@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Prueba responsiva C&amp;A CRM</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <aside class="sidebar" id="main-sidebar">
+    <div class="sidebar-brand"><div class="brand-logo">CA</div><div><div class="brand-name">C&amp;A CRM Suite</div><div class="brand-sub">PRUEBA RESPONSIVA</div></div><button class="mobile-sidebar-close" id="mobile-sidebar-close" type="button" onclick="closeMobileSidebar()">✕</button></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">PRINCIPAL</div>
+      <div class="nav-item active" data-page="dashboard"><span class="nav-icon">▦</span><span class="nav-label">Dashboard</span></div>
+      <div class="nav-item" data-page="leads"><span class="nav-icon">○</span><span class="nav-label">Prospectos</span></div>
+      <div class="nav-item" data-page="clientes"><span class="nav-icon">◎</span><span class="nav-label">Clientes</span></div>
+      <div class="nav-item" data-page="pipeline"><span class="nav-icon">□</span><span class="nav-label">Pipeline</span></div>
+      <div class="nav-section-label">OPERACIONES</div>
+      <div class="nav-item" data-page="plantillas"><span class="nav-icon">▦</span><span class="nav-label">Plantillas</span></div>
+      <div class="nav-item" data-page="agenda"><span class="nav-icon">◷</span><span class="nav-label">Agenda</span></div>
+      <div class="nav-item" data-page="finanzas"><span class="nav-icon">◇</span><span class="nav-label">Finanzas</span></div>
+      <div class="nav-item" data-page="colaboradores"><span class="nav-icon">◐</span><span class="nav-label">Colaboradores</span></div>
+      <div class="nav-section-label">ADMINISTRACIÓN</div>
+      <div class="nav-item" data-page="asesores"><span class="nav-icon">◑</span><span class="nav-label">Asesores</span></div>
+    </nav>
+    <div class="user-card"><div class="user-avatar">EA</div><div class="user-info"><div class="user-name">Emmanuel Álvarez</div><span class="rol-badge rol-admin">Admin</span></div></div>
+  </aside>
+  <button class="sidebar-scrim" id="sidebar-scrim" type="button" onclick="closeMobileSidebar()"></button>
+  <div class="main">
+    <header class="topbar">
+      <button class="mobile-menu-toggle" id="mobile-menu-btn" type="button" onclick="toggleMobileSidebar()" aria-controls="main-sidebar" aria-expanded="false">☰</button>
+      <div class="topbar-heading"><div class="topbar-title" id="topbar-title">Prueba responsiva</div><div class="topbar-sub" id="topbar-sub">Datos sintéticos</div></div>
+      <div class="topbar-actions"><button class="btn btn-icon" id="theme-btn">☀</button><button class="btn btn-primary" id="topbar-cta" style="display:none">+ Nuevo</button></div>
+    </header>
+    <main class="content" id="main-content"></main>
+  </div>
+
+  <div class="modal-overlay" id="modal-agenda">
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title">Nuevo evento</div><button class="btn btn-icon">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Título <span>*</span></label><input class="form-input" placeholder="Llamada de seguimiento"></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Tipo</label><select class="form-select"><option>Llamada de seguimiento</option></select></div><div class="form-group"><label class="form-label">Cliente</label><input class="form-input" value="CLIENTE DEMO"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Fecha</label><input class="form-input" type="date" value="2026-09-02"></div><div class="form-group"><label class="form-label">Hora</label><input class="form-input" type="time" value="10:00"></div></div>
+        <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea">Confirmar documentación y siguiente cita.</textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn" id="ag-btn-eliminar" style="margin-right:auto;color:var(--danger);border-color:var(--danger)">Eliminar</button><button class="btn">Cancelar</button><button class="btn btn-primary">Guardar</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-colaborador">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header"><div class="modal-title">Editar colaborador</div><button class="btn btn-icon">✕</button></div>
+      <div class="modal-body">
+        <div class="form-row"><div class="form-group"><label class="form-label">Nombre</label><input class="form-input" value="DANIELA"></div><div class="form-group"><label class="form-label">Ciudad / Zona</label><input class="form-input" value="CADEREYTA"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Asesor</label><select class="form-select"><option>Emmanuel Álvarez</option></select></div><div class="form-group"><label class="form-label">Comisión (%)</label><input class="form-input" type="number" value="50"></div></div>
+        <div class="form-group"><label class="form-label">Estado</label><select class="form-select"><option>Activo</option></select></div>
+      </div>
+      <div class="modal-footer"><button class="btn" id="col-btn-eliminar" style="margin-right:auto;color:var(--danger);border-color:var(--danger)">Eliminar</button><button class="btn">Cancelar</button><button class="btn btn-primary">Guardar</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-asesor">
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title">Editar asesor</div><button class="btn btn-icon">✕</button></div>
+      <div class="modal-body">
+        <div style="text-align:center;margin-bottom:16px"><div class="asesor-avatar-lg" style="margin:auto">EA</div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Nombre o nombres</label><input class="form-input" value="EMMANUEL"></div><div class="form-group"><label class="form-label">Apellidos</label><input class="form-input" value="ÁLVAREZ"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Ciudad</label><input class="form-input" value="TEQUISQUIAPAN"></div><div class="form-group"><label class="form-label">Correo</label><input class="form-input" value="demo@example.com"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Rol</label><select class="form-select"><option>Administrador</option></select></div><div class="form-group"><label class="form-label">Estado</label><select class="form-select"><option>Activo</option></select></div></div>
+        <hr class="divider"><div class="form-section">Contraseña de acceso</div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Contraseña</label><input class="form-input" type="password" value="Prueba123!"></div><div class="form-group"><label class="form-label">Confirmar</label><input class="form-input" type="password" value="Prueba123!"></div></div>
+      </div>
+      <div class="modal-footer"><button class="btn" id="as-btn-eliminar" style="margin-right:auto;color:var(--danger);border-color:var(--danger)">Eliminar</button><button class="btn">Cancelar</button><button class="btn btn-primary">Guardar</button></div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script src="../app-core-01.js"></script><script src="../app-core-02a.js"></script><script src="../app-core-02b.js"></script><script src="../app-core-03.js"></script><script src="../app-core-04.js"></script><script src="../app-core-05.js"></script><script src="../app-core-06.js"></script><script src="../app-core-07.js"></script>
+  <script>
+    (()=>{
+      const params=new URLSearchParams(location.search);
+      const modulo=params.get('module')||'dashboard';
+      const hoy=fechaISOLocal(new Date());
+      const admin={id:'admin-demo',nombre:'EMMANUEL ÁLVAREZ',nombres:'EMMANUEL',apellidos:'ÁLVAREZ',rol:'admin',activo:true,ciudad:'TEQUISQUIAPAN',fechaAlta:'2026-08-01'};
+      const asesor={id:'asesor-demo',nombre:'ASESOR DE PRUEBA',nombres:'ASESOR',apellidos:'DE PRUEBA',rol:'asesor',activo:true,ciudad:'QUERÉTARO',fechaAlta:'2026-08-15'};
+      sesionActiva=admin; vistaActual='propia'; store.asesores=[admin,asesor]; store.servicios=SERVICIOS_DEFAULT.map(s=>({...s}));
+      store.colaboradores=[{id:'col-demo-1',nombre:'DANIELA',ciudad:'CADEREYTA',asesorId:admin.id,pctComision:50,activo:true},{id:'col-demo-2',nombre:'ANA',ciudad:'IRAPUATO',asesorId:admin.id,pctComision:40,activo:true}];
+      store.clientes=STAGES_RETIRO.map((etapa,i)=>({id:'cliente-'+i,nombre:'CLIENTE DEMO '+(i+1),telefono:'44210000'+String(i).padStart(2,'0'),curp:'GOMC850315HDFMNR07',servicio:'retiro_desempleo',etapa:etapa.id,asesorId:admin.id,colaboradorId:i%3===0?'col-demo-1':null,fechaRegistro:`2026-08-${String(i+1).padStart(2,'0')}`,montoAfore:35190,honorarios:8000,comision:3000,comisionCalc:3000,estadoPago:i%2?'Pendiente':'Cobrado',contratoFirmado:i>1,origenProspecto:i%3!==0,fuente:i%2?'facebook':'recomendacion',docs:{ine:true,nss:i>2,curp:true}}));
+      store.clientes.push({id:'cliente-pension',nombre:'CLIENTE PENSIÓN DEMO',telefono:'4422000000',curp:'GOMC850315HDFMNR07',servicio:'asesoria_pension',etapa:'proceso_imss',asesorId:admin.id,fechaRegistro:'2026-08-20',fuente:'recomendacion'});
+      const estados=['pensiones','correccion_imss','semanas','sindos','aprobado'];
+      store.leads=Array.from({length:14},(_,i)=>({id:'lead-'+i,nombre:'PROSPECTO DEMO '+(i+1),telefono:'44230000'+String(i).padStart(2,'0'),curp:'GOMC850315HDFMNR07',servicio:i%5===0?'asesoria_pension':i%5===1?'correccion_imss':'retiro_desempleo',estado:estados[i%estados.length],asesorId:admin.id,colaboradorId:i%4===0?'col-demo-1':null,fechaInicio:`2026-08-${String((i%25)+1).padStart(2,'0')}`,notas:'Primer renglón de notas para comprobar el ajuste responsivo.'}));
+      store.agenda=[{id:'ev-1',titulo:'Llamada de seguimiento con cliente',tipo:'llamada',fecha:hoy,hora:'10:00',asesorId:admin.id,clienteId:'cliente-0',notas:'Confirmar documentación y siguiente cita.',completado:false},{id:'ev-2',titulo:'Enviar recordatorio por WhatsApp',tipo:'whatsapp',fecha:hoy,hora:'12:30',asesorId:admin.id,completado:true},{id:'ev-3',titulo:'Cita de actualización AFORE',tipo:'cita',fecha:hoy,hora:'16:00',asesorId:admin.id,clienteId:'cliente-2',completado:false}];
+      store.plantillas=PLANTILLAS_DEFAULT.map(p=>({...p}));
+      store.configuracion={...store.configuracion,asesor:'EMMANUEL ÁLVAREZ'};
+      currentPage=modulo;
+      const renderers={dashboard:renderDashboard,leads:renderLeads,clientes:renderClientes,pipeline:renderPipeline,plantillas:renderPlantillas,agenda:renderAgenda,finanzas:renderFinanzas,colaboradores:renderColaboradores,asesores:renderAsesores};
+      if(modulo==='modal-agenda'||modulo==='modal-colaborador'||modulo==='modal-asesor'){
+        document.getElementById(modulo).classList.add('open');
+      }else{
+        document.getElementById('main-content').innerHTML=(renderers[modulo]||renderDashboard)();
+        if(modulo==='agenda') setTimeout(renderCalMini,0);
+        if(modulo==='plantillas') setTimeout(()=>seleccionarPlantilla('pl_bienvenida'),0);
+      }
+    })();
+  </script>
+</body>
+</html>
