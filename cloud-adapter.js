@@ -251,6 +251,24 @@ function cloudQueueSync(){
   cloudSyncTimer=setTimeout(cloudSyncNow,250);
 }
 
+function cloudRepairOperationalOwnership(){
+  let changed=false;
+  for(const event of (store.agenda||[])){
+    if(event.asesorId) continue;
+    const client=event.clienteId?(store.clientes||[]).find(c=>c.id===event.clienteId):null;
+    const lead=event.leadId?(store.leads||[]).find(l=>l.id===event.leadId):null;
+    const ownerId=client?.asesorId||lead?.asesorId||null;
+    if(ownerId){event.asesorId=ownerId;changed=true;}
+  }
+  for(const client of (store.clientes||[])){
+    if(client.servicio!=='retiro_desempleo'||client.contratoFirmado!==true) continue;
+    const before=(store.agenda||[]).length;
+    agendarRecordatorio45(client);
+    if((store.agenda||[]).length>before) changed=true;
+  }
+  return changed;
+}
+
 saveStore=function(){ cloudQueueSync(); };
 supaGuardarCliente=async function(){ return cloudSyncNow({throwOnError:true}); };
 
@@ -313,7 +331,8 @@ async function cloudEnterSession(session){
     if(!profile || profile.activo===false) throw new Error('El perfil no está activo');
     sesionActiva={...profile,email:session.user.email};
     cloudReady=true;
-    if(isAdmin() && loadState?.needsSeed) await cloudSyncNow({throwOnError:true});
+    const repairedOperationalData=cloudRepairOperationalOwnership();
+    if((isAdmin()&&loadState?.needsSeed)||repairedOperationalData) await cloudSyncNow({throwOnError:true});
     const screen=document.getElementById('login-screen'); if(screen) screen.style.display='none';
     const main=document.querySelector('.main'); if(main) main.style.display='flex';
     const sidebar=document.getElementById('main-sidebar'); if(sidebar) sidebar.style.display='flex';
