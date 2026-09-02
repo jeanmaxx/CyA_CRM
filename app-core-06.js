@@ -48,17 +48,17 @@ let plantillaNombreManual = '';
 function renderPlantillas(){
   const plantillas = store.plantillas||PLANTILLAS_DEFAULT;
   return `
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+  <div class="module-toolbar templates-toolbar">
     <div><div class="section-title">Plantillas de mensajes</div><div class="section-sub">Mensajes predefinidos listos para copiar y enviar por WhatsApp</div></div>
     <button class="btn btn-primary" onclick="crearPlantilla()">+ Nueva plantilla</button>
   </div>
-  <div class="card" style="margin-bottom:16px;"><div class="card-body"><div class="form-group" style="margin:0;"><label class="form-label">Nombre</label><input class="form-input" id="pl-nombre-manual" value="${plantillaNombreManual}" placeholder="Ej. Emmanuel" oninput="plantillaNombreManual=this.value;actualizarPreviewPlantilla()"><div class="form-helper">Escribe solo el nombre con el que deseas saludar al cliente. Sustituye la variable {{NOMBRE}} en el mensaje.</div></div></div></div>
-  <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;">
+  <div class="card template-name-card"><div class="card-body"><div class="form-group" style="margin:0;"><label class="form-label">Nombre</label><input class="form-input" id="pl-nombre-manual" value="${plantillaNombreManual}" placeholder="Ej. Emmanuel" oninput="plantillaNombreManual=this.value;actualizarPreviewPlantilla()"><div class="form-helper">Escribe solo el nombre con el que deseas saludar al cliente. Sustituye la variable {{NOMBRE}} en el mensaje.</div></div></div></div>
+  <div class="templates-layout">
     <!-- Lista de plantillas -->
-    <div style="display:flex;flex-direction:column;gap:8px;">
+    <div class="templates-list" tabindex="0" aria-label="Plantillas disponibles. Desliza para recorrerlas.">
       ${plantillas.map(p=>`
-        <div class="card plantilla-list-card ${plantillaActivaId===p.id?'plantilla-card-activa':''}" data-plantilla-id="${p.id}" style="cursor:pointer;border-left:3px solid ${p.etapa?'var(--accent-blue)':'var(--border-strong)'};"
-          onclick="seleccionarPlantilla('${p.id}')">
+        <div class="card plantilla-list-card ${plantillaActivaId===p.id?'plantilla-card-activa':''}" data-plantilla-id="${p.id}" role="button" tabindex="0" style="cursor:pointer;border-left:3px solid ${p.etapa?'var(--accent-blue)':'var(--border-strong)'};"
+          onclick="seleccionarPlantilla('${p.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarPlantilla('${p.id}');}">
           <div class="card-body" style="padding:10px 12px;">
             <div style="font-size:13px;font-weight:500;">${p.icono} ${p.nombre}</div>
             ${p.etapa?`<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${stageLabel(p.etapa,'retiro_desempleo')}</div>`:'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">General</div>'}
@@ -67,11 +67,11 @@ function renderPlantillas(){
       `).join('')}
     </div>
     <!-- Preview y uso -->
-    <div>
-      <div class="card" style="margin-bottom:12px;">
+    <div class="template-preview-column">
+      <div class="card template-preview-card">
         <div class="card-header">
           <div class="card-title">Vista previa del mensaje</div>
-          <div style="display:flex;gap:6px;" id="pl-acciones">
+          <div class="template-actions" id="pl-acciones">
             <button class="btn" id="pl-btn-editar" style="font-size:12px;display:none;" onclick="editarPlantillaActiva()">✎ Editar</button>
             <button class="btn" id="pl-btn-cancelar" style="font-size:12px;display:none;" onclick="cancelarEdicionPlantilla()">Cancelar edición</button>
             <button class="btn" id="pl-btn-guardar" style="font-size:12px;display:none;" onclick="guardarPlantillaActiva()">Guardar plantilla</button>
@@ -130,8 +130,8 @@ function renderDetallePlantilla(){
         <textarea id="pl-texto-edit" class="form-textarea" style="min-height:140px;font-size:13px;" oninput="mensajePersonalizado=this.value;actualizarPreviewPlantilla()">${p.texto}</textarea>
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Vista previa final</div>
-      <div id="pl-msg-final" style="background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2);border-radius:var(--radius-sm);padding:14px;white-space:pre-wrap;font-size:13px;line-height:1.7;"></div>`:
-      `<div id="pl-msg-final" style="background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2);border-radius:var(--radius-sm);padding:18px;white-space:pre-wrap;font-size:13px;line-height:1.7;min-height:120px;"></div>`;
+      <div id="pl-msg-final" class="template-message-preview template-message-preview-edit"></div>`:
+      `<div id="pl-msg-final" class="template-message-preview"></div>`;
   }
   if(btnCopiar) btnCopiar.style.display='';
   if(btnWa) btnWa.style.display='';
@@ -333,7 +333,7 @@ let editingColaboradorId = null;
 
 function renderColaboradores(){
   const cols = isAdmin()?(store.colaboradores||[]):(store.colaboradores||[]).filter(c=>c.asesorId===sesionActiva?.id);
-  const filas=cols.map(col=>{
+  const datos=cols.map(col=>{
     const asesor=store.asesores.find(a=>a.id===col.asesorId);
     const clientes=store.clientes.filter(c=>c.colaboradorId===col.id);
     const conversion=metricasConversion({colaboradorId:col.id});
@@ -345,6 +345,9 @@ function renderColaboradores(){
       const pct=(c.colPct||col.pctComision||50)/100;
       return s+Number(c.comisionCalc||0)*pct;
     },0);
+    return {col,asesor,conversion,comisionTotal,pendiente};
+  });
+  const filas=datos.map(({col,asesor,conversion,comisionTotal,pendiente})=>{
     return `<tr>
       <td>
         <div style="display:flex;align-items:center;gap:9px;min-width:150px;">
@@ -371,16 +374,37 @@ function renderColaboradores(){
       <td><button class="btn btn-icon" onclick="openModalColaborador('${col.id}')" title="Editar">✎</button></td>
     </tr>`;
   }).join('');
+  const tarjetas=datos.map(({col,asesor,conversion,comisionTotal,pendiente})=>`
+    <article class="collaborator-mobile-card">
+      <div class="collaborator-mobile-head">
+        <div class="user-avatar">${initials(col.nombre)}</div>
+        <div class="collaborator-mobile-identity">
+          <div class="collaborator-mobile-name">${col.nombre}</div>
+          <div class="collaborator-mobile-place">${col.ciudad||'—'}</div>
+        </div>
+        <span class="chip ${col.activo?'chip-green':'chip-red'}">${col.activo?'Activo':'Inactivo'}</span>
+        <button class="btn btn-icon" onclick="openModalColaborador('${col.id}')" title="Editar ${col.nombre}" aria-label="Editar ${col.nombre}">✎</button>
+      </div>
+      <div class="collaborator-mobile-advisor">Reporta a <strong>${asesor?asesor.nombre:'—'}</strong> · ${col.pctComision||50}% de comisión</div>
+      <div class="collaborator-mobile-metrics">
+        <div><strong>${conversion.oportunidades}</strong><span>Oportunidades</span></div>
+        <div><strong>${conversion.clientes}</strong><span>Clientes</span></div>
+        <div><strong>${formatoTasaConversion(conversion.tasa)}</strong><span>Conversión</span></div>
+      </div>
+      <div class="collaborator-mobile-breakdown"><span>Desde prospecto: <strong>${conversion.desdeProspecto}</strong></span><span>Directos: <strong>${conversion.directos}</strong></span></div>
+      <div class="collaborator-mobile-money"><span><small>Cobrado</small><strong>$${comisionTotal.toLocaleString('es-MX')}</strong></span><span><small>Pendiente</small><strong>$${pendiente.toLocaleString('es-MX')}</strong></span></div>
+    </article>`).join('');
   return `
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+  <div class="module-toolbar collaborators-toolbar">
     <div><div class="section-title">Colaboradores</div><div class="section-sub">Red de colaboradores y comisiones compartidas</div></div>
     <button class="btn btn-primary" onclick="openModalColaborador()">+ Nuevo colaborador</button>
   </div>
   ${cols.length===0?`<div class="empty-state"><div class="empty-icon">◐</div><div class="empty-title">Sin colaboradores</div><div class="empty-sub">Agrega tus colaboradores externos</div><button class="btn btn-primary" onclick="openModalColaborador()">+ Nuevo</button></div>`:`
-  <div class="card"><div class="table-wrap"><table>
+  <div class="card collaborators-table-card"><div class="table-wrap"><table>
     <thead><tr><th>Colaborador</th><th>Asesor</th><th>Oportunidades</th><th>Desde prospecto</th><th>Directos</th><th>Clientes</th><th>Conversión</th><th>Cobrado</th><th>Pendiente</th><th></th></tr></thead>
     <tbody>${filas}</tbody>
-  </table></div></div>`}`;
+  </table></div></div>
+  <div class="collaborators-mobile-list">${tarjetas}</div>`}`;
 }
 
 function openModalColaborador(id){

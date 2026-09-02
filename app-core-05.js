@@ -874,7 +874,7 @@ function renderAsesores(){
   const topAsesor=topStats[0];
 
   return `
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+  <div class="module-toolbar advisors-toolbar">
     <div><div class="section-title">Asesores</div><div class="section-sub">Gestión del equipo y rendimiento</div></div>
     <button class="btn btn-primary" onclick="openModalAsesor()">+ Nuevo asesor</button>
   </div>
@@ -891,12 +891,12 @@ function renderAsesores(){
     </div>
   </div>`:''}
 
-  <div style="display:flex;flex-direction:column;gap:12px;">
+  <div class="advisors-list">
     ${asesores.map(a=>{
       const st=statsAsesor(a.id);
-      return `<div class="card">
+      return `<div class="card advisor-summary-card">
         <div class="card-body" style="padding:16px;">
-          <div style="display:flex;align-items:center;gap:14px;">
+          <div class="advisor-summary-head">
             <div class="asesor-avatar-lg">
               ${a.foto?`<img src="${a.foto}" alt="${a.nombre}">`:`<span>${initials(a.nombre)}</span>`}
             </div>
@@ -923,7 +923,7 @@ function renderAsesores(){
   </div>
 
   <!-- TABLA COMPARATIVA -->
-  <div class="card" style="margin-top:20px;">
+  <div class="card advisor-comparison-table" style="margin-top:20px;">
     <div class="card-header"><div class="card-title">Comparativa de rendimiento</div></div>
     <div class="table-wrap">
       <table>
@@ -957,6 +957,27 @@ function renderAsesores(){
         </tbody>
       </table>
     </div>
+  </div>
+  <div class="advisor-comparison-mobile">
+    <div class="card-title advisor-comparison-mobile-title">Comparativa de rendimiento</div>
+    ${asesores.map(a=>{
+      const st=statsAsesor(a.id);
+      const conversion=metricasConversion({asesorId:a.id});
+      return `<article class="advisor-performance-card">
+        <div class="advisor-performance-head">
+          <div class="client-avatar">${a.foto?`<img src="${a.foto}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`:initials(a.nombre)}</div>
+          <div><strong>${a.nombre}</strong><span>${a.rol==='admin'?'Administrador':'Asesor'}</span></div>
+        </div>
+        <div class="advisor-performance-primary">
+          <div><strong>${conversion.oportunidades}</strong><span>Oportunidades</span></div>
+          <div><strong>${st.total}</strong><span>Clientes</span></div>
+          <div><strong>${formatoTasaConversion(conversion.tasa)}</strong><span>Conversión</span></div>
+        </div>
+        <div class="advisor-performance-progress"><div class="progress-bar-wrap"><div class="progress-bar" style="width:${Math.min(conversion.tasa,100)}%;"></div></div></div>
+        <div class="advisor-performance-details"><span>Desde prospecto <strong>${conversion.desdeProspecto}</strong></span><span>Directos <strong>${conversion.directos}</strong></span><span>Activos <strong>${st.activos}</strong></span><span>Concluidos <strong>${st.concluidos}</strong></span></div>
+        <div class="advisor-performance-commission"><span>Comisiones cobradas</span><strong>$${st.comisiones.toLocaleString('es-MX')}</strong></div>
+      </article>`;
+    }).join('')}
   </div>`;
 }
 

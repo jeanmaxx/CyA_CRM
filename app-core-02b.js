@@ -20,7 +20,7 @@ function renderPipeline(){
       <div class="kanban-cards">
         ${cards.length===0
           ?'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:10px 0">—</div>'
-          :cards.map(c=>`<div class="kanban-card" onclick="openPerfil('${c.id}')">
+          :cards.map(c=>`<div class="kanban-card" role="button" tabindex="0" onclick="openPerfil('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPerfil('${c.id}');}">
             <div class="kanban-card-name">${c.nombre}</div>
             <div class="kanban-card-info">${c.telefono||'—'}</div>
             ${servicio==='retiro_desempleo'&&c.montoAfore?`<div class="kanban-card-info">AFORE: $${Number(c.montoAfore).toLocaleString('es-MX')}</div>`:''}
@@ -32,25 +32,30 @@ function renderPipeline(){
 
   function renderServicioPipeline(titulo,servicio,clientes){
     const etapas=stagesFor(servicio);
-    return `<div style="margin-top:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:13px;font-weight:600;color:var(--text-primary);">${titulo}</div><span class="chip chip-gray">${clientes.length} cliente${clientes.length!==1?'s':''}</span></div>
-      <div style="overflow-x:auto;padding-bottom:4px;"><div style="display:grid;grid-template-columns:repeat(${etapas.length},minmax(190px,1fr));gap:12px;min-width:${etapas.length*190}px;">${etapas.map(st=>renderKanbanCol(st,clientes,servicio)).join('')}</div></div>
+    return `<div class="pipeline-service-block">
+      <div class="pipeline-service-header"><div>${titulo}</div><span class="chip chip-gray">${clientes.length} cliente${clientes.length!==1?'s':''}</span></div>
+      <div class="pipeline-scroll-wrap" tabindex="0" aria-label="Etapas de ${titulo}. Desliza horizontalmente para recorrerlas."><div class="pipeline-service-grid" style="--pipeline-cols:${etapas.length};">${etapas.map(st=>renderKanbanCol(st,clientes,servicio)).join('')}</div></div>
     </div>`;
   }
 
   return `
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+  <div class="module-toolbar pipeline-toolbar">
     <div><div class="section-title">Pipeline</div><div class="section-sub" style="margin-bottom:0;">Retiro por desempleo — ${retiro.length} cliente${retiro.length!==1?'s':''} activos</div></div>
-    <div style="margin-left:auto;">${getSelectorVistaHTML(true)}</div>
+    <div class="module-view-selector pipeline-view-selector">${getSelectorVistaHTML(true)}</div>
   </div>
 
+  <div class="mobile-scroll-hint" aria-hidden="true">Desliza para recorrer las etapas →</div>
   <!-- FILA 1 -->
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px;">
-    ${fila1.map(st=>renderKanbanCol(st,retiro,'retiro_desempleo')).join('')}
+  <div class="pipeline-scroll-wrap" tabindex="0" aria-label="Primeras etapas del pipeline. Desliza horizontalmente para recorrerlas.">
+    <div class="pipeline-grid pipeline-grid-primary">
+      ${fila1.map(st=>renderKanbanCol(st,retiro,'retiro_desempleo')).join('')}
+    </div>
   </div>
   <!-- FILA 2 -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-    ${fila2.map(st=>renderKanbanCol(st,retiro,'retiro_desempleo')).join('')}
+  <div class="pipeline-scroll-wrap" tabindex="0" aria-label="Etapas finales del pipeline. Desliza horizontalmente para recorrerlas.">
+    <div class="pipeline-grid pipeline-grid-secondary">
+      ${fila2.map(st=>renderKanbanCol(st,retiro,'retiro_desempleo')).join('')}
+    </div>
   </div>
 
   <div class="archivados-section" style="margin-top:20px;">
@@ -64,7 +69,7 @@ function renderPipeline(){
       ${restantes.length?`<div style="margin-top:16px;"><div style="font-size:13px;font-weight:600;margin-bottom:8px;">Otros</div><div class="card" style="overflow:hidden;"><div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Servicio</th><th>Etapa</th><th>Teléfono</th></tr></thead><tbody>${restantes.map(c=>`<tr><td><span class="td-link" onclick="openPerfil('${c.id}')">${c.nombre}</span></td><td><span class="chip chip-gray">${getSvcLabel(c.servicio)}</span></td><td><span class="stage-badge stage-1">${stageLabel(c.etapa,c.servicio)}</span></td><td class="td-muted">${c.telefono||'—'}</td></tr>`).join('')}</tbody></table></div></div></div>`:''}
     </div>
   </div>
-  <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+  <div class="module-export pipeline-export">
     <button class="btn" onclick="exportarClientesPorEtapa()">⬇ Exportar pipeline</button>
   </div>`;
 }
