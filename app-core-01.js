@@ -223,7 +223,7 @@ function navigate(page, el){
   document.getElementById('topbar-title').textContent=t;
   document.getElementById('topbar-sub').textContent=s;
   const cta=document.getElementById('topbar-cta');
-  cta.style.display=(['dashboard','clientes'].includes(page))?'':'none';
+  cta.style.display=page==='clientes'?'':'none';
   destroyCharts();
   renderPage(page);
 }
@@ -232,4 +232,3 @@ function destroyCharts(){
   Object.values(chartInstances).forEach(c=>{try{c.destroy();}catch(e){}});
   chartInstances={};
 }
-
