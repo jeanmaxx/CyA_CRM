@@ -8,6 +8,19 @@ function closeModal(id){
   const el=document.getElementById(id); if(el) el.classList.remove('open');
 }
 function initials(n){ if(!n) return '?'; const p=n.trim().split(' ').filter(Boolean); return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():p[0][0].toUpperCase(); }
+function asesorNombres(asesor){
+  const guardados=String(asesor?.nombres||'').trim();
+  if(guardados) return guardados;
+  return String(asesor?.nombre||'').trim().split(/\s+/).filter(Boolean)[0]||'';
+}
+function asesorApellidos(asesor){
+  const guardados=String(asesor?.apellidos||'').trim();
+  if(guardados) return guardados;
+  return String(asesor?.nombre||'').trim().split(/\s+/).filter(Boolean).slice(1).join(' ');
+}
+function asesorNombreCompleto(asesor){
+  return [asesorNombres(asesor),asesorApellidos(asesor)].filter(Boolean).join(' ').trim()||String(asesor?.nombre||'').trim();
+}
 function stageLabel(etapa,svc){ const st=stagesFor(svc||'retiro_desempleo'); const f=st.find(s=>s.id===etapa); return f?f.label:etapa||'—'; }
 function stageCls(etapa,svc){ const st=stagesFor(svc||'retiro_desempleo'); const i=st.findIndex(s=>s.id===etapa); if(etapa==='concluido') return 'stage-2'; if(i<=1) return 'stage-1'; if(i<=3) return 'stage-5'; return 'stage-3'; }
 function fmtDate(iso){
@@ -955,7 +968,8 @@ function openModalAsesor(id){
   document.getElementById('modal-asesor-title').textContent=id?'Editar asesor':'Nuevo asesor';
   const elimBtn=document.getElementById('as-btn-eliminar');
   if(elimBtn) elimBtn.style.display=id&&id!=='asesor_ea'?'':'none';
-  setVal('as-nombre',a?a.nombre:'');
+  setVal('as-nombres',a?asesorNombres(a):'');
+  setVal('as-apellidos',a?asesorApellidos(a):'');
   setVal('as-ciudad',a?a.ciudad:'');
   setVal('as-email',a?a.email:'');
   setVal('as-rol',a?a.rol:'asesor');
@@ -981,7 +995,7 @@ function openModalAsesor(id){
 }
 
 function actualizarInitialsPreview(){
-  const nombre=getVal('as-nombre');
+  const nombre=[getVal('as-nombres'),getVal('as-apellidos')].filter(Boolean).join(' ').trim();
   const initEl=document.getElementById('asesor-foto-initials');
   if(initEl&&!asesorFotoTemp) initEl.textContent=nombre?initials(nombre):'?';
 }
@@ -1032,10 +1046,12 @@ function validarPasswordAsesor(val){
 }
 
 async function guardarAsesor(){
-  const nombre=(getVal('as-nombre')||'').trim();
+  const nombres=(getVal('as-nombres')||'').trim();
+  const apellidos=(getVal('as-apellidos')||'').trim();
+  const nombre=[nombres,apellidos].filter(Boolean).join(' ');
   const password=getVal('as-pin');
   const password2=getVal('as-pin2');
-  if(!nombre){showToast('El nombre es obligatorio','warn');return;}
+  if(!nombres||!apellidos){showToast('Nombres y apellidos son obligatorios','warn');return;}
   if(!editingAsesorId&&!password){showToast('Crea una contraseña temporal para el asesor','warn');return;}
   if(password&&!passwordValida(password)){showToast('La contraseña no cumple todos los requisitos','warn');return;}
   if(password&&password!==password2){showToast('Las contraseñas no coinciden','warn');return;}
@@ -1043,7 +1059,7 @@ async function guardarAsesor(){
   const passwordHash=password?await hashPin(password):(anterior?.pin||'');
   const asesor={
     id:editingAsesorId||'as_'+Date.now(),
-    nombre,
+    nombre,nombres,apellidos,
     ciudad:getVal('as-ciudad'),
     rol:getVal('as-rol')||'asesor',
     activo:getVal('as-activo')!=='false',

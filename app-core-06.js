@@ -182,7 +182,7 @@ function seleccionarClientePlantilla(id, nombre){
 
 function actualizarPreviewPlantilla(){
   const c=plantillaClienteActivo?store.clientes.find(x=>x.id===plantillaClienteActivo):null;
-  const asesor=sesionActiva?sesionActiva.nombre:(store.configuracion.asesor||'su asesor');
+  const asesor=sesionActiva?asesorNombreCompleto(sesionActiva):(store.configuracion.asesor||'su asesor');
   let texto=mensajePersonalizado||document.getElementById('pl-texto-edit')?.value||'';
   if(c){
     const nombre=plantillaNombreManual.trim()||c.nombre.split(' ')[0];
