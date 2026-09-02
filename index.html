@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C&A CRM Suite v23</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="main-sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo" id="sidebar-logo-wrap" style="overflow:hidden;padding:0;">
+      <span id="sidebar-logo-text" style="font-family:var(--font-display);font-weight:700;font-size:14px;color:#fff;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">C&A</span>
+    </div>
+    <div>
+      <div class="brand-name" id="app-name-display">C&A CRM Suite</div>
+      <div class="brand-sub">Casillas &amp; Asociados</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Principal</div>
+      <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard',this)">
+        <span class="nav-icon">&#x229E;</span><span class="nav-label">Dashboard</span>
+      </div>
+      <div class="nav-item" data-page="leads" onclick="navigate('leads',this)">
+        <span class="nav-icon">◉</span><span class="nav-label">Prospectos</span>
+      </div>
+      <div class="nav-item" data-page="clientes" onclick="navigate('clientes',this)">
+        <span class="nav-icon">&#x25CE;</span><span class="nav-label">Clientes</span>
+      </div>
+      <div class="nav-item" data-page="pipeline" onclick="navigate('pipeline',this)">
+        <span class="nav-icon">&#x229F;</span><span class="nav-label">Pipeline</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Operaciones</div>
+      <div class="nav-item" data-page="contratos" onclick="navigate('contratos',this)">
+        <span class="nav-icon">&#x25A4;</span><span class="nav-label">Contratos</span>
+      </div>
+      <div class="nav-item" data-page="plantillas" onclick="navigate('plantillas',this)">
+        <span class="nav-icon">&#x25A6;</span><span class="nav-label">Plantillas</span>
+      </div>
+      <div class="nav-item" data-page="agenda" onclick="navigate('agenda',this)">
+        <span class="nav-icon">&#x25F7;</span><span class="nav-label">Agenda</span>
+      </div>
+      <div class="nav-item" data-page="finanzas" onclick="navigate('finanzas',this)">
+        <span class="nav-icon">&#x25C8;</span><span class="nav-label">Finanzas</span>
+      </div>
+    </div>
+    <div class="nav-section" id="nav-admin-section">
+      <div class="nav-section-label">Administración</div>
+      <div class="nav-item" data-page="servicios" onclick="navigate('servicios',this)">
+        <span class="nav-icon">&#x25A7;</span><span class="nav-label">Servicios</span>
+      </div>
+      <div class="nav-item" data-page="colaboradores" onclick="navigate('colaboradores',this)">
+        <span class="nav-icon">◐</span><span class="nav-label">Colaboradores</span>
+      </div>
+      <div class="nav-item" data-page="asesores" onclick="navigate('asesores',this)">
+        <span class="nav-icon">&#x25D1;</span><span class="nav-label">Asesores</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Cuenta</div>
+      <div class="nav-item" data-page="configuracion" onclick="navigate('configuracion',this)">
+        <span class="nav-icon">&#x25CC;</span><span class="nav-label">Configuración</span>
+      </div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="sidebar-avatar" style="overflow:hidden;padding:0;display:flex;align-items:center;justify-content:center;">EA</div>
+      <div style="flex:1;min-width:0;">
+        <div class="user-name" id="sidebar-name">Emmanuel Álvarez</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+          <span class="rol-badge rol-admin" id="sidebar-rol-badge">Admin</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-footer-actions">
+      <div class="session-info" onclick="cerrarSesion()">&#x21A9; Cerrar sesión</div>
+      <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Contraer/expandir" aria-label="Contraer panel">&#x2039;</button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-sub" id="topbar-sub">Resumen general</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-icon" onclick="toggleTheme()" id="theme-btn" title="Modo día/noche">☀</button>
+      <button class="btn btn-primary" id="topbar-cta" onclick="openModalCliente()">+ Nuevo cliente</button>
+    </div>
+  </div>
+  <div class="content" id="main-content"></div>
+</div>
+
+<!-- MODAL PERFIL CLIENTE (centrado, grande) -->
+<div class="modal-overlay" id="modal-perfil">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="perfil-title">Perfil del cliente</div>
+        <div style="font-size:12px;color:var(--text-muted)" id="perfil-sub"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" id="perfil-edit-btn">✎ Editar</button>
+        <button class="btn btn-primary" id="perfil-save-btn" onclick="guardarCambiosPerfil()">Guardar cambios</button>
+        <button class="btn" id="perfil-regresar-prospecto-btn" style="font-size:12px;color:var(--warning);" onclick="abrirRegresoProspecto(perfilClienteActivo)">↩ Regresar a prospectos</button>
+        <button class="btn" id="perfil-descartar-btn" style="color:var(--text-muted);font-size:12px;" onclick="abrirDescarte(perfilClienteActivo)">Descartar</button>
+        <button class="btn btn-icon" onclick="closeModal('modal-perfil')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="perfil-body"></div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO / EDITAR CLIENTE -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-cliente-title">Nuevo cliente</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-cliente')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs" id="modal-tabs">
+        <div class="tab active" onclick="switchTab('tab-contacto',0)">Contacto</div>
+        <div class="tab" onclick="switchTab('tab-datos-extra',1)">Datos adicionales</div>
+      </div>
+
+      <!-- TAB 1: CONTACTO -->
+      <div class="tab-panel active" id="tab-contacto">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre completo <span>*</span></label>
+            <input class="form-input input-upper" id="fc-nombre" placeholder="Nombre del cliente"
+              oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teléfono <span>*</span></label>
+            <input class="form-input" id="fc-telefono" placeholder="446 XXX XXXX">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Correo electrónico</label>
+            <input class="form-input" id="fc-email" type="email" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ciudad</label>
+            <input class="form-input input-city" id="fc-ciudad" placeholder="Ciudad de origen"
+              oninput="this.value=this.value.toUpperCase()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tipo de servicio <span>*</span></label>
+            <select class="form-select" id="fc-servicio" onchange="onServicioChange()">
+              <option value="">— Seleccionar —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Etapa</label>
+            <select class="form-select" id="fc-etapa">
+              <option value="perfilamiento">Perfilamiento</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fuente de contacto</label>
+          <select class="form-select" id="fc-fuente">
+            <option value="">— Seleccionar —</option>
+            <option value="facebook">Facebook</option>
+            <option value="instagram">Instagram</option>
+            <option value="tiktok">TikTok</option>
+            <option value="recomendacion">Recomendación</option>
+            <option value="circulo_calido">Círculo cálido</option>
+            <option value="de_colaborador">De colaborador</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas</label>
+          <textarea class="form-textarea" id="fc-notas" placeholder="Observaciones iniciales del lead..."></textarea>
+        </div>
+        <hr class="divider">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Colaborador (opcional)</label>
+            <select class="form-select" id="fc-colaborador">
+              <option value="">— Sin colaborador —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">% Comisión colaborador</label>
+            <input class="form-input" id="fc-col-pct" type="number" min="0" max="100" placeholder="50" style="font-size:13px;">
+            <div class="form-helper">Default según colaborador seleccionado</div>
+          </div>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Próxima acción (opcional)</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tipo de acción</label>
+            <select class="form-select" id="fc-prox-tipo">
+              <option value="">Sin acción inmediata</option>
+              <option value="llamada">📞 Llamada de seguimiento</option>
+              <option value="whatsapp">💬 WhatsApp de seguimiento</option>
+              <option value="meet">🎥 Meet / Videollamada</option>
+              <option value="cita">📅 Cita</option>
+              <option value="recordatorio">🔔 Recordatorio</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha de la acción</label>
+            <input class="form-input" id="fc-prox-fecha" type="date">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Hora</label>
+            <input class="form-input" id="fc-prox-hora" type="time" value="10:00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nota de la acción</label>
+            <input class="form-input" id="fc-prox-nota" placeholder="Ej. Confirmar documentos...">
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: ELEGIBILIDAD -->
+      <div class="tab-panel" id="tab-elegibilidad">
+        <!-- Contenedor dinámico según servicio seleccionado -->
+        <div id="eleg-container">
+          <div style="font-size:12px;color:var(--text-muted);padding:16px;text-align:center;">
+            Selecciona un servicio en la pestaña "Contacto" para ver los criterios de elegibilidad.
+          </div>
+        </div>
+        <!-- Resultado siempre visible -->
+        <div class="eligibility-result" id="el-result">
+          <div class="er-title" id="el-result-title"></div>
+          <div class="er-text" id="el-result-text"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: DATOS ADICIONALES -->
+      <div class="tab-panel" id="tab-datos-extra">
+        <div class="form-section">Datos del documento</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">NSS (Núm. Seguridad Social) <span style="color:var(--text-muted);font-weight:400">(11 dígitos)</span></label>
+            <div class="nss-wrap">
+              <input class="form-input" id="fc-nss" placeholder="00000000000" maxlength="11"
+                oninput="this.value=this.value.replace(/\D/g,'').slice(0,11);validateNSS(this)"
+                style="padding-right:36px;">
+              <span class="nss-indicator" id="nss-indicator"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">CURP <span style="color:var(--text-muted);font-weight:400">(18 caracteres)</span></label>
+            <div class="nss-wrap">
+              <input class="form-input input-upper" id="fc-curp" placeholder="XXXX000000XXXXXXXX" maxlength="18"
+                oninput="this.value=this.value.replace(/[^A-Z0-9]/g,'').toUpperCase().slice(0,18);validateAlphaNum(this,'curp-indicator',18)">
+              <span class="nss-indicator" id="curp-indicator"></span>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">RFC <span style="color:var(--text-muted);font-weight:400">(13 caracteres)</span></label>
+            <div class="nss-wrap">
+              <input class="form-input input-upper" id="fc-rfc" placeholder="XXXX000000XXX" maxlength="13"
+                oninput="this.value=this.value.replace(/[^A-Z0-9]/g,'').toUpperCase().slice(0,13);validateAlphaNum(this,'rfc-indicator',13)">
+              <span class="nss-indicator" id="rfc-indicator"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cantidad a retirar de AFORE</label>
+            <input class="form-input" id="fc-monto" type="number" placeholder="$ 0.00"
+              oninput="previewCalculo()">
+            <div class="calc-preview" id="calc-preview">
+              <div class="calc-row"><span style="color:var(--text-muted)">Honorarios empresa</span><span id="cp-honorarios">—</span></div>
+              <div class="calc-row calc-row-total"><span>Tu comisión estimada</span><span id="cp-comision">—</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row" id="fc-finanzas-defaults">
+          <div class="form-group">
+            <label class="form-label">Honorarios</label>
+            <input class="form-input" id="fc-honorarios" type="number" placeholder="$ 0.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Comisión</label>
+            <input class="form-input" id="fc-comision" type="number" placeholder="$ 0.00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Domicilio</label>
+          <input class="form-input input-upper" id="fc-domicilio" placeholder="CALLE, NÚMERO, COLONIA, MUNICIPIO, CP"
+            oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <hr class="divider">
+        <div class="form-section">Datos bancarios</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Banco</label>
+            <input class="form-input input-upper" id="fc-banco" placeholder="Ej. BANAMEX, BBVA..." oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cuenta CLABE (18 dígitos)</label>
+            <div class="nss-wrap">
+              <input class="form-input" id="fc-clabe" maxlength="18" placeholder="18 dígitos"
+                oninput="this.value=this.value.replace(/\D/g,'');validateCLABE(this)">
+              <span class="nss-indicator" id="fc-clabe-ind"></span>
+            </div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="form-section">Fechas AFORE</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">📅 Cita biométrica AFORE</label>
+            <input class="form-input" id="fc-fecha-biometrica" type="date">
+            <div class="form-helper">Alertas 1 y 2 días antes</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">📋 Fecha solicitud AFORE (manual)</label>
+            <input class="form-input" id="fc-fecha-solicitud-manual" type="date">
+            <div class="form-helper">Reemplaza el cálculo automático de 45 días</div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="form-section">Documentos requeridos</div>
+        <div id="docs-checklist-container">
+          <div style="font-size:12px;color:var(--text-muted);">Selecciona un servicio en la pestaña Contacto para ver los documentos requeridos.</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <input class="form-input" id="extra-doc-new" placeholder="Agregar documento adicional..." style="font-size:12px;">
+          <button class="btn" onclick="addExtraDocModal()" style="font-size:12px;padding:6px 12px;flex-shrink:0;">+ Agregar</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+          <button class="btn" onclick="closeModal('modal-cliente')">Cancelar</button>
+          <button class="btn btn-primary" onclick="guardarCliente()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGENDA EVENTO -->
+<div class="modal-overlay" id="modal-agenda">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-agenda-title">Nuevo evento</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-agenda')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Título <span>*</span></label>
+        <input class="form-input" id="ag-titulo" placeholder="Ej. Llamada de seguimiento con cliente">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select class="form-select" id="ag-tipo">
+            <option value="llamada">Llamada de seguimiento</option>
+            <option value="whatsapp">WhatsApp de seguimiento</option>
+            <option value="meet">Meet / Videollamada</option>
+            <option value="cita">Cita</option>
+            <option value="recordatorio">Recordatorio</option>
+            <option value="vencimiento">Vencimiento</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cliente (opcional)</label>
+          <div class="autocomplete-wrap">
+            <input class="form-input" id="ag-cliente-input" placeholder="Buscar cliente..."
+              oninput="filtrarClientesAgenda(this.value)" autocomplete="off" style="font-size:13px;">
+            <div class="autocomplete-list" id="ag-cliente-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha <span>*</span></label>
+          <input class="form-input" id="ag-fecha" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora</label>
+          <input class="form-input" id="ag-hora" type="time" value="10:00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <textarea class="form-textarea" id="ag-notas" placeholder="Detalles adicionales..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="ag-btn-eliminar" style="margin-right:auto;color:var(--danger);border-color:var(--danger);display:none;" onclick="eliminarEvento()">Eliminar</button>
+      <button class="btn" onclick="closeModal('modal-agenda')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEvento()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SERVICIO -->
+<div class="modal-overlay" id="modal-servicio">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-servicio-title">Nuevo servicio</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-servicio')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="grid-column:span 2;">
+          <label class="form-label">Nombre del servicio <span>*</span></label>
+          <input class="form-input" id="sv-nombre" placeholder="Ej. Retiro por desempleo">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <textarea class="form-textarea" id="sv-descripcion" placeholder="Describe brevemente el servicio..."></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <input type="checkbox" id="sv-activo" checked style="width:16px;height:16px;cursor:pointer;">
+        <label for="sv-activo" style="font-size:13px;cursor:pointer;">Servicio activo</label>
+      </div>
+      <hr class="divider">
+      <div class="form-section">Documentos requeridos</div>
+      <div id="sv-docs-container" class="docs-checklist" style="margin-bottom:16px;"></div>
+      <hr class="divider">
+      <div class="form-section">Esquema de honorarios</div>
+      <div class="form-group">
+        <label class="form-label">Tipo de esquema</label>
+        <select class="form-select" id="sv-esquema" onchange="renderServicioEsquema()">
+          <option value="manual">Manual (definir en cada caso)</option>
+          <option value="mixto">Mixto (fijo por umbral / porcentaje)</option>
+          <option value="porcentaje">Solo porcentaje</option>
+        </select>
+      </div>
+      <div id="sv-esquema-mixto" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Umbral (monto mínimo para tarifa fija)</label>
+            <input class="form-input" id="sv-umbral" type="number" placeholder="35000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Honorarios fijos (≥ umbral)</label>
+            <input class="form-input" id="sv-hon-fijo" type="number" placeholder="8000">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Comisión fija asesor (≥ umbral)</label>
+            <input class="form-input" id="sv-com-fija" type="number" placeholder="2000">
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:1px;">
+            <div style="font-size:12px;color:var(--text-muted);padding:8px;background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid var(--border);width:100%;">
+              &lt; umbral: honorarios = <strong id="sv-pct-preview1">25</strong>% del monto · comisión = <strong id="sv-pct-preview2">40</strong>% de honorarios
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">% Honorarios (bajo umbral)</label>
+            <input class="form-input" id="sv-hon-pct" type="number" placeholder="25" oninput="document.getElementById('sv-pct-preview1').textContent=this.value">
+          </div>
+          <div class="form-group">
+            <label class="form-label">% Comisión asesor (de honorarios)</label>
+            <input class="form-input" id="sv-com-pct" type="number" placeholder="40" oninput="document.getElementById('sv-pct-preview2').textContent=this.value">
+          </div>
+        </div>
+      </div>
+      <div id="sv-esquema-pct" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">% Honorarios del monto</label>
+            <input class="form-input" id="sv-hon-pct-b" type="number" placeholder="25">
+          </div>
+          <div class="form-group">
+            <label class="form-label">% Comisión asesor (de honorarios)</label>
+            <input class="form-input" id="sv-com-pct-b" type="number" placeholder="40">
+          </div>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="form-section">Plantilla de contrato</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">
+        Variables: <code style="background:var(--bg-hover);padding:1px 5px;border-radius:3px;font-size:10px;">{{CLIENTE_NOMBRE}}</code>
+        <code style="background:var(--bg-hover);padding:1px 5px;border-radius:3px;font-size:10px;">{{CLIENTE_DOMICILIO}}</code>
+        <code style="background:var(--bg-hover);padding:1px 5px;border-radius:3px;font-size:10px;">{{MONTO_RETIRO}}</code>
+        <code style="background:var(--bg-hover);padding:1px 5px;border-radius:3px;font-size:10px;">{{HONORARIOS}}</code>
+        <code style="background:var(--bg-hover);padding:1px 5px;border-radius:3px;font-size:10px;">{{FECHA_CONTRATO}}</code>
+        <code style="background:var(--bg-hover);padding:1px 5px;border-radius:3px;font-size:10px;">{{EMPRESA_REPRESENTANTE}}</code>
+        <code style="background:var(--bg-hover);padding:1px 5px;border-radius:3px;font-size:10px;">{{CIUDAD_CONTRATO}}</code>
+      </div>
+      <!-- BARRA DE FORMATO -->
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;padding:8px;background:var(--bg-secondary);border:1px solid var(--border);border-bottom:none;border-radius:var(--radius-sm) var(--radius-sm) 0 0;">
+        <button type="button" class="btn" style="font-size:11px;padding:4px 8px;" onclick="insertarFormato('[CENTRO]','[/CENTRO]')" title="Centrar línea">⊛ Centrar</button>
+        <button type="button" class="btn" style="font-size:11px;padding:4px 8px;font-weight:700;" onclick="insertarFormato('[NEGRITA]','[/NEGRITA]')" title="Negrita">N Negrita</button>
+        <button type="button" class="btn" style="font-size:11px;padding:4px 8px;" onclick="insertarFormato('[SEPARADOR]','')" title="Línea separadora">— Separador</button>
+        <button type="button" class="btn" style="font-size:11px;padding:4px 8px;" onclick="insertarFirma()" title="Bloque de firmas">✍ Firmas</button>
+        <div style="height:28px;width:1px;background:var(--border);margin:0 4px;"></div>
+        <button type="button" class="btn" style="font-size:11px;padding:4px 8px;" onclick="previewPlantillaEditor()" title="Vista previa">👁 Vista previa</button>
+      </div>
+      <textarea class="form-textarea" id="sv-plantilla" style="min-height:320px;font-size:12px;font-family:monospace;line-height:1.6;border-radius:0 0 var(--radius-sm) var(--radius-sm);" placeholder="Escribe aquí el texto del contrato usando los marcadores de formato..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-servicio')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarServicio()">Guardar servicio</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA DE LOGIN ===== -->
+<div id="login-screen" class="login-screen">
+  <div id="login-logo-wrap" class="login-logo">
+    <span id="login-logo-text" style="font-family:var(--font-display);font-weight:700;font-size:18px;color:#fff;">C&A</span>
+  </div>
+  <div class="login-app-name" id="login-app-name">C&A CRM Suite</div>
+  <div class="login-sub">Casillas &amp; Asociados — Selecciona tu perfil</div>
+  <!-- Grid de usuarios -->
+  <div class="login-grid" id="login-user-grid"></div>
+  <!-- PIN pad -->
+  <div class="login-pin-wrap" id="login-pin-wrap" style="display:none;">
+    <div class="login-pin-title" id="login-pin-title">Bienvenido</div>
+    <div class="login-pin-sub" id="login-pin-sub">Ingresa tu contraseña</div>
+    <div style="margin:16px 0;">
+      <div style="position:relative;">
+        <input id="login-password-input" type="password" class="form-input"
+          placeholder="Contraseña"
+          style="font-size:15px;padding:12px 40px 12px 14px;"
+          oninput="loginPasswordCurrent=this.value;validarRequisitosPassword(this.value)"
+          onkeydown="if(event.key==='Enter')verificarLoginPin()">
+        <span onclick="togglePasswordVisibility()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:14px;color:var(--text-muted);" id="pwd-eye">👁</span>
+      </div>
+      <div id="pwd-requisitos" style="display:none;margin-top:10px;text-align:left;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">La contraseña debe tener:</div>
+        <div id="req-len"  style="font-size:11px;">⭕ Mínimo 8 caracteres</div>
+        <div id="req-upper" style="font-size:11px;">⭕ Una mayúscula</div>
+        <div id="req-lower" style="font-size:11px;">⭕ Una minúscula</div>
+        <div id="req-num"  style="font-size:11px;">⭕ Un número</div>
+        <div id="req-sym"  style="font-size:11px;">⭕ Un símbolo (!@#$%...)</div>
+        <div style="margin-top:8px;">
+          <label style="font-size:11px;color:var(--text-muted);">Confirmar contraseña</label>
+          <input id="login-password-confirm" type="password" class="form-input"
+            style="margin-top:4px;"
+            placeholder="Repetir contraseña"
+            oninput="loginPasswordConfirm=this.value">
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="verificarLoginPin()" style="width:100%;font-size:14px;padding:12px;">Ingresar</button>
+    <div id="pin-login-error" style="color:var(--danger);font-size:12px;margin-top:8px;min-height:18px;text-align:center;"></div>
+    <button class="btn" onclick="volverLoginGrid()" style="margin-top:10px;font-size:12px;width:100%;">← Volver</button>
+  </div>
+</div>
+
+<!-- MODAL ASESOR -->
+<div class="modal-overlay" id="modal-asesor">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-asesor-title">Nuevo asesor</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-asesor')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Foto -->
+      <div style="text-align:center;margin-bottom:16px;">
+        <div id="asesor-foto-preview" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1d4ed8,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;margin:0 auto 8px;overflow:hidden;">
+          <span id="asesor-foto-initials">?</span>
+        </div>
+        <input type="file" id="asesor-foto-input" accept="image/*" style="display:none" onchange="cargarFotoAsesor(this)">
+        <button class="btn" style="font-size:12px;" onclick="document.getElementById('asesor-foto-input').click()">📷 Subir foto</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre completo <span>*</span></label>
+          <input class="form-input input-upper" id="as-nombre" placeholder="Nombre del asesor" oninput="this.value=this.value.toUpperCase();actualizarInitialsPreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ciudad</label>
+          <input class="form-input input-upper" id="as-ciudad" placeholder="Ciudad" oninput="this.value=this.value.toUpperCase()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo de acceso <span id="as-email-required">*</span></label>
+        <input class="form-input" id="as-email" type="email" autocomplete="email" placeholder="asesor@empresa.com">
+        <div class="form-helper">El asesor utilizará este correo para iniciar sesión.</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Rol</label>
+          <select class="form-select" id="as-rol">
+            <option value="asesor">Asesor</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-select" id="as-activo">
+            <option value="true">Activo</option>
+            <option value="false">Inactivo</option>
+          </select>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="form-section">Contraseña de acceso</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Contraseña <span id="as-password-required">*</span></label>
+          <div class="nss-wrap">
+            <input class="form-input" id="as-pin" type="password" autocomplete="new-password" placeholder="Contraseña temporal"
+              oninput="validarPasswordAsesor(this.value)">
+            <span class="nss-indicator" id="as-pin-ind"></span>
+          </div>
+          <div class="form-helper" id="as-password-help">Mínimo 8 caracteres, mayúscula, minúscula, número y símbolo.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmar contraseña <span id="as-password2-required">*</span></label>
+          <div class="nss-wrap">
+            <input class="form-input" id="as-pin2" type="password" autocomplete="new-password" placeholder="Repetir contraseña"
+              oninput="validarPasswordAsesor(getVal('as-pin'))">
+            <span class="nss-indicator" id="as-pin2-ind"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="as-btn-eliminar" style="margin-right:auto;color:var(--danger);border-color:var(--danger);display:none;" onclick="eliminarAsesor()">Eliminar</button>
+      <button class="btn" onclick="closeModal('modal-asesor')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarAsesor()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LOGO EMPRESA -->
+<div class="modal-overlay" id="modal-logo">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Logo de la empresa</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-logo')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div id="logo-preview" style="width:100px;height:100px;border-radius:var(--radius-md);background:var(--bg-secondary);border:2px dashed var(--border-strong);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;overflow:hidden;">
+        <span style="font-size:12px;color:var(--text-muted);">Sin logo</span>
+      </div>
+      <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="cargarLogo(this)">
+      <button class="btn btn-primary" onclick="document.getElementById('logo-input').click()">📷 Seleccionar imagen</button>
+      ${`<button class="btn" onclick="quitarLogo()" style="margin-left:8px;">Quitar logo</button>`}
+      <div style="font-size:11px;color:var(--text-muted);margin-top:12px;">Se comprimirá automáticamente. Recomendado: fondo transparente o blanco, formato cuadrado.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="guardarLogo()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LEAD -->
+<div class="modal-overlay" id="modal-lead">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-lead-title">Nuevo prospecto</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-lead')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre completo <span>*</span></label>
+          <input class="form-input input-upper" id="lead-nombre" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase();validarCurpLead()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Teléfono</label>
+          <input class="form-input" id="lead-tel" placeholder="10 dígitos" maxlength="10">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">CURP</label>
+          <input class="form-input input-upper" id="lead-curp" maxlength="18" placeholder="18 caracteres"
+            oninput="this.value=this.value.replace(/[^A-ZÑ0-9]/gi,'').toUpperCase().slice(0,18);validarCurpLead();renderLeadElegibilidad(recogerElegibilidadLead())">
+          <div class="curp-warning" id="lead-curp-warning"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Colaborador (opcional)</label>
+          <select class="form-select" id="lead-colaborador">
+            <option value="">— Directo —</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Servicio</label>
+          <select class="form-select" id="lead-servicio" onchange="onLeadServicioChange()"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado / etapa</label>
+          <select class="form-select" id="lead-estado">
+            <option value="pensiones">♜ Pensiones</option>
+            <option value="correccion_imss">⚙ Corrección ante IMSS</option>
+            <option value="semanas">🔍 En revisión de semanas / NSS</option>
+            <option value="sindos">📋 En revisión de SINDOs</option>
+            <option value="aprobado">✅ Aprobado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-section">Datos de elegibilidad <span style="font-weight:400;text-transform:none;letter-spacing:0;">(informativos, no obligatorios)</span></div>
+      <div id="lead-elegibilidad-container"></div>
+      <div class="form-group">
+        <label class="form-label">Notas / Observaciones</label>
+        <textarea class="form-textarea" id="lead-notas" placeholder="Ej. Tiene duda sobre sus semanas, pendiente validar NSS..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div style="display:flex;gap:8px;margin-right:auto;">
+        <button class="btn" id="lead-btn-eliminar" style="display:none;color:var(--danger);border-color:rgba(239,68,68,.45);" onclick="eliminarLeadDefinitivo()">Eliminar definitivamente</button>
+        <button class="btn" id="lead-btn-archivar" style="display:none;color:var(--text-muted);" onclick="archivarLead()">Archivar</button>
+      </div>
+      <button class="btn" id="lead-btn-convertir" style="display:none;color:var(--success);border-color:var(--success);" onclick="convertirLeadACliente()">→ Convertir a cliente</button>
+      <button class="btn" onclick="closeModal('modal-lead')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarLead()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ARCHIVAR LEAD -->
+<div class="modal-overlay" id="modal-archivar-lead">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-archivar-lead-title">Archivar prospecto</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-archivar-lead')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Razón de archivo <span>*</span></label>
+        <select class="form-select" id="lead-causa-archivo" onchange="toggleLeadOtros()">
+          <option value="docs_incompletos">No envió toda la documentación</option>
+          <option value="no_contesta">No contesta</option>
+          <option value="aprobado_no_contesta">Aprobado y no contesta</option>
+          <option value="no_quiso">No quiso continuar</option>
+          <option value="imss_activo">Tiene IMSS activo</option>
+          <option value="inconsistencias_curp_nss">Inconsistencias de CURP / NSS</option>
+          <option value="retiro_menos_5">Retiró hace menos de 5 años</option>
+          <option value="otros">Otros</option>
+        </select>
+      </div>
+      <div class="form-group" id="lead-fecha-retiro-wrap" style="display:none;">
+        <label class="form-label">Fecha del último retiro <span>*</span></label>
+        <input class="form-input" id="lead-fecha-ultimo-retiro" type="date">
+        <div class="form-helper">Se programará el recontacto automáticamente 4 años y 11 meses después.</div>
+      </div>
+      <div class="form-group" id="lead-otros-wrap" style="display:none;">
+        <label class="form-label">Especificar</label>
+        <input class="form-input" id="lead-otros-texto" placeholder="Describe la razón...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas adicionales</label>
+        <textarea class="form-textarea" id="lead-archivo-notas" placeholder="Comentarios opcionales..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-archivar-lead')">Cancelar</button>
+      <button class="btn btn-primary" id="lead-confirmar-archivo-btn" onclick="confirmarArchivarLead()">Archivar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESCARTAR CLIENTE -->
+<div class="modal-overlay" id="modal-descartar">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">Descartar cliente</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-descartar')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Causa del descarte <span>*</span></label>
+        <select class="form-select" id="descarte-causa" onchange="toggleDescartarOtros()">
+          <option value="imss_activo">Sigue con servicio activo del IMSS</option>
+          <option value="retiro_reciente">Tiene menos de 5 años que retiró</option>
+          <option value="inconsistencias">Inconsistencias de CURP / NSS</option>
+          <option value="no_contesta">Aprobado pero ya no contesta</option>
+          <option value="semanas">No cumple con las semanas</option>
+          <option value="otros">Otros</option>
+        </select>
+      </div>
+      <!-- Fecha de seguimiento para retiro reciente -->
+      <div class="form-group" id="descarte-fecha-retiro-wrap" style="display:none;">
+        <label class="form-label">Fecha del último retiro (opcional — para seguimiento posterior)</label>
+        <input class="form-input" id="descarte-fecha-retiro" type="date">
+        <div class="form-helper">En 5 años desde esta fecha podría ser elegible nuevamente</div>
+      </div>
+      <div class="form-group" id="descarte-otros-wrap" style="display:none;">
+        <label class="form-label">Especificar causa</label>
+        <input class="form-input" id="descarte-otros-texto" placeholder="Describe la razón del descarte...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas adicionales</label>
+        <textarea class="form-textarea" id="descarte-notas" placeholder="Comentarios opcionales..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-descartar')">Cancelar</button>
+      <button class="btn" style="color:var(--danger);border-color:var(--danger);" onclick="confirmarDescarte()">Descartar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REGRESAR CLIENTE A PROSPECTOS -->
+<div class="modal-overlay" id="modal-regresar-prospecto">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <div class="modal-title">Regresar cliente a prospectos</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-regresar-prospecto')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">El expediente dejará de aparecer en Clientes y se conservará dentro de Prospectos.</div>
+      <div class="form-group">
+        <label class="form-label">Etapa de destino <span>*</span></label>
+        <select class="form-select" id="regreso-prospecto-etapa" onchange="toggleRegresoProspectoArchivo()">
+          <option value="pensiones">Pensiones</option>
+          <option value="correccion_imss">Corrección ante IMSS</option>
+          <option value="semanas">En revisión de semanas / NSS</option>
+          <option value="sindos">En revisión de SINDOs</option>
+          <option value="aprobado">Aprobado</option>
+          <option value="archivado">Archivado</option>
+        </select>
+      </div>
+      <div id="regreso-archivo-wrap" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Causa de archivo <span>*</span></label>
+          <select class="form-select" id="regreso-archivo-causa" onchange="toggleRegresoCausa()">
+            <option value="docs_incompletos">No envió toda la documentación</option>
+            <option value="no_contesta">No contesta</option>
+            <option value="aprobado_no_contesta">Aprobado y no contesta</option>
+            <option value="no_quiso">No quiso continuar</option>
+            <option value="imss_activo">Tiene IMSS activo</option>
+            <option value="inconsistencias_curp_nss">Inconsistencias de CURP / NSS</option>
+            <option value="retiro_menos_5">Retiró hace menos de 5 años</option>
+            <option value="otros">Otros</option>
+          </select>
+        </div>
+        <div class="form-group" id="regreso-fecha-retiro-wrap" style="display:none;">
+          <label class="form-label">Fecha del último retiro <span>*</span></label>
+          <input class="form-input" id="regreso-fecha-retiro" type="date">
+        </div>
+        <div class="form-group" id="regreso-otros-wrap" style="display:none;">
+          <label class="form-label">Especificar causa <span>*</span></label>
+          <input class="form-input" id="regreso-otros-causa" placeholder="Describe la causa...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas del regreso</label>
+        <textarea class="form-textarea" id="regreso-prospecto-notas" placeholder="Información que debe conservarse en el prospecto..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-regresar-prospecto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarRegresoProspecto()">Regresar a prospectos</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COLABORADOR -->
+<div class="modal-overlay" id="modal-colaborador">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-col-title">Nuevo colaborador</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-colaborador')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre <span>*</span></label>
+          <input class="form-input input-upper" id="col-nombre" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ciudad / Zona</label>
+          <input class="form-input input-upper" id="col-ciudad" oninput="this.value=this.value.toUpperCase()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Asesor al que reporta</label>
+          <select class="form-select" id="col-asesor"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Comisión por defecto (%)</label>
+          <input class="form-input" id="col-pct" type="number" min="0" max="100" value="50">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <select class="form-select" id="col-activo">
+          <option value="true">Activo</option>
+          <option value="false">Inactivo</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="col-btn-eliminar" style="display:none;margin-right:auto;color:var(--danger);border-color:var(--danger);" onclick="eliminarColaborador()">Eliminar</button>
+      <button class="btn" onclick="closeModal('modal-colaborador')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarColaborador()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP CIERRE EXPEDIENTE -->
+<div class="popup-overlay" id="popup-cierre">
+  <div class="popup-box" style="max-width:440px;">
+    <div class="popup-icon" style="font-size:28px;">🏁</div>
+    <div class="popup-title">Honorarios recibidos — Cierre</div>
+    <div class="popup-text" id="popup-cierre-texto"></div>
+    <div style="text-align:left;margin:12px 0;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;" id="popup-cierre-fecha"></div>
+      <textarea id="cierre-nota" class="form-textarea" placeholder="Nota final del expediente (opcional)..." style="min-height:80px;"></textarea>
+    </div>
+    <div class="popup-actions">
+      <button class="btn" onclick="document.getElementById('popup-cierre').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-primary" id="cierre-save-btn">💾 Guardar y archivar</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP RECORDATORIO DE EVENTO -->
+<div class="popup-overlay" id="popup-evento-recordatorio">
+  <div class="popup-box">
+    <div class="popup-icon">🔔</div>
+    <div class="popup-title" id="popup-ev-titulo">Recordatorio de evento</div>
+    <div class="popup-text" id="popup-ev-texto"></div>
+    <div class="popup-actions" style="flex-direction:column;gap:8px;">
+      <button class="btn btn-primary" style="width:100%;" onclick="accionEvento('realizado')">✓ Realizado</button>
+      <button class="btn" style="width:100%;" onclick="accionEvento('posponer')">⏱ Posponer 30 minutos</button>
+      <button class="btn" style="width:100%;color:var(--text-muted);" onclick="accionEvento('cancelar')">✕ Cancelar recordatorio</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP BLOQUEO FIRMA -->
+<div class="popup-overlay" id="popup-bloqueo">
+  <div class="popup-box">
+    <div class="popup-icon">🔒</div>
+    <div class="popup-title">Contrato no firmado</div>
+    <div class="popup-text">Se requiere contrato firmado para continuar.<br>Solicita autorización al administrador si necesitas forzar el avance.</div>
+    <div class="popup-actions">
+      <button class="btn btn-primary" onclick="closePopup('popup-bloqueo')">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PIN ADMIN — autorizar avance sin firma -->
+<div class="popup-overlay" id="popup-pin">
+  <div class="popup-box">
+    <div class="popup-icon">🔑</div>
+    <div class="popup-title">Autorización de administrador</div>
+    <div class="popup-text" id="popup-pin-desc">Ingresa las credenciales de un administrador para autorizar el avance sin contrato firmado.</div>
+    <input class="form-input" id="pin-email-field" type="email" placeholder="Correo del administrador" autocomplete="username" style="text-align:left;font-size:14px;margin-bottom:8px;">
+    <input class="form-input" id="pin-input-field" type="password" placeholder="Contraseña de administrador" autocomplete="current-password" onkeydown="if(event.key==='Enter')verificarPinAdmin()" style="text-align:left;letter-spacing:normal;font-size:14px;">
+    <div id="pin-error" style="color:var(--danger);font-size:12px;margin-bottom:12px;display:none;">Contraseña incorrecta. Intenta de nuevo.</div>
+    <div class="popup-actions">
+      <button class="btn" onclick="closePopup('popup-pin')">Cancelar</button>
+      <button class="btn btn-primary" onclick="verificarPinAdmin()">Autorizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONTRASEÑA DEL USUARIO ACTUAL -->
+<div class="popup-overlay" id="popup-pin-config">
+  <div class="popup-box">
+    <div class="popup-icon">🔐</div>
+    <div class="popup-title">Cambiar contraseña</div>
+    <div class="popup-text">Mínimo 8 caracteres, incluyendo mayúscula, minúscula, número y símbolo.</div>
+    <input class="form-input" id="pin-nuevo" type="password" placeholder="Nueva contraseña (mín. 8 chars)" style="text-align:left;letter-spacing:normal;font-size:13px;">
+    <input class="form-input" id="pin-confirmar" type="password" placeholder="Confirmar contraseña" style="text-align:left;letter-spacing:normal;font-size:13px;margin-top:8px;">
+    <div id="pin-config-error" style="color:var(--danger);font-size:12px;margin-bottom:12px;display:none;"></div>
+    <div class="popup-actions">
+      <button class="btn" onclick="closePopup('popup-pin-config')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPinAdmin()">Guardar contraseña</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VISOR PLANTILLA -->
+<div class="modal-overlay" id="modal-visor">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="visor-contrato-titulo">Plantilla</div>
+      <button class="btn btn-icon" onclick="closeModal('modal-visor')">✕</button>
+    </div>
+    <div class="modal-body" id="visor-contrato-body" style="max-height:70vh;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="app-core-01.js"></script>
+<script src="app-core-02a.js"></script>
+<script src="app-core-02b.js"></script>
+<script src="app-core-03.js"></script>
+<script src="app-core-04.js"></script>
+<script src="app-core-05.js"></script>
+<script src="app-core-06.js"></script>
+<script src="app-core-07.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="cloud-config.js"></script>
+<script src="cloud-adapter.js"></script>
+<script>
+initCloudApp();
+</script>
+</body>
+</html>
