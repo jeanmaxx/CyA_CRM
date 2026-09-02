@@ -191,13 +191,17 @@ function cloudTemplateRows(){
   }));
 }
 
-async function cloudSyncCollection(table,rows){
+async function cloudUpsertCollection(table,rows){
   const currentIds=new Set(rows.map(r=>r.id));
   const removed=[...(cloudKnownIds[table] || new Set())].filter(id=>!currentIds.has(id));
   if(rows.length){
     const {error}=await supabaseClient.from(table).upsert(rows,{onConflict:'organization_id,id'});
     if(error) throw new Error(`${table}: ${error.message}`);
   }
+  return {table,currentIds,removed};
+}
+
+async function cloudDeleteRemovedCollection({table,currentIds,removed}){
   if(removed.length){
     const {error}=await supabaseClient.from(table).delete().eq('organization_id',CA_ORG_ID).in('id',removed);
     if(error) throw new Error(`${table} (eliminar): ${error.message}`);
@@ -222,17 +226,22 @@ async function cloudSyncNow(options={}){
   cloudSyncRunning=true;
   try{
     await cloudSyncProfiles();
-    await cloudSyncCollection('collaborators',cloudCollaboratorRows());
-    await cloudSyncCollection('leads',cloudLeadRows());
-    await cloudSyncCollection('clients',cloudClientRows());
-    await cloudSyncCollection('agenda_events',cloudEventRows());
-    await cloudSyncCollection('message_templates',cloudTemplateRows());
+    // Primero se guardan todos los registros nuevos o modificados y solamente
+    // después se ejecutan las eliminaciones. Así una conversión nunca elimina
+    // el prospecto en la nube antes de haber guardado el nuevo cliente.
+    const pendingDeletes=[];
+    pendingDeletes.push(await cloudUpsertCollection('collaborators',cloudCollaboratorRows()));
+    pendingDeletes.push(await cloudUpsertCollection('leads',cloudLeadRows()));
+    pendingDeletes.push(await cloudUpsertCollection('clients',cloudClientRows()));
+    pendingDeletes.push(await cloudUpsertCollection('agenda_events',cloudEventRows()));
+    pendingDeletes.push(await cloudUpsertCollection('message_templates',cloudTemplateRows()));
     if(isAdmin()){
-      await cloudSyncCollection('services',cloudServiceRows());
+      pendingDeletes.push(await cloudUpsertCollection('services',cloudServiceRows()));
       const settingsPayload={...cloudCleanObject(store.configuracion || {}),__legacyAdvisors:cloudLegacyAdvisors};
       const {error}=await supabaseClient.from('app_settings').upsert({organization_id:CA_ORG_ID,payload:settingsPayload},{onConflict:'organization_id'});
       if(error) throw new Error(`app_settings: ${error.message}`);
     }
+    for(const pendingDelete of pendingDeletes) await cloudDeleteRemovedCollection(pendingDelete);
     return true;
   }catch(error){
     console.error('Error al guardar en Supabase',error);
