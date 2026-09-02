@@ -39,9 +39,10 @@ function renderPipeline(){
   }
 
   return `
-  ${getSelectorVistaHTML()}
-  <div class="section-title">Pipeline</div>
-  <div class="section-sub">Retiro por desempleo — ${retiro.length} cliente${retiro.length!==1?'s':''} activos</div>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+    <div><div class="section-title">Pipeline</div><div class="section-sub" style="margin-bottom:0;">Retiro por desempleo — ${retiro.length} cliente${retiro.length!==1?'s':''} activos</div></div>
+    <div style="margin-left:auto;">${getSelectorVistaHTML(true)}</div>
+  </div>
 
   <!-- FILA 1 -->
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px;">
@@ -471,8 +472,8 @@ function guardarCliente(){
     cliente.id='c_'+Date.now();
     cliente.fechaRegistro=new Date().toISOString();
     cliente.historial=[];
-    cliente.asesorId=sesionActiva?sesionActiva.id:null;
-    cliente.asesorNombre=sesionActiva?sesionActiva.nombre:'';
+    cliente.asesorId=asesorDestinoVista();
+    cliente.asesorNombre=(store.asesores.find(a=>a.id===cliente.asesorId)||sesionActiva||{}).nombre||'';
     cliente.fechaRetiroEstimada=calcFechaRetiro(cliente.fechaRegistro);
     cliente.fechaRetiroEstimadaManual=false;
     // Si se registra directo en espera_45 con monto, calcular
@@ -514,4 +515,3 @@ function eliminar(id){
   showToast('Cliente eliminado','info');
   renderPage(currentPage);
 }
-
