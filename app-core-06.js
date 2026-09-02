@@ -482,11 +482,12 @@ function renderLeads(){
   const colsActivos=['pensiones','correccion_imss','semanas','sindos','aprobado'];
 
   return `
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+  <div class="leads-toolbar">
     <div><div class="section-title">Prospectos</div><div class="section-sub">Seguimiento y evaluación de prospectos</div></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;">${getSelectorVistaHTML(true)}<button class="btn btn-primary" onclick="openModalLead()">+ Nuevo prospecto</button></div>
+    <div class="leads-toolbar-actions">${getSelectorVistaHTML(true)}<button class="btn btn-primary" onclick="openModalLead()">+ Nuevo prospecto</button></div>
   </div>
-  <div style="overflow-x:auto;">
+  <div class="mobile-scroll-hint" aria-hidden="true">Desliza para recorrer las etapas →</div>
+  <div class="leads-scroll-wrap" tabindex="0" aria-label="Etapas de prospectos. Desliza horizontalmente para recorrerlas.">
     <div class="leads-kanban">
       ${colsActivos.map(estado=>{
         const cfg=LEAD_ESTADOS[estado];
@@ -505,7 +506,7 @@ function renderLeads(){
               const diasCls=urgente?'lead-dias-urgente':dias>1?'lead-dias-normal':'lead-dias-ok';
               const colabNombre=l.colaboradorId?(store.colaboradores.find(c=>c.id===l.colaboradorId)||{}).nombre:'';
               const primeraNota=(l.notas||'').split(/\r?\n/)[0]||'Sin notas';
-              return `<div class="lead-card" onclick="openModalLead('${l.id}')">
+              return `<div class="lead-card" role="button" tabindex="0" onclick="openModalLead('${l.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${l.id}');}">
                 <div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start;"><div class="lead-card-nombre">${l.nombre}</div>${l.recontactar?`<span class="lead-recontactar ${l.recontactoVencido?'vencido':''}">RECONTACTAR</span>`:''}</div>
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;">
                   <span style="font-size:10px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.curp||'CURP pendiente'}</span>
@@ -530,7 +531,7 @@ function renderLeads(){
       ${renderArchivadosPorCausa(definitivos)}
     </div>
   </div>
-  <div style="display:flex;justify-content:flex-end;margin-top:12px;"><button class="btn" onclick="exportarLeadsPorEtapa()">⬇ Exportar prospectos</button></div>`;
+  <div class="leads-export"><button class="btn" onclick="exportarLeadsPorEtapa()">⬇ Exportar prospectos</button></div>`;
 }
 
 function renderGrupoArchivados(titulo,items,temporal){
@@ -554,7 +555,7 @@ function renderArchivadosPorCausa(items){
 function renderTarjetaArchivado(l,temporal){
   const dias=Math.max(0,Math.floor((new Date()-new Date(l.fechaInicio||l.fechaArchivo||new Date()))/86400000));
   const nota=(l.notas||l.notasArchivo||'Sin notas').split(/\r?\n/)[0];
-  return `<div class="lead-card" onclick="openModalLead('${l.id}')"><div class="lead-card-nombre" style="opacity:.78;">${l.nombre}</div><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-size:10px;color:var(--text-secondary);">${l.curp||'CURP pendiente'}</span><span class="lead-card-dias lead-dias-normal" style="margin:0;">${dias}d</span></div><div class="lead-card-nota">${nota}</div><div style="font-size:10px;color:var(--text-muted);margin-top:5px;"><strong>Causa:</strong> ${l.causaArchivo||'Sin causa especificada'}</div>${temporal&&l.fechaRecontacto?`<div style="font-size:10px;color:var(--warning);margin-top:4px;">Recontacto: ${fmtDate(l.fechaRecontacto)}</div>`:''}</div>`;
+  return `<div class="lead-card" role="button" tabindex="0" onclick="openModalLead('${l.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${l.id}');}"><div class="lead-card-nombre" style="opacity:.78;">${l.nombre}</div><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-size:10px;color:var(--text-secondary);">${l.curp||'CURP pendiente'}</span><span class="lead-card-dias lead-dias-normal" style="margin:0;">${dias}d</span></div><div class="lead-card-nota">${nota}</div><div style="font-size:10px;color:var(--text-muted);margin-top:5px;"><strong>Causa:</strong> ${l.causaArchivo||'Sin causa especificada'}</div>${temporal&&l.fechaRecontacto?`<div style="font-size:10px;color:var(--warning);margin-top:4px;">Recontacto: ${fmtDate(l.fechaRecontacto)}</div>`:''}</div>`;
 }
 
 function toggleArchivadosLeads(){ archivadosLeadsAbiertos=!archivadosLeadsAbiertos; renderPage('leads'); }
