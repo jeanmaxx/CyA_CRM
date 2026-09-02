@@ -336,25 +336,25 @@ function renderClientes(){
   const alertas=alertasSeguimiento(activos);
   const misColabs=colaboradoresVistaActual().filter(c=>c.activo!==false);
   return `
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+  <div class="clients-toolbar">
     <div><div class="section-title">Clientes</div><div class="section-sub" style="margin-bottom:0;">Base de clientes y seguimiento de trámites</div></div>
-    <div style="margin-left:auto;">${getSelectorVistaHTML(true)}</div>
+    <div class="clients-view-selector">${getSelectorVistaHTML(true)}</div>
   </div>
   ${alertas.length>0?`
-  <div style="margin-bottom:12px;">
-    <div class="alerta-firma alerta-amarilla" style="flex-direction:column;align-items:flex-start;gap:4px;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+  <div class="clients-alerts">
+    <div class="alerta-firma alerta-amarilla client-alerts-toggle" role="button" tabindex="0" aria-expanded="false" onclick="toggleAlertasClientes(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAlertasClientes(this);}">
       <div style="font-weight:600;">⚠ ${alertas.length} cliente${alertas.length!==1?'s':''} sin movimiento — click para ver</div>
     </div>
-    <div style="display:none;margin-top:6px;display:flex;flex-direction:column;gap:4px;" id="alertas-seguimiento-list">
+    <div class="client-alerts-list" id="alertas-seguimiento-list" hidden>
       ${alertas.map(a=>`
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;" onclick="openPerfil('${a.cliente.id}')">
+        <div class="client-alert-item" role="button" tabindex="0" onclick="openPerfil('${a.cliente.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPerfil('${a.cliente.id}');}">
           <div class="client-avatar" style="width:28px;height:28px;font-size:10px;flex-shrink:0;">${initials(a.cliente.nombre)}</div>
-          <div style="flex:1;"><span style="font-weight:500;font-size:13px;">${a.cliente.nombre}</span> <span style="font-size:11px;color:var(--text-muted);">· ${a.etapa}</span></div>
+          <div class="client-alert-main"><span style="font-weight:500;font-size:13px;">${a.cliente.nombre}</span> <span style="font-size:11px;color:var(--text-muted);">· ${a.etapa}</span></div>
           <span class="chip chip-amber" style="font-size:10px;">${a.dias} día${a.dias!==1?'s':''} sin movimiento</span>
         </div>`).join('')}
     </div>
   </div>`:''}
-  <div class="filter-bar">
+  <div class="filter-bar client-filter-bar">
     <div class="search-wrap">
       <span class="search-icon">⌕</span>
       <input placeholder="Buscar por nombre, teléfono o NSS..." oninput="filtrarClientes()" id="search-cl">
@@ -382,7 +382,7 @@ function renderClientes(){
       Descartados (${descartados.length})
     </button>
   </div>
-  <div id="descartados-panel" style="display:none;margin-bottom:12px;">
+  <div id="descartados-panel" class="discarded-clients-panel" style="display:none;">
     <div class="card" style="overflow:hidden;">
       <div class="card-header"><div class="card-title">Clientes descartados (${descartados.length})</div></div>
       <div class="table-wrap"><table>
@@ -396,8 +396,8 @@ function renderClientes(){
       </table></div>
     </div>
   </div>
-  <div class="card" style="overflow:hidden;">
-    <div class="table-wrap">
+  <div class="card clients-list-card">
+    <div class="table-wrap clients-table-wrap">
       <table>
         <thead><tr>
           <th style="cursor:pointer;user-select:none;" onclick="ordenarClientes('nombre')">Cliente${flechaOrden('nombre')}</th>
@@ -419,6 +419,7 @@ function renderClientes(){
           <button class="btn btn-primary" onclick="openModalCliente()">+ Nuevo cliente</button>
         </div>`:''}
     </div>
+    <div class="clients-mobile-list" id="clientes-mobile-list">${renderClientesCards(aplicarOrden(cl))}</div>
   </div>`;
 }
 
@@ -458,6 +459,41 @@ function renderClientesRows(cl){
   }).join('');
 }
 
+function renderClientesCards(cl){
+  if(!cl.length) return '';
+  return cl.map(c=>{
+    const docs=c.docs||{};
+    const docList=docsFor(c.servicio);
+    const docOk=docList.filter(d=>docs[d.id]).length;
+    const docPct=docList.length>0?Math.round(docOk/docList.length*100):0;
+    return `<article class="client-mobile-card" onclick="openPerfil('${c.id}')">
+      <div class="client-mobile-head">
+        <div class="client-avatar">${initials(c.nombre)}</div>
+        <div class="client-mobile-identity"><div class="client-mobile-name">${c.nombre}</div><div class="client-mobile-phone">${c.telefono||'Sin teléfono'}</div></div>
+        <span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span>
+      </div>
+      <div class="client-mobile-meta"><span>${getSvcLabel(c.servicio)}</span><span>${FUENTES[c.fuente]||'Fuente pendiente'}</span><span>${fmtDate(c.fechaRegistro)}</span></div>
+      <div class="client-mobile-docs">
+        <span>Documentos ${docOk}/${docList.length}</span>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${docPct}%;${docPct===100?'background:var(--success)':''}"></div></div>
+      </div>
+      <div class="client-mobile-actions">
+        <button class="btn" onclick="event.stopPropagation();openPerfil('${c.id}')">Ver expediente</button>
+        <button class="action-btn" onclick="event.stopPropagation();editCliente('${c.id}')" title="Editar" aria-label="Editar ${c.nombre}">✎</button>
+        <button class="action-btn" onclick="event.stopPropagation();eliminar('${c.id}')" title="Eliminar" aria-label="Eliminar ${c.nombre}" style="color:var(--danger)">⊗</button>
+      </div>
+    </article>`;
+  }).join('');
+}
+
+function toggleAlertasClientes(el){
+  const list=el?.nextElementSibling;
+  if(!list) return;
+  const abrir=list.hidden;
+  list.hidden=!abrir;
+  el.setAttribute('aria-expanded',String(abrir));
+}
+
 function toggleDescartadosView(){
   const panel=document.getElementById('descartados-panel');
   if(panel) panel.style.display=panel.style.display==='none'?'block':'none';
@@ -477,6 +513,8 @@ function filtrarClientes(){
   });
   const tb=document.getElementById('tbody-cl');
   if(tb) tb.innerHTML=renderClientesRows(aplicarOrden(filtered));
+  const cards=document.getElementById('clientes-mobile-list');
+  if(cards) cards.innerHTML=renderClientesCards(aplicarOrden(filtered));
 }
 
 function elegibleChip(e){
