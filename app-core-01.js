@@ -202,6 +202,7 @@ function navigate(page, el){
     return;
   }
   currentPage=page;
+  closeMobileSidebar(false);
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el) el.classList.add('active');
   else { const found=document.querySelector('[data-page="'+page+'"]'); if(found) found.classList.add('active'); }

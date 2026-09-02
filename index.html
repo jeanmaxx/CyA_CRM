@@ -2,7 +2,7 @@
 <html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>C&A CRM Suite v23</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -16,10 +16,11 @@
     <div class="brand-logo" id="sidebar-logo-wrap" style="overflow:hidden;padding:0;">
       <span id="sidebar-logo-text" style="font-family:var(--font-display);font-weight:700;font-size:14px;color:#fff;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">C&A</span>
     </div>
-    <div>
+    <div class="sidebar-brand-copy">
       <div class="brand-name" id="app-name-display">C&A CRM Suite</div>
       <div class="brand-sub">Casillas &amp; Asociados</div>
     </div>
+    <button class="mobile-sidebar-close" id="mobile-sidebar-close" type="button" onclick="closeMobileSidebar()" aria-label="Cerrar menú">✕</button>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section">
@@ -87,11 +88,13 @@
     </div>
   </div>
 </aside>
+<button class="sidebar-scrim" id="sidebar-scrim" type="button" onclick="closeMobileSidebar()" aria-label="Cerrar menú de navegación"></button>
 
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
-    <div>
+    <button class="mobile-menu-toggle" id="mobile-menu-btn" type="button" onclick="toggleMobileSidebar()" aria-label="Abrir menú" aria-controls="main-sidebar" aria-expanded="false">☰</button>
+    <div class="topbar-heading">
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-sub" id="topbar-sub">Resumen general</div>
     </div>
@@ -105,18 +108,18 @@
 
 <!-- MODAL PERFIL CLIENTE (centrado, grande) -->
 <div class="modal-overlay" id="modal-perfil">
-  <div class="modal modal-lg">
-    <div class="modal-header">
-      <div>
+  <div class="modal modal-lg client-profile-modal">
+    <div class="modal-header profile-header">
+      <div class="profile-header-copy">
         <div class="modal-title" id="perfil-title">Perfil del cliente</div>
         <div style="font-size:12px;color:var(--text-muted)" id="perfil-sub"></div>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div class="profile-header-actions">
         <button class="btn" id="perfil-edit-btn">✎ Editar</button>
         <button class="btn btn-primary" id="perfil-save-btn" onclick="guardarCambiosPerfil()">Guardar cambios</button>
         <button class="btn" id="perfil-regresar-prospecto-btn" style="font-size:12px;color:var(--warning);" onclick="abrirRegresoProspecto(perfilClienteActivo)">↩ Regresar a prospectos</button>
         <button class="btn" id="perfil-descartar-btn" style="color:var(--text-muted);font-size:12px;" onclick="abrirDescarte(perfilClienteActivo)">Descartar</button>
-        <button class="btn btn-icon" onclick="closeModal('modal-perfil')">✕</button>
+        <button class="btn btn-icon profile-close" onclick="closeModal('modal-perfil')" aria-label="Cerrar expediente">✕</button>
       </div>
     </div>
     <div class="modal-body" id="perfil-body"></div>
@@ -125,13 +128,13 @@
 
 <!-- MODAL NUEVO / EDITAR CLIENTE -->
 <div class="modal-overlay" id="modal-cliente">
-  <div class="modal">
+  <div class="modal client-edit-modal">
     <div class="modal-header">
       <div class="modal-title" id="modal-cliente-title">Nuevo cliente</div>
       <button class="btn btn-icon" onclick="closeModal('modal-cliente')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="tabs" id="modal-tabs">
+      <div class="tabs client-edit-tabs" id="modal-tabs">
         <div class="tab active" onclick="switchTab('tab-contacto',0)">Contacto</div>
         <div class="tab" onclick="switchTab('tab-datos-extra',1)">Datos adicionales</div>
       </div>
@@ -347,7 +350,7 @@
         </div>
       </div>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer client-edit-footer">
           <button class="btn" onclick="closeModal('modal-cliente')">Cancelar</button>
           <button class="btn btn-primary" onclick="guardarCliente()">Guardar cliente</button>
     </div>

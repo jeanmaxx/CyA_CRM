@@ -686,12 +686,12 @@ function renderFinanzas(){
   const mesesOrdenados=Object.keys(porMes).sort();
 
   return `
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+  <div class="finance-toolbar">
     <div><div class="section-title">Finanzas</div><div class="section-sub" style="margin-bottom:0;">Control de comisiones y proyección de ingresos</div></div>
-    <div style="margin-left:auto;">${getSelectorVistaHTML(true)}</div>
+    <div class="finance-view-selector">${getSelectorVistaHTML(true)}</div>
   </div>
 
-  <div class="kpi-grid" style="margin-bottom:24px;">
+  <div class="kpi-grid finance-kpis">
     <div class="kpi-card kpi-accent-green">
       <div class="kpi-label">Total cobrado</div>
       <div class="kpi-value">$${totalCobrado.toLocaleString('es-MX')}</div>
@@ -714,8 +714,8 @@ function renderFinanzas(){
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-    <div class="card">
+  <div class="finance-grid">
+    <div class="card finance-detail-card">
       <div class="card-header">
         <div class="card-title">Próximas comisiones — por mes</div>
         <span style="font-size:12px;color:var(--text-muted)">Fecha estimada de retiro</span>
@@ -746,7 +746,7 @@ function renderFinanzas(){
       `).join('')}
     </div>
 
-    <div class="card">
+    <div class="card finance-detail-card">
       <div class="card-header">
         <div class="card-title">Comisiones cobradas</div>
         <span style="font-size:12px;color:var(--success);font-weight:600">$${totalCobrado.toLocaleString('es-MX')}</span>
@@ -770,7 +770,7 @@ function renderFinanzas(){
     </div>
   </div>
   ${resumenColabs.length>0?`
-  <div class="card" style="margin-top:20px;">
+  <div class="card finance-collaborators-card">
     <div class="card-header"><div class="card-title">Colaboradores — comisiones compartidas</div></div>
     <div class="table-wrap"><table>
       <thead><tr><th>Colaborador</th><th>Zona</th><th>Clientes</th><th>Su comisión cobrada</th><th>Su comisión pendiente</th><th>Mi parte cobrada</th></tr></thead>

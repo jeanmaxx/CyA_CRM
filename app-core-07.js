@@ -223,7 +223,44 @@ function exportarClientesPorEtapa(){
 
 // ==================== SIDEBAR CONTRAÍBLE ====================
 let sidebarCollapsed = false;
+let mobileSidebarOpen = false;
+const mobileSidebarMedia = window.matchMedia('(max-width: 900px)');
+
+function setMobileSidebar(open, restoreFocus=true){
+  const isMobile=mobileSidebarMedia.matches;
+  const shouldOpen=Boolean(open&&isMobile);
+  const wasOpen=mobileSidebarOpen;
+  const sidebar=document.getElementById('main-sidebar');
+  const scrim=document.getElementById('sidebar-scrim');
+  const menuButton=document.getElementById('mobile-menu-btn');
+  const main=document.querySelector('.main');
+  mobileSidebarOpen=shouldOpen;
+  if(sidebar){
+    sidebar.classList.toggle('mobile-open',shouldOpen);
+    if(isMobile) sidebar.setAttribute('aria-hidden',shouldOpen?'false':'true');
+    else sidebar.removeAttribute('aria-hidden');
+  }
+  if(scrim) scrim.classList.toggle('open',shouldOpen);
+  if(menuButton) menuButton.setAttribute('aria-expanded',shouldOpen?'true':'false');
+  if(main){
+    if(shouldOpen) main.setAttribute('inert','');
+    else main.removeAttribute('inert');
+  }
+  document.body.classList.toggle('mobile-nav-open',shouldOpen);
+  if(shouldOpen) requestAnimationFrame(()=>document.getElementById('mobile-sidebar-close')?.focus());
+  else if(wasOpen&&restoreFocus) menuButton?.focus();
+}
+
+function toggleMobileSidebar(){
+  setMobileSidebar(!mobileSidebarOpen);
+}
+
+function closeMobileSidebar(restoreFocus=true){
+  setMobileSidebar(false,restoreFocus);
+}
+
 function toggleSidebar(){
+  if(mobileSidebarMedia.matches){ toggleMobileSidebar(); return; }
   sidebarCollapsed = !sidebarCollapsed;
   const sb = document.getElementById('main-sidebar');
   const btn = document.getElementById('sidebar-toggle-btn');
@@ -237,6 +274,18 @@ function initSidebarState(){
     if(saved==='1'){ sidebarCollapsed=true; const sb=document.getElementById('main-sidebar'); if(sb) sb.classList.add('collapsed'); const btn=document.getElementById('sidebar-toggle-btn'); if(btn) btn.innerHTML='&#x203A;'; }
   }catch(e){}
 }
+
+function initResponsiveShell(){
+  setMobileSidebar(false,false);
+  const syncViewport=()=>setMobileSidebar(false,false);
+  if(mobileSidebarMedia.addEventListener) mobileSidebarMedia.addEventListener('change',syncViewport);
+  else mobileSidebarMedia.addListener(syncViewport);
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&mobileSidebarOpen) closeMobileSidebar();
+  });
+}
+
+initResponsiveShell();
 
 // ==================== MODO DIRECTOR ====================
 let vistaActual = 'propia'; // 'propia' | 'director' | asesor_id

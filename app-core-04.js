@@ -394,11 +394,11 @@ function renderAgenda(){
   const vencidos = eventos.filter(e=>e.fecha>=ventana.inicio&&e.fecha<hoyStr&&!e.completado);
 
   return `
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+  <div class="module-toolbar agenda-toolbar">
     <div><div class="section-title">Agenda</div><div class="section-sub">Citas, seguimientos y recordatorios</div></div>
-    <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap;">
-      ${getSelectorVistaHTML(true)}
-      <div style="display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+    <div class="agenda-toolbar-actions">
+      <div class="module-view-selector agenda-view-selector">${getSelectorVistaHTML(true)}</div>
+      <div class="agenda-view-toggle">
         <button class="btn" onclick="agendaSetVista('semana')" id="btn-vista-semana"
           style="border:none;border-radius:0;${agendaVistaActual==='semana'?'background:var(--accent-blue);color:#fff;':''}">Semana</button>
         <button class="btn" onclick="agendaSetVista('lista')" id="btn-vista-lista"
@@ -461,16 +461,17 @@ function renderAgendaSemana(){
   return `
   <div class="card" style="overflow:hidden;">
     <!-- NAV SEMANA -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);">
+    <div class="agenda-week-nav">
       <button class="btn btn-icon" onclick="agendaSemana(-1)">‹</button>
-      <div style="font-family:var(--font-display);font-size:15px;font-weight:600;">${inicioLabel} — ${finLabel}</div>
-      <div style="display:flex;gap:6px;">
+      <div class="agenda-week-label">${inicioLabel} — ${finLabel}</div>
+      <div class="agenda-week-actions">
         <button class="btn" onclick="agendaSemana(0,true)" style="font-size:12px;">Hoy</button>
         <button class="btn btn-icon" onclick="agendaSemana(1)">›</button>
       </div>
     </div>
     <!-- GRID SEMANAL -->
-    <div style="overflow-x:auto;">
+    <div class="mobile-scroll-hint agenda-scroll-hint" aria-hidden="true">Desliza para recorrer la semana →</div>
+    <div class="agenda-week-scroll" tabindex="0" aria-label="Calendario semanal. Desliza horizontalmente para recorrer los días.">
       <div style="display:grid;grid-template-columns:48px repeat(7,1fr);min-width:700px;">
         <!-- HEADER DÍAS -->
         <div style="border-bottom:1px solid var(--border);"></div>
@@ -553,8 +554,8 @@ function renderAgendaLista(){
     sorted.forEach(function(e){ proximasHTML+=renderEventoItem(e,false); });
   });
 
-  return '<div style="display:grid;grid-template-columns:240px 1fr;gap:16px;">'
-    +'<div>'
+  return '<div class="agenda-list-layout">'
+    +'<div class="agenda-list-sidebar">'
     +'<div class="card" style="margin-bottom:12px;">'
     +'<div class="card-header" style="justify-content:space-between;">'
     +'<button class="btn btn-icon" onclick="agendaMes(-1)" style="font-size:12px;">&#8249;</button>'
@@ -563,7 +564,7 @@ function renderAgendaLista(){
     +'</div><div class="card-body" style="padding:10px;"><div class="cal-mini" id="cal-mini-grid"></div></div></div>'
     +'<div class="card"><div class="card-header"><div class="card-title">Resumen</div></div>'
     +'<div class="card-body">'+resumenHTML+'</div></div></div>'
-    +'<div>'+proximasHTML+'</div>'
+    +'<div class="agenda-list-events">'+proximasHTML+'</div>'
     +'</div>';
 }
 

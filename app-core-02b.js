@@ -20,7 +20,7 @@ function renderPipeline(){
       <div class="kanban-cards">
         ${cards.length===0
           ?'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:10px 0">—</div>'
-          :cards.map(c=>`<div class="kanban-card" onclick="openPerfil('${c.id}')">
+          :cards.map(c=>`<div class="kanban-card" role="button" tabindex="0" onclick="openPerfil('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPerfil('${c.id}');}">
             <div class="kanban-card-name">${c.nombre}</div>
             <div class="kanban-card-info">${c.telefono||'—'}</div>
             ${servicio==='retiro_desempleo'&&c.montoAfore?`<div class="kanban-card-info">AFORE: $${Number(c.montoAfore).toLocaleString('es-MX')}</div>`:''}
@@ -32,25 +32,30 @@ function renderPipeline(){
 
   function renderServicioPipeline(titulo,servicio,clientes){
     const etapas=stagesFor(servicio);
-    return `<div style="margin-top:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:13px;font-weight:600;color:var(--text-primary);">${titulo}</div><span class="chip chip-gray">${clientes.length} cliente${clientes.length!==1?'s':''}</span></div>
-      <div style="overflow-x:auto;padding-bottom:4px;"><div style="display:grid;grid-template-columns:repeat(${etapas.length},minmax(190px,1fr));gap:12px;min-width:${etapas.length*190}px;">${etapas.map(st=>renderKanbanCol(st,clientes,servicio)).join('')}</div></div>
+    return `<div class="pipeline-service-block">
+      <div class="pipeline-service-header"><div>${titulo}</div><span class="chip chip-gray">${clientes.length} cliente${clientes.length!==1?'s':''}</span></div>
+      <div class="pipeline-scroll-wrap" tabindex="0" aria-label="Etapas de ${titulo}. Desliza horizontalmente para recorrerlas."><div class="pipeline-service-grid" style="--pipeline-cols:${etapas.length};">${etapas.map(st=>renderKanbanCol(st,clientes,servicio)).join('')}</div></div>
     </div>`;
   }
 
   return `
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+  <div class="module-toolbar pipeline-toolbar">
     <div><div class="section-title">Pipeline</div><div class="section-sub" style="margin-bottom:0;">Retiro por desempleo — ${retiro.length} cliente${retiro.length!==1?'s':''} activos</div></div>
-    <div style="margin-left:auto;">${getSelectorVistaHTML(true)}</div>
+    <div class="module-view-selector pipeline-view-selector">${getSelectorVistaHTML(true)}</div>
   </div>
 
+  <div class="mobile-scroll-hint" aria-hidden="true">Desliza para recorrer las etapas →</div>
   <!-- FILA 1 -->
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px;">
-    ${fila1.map(st=>renderKanbanCol(st,retiro,'retiro_desempleo')).join('')}
+  <div class="pipeline-scroll-wrap" tabindex="0" aria-label="Primeras etapas del pipeline. Desliza horizontalmente para recorrerlas.">
+    <div class="pipeline-grid pipeline-grid-primary">
+      ${fila1.map(st=>renderKanbanCol(st,retiro,'retiro_desempleo')).join('')}
+    </div>
   </div>
   <!-- FILA 2 -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-    ${fila2.map(st=>renderKanbanCol(st,retiro,'retiro_desempleo')).join('')}
+  <div class="pipeline-scroll-wrap" tabindex="0" aria-label="Etapas finales del pipeline. Desliza horizontalmente para recorrerlas.">
+    <div class="pipeline-grid pipeline-grid-secondary">
+      ${fila2.map(st=>renderKanbanCol(st,retiro,'retiro_desempleo')).join('')}
+    </div>
   </div>
 
   <div class="archivados-section" style="margin-top:20px;">
@@ -64,7 +69,7 @@ function renderPipeline(){
       ${restantes.length?`<div style="margin-top:16px;"><div style="font-size:13px;font-weight:600;margin-bottom:8px;">Otros</div><div class="card" style="overflow:hidden;"><div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Servicio</th><th>Etapa</th><th>Teléfono</th></tr></thead><tbody>${restantes.map(c=>`<tr><td><span class="td-link" onclick="openPerfil('${c.id}')">${c.nombre}</span></td><td><span class="chip chip-gray">${getSvcLabel(c.servicio)}</span></td><td><span class="stage-badge stage-1">${stageLabel(c.etapa,c.servicio)}</span></td><td class="td-muted">${c.telefono||'—'}</td></tr>`).join('')}</tbody></table></div></div></div>`:''}
     </div>
   </div>
-  <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+  <div class="module-export pipeline-export">
     <button class="btn" onclick="exportarClientesPorEtapa()">⬇ Exportar pipeline</button>
   </div>`;
 }
@@ -99,20 +104,22 @@ function openPerfil(id){
     ${renderAlertasAFORE(c)}
     ${c.descartado?`<div class="alerta-firma alerta-roja" style="margin-bottom:12px;">🚫 DESCARTADO: ${c.causaDescarte||'—'}${c.fechaElegibleNuevo?' · Podría ser elegible: '+fmtDate(c.fechaElegibleNuevo):''}</div>`:''}
     <!-- ETAPAS CON CHECKBOXES -->
-    <div style="margin-bottom:12px;">
-      <div style="display:flex;gap:0;overflow-x:auto;padding-bottom:4px;">
+    <div class="profile-stage-wrap">
+      <div class="profile-stage-track" tabindex="0" aria-label="Etapas del trámite. Desliza horizontalmente para recorrerlas.">
         ${stages.map((s,i)=>{
           const done=i<si; const active=i===si; const futuro=i>si;
           const color=done?'var(--success)':active?'var(--accent-blue)':'var(--border-strong)';
-          return `<div style="flex:1;min-width:80px;text-align:center;padding:6px 2px;border-bottom:2px solid ${color};cursor:${futuro&&i===si+1?'pointer':'default'};"
+          const siguiente=futuro&&i===si+1;
+          return `<div class="profile-stage-step ${done?'done':active?'active':siguiente?'next':'future'}" style="--stage-color:${color};" ${siguiente?'role="button" tabindex="0"':active?'aria-current="step"':''}
             onclick="${futuro&&i===si+1?`avanzarEtapa('${c.id}')`:''}"
+            onkeydown="${siguiente?`if(event.key==='Enter'||event.key===' '){event.preventDefault();avanzarEtapa('${c.id}');}`:''}"
             title="${futuro&&i===si+1?'Click para avanzar a: '+s.label:''}">
-            <div style="width:20px;height:20px;border-radius:50%;border:2px solid ${color};background:${done?color:'transparent'};display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:10px;color:${done?'#fff':color};">${done?'✓':i+1}</div>
-            <div style="font-size:9px;color:${active?'var(--accent-blue)':done?'var(--success)':'var(--text-muted)'};font-weight:${active?'700':'400'};line-height:1.2;">${s.short||s.label}</div>
+            <div class="profile-stage-number">${done?'✓':i+1}</div>
+            <div class="profile-stage-label">${s.short||s.label}</div>
           </div>`;
         }).join('')}
       </div>
-      <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:4px;">
+      <div class="profile-stage-current">
         Etapa actual: <strong style="color:var(--accent-blue);">${stages[si]?.label||'—'}</strong>
         ${si<stages.length-1?`<span style="color:var(--text-muted);"> · Click en la siguiente etapa para avanzar</span>`:''}
       </div>
@@ -140,12 +147,12 @@ function openPerfil(id){
       return alertas;
     })()}
 
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+    <div class="profile-summary-grid">
       <div class="card" style="padding:12px;"><div class="kpi-label">Etapa</div><div style="font-size:14px;font-weight:600;color:var(--accent-blue);margin-top:4px;">${stageLabel(c.etapa,c.servicio)}</div></div>
       <div class="card" style="padding:12px;"><div class="kpi-label">Servicio</div><div style="margin-top:4px;font-size:13px;font-weight:600;">${getSvcLabel(c.servicio)}</div></div>
       <div class="card" style="padding:12px;"><div class="kpi-label">Documentos</div><div style="font-size:14px;font-weight:600;margin-top:4px;">${docOk}/${docList.length} <span style="font-size:11px;color:var(--text-muted)">recibidos</span></div><div class="progress-bar-wrap" style="margin-top:6px;"><div class="progress-bar" style="width:${docList.length>0?Math.round(docOk/docList.length*100):0}%;${docOk===docList.length&&docList.length>0?'background:var(--success)':''}"></div></div></div>
     </div>
-    <div class="tabs" id="perfil-tabs">
+    <div class="tabs profile-tabs" id="perfil-tabs" aria-label="Secciones del expediente">
       <div class="tab active" onclick="pTab('pd-contacto',this)">Contacto</div>
       <div class="tab" onclick="pTab('pd-datos',this)">Datos adicionales</div>
       <div class="tab" onclick="pTab('pd-docs',this)">Documentos</div>
@@ -180,7 +187,7 @@ function openPerfil(id){
           <div class="doc-status-text">${docs['extra_'+de.replace(/\s/g,'_')]?'Recibido':'Pendiente'}</div>
         </div>`).join('')}
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px;">
+      <div class="profile-add-doc">
         <input class="form-input" id="extra-doc-perfil-${c.id}" placeholder="Agregar documento..." style="font-size:12px;">
         <button class="btn" onclick="addExtraDocPerfil('${c.id}')" style="font-size:12px;flex-shrink:0;">+ Agregar</button>
       </div>
@@ -190,7 +197,7 @@ function openPerfil(id){
       <!-- Estado firma -->
       <div style="margin-bottom:16px;">
         <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Estado del contrato</div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div class="profile-contract-status">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
             <input type="checkbox" id="chk-firmado-${c.id}" ${c.contratoFirmado?'checked':''} onchange="toggleContratoFirmado('${c.id}',this)" style="width:16px;height:16px;">
             Contrato firmado
@@ -247,9 +254,9 @@ function openPerfil(id){
     <!-- FINANZAS -->
     <div class="tab-panel" id="pd-finanzas">
       ${esRetiro&&c.montoAfore?`
-      <div style="padding:12px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:var(--radius-sm);margin-bottom:14px;">
+      <div class="profile-finance-auto">
         <div style="font-size:11px;color:var(--accent-blue);font-weight:600;margin-bottom:8px;">CÁLCULO AUTOMÁTICO — Monto AFORE: $${Number(c.montoAfore).toLocaleString('es-MX')}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div class="profile-finance-auto-grid">
           <div><div style="font-size:10px;color:var(--text-muted)">Honorarios empresa</div><div style="font-size:14px;font-weight:600;">$${Number(c.honorariosCalc||0).toLocaleString('es-MX')}</div></div>
           <div><div style="font-size:10px;color:var(--text-muted)">Tu comisión calc.</div><div style="font-size:14px;font-weight:600;color:var(--warning);">$${Number(c.comisionCalc||0).toLocaleString('es-MX')}</div></div>
           <div><div style="font-size:10px;color:var(--text-muted)">Retiro est.</div><div style="font-size:13px;font-weight:600;">${fmtDate(c.fechaRetiroEstimada)}</div></div>
@@ -279,7 +286,7 @@ function openPerfil(id){
           </select>
         </div>
       </div>
-      <button class="btn btn-primary" onclick="guardarFinanzas('${c.id}')" style="font-size:12px;">Guardar datos de cobro</button>
+      <button class="btn btn-primary profile-finance-save" onclick="guardarFinanzas('${c.id}')" style="font-size:12px;">Guardar datos de cobro</button>
     </div>
   `;
   document.getElementById('modal-perfil').classList.add('open');
