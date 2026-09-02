@@ -332,8 +332,27 @@ select:focus{outline:none;border-color:var(--accent-blue);}
 
 /* ===== LEADS / PROSPECTOS ===== */
 .leads-kanban{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:12px;}
-.leads-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
-.leads-toolbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;}
+.leads-toolbar{position:relative;z-index:30;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+.leads-toolbar-actions{display:flex;align-items:center;gap:8px;margin-left:0;flex-wrap:wrap;}
+.lead-search-wrap{position:relative;flex:1 1 300px;min-width:250px;max-width:470px;margin-left:auto;z-index:35;}
+.lead-search-wrap input{width:100%;height:38px;padding:8px 38px 8px 34px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-body);font-size:13px;}
+.lead-search-wrap input:focus{outline:none;border-color:var(--accent-blue);box-shadow:0 0 0 2px rgba(59,130,246,.13);}
+.lead-search-wrap input::-webkit-search-cancel-button{display:none;}
+.lead-search-icon{position:absolute;left:11px;top:19px;transform:translateY(-50%);color:var(--text-muted);font-size:17px;line-height:1;pointer-events:none;}
+.lead-search-clear{position:absolute;right:5px;top:4px;width:30px;height:30px;border:0;border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer;}
+.lead-search-clear:hover,.lead-search-clear:focus-visible{background:var(--bg-hover);color:var(--text-primary);outline:none;}
+.lead-search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:min(390px,60vh);overflow-y:auto;padding:6px;background:var(--bg-card);border:1px solid var(--border-strong);border-radius:var(--radius-md);box-shadow:0 18px 45px rgba(0,0,0,.38);}
+.lead-search-results[hidden]{display:none;}
+.lead-search-count,.lead-search-more{padding:6px 8px;font-size:10px;color:var(--text-muted);}
+.lead-search-more{text-align:center;border-top:1px solid var(--border);margin-top:4px;}
+.lead-search-empty{padding:18px 12px;text-align:center;font-size:11px;color:var(--text-muted);}
+.lead-search-result{width:100%;display:flex;flex-direction:column;gap:4px;padding:9px 10px;border:0;border-radius:var(--radius-sm);background:transparent;color:var(--text-primary);font-family:var(--font-body);text-align:left;cursor:pointer;}
+.lead-search-result:hover,.lead-search-result:focus-visible{background:var(--bg-hover);outline:none;}
+.lead-search-result-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.lead-search-result-head strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+.lead-search-stage{flex-shrink:0;padding:2px 7px;border:1px solid;border-radius:10px;font-size:9px;font-weight:600;white-space:nowrap;}
+.lead-search-result-meta,.lead-search-result-archive{font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.lead-search-result-archive{color:var(--warning);}
 .leads-scroll-wrap{overflow-x:auto;padding-bottom:4px;scrollbar-gutter:stable;}
 .mobile-scroll-hint{display:none;font-size:10px;color:var(--text-muted);margin:-6px 0 8px;text-align:right;}
 .leads-export{display:flex;justify-content:flex-end;margin-top:12px;}
@@ -343,6 +362,8 @@ select:focus{outline:none;border-color:var(--accent-blue);}
 .lead-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;cursor:pointer;transition:var(--transition);}
 .lead-card:hover{border-color:var(--border-strong);transform:translateY(-1px);}
 .lead-card:focus-visible{outline:2px solid var(--accent-blue);outline-offset:2px;}
+.lead-card.lead-card-encontrado{border-color:#fbbf24!important;box-shadow:0 0 0 3px rgba(245,158,11,.22),0 10px 28px rgba(0,0,0,.25);animation:lead-card-encontrado 1s ease-in-out 3;}
+@keyframes lead-card-encontrado{0%,100%{background:var(--bg-secondary);}50%{background:rgba(245,158,11,.14);}}
 .lead-card-nombre{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px;}
 .lead-card-dias{font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;display:inline-block;margin-bottom:4px;}
 .lead-card-nota{font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -679,6 +700,7 @@ select:focus{outline:none;border-color:var(--accent-blue);}
 }
 
 @media(max-width:700px){
+  .lead-search-wrap{flex:1 0 100%;width:100%;max-width:none;margin-left:0;}
   .clients-toolbar,.finance-toolbar{align-items:stretch;}
   .clients-toolbar>div:first-child,.finance-toolbar>div:first-child{width:100%;}
   .clients-view-selector,.finance-view-selector{width:100%;margin-left:0;}
@@ -822,6 +844,8 @@ select:focus{outline:none;border-color:var(--accent-blue);}
   .card-body{padding:14px;}
   .leads-toolbar{align-items:stretch;margin-bottom:12px;}
   .leads-toolbar>div:first-child{width:100%;}
+  .lead-search-wrap{width:100%;max-width:none;min-width:0;margin-left:0;}
+  .lead-search-results{max-height:52vh;}
   .leads-toolbar-actions{width:100%;margin-left:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
   .leads-toolbar-actions>div{min-width:0;margin-bottom:0!important;}
   .leads-toolbar-actions>div>span{display:none;}
@@ -893,7 +917,9 @@ select:focus{outline:none;border-color:var(--accent-blue);}
 
 @media(hover:none),(pointer:coarse){
   .btn,.action-btn,.tab,.doc-check,.kanban-card,.plantilla-list-card{min-height:44px;}
-  .form-input,.form-select,.form-textarea,select,.search-wrap input{min-height:44px;font-size:16px;}
+  .form-input,.form-select,.form-textarea,select,.search-wrap input,.lead-search-wrap input{min-height:44px;font-size:16px;}
+  .lead-search-icon{top:22px;}
+  .lead-search-clear{top:7px;}
   .nav-item{min-height:44px;}
   .lead-card:hover{transform:none;}
   .lead-card:active{border-color:var(--accent-blue);background:var(--bg-hover);}
@@ -901,4 +927,5 @@ select:focus{outline:none;border-color:var(--accent-blue);}
 
 @media(prefers-reduced-motion:reduce){
   .sidebar,.sidebar-scrim{transition:none;}
+  .lead-card.lead-card-encontrado{animation:none;}
 }

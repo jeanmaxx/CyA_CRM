@@ -484,6 +484,8 @@ let editingLeadId = null;
 let leadParaArchivar = null;
 let leadConversionPendienteId = null;
 let archivadosLeadsAbiertos = true;
+let leadSearchTerm = '';
+let leadSearchHighlightTimer = null;
 
 const LEAD_ESTADOS = {
   pensiones:  {label:'Pensiones',                    color:'#7c3aed', cls:'lead-pensiones',  dias:7},
@@ -493,6 +495,137 @@ const LEAD_ESTADOS = {
   aprobado:  {label:'Aprobado',               color:'#16a34a', cls:'lead-aprobado', dias:null},
   archivado: {label:'Archivado',              color:'#475569', cls:'lead-archivado',dias:null},
 };
+
+function escapeLeadText(valor){
+  return String(valor??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function normalizarBusquedaLead(valor){
+  return String(valor||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+}
+
+function buscarCoincidenciasProspectos(termino){
+  const consulta=normalizarBusquedaLead(termino);
+  const compacta=consulta.replace(/[^a-z0-9ñ]/g,'');
+  if(compacta.length<2) return [];
+  return leadsVistaActual().filter(l=>{
+    const nombre=normalizarBusquedaLead(l.nombre);
+    const curp=normalizarBusquedaLead(l.curp).replace(/[^a-z0-9ñ]/g,'');
+    const telefono=String(l.telefono||'').replace(/\D/g,'');
+    const texto=`${nombre} ${normalizarBusquedaLead(l.curp)} ${normalizarBusquedaLead(l.telefono)}`;
+    const palabras=consulta.split(' ').filter(Boolean);
+    return texto.includes(consulta)||palabras.every(p=>texto.includes(p))||nombre.replace(/[^a-z0-9ñ]/g,'').includes(compacta)||curp.includes(compacta)||telefono.includes(compacta);
+  }).sort((a,b)=>{
+    const aNombre=normalizarBusquedaLead(a.nombre),bNombre=normalizarBusquedaLead(b.nombre);
+    const aPrioridad=aNombre.startsWith(consulta)?0:1;
+    const bPrioridad=bNombre.startsWith(consulta)?0:1;
+    return aPrioridad-bPrioridad||aNombre.localeCompare(bNombre,'es');
+  });
+}
+
+function contenidoResultadosBusquedaProspectos(termino){
+  const consulta=normalizarBusquedaLead(termino);
+  const compacta=consulta.replace(/[^a-z0-9ñ]/g,'');
+  if(!compacta) return '';
+  if(compacta.length<2) return '<div class="lead-search-empty">Escribe al menos 2 caracteres</div>';
+  const coincidencias=buscarCoincidenciasProspectos(termino);
+  if(!coincidencias.length) return '<div class="lead-search-empty">No hay coincidencias en la vista seleccionada</div>';
+  const visibles=coincidencias.slice(0,10);
+  return `<div class="lead-search-count">${coincidencias.length} coincidencia${coincidencias.length!==1?'s':''}</div>
+    ${visibles.map(l=>{
+      const cfg=LEAD_ESTADOS[l.estado]||{label:l.estado||'Sin etapa',color:'#64748b'};
+      const detalleArchivo=l.estado==='archivado'?(l.archivoTipo==='temporal'?'No elegible por el momento':l.causaArchivo||'Sin causa especificada'):'';
+      return `<button type="button" class="lead-search-result" data-lead-id="${escapeLeadText(l.id)}" onclick="irAProspecto(this.dataset.leadId)" onkeydown="manejarTeclaResultadoProspecto(event,this)">
+        <span class="lead-search-result-head"><strong>${escapeLeadText(l.nombre||'Sin nombre')}</strong><span class="lead-search-stage" style="color:${cfg.color};border-color:${cfg.color};">${escapeLeadText(cfg.label)}</span></span>
+        <span class="lead-search-result-meta">${escapeLeadText(l.curp||'CURP pendiente')} · ${escapeLeadText(l.telefono||'Teléfono pendiente')}</span>
+        ${detalleArchivo?`<span class="lead-search-result-archive">${escapeLeadText(detalleArchivo)}</span>`:''}
+      </button>`;
+    }).join('')}
+    ${coincidencias.length>visibles.length?`<div class="lead-search-more">Se muestran los primeros ${visibles.length} resultados</div>`:''}`;
+}
+
+function renderBuscadorProspectos(){
+  const tieneConsulta=normalizarBusquedaLead(leadSearchTerm).replace(/[^a-z0-9ñ]/g,'').length>0;
+  return `<div class="lead-search-wrap" id="lead-search-wrap" onfocusout="setTimeout(cerrarBusquedaProspectosSiFuera,0)">
+    <span class="lead-search-icon" aria-hidden="true">⌕</span>
+    <input id="lead-search-input" type="search" value="${escapeLeadText(leadSearchTerm)}" placeholder="Buscar por nombre, CURP o teléfono…" aria-label="Buscar prospecto por nombre, CURP o teléfono" aria-controls="lead-search-results" autocomplete="off" spellcheck="false" oninput="actualizarBusquedaProspectos(this.value)" onfocus="actualizarBusquedaProspectos(this.value)" onkeydown="manejarTeclaBusquedaProspectos(event)">
+    <button type="button" id="lead-search-clear" class="lead-search-clear" aria-label="Limpiar búsqueda" onclick="limpiarBusquedaProspectos()" ${tieneConsulta?'':'hidden'}>✕</button>
+    <div id="lead-search-results" class="lead-search-results" role="listbox" hidden>${contenidoResultadosBusquedaProspectos(leadSearchTerm)}</div>
+  </div>`;
+}
+
+function actualizarBusquedaProspectos(valor){
+  leadSearchTerm=String(valor||'');
+  const panel=document.getElementById('lead-search-results');
+  const limpiar=document.getElementById('lead-search-clear');
+  if(!panel||!limpiar) return;
+  const tieneConsulta=normalizarBusquedaLead(leadSearchTerm).replace(/[^a-z0-9ñ]/g,'').length>0;
+  limpiar.hidden=!tieneConsulta;
+  panel.hidden=!tieneConsulta;
+  panel.innerHTML=tieneConsulta?contenidoResultadosBusquedaProspectos(leadSearchTerm):'';
+}
+
+function cerrarResultadosBusquedaProspectos(){
+  const panel=document.getElementById('lead-search-results');
+  if(panel) panel.hidden=true;
+}
+
+function cerrarBusquedaProspectosSiFuera(){
+  const wrap=document.getElementById('lead-search-wrap');
+  if(wrap&&!wrap.contains(document.activeElement)) cerrarResultadosBusquedaProspectos();
+}
+
+function limpiarBusquedaProspectos(){
+  leadSearchTerm='';
+  const input=document.getElementById('lead-search-input');
+  if(input) input.value='';
+  actualizarBusquedaProspectos('');
+  input?.focus();
+}
+
+function manejarTeclaBusquedaProspectos(event){
+  if(event.key==='Escape'){ cerrarResultadosBusquedaProspectos(); return; }
+  if(event.key==='Enter'||event.key==='ArrowDown'){
+    const primero=document.querySelector('#lead-search-results .lead-search-result');
+    if(!primero) return;
+    event.preventDefault();
+    if(event.key==='Enter') primero.click(); else primero.focus();
+  }
+}
+
+function manejarTeclaResultadoProspecto(event,actual){
+  if(!['ArrowDown','ArrowUp','Escape'].includes(event.key)) return;
+  event.preventDefault();
+  if(event.key==='Escape'){
+    cerrarResultadosBusquedaProspectos();
+    document.getElementById('lead-search-input')?.focus();
+    return;
+  }
+  const resultados=[...document.querySelectorAll('#lead-search-results .lead-search-result')];
+  const indice=resultados.indexOf(actual)+(event.key==='ArrowDown'?1:-1);
+  (resultados[indice]||resultados[event.key==='ArrowDown'?0:resultados.length-1])?.focus();
+}
+
+function irAProspecto(id){
+  const lead=leadsVistaActual().find(l=>String(l.id)===String(id));
+  if(!lead){ showToast('El prospecto ya no está disponible en esta vista','warn'); return; }
+  cerrarResultadosBusquedaProspectos();
+  if(lead.estado==='archivado'&&!archivadosLeadsAbiertos){
+    archivadosLeadsAbiertos=true;
+    renderPage('leads');
+  }
+  setTimeout(()=>{
+    cerrarResultadosBusquedaProspectos();
+    const tarjeta=[...document.querySelectorAll('.lead-card[data-lead-id]')].find(el=>String(el.dataset.leadId)===String(id));
+    if(!tarjeta){ showToast(`Prospecto encontrado en ${LEAD_ESTADOS[lead.estado]?.label||'su etapa'}`,'success'); return; }
+    document.querySelectorAll('.lead-card-encontrado').forEach(el=>el.classList.remove('lead-card-encontrado'));
+    clearTimeout(leadSearchHighlightTimer);
+    tarjeta.classList.add('lead-card-encontrado');
+    tarjeta.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+    tarjeta.focus({preventScroll:true});
+    leadSearchHighlightTimer=setTimeout(()=>tarjeta.classList.remove('lead-card-encontrado'),4200);
+  },40);
+}
 
 function renderLeads(){
   procesarRecontactosLeads();
@@ -508,6 +641,7 @@ function renderLeads(){
   return `
   <div class="leads-toolbar">
     <div><div class="section-title">Prospectos</div><div class="section-sub">Seguimiento y evaluación de prospectos</div></div>
+    ${renderBuscadorProspectos()}
     <div class="leads-toolbar-actions">${getSelectorVistaHTML(true)}<button class="btn btn-primary" onclick="openModalLead()">+ Nuevo prospecto</button></div>
   </div>
   <div class="mobile-scroll-hint" aria-hidden="true">Desliza para recorrer las etapas →</div>
@@ -530,7 +664,7 @@ function renderLeads(){
               const diasCls=urgente?'lead-dias-urgente':dias>1?'lead-dias-normal':'lead-dias-ok';
               const colabNombre=l.colaboradorId?(store.colaboradores.find(c=>c.id===l.colaboradorId)||{}).nombre:'';
               const primeraNota=(l.notas||'').split(/\r?\n/)[0]||'Sin notas';
-              return `<div class="lead-card" role="button" tabindex="0" onclick="openModalLead('${l.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${l.id}');}">
+              return `<div class="lead-card" data-lead-id="${escapeLeadText(l.id)}" role="button" tabindex="0" onclick="openModalLead('${l.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${l.id}');}">
                 <div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start;"><div class="lead-card-nombre">${l.nombre}</div>${l.recontactar?`<span class="lead-recontactar ${l.recontactoVencido?'vencido':''}">RECONTACTAR</span>`:''}</div>
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;">
                   <span style="font-size:10px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.curp||'CURP pendiente'}</span>
@@ -579,7 +713,7 @@ function renderArchivadosPorCausa(items){
 function renderTarjetaArchivado(l,temporal){
   const dias=Math.max(0,Math.floor((new Date()-new Date(l.fechaInicio||l.fechaArchivo||new Date()))/86400000));
   const nota=(l.notas||l.notasArchivo||'Sin notas').split(/\r?\n/)[0];
-  return `<div class="lead-card" role="button" tabindex="0" onclick="openModalLead('${l.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${l.id}');}"><div class="lead-card-nombre" style="opacity:.78;">${l.nombre}</div><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-size:10px;color:var(--text-secondary);">${l.curp||'CURP pendiente'}</span><span class="lead-card-dias lead-dias-normal" style="margin:0;">${dias}d</span></div><div class="lead-card-nota">${nota}</div><div style="font-size:10px;color:var(--text-muted);margin-top:5px;"><strong>Causa:</strong> ${l.causaArchivo||'Sin causa especificada'}</div>${temporal&&l.fechaRecontacto?`<div style="font-size:10px;color:var(--warning);margin-top:4px;">Recontacto: ${fmtDate(l.fechaRecontacto)}</div>`:''}</div>`;
+  return `<div class="lead-card" data-lead-id="${escapeLeadText(l.id)}" role="button" tabindex="0" onclick="openModalLead('${l.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${l.id}');}"><div class="lead-card-nombre" style="opacity:.78;">${l.nombre}</div><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-size:10px;color:var(--text-secondary);">${l.curp||'CURP pendiente'}</span><span class="lead-card-dias lead-dias-normal" style="margin:0;">${dias}d</span></div><div class="lead-card-nota">${nota}</div><div style="font-size:10px;color:var(--text-muted);margin-top:5px;"><strong>Causa:</strong> ${l.causaArchivo||'Sin causa especificada'}</div>${temporal&&l.fechaRecontacto?`<div style="font-size:10px;color:var(--warning);margin-top:4px;">Recontacto: ${fmtDate(l.fechaRecontacto)}</div>`:''}</div>`;
 }
 
 function toggleArchivadosLeads(){ archivadosLeadsAbiertos=!archivadosLeadsAbiertos; renderPage('leads'); }
