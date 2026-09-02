@@ -646,7 +646,7 @@ function renderFinanzas(){
   const totalProximo=proximas.reduce((s,c)=>s+Number(c.comisionCalc||0),0);
 
   // Comisiones de colaboradores
-  const misColabs=(store.colaboradores||[]).filter(col=>!sesionActiva||isAdmin()||col.asesorId===sesionActiva.id);
+  const misColabs=colaboradoresVistaActual();
   const resumenColabs=misColabs.map(col=>{
     const clCol=cl.filter(c=>c.colaboradorId===col.id);
     const cobradoCol=clCol.filter(c=>c.estadoPago==='Cobrado').reduce((s,c)=>{
@@ -684,9 +684,10 @@ function renderFinanzas(){
   const mesesOrdenados=Object.keys(porMes).sort();
 
   return `
-  ${getSelectorVistaHTML()}
-  <div class="section-title">Finanzas</div>
-  <div class="section-sub">Control de comisiones y proyección de ingresos</div>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+    <div><div class="section-title">Finanzas</div><div class="section-sub" style="margin-bottom:0;">Control de comisiones y proyección de ingresos</div></div>
+    <div style="margin-left:auto;">${getSelectorVistaHTML(true)}</div>
+  </div>
 
   <div class="kpi-grid" style="margin-bottom:24px;">
     <div class="kpi-card kpi-accent-green">
@@ -957,4 +958,3 @@ function guardarServicio(){
 }
 
 let selectedClienteId = null;
-
