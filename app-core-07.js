@@ -188,7 +188,7 @@ function verificarAlertasAFOREDiarias(){
 
 // ==================== EXPORTACIÓN POR ETAPA ====================
 function exportarLeadsPorEtapa(){
-  const leads=store.leads||[];
+  const leads=leadsVistaActual();
   if(!leads.length){showToast('Sin prospectos para exportar','info');return;}
   const ESTADO_LABEL={pensiones:'Pensiones',correccion_imss:'Corrección ante IMSS',semanas:'En revisión de semanas / NSS',sindos:'En revisión de SINDOs',aprobado:'Aprobado',archivado:'Archivado'};
   const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
@@ -243,7 +243,7 @@ let vistaActual = 'propia'; // 'propia' | 'director' | asesor_id
 
 function getSelectorVistaHTML(compacto=false){
   if(!isAdmin()) return '';
-  const asesores = store.asesores.filter(a=>a.activo!==false);
+  const asesores = store.asesores.filter(a=>a.activo!==false&&a.rol!=='admin');
   return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:${compacto?'0':'16px'};">
     <span style="font-size:12px;color:var(--text-muted);">Vista:</span>
     <select id="selector-vista" class="form-select" style="width:auto;font-size:13px;padding:4px 10px;"
@@ -260,9 +260,16 @@ function cambiarVista(val){
   renderPage(currentPage);
 }
 
+function asesorDestinoVista(){
+  if(!sesionActiva) return null;
+  if(isAdmin()&&vistaActual!=='propia'&&vistaActual!=='director') return vistaActual;
+  return sesionActiva.id;
+}
+
 function clientesVistaActual(){
   const todos = store.clientes||[];
-  if(!isAdmin()||vistaActual==='propia') return todos.filter(c=>!sesionActiva||!c.asesorId||c.asesorId===sesionActiva.id);
+  if(!sesionActiva) return [];
+  if(!isAdmin()||vistaActual==='propia') return todos.filter(c=>c.asesorId===sesionActiva.id);
   if(vistaActual==='director') return todos;
   // Por asesor específico
   return todos.filter(c=>c.asesorId===vistaActual);
@@ -270,9 +277,26 @@ function clientesVistaActual(){
 
 function leadsVistaActual(){
   const todos=store.leads||[];
-  if(!isAdmin()||vistaActual==='propia') return todos.filter(l=>!sesionActiva||!l.asesorId||l.asesorId===sesionActiva.id);
+  if(!sesionActiva) return [];
+  if(!isAdmin()||vistaActual==='propia') return todos.filter(l=>l.asesorId===sesionActiva.id);
   if(vistaActual==='director') return todos;
   return todos.filter(l=>l.asesorId===vistaActual);
+}
+
+function eventosVistaActual(){
+  const todos=store.agenda||[];
+  if(!sesionActiva) return [];
+  if(!isAdmin()||vistaActual==='propia') return todos.filter(e=>e.asesorId===sesionActiva.id);
+  if(vistaActual==='director') return todos;
+  return todos.filter(e=>e.asesorId===vistaActual);
+}
+
+function colaboradoresVistaActual(){
+  const todos=store.colaboradores||[];
+  if(!sesionActiva) return [];
+  if(!isAdmin()||vistaActual==='propia') return todos.filter(c=>c.asesorId===sesionActiva.id);
+  if(vistaActual==='director') return todos;
+  return todos.filter(c=>c.asesorId===vistaActual);
 }
 
 // ==================== REORDENAR PESTAÑAS ====================
@@ -311,12 +335,12 @@ function aplicarOrdenSidebar(){
   allNavItems.forEach(el=>{ if(el.dataset.page) itemMap[el.dataset.page]=el; });
   // Reordenar dentro de sus secciones respectivas
   // Principal: dashboard, leads, clientes, pipeline
-  // Operaciones: contratos, plantillas, agenda, finanzas
-  // Administración: servicios, colaboradores, asesores. Cuenta: configuracion.
+  // Operaciones: contratos, plantillas, agenda, finanzas, colaboradores
+  // Administración: servicios, asesores. Cuenta: configuracion.
   const secciones={
     principal:['dashboard','leads','clientes','pipeline'],
-    operaciones:['contratos','plantillas','agenda','finanzas'],
-    administracion:['servicios','colaboradores','asesores'],
+    operaciones:['contratos','plantillas','agenda','finanzas','colaboradores'],
+    administracion:['servicios','asesores'],
     cuenta:['configuracion'],
   };
   const ordenPorSeccion={principal:[],operaciones:[],administracion:[],cuenta:[]};
