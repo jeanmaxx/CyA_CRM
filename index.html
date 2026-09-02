@@ -51,14 +51,14 @@
       <div class="nav-item" data-page="finanzas" onclick="navigate('finanzas',this)">
         <span class="nav-icon">&#x25C8;</span><span class="nav-label">Finanzas</span>
       </div>
+      <div class="nav-item" data-page="colaboradores" onclick="navigate('colaboradores',this)">
+        <span class="nav-icon">◐</span><span class="nav-label">Colaboradores</span>
+      </div>
     </div>
     <div class="nav-section" id="nav-admin-section">
       <div class="nav-section-label">Administración</div>
       <div class="nav-item" data-page="servicios" onclick="navigate('servicios',this)">
         <span class="nav-icon">&#x25A7;</span><span class="nav-label">Servicios</span>
-      </div>
-      <div class="nav-item" data-page="colaboradores" onclick="navigate('colaboradores',this)">
-        <span class="nav-icon">◐</span><span class="nav-label">Colaboradores</span>
       </div>
       <div class="nav-item" data-page="asesores" onclick="navigate('asesores',this)">
         <span class="nav-icon">&#x25D1;</span><span class="nav-label">Asesores</span>
@@ -97,7 +97,7 @@
     </div>
     <div class="topbar-actions">
       <button class="btn btn-icon" onclick="toggleTheme()" id="theme-btn" title="Modo día/noche">☀</button>
-      <button class="btn btn-primary" id="topbar-cta" onclick="openModalCliente()">+ Nuevo cliente</button>
+      <button class="btn btn-primary" id="topbar-cta" onclick="openModalCliente()" style="display:none;">+ Nuevo cliente</button>
     </div>
   </div>
   <div class="content" id="main-content"></div>

@@ -206,7 +206,7 @@ function exportarClientesExcel(){
     'Elegible','NSS','CURP','RFC','Domicilio','Monto AFORE','Contrato Firmado',
     'Fecha Firma','Fecha Retiro Estimada','Comisión','Estado Pago','Registro'];
 
-  const rows = store.clientes.map(c=>[
+  const rows = clientesVistaActual().map(c=>[
     c.nombre||'',
     c.telefono||'',
     c.email||'',
@@ -720,8 +720,7 @@ function asesorId(){ return sesionActiva ? sesionActiva.id : null; }
 // Filtrar clientes por sesión
 function clientesVisibles(){
   if(!sesionActiva) return [];
-  if(isAdmin()) return store.clientes;
-  return store.clientes.filter(c=>!c.asesorId||c.asesorId===sesionActiva.id);
+  return clientesVistaActual();
 }
 
 // ==================== LOGO EMPRESA ====================
@@ -1053,4 +1052,3 @@ function eliminarAsesor(){
   showToast('Asesor eliminado','info');
   renderPage('asesores');
 }
-

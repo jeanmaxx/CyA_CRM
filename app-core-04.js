@@ -389,14 +389,15 @@ function getInicioSemana(offset){
 function renderAgenda(){
   const hoy = new Date();
   const hoyStr = fechaISOLocal(hoy);
-  const eventos = store.agenda||[];
+  const eventos = eventosVistaActual();
   const ventana=getVentanaAgenda();
   const vencidos = eventos.filter(e=>e.fecha>=ventana.inicio&&e.fecha<hoyStr&&!e.completado);
 
   return `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
     <div><div class="section-title">Agenda</div><div class="section-sub">Citas, seguimientos y recordatorios</div></div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap;">
+      ${getSelectorVistaHTML(true)}
       <div style="display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
         <button class="btn" onclick="agendaSetVista('semana')" id="btn-vista-semana"
           style="border:none;border-radius:0;${agendaVistaActual==='semana'?'background:var(--accent-blue);color:#fff;':''}">Semana</button>
@@ -419,7 +420,7 @@ function toggleEventosFuturos(){ agendaFuturosAbiertos=!agendaFuturosAbiertos; r
 
 function renderEventosFuturos(){
   const {limite}=getVentanaAgenda();
-  const futuros=(store.agenda||[]).filter(e=>e.fecha>=limite).sort((a,b)=>a.fecha===b.fecha?(a.hora||'').localeCompare(b.hora||''):a.fecha.localeCompare(b.fecha));
+  const futuros=eventosVistaActual().filter(e=>e.fecha>=limite).sort((a,b)=>a.fecha===b.fecha?(a.hora||'').localeCompare(b.hora||''):a.fecha.localeCompare(b.fecha));
   const porFecha={}; futuros.forEach(e=>{ if(!porFecha[e.fecha]) porFecha[e.fecha]=[]; porFecha[e.fecha].push(e); });
   return `<div class="archivados-section" style="margin-top:16px;">
     <div class="archivados-header" onclick="toggleEventosFuturos()"><span>${agendaFuturosAbiertos?'▾':'▸'} EVENTOS FUTUROS</span><span style="font-size:10px;color:var(--text-muted);">${futuros.length} evento${futuros.length!==1?'s':''} después del próximo mes</span></div>
@@ -443,7 +444,7 @@ function renderAgendaSemana(){
   for(let h=8;h<=18;h++) horas.push(h);
   const SLOT_H = 52; // px por hora
   const ventana=getVentanaAgenda();
-  const eventos = (store.agenda||[]).filter(e=>e.fecha>=ventana.inicio&&e.fecha<ventana.limite);
+  const eventos = eventosVistaActual().filter(e=>e.fecha>=ventana.inicio&&e.fecha<ventana.limite);
   const inicioLabel = fmtDate(fechaISOLocal(inicio));
   const fin = dias[6];
   const finLabel = fmtDate(fechaISOLocal(fin));
@@ -527,7 +528,7 @@ function renderAgendaSemana(){
 function renderAgendaLista(){
   const hoyStr=fechaISOLocal(new Date());
   const ventana=getVentanaAgenda();
-  const eventos=(store.agenda||[]).filter(e=>e.fecha>=ventana.inicio&&e.fecha<ventana.limite);
+  const eventos=eventosVistaActual().filter(e=>e.fecha>=ventana.inicio&&e.fecha<ventana.limite);
   const dias={};
   eventos.forEach(e=>{ if(!dias[e.fecha]) dias[e.fecha]=[]; dias[e.fecha].push(e); });
   const fechasVisibles=Object.keys(dias).sort();
@@ -613,7 +614,7 @@ function renderCalMini(){
   const primerDia=new Date(anio,mes,1).getDay();
   const ultimoDia=new Date(anio,mes+1,0).getDate();
   const hoyStr=fechaISOLocal(hoy);
-  const eventFechas=new Set((store.agenda||[]).map(e=>e.fecha));
+  const eventFechas=new Set(eventosVistaActual().map(e=>e.fecha));
   for(let i=0;i<primerDia;i++) html+=`<div class="cal-mini-day otro-mes"></div>`;
   for(let d=1;d<=ultimoDia;d++){
     const fs=`${anio}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -665,7 +666,7 @@ function filtrarClientesAgenda(q){
   const list=document.getElementById('ag-cliente-list');
   if(!list) return;
   if(!q||q.length<2){ list.classList.remove('open'); return; }
-  const f=store.clientes.filter(c=>c.nombre.toUpperCase().includes(q.toUpperCase()));
+  const f=clientesVistaActual().filter(c=>c.nombre.toUpperCase().includes(q.toUpperCase()));
   if(!f.length){ list.classList.remove('open'); return; }
   list.innerHTML=f.slice(0,6).map(c=>{
     const n=c.nombre.replace(/'/g,'&apos;');
@@ -686,12 +687,15 @@ function guardarEvento(){
   const fecha=getVal('ag-fecha');
   if(!titulo){showToast('El título es obligatorio','warn');return;}
   if(!fecha){showToast('La fecha es obligatoria','warn');return;}
+  const eventoAnterior=editingEventoId?store.agenda.find(x=>x.id===editingEventoId):null;
+  const clienteEvento=agEventoClienteId?store.clientes.find(c=>c.id===agEventoClienteId):null;
   const evento={
     titulo,tipo:getVal('ag-tipo')||'llamada',
     fecha,hora:getVal('ag-hora')||'',
     notas:getVal('ag-notas')||'',
     clienteId:agEventoClienteId||null,
     completado:false,
+    asesorId:eventoAnterior?.asesorId||clienteEvento?.asesorId||asesorDestinoVista(),
   };
   if(editingEventoId){
     const idx=store.agenda.findIndex(x=>x.id===editingEventoId);
@@ -844,4 +848,3 @@ function validateAlphaNum(input, indicatorId, required){
     if(indicator){ indicator.textContent=val.length+'/'+required; indicator.className='nss-indicator nss-err'; }
   }
 }
-

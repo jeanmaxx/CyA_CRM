@@ -332,8 +332,7 @@ function flechaOrden(campo){
 let editingColaboradorId = null;
 
 function renderColaboradores(){
-  if(!isAdmin()) return renderComingSoon('colaboradores');
-  const cols = store.colaboradores||[];
+  const cols = isAdmin()?(store.colaboradores||[]):(store.colaboradores||[]).filter(c=>c.asesorId===sesionActiva?.id);
   return `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
     <div><div class="section-title">Colaboradores</div><div class="section-sub">Red de colaboradores y comisiones compartidas</div></div>
@@ -374,6 +373,7 @@ function renderColaboradores(){
 function openModalColaborador(id){
   editingColaboradorId=id||null;
   const col=id?store.colaboradores.find(x=>x.id===id):null;
+  if(col&&!isAdmin()&&col.asesorId!==sesionActiva?.id){showToast('No puedes editar colaboradores de otro asesor','warn');return;}
   document.getElementById('modal-col-title').textContent=id?'Editar colaborador':'Nuevo colaborador';
   document.getElementById('col-btn-eliminar').style.display=id?'':'none';
   setVal('col-nombre',col?col.nombre:'');
@@ -382,18 +382,22 @@ function openModalColaborador(id){
   setVal('col-activo',col?(col.activo===false?'false':'true'):'true');
   // Poblar select de asesores
   const sel=document.getElementById('col-asesor');
-  sel.innerHTML=store.asesores.filter(a=>a.activo!==false).map(a=>`<option value="${a.id}"${col&&col.asesorId===a.id?' selected':''}>${a.nombre}</option>`).join('');
+  const asesoresDisponibles=isAdmin()?store.asesores.filter(a=>a.activo!==false):store.asesores.filter(a=>a.id===sesionActiva?.id);
+  sel.innerHTML=asesoresDisponibles.map(a=>`<option value="${a.id}"${col&&col.asesorId===a.id?' selected':''}>${a.nombre}</option>`).join('');
   if(!col&&sesionActiva) sel.value=sesionActiva.id;
+  sel.disabled=!isAdmin();
   document.getElementById('modal-colaborador').classList.add('open');
 }
 
 function guardarColaborador(){
   const nombre=(getVal('col-nombre')||'').trim();
   if(!nombre){showToast('El nombre es obligatorio','warn');return;}
+  const anterior=editingColaboradorId?store.colaboradores.find(c=>c.id===editingColaboradorId):null;
+  if(anterior&&!isAdmin()&&anterior.asesorId!==sesionActiva?.id){showToast('No puedes modificar colaboradores de otro asesor','warn');return;}
   const col={
     id:editingColaboradorId||'col_'+Date.now(),
     nombre, ciudad:getVal('col-ciudad'),
-    asesorId:getVal('col-asesor')||sesionActiva?.id,
+    asesorId:isAdmin()?(getVal('col-asesor')||sesionActiva?.id):sesionActiva?.id,
     pctComision:Number(getVal('col-pct'))||50,
     activo:getVal('col-activo')!=='false',
     fechaAlta:editingColaboradorId?(store.colaboradores.find(c=>c.id===editingColaboradorId)||{}).fechaAlta||new Date().toISOString().split('T')[0]:new Date().toISOString().split('T')[0],
@@ -413,8 +417,12 @@ function guardarColaborador(){
 
 function eliminarColaborador(){
   if(!editingColaboradorId) return;
+  const colaborador=store.colaboradores.find(c=>c.id===editingColaboradorId);
+  if(!colaborador) return;
+  if(!isAdmin()&&colaborador.asesorId!==sesionActiva?.id){showToast('No puedes eliminar colaboradores de otro asesor','warn');return;}
   if(!confirm('¿Eliminar este colaborador? Los clientes vinculados quedarán sin colaborador.')) return;
   store.colaboradores=store.colaboradores.filter(c=>c.id!==editingColaboradorId);
+  (store.clientes||[]).forEach(c=>{if(c.colaboradorId===editingColaboradorId){c.colaboradorId=null;c.colPct=0;}});
   saveStore();
   closeModal('modal-colaborador');
   showToast('Colaborador eliminado','info');
@@ -425,8 +433,7 @@ function eliminarColaborador(){
 function poblarSelectColaborador(){
   const sel=document.getElementById('fc-colaborador');
   if(!sel) return;
-  const miId=sesionActiva?sesionActiva.id:null;
-  const misColabs=(store.colaboradores||[]).filter(c=>c.activo!==false&&(!miId||c.asesorId===miId||isAdmin()));
+  const misColabs=colaboradoresVistaActual().filter(c=>c.activo!==false);
   sel.innerHTML='<option value="">— Sin colaborador —</option>'+misColabs.map(c=>`<option value="${c.id}">${c.nombre} (${c.ciudad||'—'})</option>`).join('');
   sel.onchange=function(){
     const col=store.colaboradores.find(x=>x.id===this.value);
@@ -451,8 +458,9 @@ const LEAD_ESTADOS = {
 
 function renderLeads(){
   procesarRecontactosLeads();
-  const leads=(store.leads||[]).filter(l=>l.estado!=='archivado');
-  const archivados=(store.leads||[]).filter(l=>l.estado==='archivado');
+  const vistaLeads=leadsVistaActual();
+  const leads=vistaLeads.filter(l=>l.estado!=='archivado');
+  const archivados=vistaLeads.filter(l=>l.estado==='archivado');
   const temporales=archivados.filter(l=>l.archivoTipo==='temporal');
   const definitivos=archivados.filter(l=>l.archivoTipo!=='temporal');
   const hoy=new Date();
@@ -462,7 +470,7 @@ function renderLeads(){
   return `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
     <div><div class="section-title">Prospectos</div><div class="section-sub">Seguimiento y evaluación de prospectos</div></div>
-    <button class="btn btn-primary" onclick="openModalLead()">+ Nuevo prospecto</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;">${getSelectorVistaHTML(true)}<button class="btn btn-primary" onclick="openModalLead()">+ Nuevo prospecto</button></div>
   </div>
   <div style="overflow-x:auto;">
     <div class="leads-kanban">
@@ -543,8 +551,7 @@ function openModalLead(id){
   document.getElementById('modal-lead-title').textContent=id?'Editar prospecto':'Nuevo prospecto';
   // Poblar colaboradores
   const sel=document.getElementById('lead-colaborador');
-  const miId=sesionActiva?sesionActiva.id:null;
-  const misColabs=(store.colaboradores||[]).filter(c=>c.activo!==false&&(!miId||c.asesorId===miId||isAdmin()));
+  const misColabs=colaboradoresVistaActual().filter(c=>c.activo!==false);
   sel.innerHTML='<option value="">— Directo —</option>'+misColabs.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
   const svcSel=document.getElementById('lead-servicio');
   svcSel.innerHTML=store.servicios.filter(s=>s.activo!==false).map(s=>`<option value="${s.id}">${s.nombre}</option>`).join('');
@@ -589,6 +596,7 @@ function guardarLead(){
   if(!nombre){showToast('El nombre es obligatorio','warn');return;}
   const curp=getVal('lead-curp').toUpperCase();
   const validacion=validarCurpEstructura(curp,nombre);
+  const leadAnterior=editingLeadId?store.leads.find(l=>l.id===editingLeadId):null;
   const lead={
     id:editingLeadId||'lead_'+Date.now(),
     nombre, telefono:getVal('lead-tel'), curp,
@@ -598,8 +606,8 @@ function guardarLead(){
     notas:getVal('lead-notas'),
     elegibilidad:recogerElegibilidadLead(),
     curpAdvertencias:validacion.errores,
-    fechaInicio:editingLeadId?(store.leads.find(l=>l.id===editingLeadId)||{}).fechaInicio||new Date().toISOString():new Date().toISOString(),
-    asesorId:sesionActiva?sesionActiva.id:null,
+    fechaInicio:leadAnterior?.fechaInicio||new Date().toISOString(),
+    asesorId:leadAnterior?.asesorId||asesorDestinoVista(),
   };
   if(editingLeadId){
     const idx=store.leads.findIndex(l=>l.id===editingLeadId);
@@ -780,4 +788,3 @@ function validarCurpLead(){
   if(!curp||r.ok){ box.classList.remove('show'); box.textContent=''; return; }
   box.textContent='⚠ Solicitar al cliente verificación de CURP. Formato incorrecto en: '+r.errores.join(', ')+'. El prospecto se puede guardar.'; box.classList.add('show');
 }
-
