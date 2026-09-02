@@ -292,14 +292,16 @@ let vistaActual = 'propia'; // 'propia' | 'director' | asesor_id
 
 function getSelectorVistaHTML(compacto=false){
   if(!isAdmin()) return '';
-  const asesores = store.asesores.filter(a=>a.activo!==false&&a.rol!=='admin');
+  const asesores = store.asesores
+    .filter(a=>a.activo!==false&&a.id!==sesionActiva?.id)
+    .sort((a,b)=>String(a.nombre||'').localeCompare(String(b.nombre||''),'es'));
   return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:${compacto?'0':'16px'};">
     <span style="font-size:12px;color:var(--text-muted);">Vista:</span>
     <select id="selector-vista" class="form-select" style="width:auto;font-size:13px;padding:4px 10px;"
       onchange="cambiarVista(this.value)">
       <option value="propia" ${vistaActual==='propia'?'selected':''}>Mi vista</option>
       <option value="director" ${vistaActual==='director'?'selected':''}>&#127919; Vista director</option>
-      ${asesores.map(a=>`<option value="${a.id}" ${vistaActual===a.id?'selected':''}>${a.nombre}</option>`).join('')}
+      ${asesores.map(a=>`<option value="${a.id}" ${vistaActual===a.id?'selected':''}>${a.nombre}${a.rol==='admin'?' · Admin':''}</option>`).join('')}
     </select>
   </div>`;
 }
