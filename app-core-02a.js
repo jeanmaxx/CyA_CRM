@@ -46,13 +46,13 @@ function renderDashboard(){
   const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
   return `
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;">
+  <div class="dashboard-hero">
     <div>
       <div style="margin-bottom:4px;font-size:12px;color:var(--text-muted)">${dias[today.getDay()]}, ${fmtDate(fechaISOLocal(today))}</div>
       <div class="section-title">Bienvenido, ${sesionActiva?.nombre||store.configuracion.asesor||'Emmanuel'}</div>
       <div class="section-sub" style="margin-bottom:0;">Resumen de tu cartera de clientes.</div>
     </div>
-    <div style="margin-left:auto;">${getSelectorVistaHTML(true)}</div>
+    <div class="dashboard-view-selector">${getSelectorVistaHTML(true)}</div>
   </div>
 
   ${(()=>{
@@ -64,7 +64,7 @@ function renderDashboard(){
     </div>`;
   })()}
 
-  <div class="kpi-grid">
+  <div class="kpi-grid dashboard-kpis">
     <div class="kpi-card kpi-accent-blue">
       <div class="kpi-label">Clientes totales</div>
       <div class="kpi-value">${todosClientes.length}</div>
@@ -102,7 +102,7 @@ function renderDashboard(){
     const TIPO_LABELS={llamada:'📞 Llamada',whatsapp:'💬 WhatsApp',meet:'🎥 Meet',cita:'📅 Cita',recordatorio:'🔔 Recordatorio',vencimiento:'⏰ Vencimiento',otro:'📌 Otro'};
     const TIPO_COLORS={llamada:'#3b82f6',whatsapp:'#25d366',meet:'#8b5cf6',cita:'#0ea5e9',recordatorio:'#10b981',vencimiento:'#ef4444',otro:'#64748b'};
     return `<div class="card" style="margin-bottom:20px;border-top:2px solid var(--accent-blue);">
-      <div class="card-header" style="justify-content:space-between;">
+      <div class="card-header dashboard-agenda-header">
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="card-title">📅 Agenda de hoy</div>
           ${vencidos.length>0?`<span class="chip chip-red" style="font-size:10px;">⚠ ${vencidos.length} vencido${vencidos.length!==1?'s':''}</span>`:''}
@@ -113,14 +113,14 @@ function renderDashboard(){
         ${eventosHoyList.length===0&&vencidos.length>0?`<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">Sin eventos para hoy, pero hay ${vencidos.length} evento${vencidos.length!==1?'s':''} vencidos.</div>`:''}
         ${eventosHoyList.sort((a,b)=>a.hora>b.hora?1:-1).map(e=>{
           const c=e.clienteId?(store.clientes.find(x=>x.id===e.clienteId)):{};
-          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+          return `<div class="dashboard-agenda-row">
             <div style="width:3px;height:36px;border-radius:2px;background:${TIPO_COLORS[e.tipo]||'#64748b'};flex-shrink:0;"></div>
             <div style="width:44px;text-align:right;font-size:11px;color:var(--text-muted);flex-shrink:0;">${e.hora||'—'}</div>
             <div style="flex:1;min-width:0;">
               <div style="font-size:13px;font-weight:500;color:var(--text-primary);">${e.titulo}</div>
               <div style="font-size:11px;color:var(--text-muted);">${TIPO_LABELS[e.tipo]||e.tipo}${c&&c.nombre?' · '+c.nombre:''}</div>
             </div>
-            <button class="btn" style="font-size:10px;padding:3px 8px;flex-shrink:0;" onclick="completarEvento('${e.id}')">✓ Hecho</button>
+            <button class="btn dashboard-agenda-action" onclick="completarEvento('${e.id}')">✓ Hecho</button>
           </div>`;
         }).join('')}
         ${vencidos.length>0?`<div style="padding:8px 0;font-size:12px;color:var(--danger);">+ ${vencidos.length} evento${vencidos.length!==1?'s':''} vencido${vencidos.length!==1?'s':''} — <span style="cursor:pointer;text-decoration:underline;" onclick="navigate('agenda',document.querySelector('[data-page=agenda]'))">ver en agenda</span></div>`:''}
