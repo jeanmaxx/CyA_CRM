@@ -821,6 +821,31 @@ async function verificarPin(asesor, pwd){
 let editingAsesorId=null;
 let asesorFotoTemp='';
 
+function metricasConversion({asesorId=null,colaboradorId=null}={}){
+  const coincideAmbito=registro=>{
+    if(asesorId!==null&&registro.asesorId!==asesorId) return false;
+    if(colaboradorId!==null&&registro.colaboradorId!==colaboradorId) return false;
+    return true;
+  };
+  const prospectos=(store.leads||[]).filter(coincideAmbito);
+  const prospectoIds=new Set(prospectos.map(p=>String(p.id)));
+  const clientes=(store.clientes||[]).filter(coincideAmbito);
+  const origenesConvertidos=new Set(
+    clientes
+      .map(c=>c.origenLeadId)
+      .filter(id=>id&&prospectoIds.has(String(id)))
+      .map(String)
+  );
+  const convertidos=origenesConvertidos.size;
+  const directos=clientes.filter(c=>!c.origenLeadId).length;
+  const tasa=prospectos.length?Math.round((convertidos/prospectos.length)*1000)/10:0;
+  return {prospectos:prospectos.length,convertidos,directos,tasa};
+}
+
+function formatoTasaConversion(tasa){
+  return `${Number.isInteger(tasa)?tasa:tasa.toFixed(1)}%`;
+}
+
 function renderAsesores(){
   if(!isAdmin()) return renderComingSoon('asesores');
   const asesores=store.asesores||[];
@@ -894,11 +919,11 @@ function renderAsesores(){
     <div class="card-header"><div class="card-title">Comparativa de rendimiento</div></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Asesor</th><th>Clientes totales</th><th>Activos</th><th>Concluidos</th><th>Comisiones</th><th>Tasa de cierre</th></tr></thead>
+        <thead><tr><th>Asesor</th><th>Prospectos</th><th>Convertidos</th><th>Directos</th><th>Clientes totales</th><th>Activos</th><th>Concluidos</th><th>Comisiones</th><th>Conversión</th></tr></thead>
         <tbody>
           ${asesores.map(a=>{
             const st=statsAsesor(a.id);
-            const tasa=st.total>0?Math.round(st.concluidos/st.total*100):0;
+            const conversion=metricasConversion({asesorId:a.id});
             return `<tr>
               <td>
                 <div style="display:flex;align-items:center;gap:8px;">
@@ -906,14 +931,17 @@ function renderAsesores(){
                   <span style="font-weight:500;">${a.nombre}</span>
                 </div>
               </td>
+              <td>${conversion.prospectos}</td>
+              <td>${conversion.convertidos}</td>
+              <td>${conversion.directos}</td>
               <td>${st.total}</td>
               <td>${st.activos}</td>
               <td>${st.concluidos}</td>
               <td style="color:var(--success)">$${st.comisiones.toLocaleString('es-MX')}</td>
               <td>
                 <div style="display:flex;align-items:center;gap:8px;">
-                  <div class="progress-bar-wrap" style="flex:1;margin:0;"><div class="progress-bar" style="width:${tasa}%;"></div></div>
-                  <span style="font-size:11px;width:32px;">${tasa}%</span>
+                  <div class="progress-bar-wrap" style="flex:1;min-width:60px;margin:0;"><div class="progress-bar" style="width:${Math.min(conversion.tasa,100)}%;"></div></div>
+                  <span style="font-size:11px;min-width:38px;">${formatoTasaConversion(conversion.tasa)}</span>
                 </div>
               </td>
             </tr>`;

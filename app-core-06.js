@@ -343,6 +343,7 @@ function renderColaboradores(){
     :cols.map(col=>{
       const asesor=store.asesores.find(a=>a.id===col.asesorId);
       const clientes=store.clientes.filter(c=>c.colaboradorId===col.id);
+      const conversion=metricasConversion({colaboradorId:col.id});
       const comisionTotal=clientes.filter(c=>c.estadoPago==='Cobrado').reduce((s,c)=>{
         const pct=(c.colPct||col.pctComision||50)/100;
         return s+Number(c.comision||0)*pct;
@@ -359,8 +360,8 @@ function renderColaboradores(){
             <span class="chip ${col.activo?'chip-green':'chip-red'}" style="font-size:10px;">${col.activo?'Activo':'Inactivo'}</span>
           </div>
           <div style="font-size:12px;color:var(--text-muted);">${col.ciudad||'—'} · Reporta a: ${asesor?asesor.nombre:'—'} · ${col.pctComision||50}% de comisión</div>
-          <div style="display:flex;gap:20px;margin-top:8px;">
-            ${[['Clientes',clientes.length],['Cobrado','$'+comisionTotal.toLocaleString('es-MX')],['Pendiente','$'+pendiente.toLocaleString('es-MX')]].map(([l,v])=>`
+          <div class="col-metrics">
+            ${[['Prospectos',conversion.prospectos],['Convertidos',conversion.convertidos],['Directos',conversion.directos],['Conversión',formatoTasaConversion(conversion.tasa)],['Cobrado','$'+comisionTotal.toLocaleString('es-MX')],['Pendiente','$'+pendiente.toLocaleString('es-MX')]].map(([l,v])=>`
             <div><div style="font-size:15px;font-weight:700;">${v}</div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">${l}</div></div>`).join('')}
           </div>
         </div>
