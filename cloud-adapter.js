@@ -82,6 +82,8 @@ async function cloudLoadStore(){
     id:p.id,
     legacyId:p.legacy_id || '',
     nombre:p.full_name,
+    nombres:p.given_names || String(p.full_name || '').trim().split(/\s+/)[0] || '',
+    apellidos:p.surnames || String(p.full_name || '').trim().split(/\s+/).slice(1).join(' '),
     ciudad:p.city || '',
     rol:p.role === 'admin' ? 'admin' : 'asesor',
     activo:p.active !== false,
@@ -213,7 +215,8 @@ async function cloudSyncProfiles(){
   const profiles=(store.asesores || []).filter(a=>cloudIsUuid(a.id) && (isAdmin() || a.id===sesionActiva?.id));
   for(const a of profiles){
     const {error}=await supabaseClient.from('profiles').update({
-      full_name:a.nombre || 'Asesor',city:a.ciudad || null,active:a.activo !== false,
+      full_name:a.nombre || 'Asesor',given_names:asesorNombres(a)||null,surnames:asesorApellidos(a)||null,
+      city:a.ciudad || null,active:a.activo !== false,
     }).eq('id',a.id);
     if(error) throw new Error(`profiles: ${error.message}`);
   }
@@ -433,11 +436,13 @@ async function cloudInvokeAdvisor(body){
 }
 
 guardarAsesor=async function(){
-  const nombre=(getVal('as-nombre') || '').trim();
+  const nombres=(getVal('as-nombres') || '').trim();
+  const apellidos=(getVal('as-apellidos') || '').trim();
+  const nombre=[nombres,apellidos].filter(Boolean).join(' ');
   const email=(getVal('as-email') || '').trim().toLowerCase();
   const password=getVal('as-pin');
   const password2=getVal('as-pin2');
-  if(!nombre || !email){showToast('Nombre y correo son obligatorios','warn');return;}
+  if(!nombres || !apellidos || !email){showToast('Nombres, apellidos y correo son obligatorios','warn');return;}
   if(!/^\S+@\S+\.\S+$/.test(email)){showToast('Ingresa un correo válido','warn');return;}
   const anterior=editingAsesorId?store.asesores.find(a=>a.id===editingAsesorId):null;
   const creandoCuenta=!anterior || !cloudIsUuid(anterior.id);
@@ -465,7 +470,7 @@ guardarAsesor=async function(){
     }
     const asesor={
       id:userId,legacyId:anterior&&!cloudIsUuid(anterior.id)?anterior.id:(anterior?.legacyId || ''),
-      nombre,ciudad:getVal('as-ciudad'),email:result.email || email,
+      nombre,nombres,apellidos,ciudad:getVal('as-ciudad'),email:result.email || email,
       rol:getVal('as-rol')==='admin'?'admin':'asesor',activo:getVal('as-activo')!=='false',
       foto,fotoPath,fechaAlta:anterior?.fechaAlta || new Date().toISOString(),cloudUser:true,
     };
