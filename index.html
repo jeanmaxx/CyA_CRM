@@ -585,18 +585,24 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Nombre completo <span>*</span></label>
-          <input class="form-input input-upper" id="as-nombre" placeholder="Nombre del asesor" oninput="this.value=this.value.toUpperCase();actualizarInitialsPreview()">
+          <label class="form-label">Nombre o nombres <span>*</span></label>
+          <input class="form-input input-upper" id="as-nombres" placeholder="Nombre del asesor" oninput="this.value=this.value.toUpperCase();actualizarInitialsPreview()">
         </div>
+        <div class="form-group">
+          <label class="form-label">Apellidos <span>*</span></label>
+          <input class="form-input input-upper" id="as-apellidos" placeholder="Apellidos del asesor" oninput="this.value=this.value.toUpperCase();actualizarInitialsPreview()">
+        </div>
+      </div>
+      <div class="form-row">
         <div class="form-group">
           <label class="form-label">Ciudad</label>
           <input class="form-input input-upper" id="as-ciudad" placeholder="Ciudad" oninput="this.value=this.value.toUpperCase()">
         </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Correo de acceso <span id="as-email-required">*</span></label>
-        <input class="form-input" id="as-email" type="email" autocomplete="email" placeholder="asesor@empresa.com">
-        <div class="form-helper">El asesor utilizará este correo para iniciar sesión.</div>
+        <div class="form-group">
+          <label class="form-label">Correo de acceso <span id="as-email-required">*</span></label>
+          <input class="form-input" id="as-email" type="email" autocomplete="email" placeholder="asesor@empresa.com">
+          <div class="form-helper">El asesor utilizará este correo para iniciar sesión.</div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group">
