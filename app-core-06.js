@@ -333,42 +333,54 @@ let editingColaboradorId = null;
 
 function renderColaboradores(){
   const cols = isAdmin()?(store.colaboradores||[]):(store.colaboradores||[]).filter(c=>c.asesorId===sesionActiva?.id);
+  const filas=cols.map(col=>{
+    const asesor=store.asesores.find(a=>a.id===col.asesorId);
+    const clientes=store.clientes.filter(c=>c.colaboradorId===col.id);
+    const conversion=metricasConversion({colaboradorId:col.id});
+    const comisionTotal=clientes.filter(c=>c.estadoPago==='Cobrado').reduce((s,c)=>{
+      const pct=(c.colPct||col.pctComision||50)/100;
+      return s+Number(c.comision||0)*pct;
+    },0);
+    const pendiente=clientes.filter(c=>c.estadoPago==='Pendiente').reduce((s,c)=>{
+      const pct=(c.colPct||col.pctComision||50)/100;
+      return s+Number(c.comisionCalc||0)*pct;
+    },0);
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:9px;min-width:150px;">
+          <div class="user-avatar" style="width:32px;height:32px;font-size:11px;flex-shrink:0;">${initials(col.nombre)}</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span style="font-weight:600;">${col.nombre}</span><span class="chip ${col.activo?'chip-green':'chip-red'}" style="font-size:9px;">${col.activo?'Activo':'Inactivo'}</span></div>
+            <div style="font-size:10px;color:var(--text-muted);">${col.ciudad||'—'}</div>
+          </div>
+        </div>
+      </td>
+      <td><div style="min-width:110px;">${asesor?asesor.nombre:'—'}<div style="font-size:10px;color:var(--text-muted);">${col.pctComision||50}% de comisión</div></div></td>
+      <td>${conversion.oportunidades}</td>
+      <td>${conversion.desdeProspecto}</td>
+      <td>${conversion.directos}</td>
+      <td>${conversion.clientes}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="progress-bar-wrap" style="width:58px;margin:0;"><div class="progress-bar" style="width:${Math.min(conversion.tasa,100)}%;"></div></div>
+          <span style="font-size:11px;min-width:38px;">${formatoTasaConversion(conversion.tasa)}</span>
+        </div>
+      </td>
+      <td style="color:var(--success);">$${comisionTotal.toLocaleString('es-MX')}</td>
+      <td>$${pendiente.toLocaleString('es-MX')}</td>
+      <td><button class="btn btn-icon" onclick="openModalColaborador('${col.id}')" title="Editar">✎</button></td>
+    </tr>`;
+  }).join('');
   return `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
     <div><div class="section-title">Colaboradores</div><div class="section-sub">Red de colaboradores y comisiones compartidas</div></div>
     <button class="btn btn-primary" onclick="openModalColaborador()">+ Nuevo colaborador</button>
   </div>
-  <div style="display:flex;flex-direction:column;gap:10px;">
-    ${cols.length===0?`<div class="empty-state"><div class="empty-icon">◐</div><div class="empty-title">Sin colaboradores</div><div class="empty-sub">Agrega tus colaboradores externos</div><button class="btn btn-primary" onclick="openModalColaborador()">+ Nuevo</button></div>`
-    :cols.map(col=>{
-      const asesor=store.asesores.find(a=>a.id===col.asesorId);
-      const clientes=store.clientes.filter(c=>c.colaboradorId===col.id);
-      const conversion=metricasConversion({colaboradorId:col.id});
-      const comisionTotal=clientes.filter(c=>c.estadoPago==='Cobrado').reduce((s,c)=>{
-        const pct=(c.colPct||col.pctComision||50)/100;
-        return s+Number(c.comision||0)*pct;
-      },0);
-      const pendiente=clientes.filter(c=>c.estadoPago==='Pendiente').reduce((s,c)=>{
-        const pct=(c.colPct||col.pctComision||50)/100;
-        return s+Number(c.comisionCalc||0)*pct;
-      },0);
-      return `<div class="col-card">
-        <div class="user-avatar" style="width:42px;height:42px;font-size:15px;flex-shrink:0;">${initials(col.nombre)}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <span style="font-size:14px;font-weight:600;">${col.nombre}</span>
-            <span class="chip ${col.activo?'chip-green':'chip-red'}" style="font-size:10px;">${col.activo?'Activo':'Inactivo'}</span>
-          </div>
-          <div style="font-size:12px;color:var(--text-muted);">${col.ciudad||'—'} · Reporta a: ${asesor?asesor.nombre:'—'} · ${col.pctComision||50}% de comisión</div>
-          <div class="col-metrics">
-            ${[['Prospectos',conversion.prospectos],['Convertidos',conversion.convertidos],['Directos',conversion.directos],['Conversión',formatoTasaConversion(conversion.tasa)],['Cobrado','$'+comisionTotal.toLocaleString('es-MX')],['Pendiente','$'+pendiente.toLocaleString('es-MX')]].map(([l,v])=>`
-            <div><div style="font-size:15px;font-weight:700;">${v}</div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">${l}</div></div>`).join('')}
-          </div>
-        </div>
-        <button class="btn btn-icon" onclick="openModalColaborador('${col.id}')">✎</button>
-      </div>`;
-    }).join('')}
-  </div>`;
+  ${cols.length===0?`<div class="empty-state"><div class="empty-icon">◐</div><div class="empty-title">Sin colaboradores</div><div class="empty-sub">Agrega tus colaboradores externos</div><button class="btn btn-primary" onclick="openModalColaborador()">+ Nuevo</button></div>`:`
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Colaborador</th><th>Asesor</th><th>Oportunidades</th><th>Desde prospecto</th><th>Directos</th><th>Clientes</th><th>Conversión</th><th>Cobrado</th><th>Pendiente</th><th></th></tr></thead>
+    <tbody>${filas}</tbody>
+  </table></div></div>`}`;
 }
 
 function openModalColaborador(id){
@@ -740,6 +752,9 @@ function convertirLeadACliente(){
     colaboradorId:getVal('lead-colaborador')||l.colaboradorId||null,
     notas:getVal('lead-notas')||l.notas||'',
   };
+  // La conversión también debe conservar cambios hechos en el prospecto
+  // aunque el usuario no haya pulsado Guardar antes de convertirlo.
+  Object.assign(l,borrador);
   closeModal('modal-lead');
   openModalCliente(l.id);
   // Precargar datos del lead

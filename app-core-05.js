@@ -827,19 +827,14 @@ function metricasConversion({asesorId=null,colaboradorId=null}={}){
     if(colaboradorId!==null&&registro.colaboradorId!==colaboradorId) return false;
     return true;
   };
-  const prospectos=(store.leads||[]).filter(coincideAmbito);
-  const prospectoIds=new Set(prospectos.map(p=>String(p.id)));
+  const esConvertido=prospecto=>prospecto.causaArchivoId==='convertido_cliente'||prospecto.causaArchivo==='Convertido a cliente';
+  const prospectos=(store.leads||[]).filter(p=>coincideAmbito(p)&&!esConvertido(p));
   const clientes=(store.clientes||[]).filter(coincideAmbito);
-  const origenesConvertidos=new Set(
-    clientes
-      .map(c=>c.origenLeadId)
-      .filter(id=>id&&prospectoIds.has(String(id)))
-      .map(String)
-  );
-  const convertidos=origenesConvertidos.size;
-  const directos=clientes.filter(c=>!c.origenLeadId).length;
-  const tasa=prospectos.length?Math.round((convertidos/prospectos.length)*1000)/10:0;
-  return {prospectos:prospectos.length,convertidos,directos,tasa};
+  const desdeProspecto=clientes.filter(c=>c.origenProspecto===true||Boolean(c.origenLeadId)).length;
+  const directos=clientes.length-desdeProspecto;
+  const oportunidades=prospectos.length+clientes.length;
+  const tasa=oportunidades?Math.round((clientes.length/oportunidades)*1000)/10:0;
+  return {oportunidades,prospectosPendientes:prospectos.length,desdeProspecto,directos,clientes:clientes.length,tasa};
 }
 
 function formatoTasaConversion(tasa){
@@ -919,7 +914,7 @@ function renderAsesores(){
     <div class="card-header"><div class="card-title">Comparativa de rendimiento</div></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Asesor</th><th>Prospectos</th><th>Convertidos</th><th>Directos</th><th>Clientes totales</th><th>Activos</th><th>Concluidos</th><th>Comisiones</th><th>Conversión</th></tr></thead>
+        <thead><tr><th>Asesor</th><th>Oportunidades</th><th>Desde prospecto</th><th>Directos</th><th>Clientes totales</th><th>Activos</th><th>Concluidos</th><th>Comisiones</th><th>Conversión</th></tr></thead>
         <tbody>
           ${asesores.map(a=>{
             const st=statsAsesor(a.id);
@@ -931,8 +926,8 @@ function renderAsesores(){
                   <span style="font-weight:500;">${a.nombre}</span>
                 </div>
               </td>
-              <td>${conversion.prospectos}</td>
-              <td>${conversion.convertidos}</td>
+              <td>${conversion.oportunidades}</td>
+              <td>${conversion.desdeProspecto}</td>
               <td>${conversion.directos}</td>
               <td>${st.total}</td>
               <td>${st.activos}</td>
