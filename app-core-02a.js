@@ -49,7 +49,7 @@ function renderDashboard(){
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;">
     <div>
       <div style="margin-bottom:4px;font-size:12px;color:var(--text-muted)">${dias[today.getDay()]}, ${fmtDate(fechaISOLocal(today))}</div>
-      <div class="section-title">Bienvenido, ${sesionActiva?.nombre||store.configuracion.asesor||'Emmanuel'}</div>
+      <div class="section-title">Bienvenido, ${asesorNombres(sesionActiva)||store.configuracion.asesor||'Emmanuel'}</div>
       <div class="section-sub" style="margin-bottom:0;">Resumen de tu cartera de clientes.</div>
     </div>
     <div style="margin-left:auto;">${getSelectorVistaHTML(true)}</div>
