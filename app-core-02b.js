@@ -480,6 +480,12 @@ function guardarCliente(){
     cliente.asesorNombre=(store.asesores.find(a=>a.id===cliente.asesorId)||sesionActiva||{}).nombre||'';
     cliente.fechaRetiroEstimada=calcFechaRetiro(cliente.fechaRegistro);
     cliente.fechaRetiroEstimadaManual=false;
+    cliente.origenProspecto=Boolean(leadOrigenConversion);
+    if(leadOrigenConversion){
+      cliente.origenLeadId=leadOrigenConversion.id;
+      cliente.prospectoOrigen=JSON.parse(JSON.stringify(leadOrigenConversion));
+      addHist(cliente,'registro','Prospecto convertido a cliente');
+    }
     // Si se registra directo en espera_45 con monto, calcular
     if(cliente.etapa==='espera_45'&&cliente.montoAfore){
       cliente.honorarios=calc.honorarios;
@@ -487,7 +493,7 @@ function guardarCliente(){
       cliente.estadoPago='Pendiente';
       addHist(cliente,'finanzas',`Cálculo automático: honorarios $${calc.honorarios.toLocaleString('es-MX')}, comisión $${calc.comision.toLocaleString('es-MX')}`);
     }
-    addHist(cliente,'registro','Cliente registrado en el sistema');
+    addHist(cliente,'registro',leadOrigenConversion?'Cliente creado desde Prospectos':'Cliente directo registrado en el sistema');
     store.clientes.push(cliente);
     // Crear próxima acción en agenda si se especificó
     const proxTipo=getVal('fc-prox-tipo');
@@ -506,13 +512,15 @@ function guardarCliente(){
       addHist(cliente,'agenda','Próxima acción agendada: '+proxFecha);
     }
     if(leadOrigenConversion){
-      leadOrigenConversion.estado='archivado';
-      leadOrigenConversion.archivoTipo='definitivo';
-      leadOrigenConversion.causaArchivo='Convertido a cliente';
-      leadOrigenConversion.causaArchivoId='convertido_cliente';
-      leadOrigenConversion.fechaArchivo=new Date().toISOString();
-      cliente.origenLeadId=leadOrigenConversion.id;
-      addHist(cliente,'registro','Prospecto convertido a cliente');
+      // El expediente del prospecto ya quedó preservado dentro del cliente.
+      // Sus eventos pasan al cliente antes de retirar el registro de Prospectos.
+      (store.agenda||[]).forEach(evento=>{
+        if(evento.leadId!==leadOrigenConversion.id) return;
+        evento.clienteId=cliente.id;
+        evento.leadId=null;
+        evento.asesorId=cliente.asesorId||evento.asesorId||null;
+      });
+      store.leads=store.leads.filter(l=>l.id!==leadOrigenConversion.id);
       leadConversionPendienteId=null;
     }
     showToast('Cliente agregado correctamente','success');
