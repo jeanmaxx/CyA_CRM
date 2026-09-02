@@ -48,6 +48,53 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="modal-perfil">
+    <div class="modal modal-lg client-profile-modal">
+      <div class="modal-header profile-header">
+        <div class="profile-header-copy"><div class="modal-title" id="perfil-title">Perfil del cliente</div><div id="perfil-sub" style="font-size:12px;color:var(--text-muted)"></div></div>
+        <div class="profile-header-actions">
+          <button class="btn" id="perfil-edit-btn">✎ Editar</button>
+          <button class="btn btn-primary" id="perfil-save-btn">Guardar cambios</button>
+          <button class="btn" id="perfil-regresar-prospecto-btn" style="font-size:12px;color:var(--warning)">↩ Regresar a prospectos</button>
+          <button class="btn" id="perfil-descartar-btn" style="font-size:12px;color:var(--text-muted)">Descartar</button>
+          <button class="btn btn-icon profile-close" aria-label="Cerrar expediente">✕</button>
+        </div>
+      </div>
+      <div class="modal-body" id="perfil-body"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-cliente">
+    <div class="modal client-edit-modal">
+      <div class="modal-header"><div class="modal-title">Editar cliente</div><button class="btn btn-icon" aria-label="Cerrar">✕</button></div>
+      <div class="modal-body">
+        <div class="tabs client-edit-tabs"><div class="tab active">Contacto</div><div class="tab">Datos adicionales</div></div>
+        <div class="tab-panel active">
+          <div class="form-row"><div class="form-group"><label class="form-label">Nombre completo</label><input class="form-input" value="CLIENTE DEMO"></div><div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" value="4421000000"></div></div>
+          <div class="form-row"><div class="form-group"><label class="form-label">Correo electrónico</label><input class="form-input" value="cliente@example.com"></div><div class="form-group"><label class="form-label">Ciudad</label><input class="form-input" value="TEQUISQUIAPAN"></div></div>
+          <div class="form-row"><div class="form-group"><label class="form-label">Tipo de servicio</label><select class="form-select"><option>Retiro por desempleo</option></select></div><div class="form-group"><label class="form-label">Etapa</label><select class="form-select"><option>Generando contrato</option></select></div></div>
+          <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea">Registro sintético para comprobar el formulario.</textarea></div>
+        </div>
+      </div>
+      <div class="modal-footer client-edit-footer"><button class="btn">Cancelar</button><button class="btn btn-primary">Guardar cliente</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-lead">
+    <div class="modal modal-lg">
+      <div class="modal-header"><div class="modal-title">Editar prospecto</div><button class="btn btn-icon" aria-label="Cerrar">✕</button></div>
+      <div class="modal-body">
+        <div class="form-row"><div class="form-group"><label class="form-label">Nombre completo</label><input class="form-input" value="PROSPECTO DEMO"></div><div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" value="4423000000"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">CURP</label><input class="form-input" value="GOMC850315HDFMNR07"><div class="curp-warning">✓ Formato verificado</div></div><div class="form-group"><label class="form-label">Colaborador</label><select class="form-select"><option>DANIELA</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Servicio</label><select class="form-select"><option>Retiro por desempleo</option></select></div><div class="form-group"><label class="form-label">Estado / etapa</label><select class="form-select"><option>En revisión de semanas / NSS</option></select></div></div>
+        <div class="form-section">Datos de elegibilidad <span style="font-weight:400;text-transform:none">(informativos)</span></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Semanas cotizadas</label><input class="form-input" value="850"></div><div class="form-group"><label class="form-label">¿Semanas con validez?</label><select class="form-select"><option>Sí</option></select></div></div>
+        <div class="form-group"><label class="form-label">Notas / Observaciones</label><textarea class="form-textarea">Pendiente validar NSS.</textarea></div>
+      </div>
+      <div class="modal-footer"><div style="display:flex;gap:8px;margin-right:auto"><button class="btn" style="color:var(--danger)">Eliminar definitivamente</button><button class="btn">Archivar</button></div><button class="btn" style="color:var(--success)">→ Convertir a cliente</button><button class="btn">Cancelar</button><button class="btn btn-primary">Guardar</button></div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modal-colaborador">
     <div class="modal" style="max-width:480px">
       <div class="modal-header"><div class="modal-title">Editar colaborador</div><button class="btn btn-icon">✕</button></div>
@@ -95,7 +142,9 @@
       store.configuracion={...store.configuracion,asesor:'EMMANUEL ÁLVAREZ'};
       currentPage=modulo;
       const renderers={dashboard:renderDashboard,leads:renderLeads,clientes:renderClientes,pipeline:renderPipeline,plantillas:renderPlantillas,agenda:renderAgenda,finanzas:renderFinanzas,colaboradores:renderColaboradores,asesores:renderAsesores};
-      if(modulo==='modal-agenda'||modulo==='modal-colaborador'||modulo==='modal-asesor'){
+      if(modulo==='modal-perfil'){
+        openPerfil('cliente-0');
+      }else if(['modal-agenda','modal-cliente','modal-lead','modal-colaborador','modal-asesor'].includes(modulo)){
         document.getElementById(modulo).classList.add('open');
       }else{
         document.getElementById('main-content').innerHTML=(renderers[modulo]||renderDashboard)();
