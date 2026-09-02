@@ -632,6 +632,8 @@ function onLeadServicioChange(){
 function guardarLead(){
   const nombre=(getVal('lead-nombre')||'').trim();
   if(!nombre){showToast('El nombre es obligatorio','warn');return;}
+  const fechaRetiroElegibilidad=leerFechaMX('lead-el-fecha-retiro');
+  if(fechaRetiroElegibilidad===null) return;
   const curp=getVal('lead-curp').toUpperCase();
   const validacion=validarCurpEstructura(curp,nombre);
   const leadAnterior=editingLeadId?store.leads.find(l=>l.id===editingLeadId):null;
@@ -642,7 +644,7 @@ function guardarLead(){
     estado:getVal('lead-estado')||'semanas',
     colaboradorId:getVal('lead-colaborador')||null,
     notas:getVal('lead-notas'),
-    elegibilidad:recogerElegibilidadLead(),
+    elegibilidad:{...recogerElegibilidadLead(),fechaRetiro:fechaRetiroElegibilidad},
     curpAdvertencias:validacion.errores,
     fechaInicio:leadAnterior?.fechaInicio||new Date().toISOString(),
     asesorId:leadAnterior?.asesorId||asesorDestinoVista(),
@@ -690,7 +692,7 @@ function archivarLead(){
   setVal('lead-causa-archivo',causaActual);
   setVal('lead-otros-texto',causaActual==='otros'?(lead?.causaArchivo||''):'');
   setVal('lead-archivo-notas',lead?.notasArchivo||'');
-  setVal('lead-fecha-ultimo-retiro',lead?.fechaUltimoRetiro||'');
+  setFechaMX('lead-fecha-ultimo-retiro',lead?.fechaUltimoRetiro||'');
   toggleLeadOtros();
   document.getElementById('modal-archivar-lead').classList.add('open');
 }
@@ -737,7 +739,8 @@ function confirmarArchivarLead(){
   const otros=getVal('lead-otros-texto');
   const causaLabel={docs_incompletos:'No envió toda la documentación',no_contesta:'No contesta',aprobado_no_contesta:'Aprobado y no contesta',no_quiso:'No quiso continuar',imss_activo:'Tiene IMSS activo',inconsistencias_curp_nss:'Inconsistencias de CURP / NSS',retiro_menos_5:'Retiró hace menos de 5 años',otros:otros||'Otros'};
   if(causa==='otros'&&!otros.trim()){ showToast('Especifica la causa de archivo','warn'); return; }
-  if(causa==='retiro_menos_5'&&!getVal('lead-fecha-ultimo-retiro')){ showToast('Captura la fecha del último retiro','warn'); return; }
+  const fechaUltimoRetiro=causa==='retiro_menos_5'?leerFechaMX('lead-fecha-ultimo-retiro',true):'';
+  if(causa==='retiro_menos_5'&&fechaUltimoRetiro===null) return;
   lead.estado='archivado';
   lead.causaArchivoId=causa;
   lead.causaArchivo=causaLabel[causa]||causa;
@@ -752,7 +755,7 @@ function confirmarArchivarLead(){
     store.agenda=(store.agenda||[]).filter(e=>e.id!=='ev_recontacto_'+lead.id);
   }
   if(causa==='retiro_menos_5'){
-    lead.fechaUltimoRetiro=getVal('lead-fecha-ultimo-retiro');
+    lead.fechaUltimoRetiro=fechaUltimoRetiro;
     const d=new Date(lead.fechaUltimoRetiro+'T10:00:00'); d.setFullYear(d.getFullYear()+4); d.setMonth(d.getMonth()+11);
     lead.fechaRecontacto=d.toISOString().split('T')[0];
     const eventoId='ev_recontacto_'+lead.id;
@@ -804,14 +807,14 @@ function renderLeadElegibilidad(existing){
     const fechaCurp=extraerFechaCurp(getVal('lead-curp'));
     cont.innerHTML=`<div class="form-row"><div class="form-group"><label class="form-label">Fecha de nacimiento / edad mínima 58</label><input class="form-input" id="lead-el-fecha-nac" type="date" value="${e.fechaNacimiento||fechaCurp||''}"></div><div class="form-group"><label class="form-label">Semanas cotizadas (mínimo 500)</label><input class="form-input" id="lead-el-semanas" type="number" value="${e.semanas||''}"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Ley</label><select class="form-select" id="lead-el-ley"><option value="">— Seleccionar —</option><option value="73" ${e.ley==='73'?'selected':''}>Ley 73</option><option value="97" ${e.ley==='97'?'selected':''}>Ley 97</option></select></div><div class="form-group"><label class="form-label">¿Semanas con validez?</label><select class="form-select" id="lead-el-semanas-validas"><option value="">— Seleccionar —</option><option value="si" ${e.semanasValidas==='si'?'selected':''}>Sí</option><option value="no" ${e.semanasValidas==='no'?'selected':''}>No</option></select></div></div>`;
   } else if(svc==='retiro_desempleo'){
-    cont.innerHTML=`<div class="form-row"><div class="form-group"><label class="form-label">Semanas cotizadas (referencia mínima 105)</label><input class="form-input" id="lead-el-semanas" type="number" value="${e.semanas||''}"></div><div class="form-group"><label class="form-label">¿Semanas con validez?</label><select class="form-select" id="lead-el-semanas-validas"><option value="">— Seleccionar —</option><option value="si" ${e.semanasValidas==='si'?'selected':''}>Sí</option><option value="no" ${e.semanasValidas==='no'?'selected':''}>No</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">¿Retiró en los últimos 5 años?</label><select class="form-select" id="lead-el-retiro"><option value="">— Seleccionar —</option><option value="si" ${e.retiro5==='si'?'selected':''}>Sí</option><option value="no" ${e.retiro5==='no'?'selected':''}>No</option></select></div><div class="form-group"><label class="form-label">Fecha del último retiro</label><input class="form-input" id="lead-el-fecha-retiro" type="date" value="${e.fechaRetiro||''}"></div></div>`;
+    cont.innerHTML=`<div class="form-row"><div class="form-group"><label class="form-label">Semanas cotizadas (referencia mínima 105)</label><input class="form-input" id="lead-el-semanas" type="number" value="${e.semanas||''}"></div><div class="form-group"><label class="form-label">¿Semanas con validez?</label><select class="form-select" id="lead-el-semanas-validas"><option value="">— Seleccionar —</option><option value="si" ${e.semanasValidas==='si'?'selected':''}>Sí</option><option value="no" ${e.semanasValidas==='no'?'selected':''}>No</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">¿Retiró en los últimos 5 años?</label><select class="form-select" id="lead-el-retiro"><option value="">— Seleccionar —</option><option value="si" ${e.retiro5==='si'?'selected':''}>Sí</option><option value="no" ${e.retiro5==='no'?'selected':''}>No</option></select></div><div class="form-group"><label class="form-label">Fecha del último retiro</label><input class="form-input input-fecha-mx" id="lead-el-fecha-retiro" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" value="${fechaISOaMX(e.fechaRetiro||'')}" oninput="mascaraFechaMX(this)" onblur="validarVisualFechaMX(this)"><div class="form-helper">Formato: dd/mm/aaaa</div></div></div>`;
   } else {
     cont.innerHTML=`<div class="form-group"><label class="form-label">Resultado / observaciones de elegibilidad</label><textarea class="form-textarea" id="lead-el-notas" placeholder="Información opcional...">${e.notas||''}</textarea></div>`;
   }
 }
 
 function recogerElegibilidadLead(){
-  return {semanas:getVal('lead-el-semanas'),semanasValidas:getVal('lead-el-semanas-validas'),fechaNacimiento:getVal('lead-el-fecha-nac'),ley:getVal('lead-el-ley'),retiro5:getVal('lead-el-retiro'),fechaRetiro:getVal('lead-el-fecha-retiro'),notas:getVal('lead-el-notas')};
+  return {semanas:getVal('lead-el-semanas'),semanasValidas:getVal('lead-el-semanas-validas'),fechaNacimiento:getVal('lead-el-fecha-nac'),ley:getVal('lead-el-ley'),retiro5:getVal('lead-el-retiro'),fechaRetiro:fechaMXaISO(getVal('lead-el-fecha-retiro')),notas:getVal('lead-el-notas')};
 }
 
 function procesarRecontactosLeads(){

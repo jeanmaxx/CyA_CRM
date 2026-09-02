@@ -201,6 +201,8 @@ select:focus{outline:none;border-color:var(--accent-blue);}
 .form-label span{color:var(--danger);}
 .form-input,.form-select,.form-textarea{width:100%;padding:8px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-body);font-size:13px;transition:var(--transition);}
 .form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--accent-blue);box-shadow:0 0 0 2px rgba(59,130,246,.15);}
+.input-fecha-mx{font-variant-numeric:tabular-nums;letter-spacing:.35px;}
+.fecha-mx-invalida{border-color:var(--danger)!important;box-shadow:0 0 0 2px rgba(239,68,68,.12)!important;}
 .form-textarea{resize:vertical;min-height:72px;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .form-helper{font-size:11px;color:var(--text-muted);margin-top:4px;}

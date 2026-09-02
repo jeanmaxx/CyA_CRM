@@ -31,6 +31,59 @@ function fmtDate(iso){
   const d=new Date(raw); if(isNaN(d)) return raw;
   return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 }
+function fechaISOaMX(valor){
+  if(!valor) return '';
+  const s=String(valor).trim();
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m?`${m[3]}/${m[2]}/${m[1]}`:'';
+}
+function fechaMXaISO(valor){
+  const s=String(valor||'').trim();
+  if(!s) return '';
+  const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(iso) return fechaMXaISO(`${iso[3]}/${iso[2]}/${iso[1]}`);
+  const m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(!m) return '';
+  const dia=Number(m[1]),mes=Number(m[2]),anio=Number(m[3]);
+  const d=new Date(Date.UTC(anio,mes-1,dia));
+  if(d.getUTCFullYear()!==anio||d.getUTCMonth()!==mes-1||d.getUTCDate()!==dia) return '';
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+function mascaraFechaMX(input){
+  if(!input) return;
+  const actual=String(input.value||'');
+  if(/^\d{4}-\d{2}-\d{2}$/.test(actual)){ input.value=fechaISOaMX(actual); return; }
+  const digitos=actual.replace(/\D/g,'').slice(0,8);
+  input.value=digitos.length<=2?digitos:digitos.length<=4?`${digitos.slice(0,2)}/${digitos.slice(2)}`:`${digitos.slice(0,2)}/${digitos.slice(2,4)}/${digitos.slice(4)}`;
+  input.classList.remove('fecha-mx-invalida');
+  input.removeAttribute('aria-invalid');
+}
+function validarVisualFechaMX(input){
+  if(!input||!input.value) return true;
+  const valida=Boolean(fechaMXaISO(input.value));
+  input.classList.toggle('fecha-mx-invalida',!valida);
+  if(valida) input.removeAttribute('aria-invalid'); else input.setAttribute('aria-invalid','true');
+  return valida;
+}
+function leerFechaMX(id,obligatoria=false){
+  const input=document.getElementById(id);
+  const valor=String(input?.value||'').trim();
+  if(!valor){
+    if(!obligatoria) return '';
+    showToast('Captura la fecha en formato dd/mm/aaaa','warn');
+    input?.focus();
+    return null;
+  }
+  const iso=fechaMXaISO(valor);
+  if(iso) return iso;
+  input?.classList.add('fecha-mx-invalida');
+  input?.setAttribute('aria-invalid','true');
+  input?.focus();
+  showToast('La fecha no es válida. Usa el formato dd/mm/aaaa','warn');
+  return null;
+}
+function setFechaMX(id,valor){ const input=document.getElementById(id); if(input) input.value=fechaISOaMX(valor); }
 function fmtDateShort(iso){ return fmtDate(iso); }
 function fmtDateTime(valor){ const d=valor instanceof Date?valor:new Date(valor); if(isNaN(d)) return String(valor||'—'); return `${fmtDate(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 function fmtFechaHistorial(valor){
