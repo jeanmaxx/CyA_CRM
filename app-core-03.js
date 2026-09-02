@@ -96,7 +96,7 @@ async function avanzarEtapa(id){
   }
   // Auto-calcular comisión al llegar a deposito_recibido
   if(next.id==='deposito_recibido' && c.montoAfore && !c.estadoPago){
-    const calc=calcComision(Number(c.montoAfore),c.servicio);
+    const calc=calcComision(Number(c.montoAfore),c.servicio,c.asesorId);
     c.honorarios=calc.honorarios; c.comision=calc.comision; c.comisionCalc=calc.comision;
     c.estadoPago='Pendiente';
     addHist(c,'finanzas','Cálculo automático: $'+calc.honorarios.toLocaleString('es-MX')+' hon / $'+calc.comision.toLocaleString('es-MX')+' comisión');
@@ -245,8 +245,8 @@ function guardarFinanzas(id){
   c.montoAfore=c.montoRetiro;
   c.honorarios=honorariosManual===''?'':Number(honorariosManual);
   c.comision=comisionManual===''?'':Number(comisionManual);
-  c.honorariosCalc='';
-  c.comisionCalc='';
+  c.honorariosCalc=c.honorarios;
+  c.comisionCalc=c.comision;
   c.estadoPago=estadoPago||'';
   c.fechaRetiroEstimada=fechaEst;
   c.fechaRetiroEstimadaManual=true;
@@ -380,15 +380,16 @@ function onServicioChange(existingDocs){
   if(svc==='retiro_desempleo'){
     const clienteEditado=editingId?store.clientes.find(c=>c.id===editingId):null;
     const cargarDefaults=!clienteEditado||clienteEditado.finanzasConfiguradas!==true;
+    const comisionDefault=comisionDefaultParaAsesor(clienteEditado?.asesorId||asesorDestinoVista());
     if(cargarDefaults&&!getVal('fc-monto')) setVal('fc-monto',35190);
     if(cargarDefaults&&!getVal('fc-honorarios')) setVal('fc-honorarios',8000);
-    if(cargarDefaults&&!getVal('fc-comision')) setVal('fc-comision',3000);
+    if(cargarDefaults&&!getVal('fc-comision')) setVal('fc-comision',comisionDefault);
     previewCalculo();
   } else if(svc==='correccion_imss'){
     // La corrección ante IMSS se cotiza al concluir; retirar únicamente valores automáticos heredados de Retiro.
     if(String(getVal('fc-monto'))==='35190') setVal('fc-monto','');
     if(String(getVal('fc-honorarios'))==='8000') setVal('fc-honorarios','');
-    if(String(getVal('fc-comision'))==='3000') setVal('fc-comision','');
+    if(['2000','3000'].includes(String(getVal('fc-comision')))) setVal('fc-comision','');
   }
 }
 
@@ -642,8 +643,9 @@ function renderFinanzas(){
   const cobradas=cl.filter(c=>c.comision&&c.estadoPago==='Cobrado');
   const totalCobrado=cobradas.reduce((s,c)=>s+Number(c.comision||0),0);
   // Próximas (calculadas, no cobradas)
-  const proximas=cl.filter(c=>c.comisionCalc&&c.estadoPago!=='Cobrado'&&c.fechaRetiroEstimada);
-  const totalProximo=proximas.reduce((s,c)=>s+Number(c.comisionCalc||0),0);
+  const comisionRegistrada=c=>Number(c.comisionCalc||c.comision||0);
+  const proximas=cl.filter(c=>comisionRegistrada(c)>0&&c.estadoPago!=='Cobrado'&&c.fechaRetiroEstimada);
+  const totalProximo=proximas.reduce((s,c)=>s+comisionRegistrada(c),0);
 
   // Comisiones de colaboradores
   const misColabs=colaboradoresVistaActual();
@@ -655,7 +657,7 @@ function renderFinanzas(){
     },0);
     const pendienteCol=clCol.filter(c=>c.estadoPago!=='Cobrado').reduce((s,c)=>{
       const pct=(c.colPct||col.pctComision||50)/100;
-      return s+Number(c.comisionCalc||0)*pct;
+      return s+comisionRegistrada(c)*pct;
     },0);
     const miParteCol=clCol.filter(c=>c.estadoPago==='Cobrado').reduce((s,c)=>{
       const pct=1-(c.colPct||col.pctComision||50)/100;
@@ -679,7 +681,7 @@ function renderFinanzas(){
     porMes[key].clientes.push(c);
     const col=c.colaboradorId?(store.colaboradores||[]).find(x=>x.id===c.colaboradorId):null;
     const pctCol=col?(Number(c.colPct||col.pctComision||50)/100):0;
-    porMes[key].total+=Number(c.comisionCalc||0)*(1-pctCol);
+    porMes[key].total+=comisionRegistrada(c)*(1-pctCol);
   });
   const mesesOrdenados=Object.keys(porMes).sort();
 
@@ -737,7 +739,7 @@ function renderFinanzas(){
                 <div class="comision-nombre">${c.nombre}</div>
                 <div class="comision-fecha">Retiro est. ${fmtDate(c.fechaRetiroEstimada)} · ${c.etapa==='espera_45'?'En espera':stageLabel(c.etapa,c.servicio)}</div>
               </div>
-              ${(()=>{const col=c.colaboradorId?(store.colaboradores||[]).find(x=>x.id===c.colaboradorId):null;const pct=col?Number(c.colPct||col.pctComision||50)/100:0;return `<div class="comision-monto">$${(Number(c.comisionCalc||0)*(1-pct)).toLocaleString('es-MX')}</div>`;})()}
+              ${(()=>{const col=c.colaboradorId?(store.colaboradores||[]).find(x=>x.id===c.colaboradorId):null;const pct=col?Number(c.colPct||col.pctComision||50)/100:0;return `<div class="comision-monto">$${(comisionRegistrada(c)*(1-pct)).toLocaleString('es-MX')}</div>`;})()}
             </div>
           `).join('')}
         </div>

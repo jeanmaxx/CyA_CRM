@@ -182,7 +182,7 @@ function onContratoClienteChange(){
   const s=store.servicios.find(x=>x.id===svcId);
   let honCalculado=0;
   if(s&&s.esquema==='mixto'&&c.montoAfore){
-    const calc=calcComision(Number(c.montoAfore),svcId);
+    const calc=calcComision(Number(c.montoAfore),svcId,c.asesorId);
     honCalculado=calc.honorarios;
     setVal('ct-honorarios',calc.honorarios);
   } else if(c.honorarios){
@@ -757,6 +757,7 @@ function agendarRecordatorio45(cliente){
     hora:'09:00',
     notas:'Se cumplen 45 días. Iniciar solicitud de retiro en AFORE Móvil.',
     clienteId:cliente.id,
+    asesorId:cliente.asesorId||sesionActiva?.id||null,
     completado:false,
     autoGenerado:true,
   });
@@ -772,7 +773,12 @@ function renderComingSoon(page){
 }
 
 // ==================== CÁLCULO COMISIÓN ====================
-function calcComision(monto, servicioId){
+function comisionDefaultParaAsesor(advisorId){
+  const asesor=(store.asesores||[]).find(a=>a.id===advisorId);
+  return asesor&&asesor.rol!=='admin'?2000:3000;
+}
+
+function calcComision(monto, servicioId, advisorId){
   if(!monto||monto<=0) return {honorarios:0,comision:0};
   // Buscar esquema del servicio si se pasa
   const svc=servicioId?store.servicios.find(s=>s.id===servicioId):store.servicios.find(s=>s.id==='retiro_desempleo');
@@ -783,7 +789,7 @@ function calcComision(monto, servicioId){
     const umbral=Number(svc.umbralFijo)||35000;
     if(monto>=umbral){
       honorarios=Number(svc.honorariosFijo)||8000;
-      comision=Number(svc.comisionFija)||3000;
+      comision=comisionDefaultParaAsesor(advisorId)===2000?2000:(Number(svc.comisionFija)||3000);
     } else {
       honorarios=Math.round(monto*(Number(svc.honorariosPct)||25)/100);
       comision=Math.round(honorarios*(Number(svc.comisionPct)||40)/100);
@@ -793,7 +799,7 @@ function calcComision(monto, servicioId){
     comision=Math.round(honorarios*(Number(svc.comisionPct)||40)/100);
   } else {
     // Fallback: lógica original retiro desempleo
-    if(monto>=35000){ honorarios=8000; comision=3000; }
+    if(monto>=35000){ honorarios=8000; comision=comisionDefaultParaAsesor(advisorId); }
     else { honorarios=Math.round(monto*0.25); comision=Math.round(honorarios*0.40); }
   }
   return {honorarios,comision};
@@ -811,7 +817,8 @@ function previewCalculo(){
   const preview=document.getElementById('calc-preview');
   if(!preview) return;
   if(!monto){ preview.classList.remove('show'); return; }
-  const calc=calcComision(monto, svcId);
+  const clienteEditado=editingId?store.clientes.find(c=>c.id===editingId):null;
+  const calc=calcComision(monto, svcId, clienteEditado?.asesorId||asesorDestinoVista());
   document.getElementById('cp-honorarios').textContent='$'+calc.honorarios.toLocaleString('es-MX');
   document.getElementById('cp-comision').textContent='$'+calc.comision.toLocaleString('es-MX');
   if(!editingId){

@@ -94,12 +94,14 @@ async function cloudLoadStore(){
 
   const profileLegacyIds=new Set(cloudProfiles.flatMap(p=>[p.id,p.legacyId]).filter(Boolean));
   const legacyVisible=cloudLegacyAdvisors.filter(a=>!profileLegacyIds.has(a.id));
+  const advisorByLegacyId=new Map(cloudProfiles.filter(p=>p.legacyId).map(p=>[p.legacyId,p.id]));
+  const resolvedAdvisorId=(advisorId,legacyAdvisorId)=>advisorId||advisorByLegacyId.get(legacyAdvisorId)||legacyAdvisorId||null;
 
   store={
     clientes:clients.map(r=>({
       ...cloudCleanObject(r.payload || {}),
       id:r.id,nombre:r.name,telefono:r.phone || '',curp:r.curp || '',
-      servicio:r.service_id || '',etapa:r.stage,asesorId:r.advisor_id || r.legacy_advisor_id || null,
+      servicio:r.service_id || '',etapa:r.stage,asesorId:resolvedAdvisorId(r.advisor_id,r.legacy_advisor_id),
       colaboradorId:r.collaborator_id || null,archivado:r.archived,descartado:r.discarded,
       fechaRegistro:(r.payload || {}).fechaRegistro || r.created_at,
     })),
@@ -107,7 +109,7 @@ async function cloudLoadStore(){
       ...cloudCleanObject(r.payload || {}),
       id:r.id,nombre:r.name,telefono:r.phone || '',curp:r.curp || '',
       servicio:r.service_id || '',estado:r.status,archivoTipo:r.archive_type || null,
-      fechaRecontacto:r.recontact_date || null,asesorId:r.advisor_id || r.legacy_advisor_id || null,
+      fechaRecontacto:r.recontact_date || null,asesorId:resolvedAdvisorId(r.advisor_id,r.legacy_advisor_id),
       colaboradorId:r.collaborator_id || null,
     })),
     agenda:events.map(r=>({
@@ -115,10 +117,10 @@ async function cloudLoadStore(){
       id:r.id,titulo:r.title,tipo:r.event_type,fecha:r.event_date,
       hora:r.event_time ? String(r.event_time).slice(0,5) : '',completado:r.completed,
       clienteId:r.client_id || null,leadId:r.lead_id || null,
-      asesorId:r.advisor_id || r.legacy_advisor_id || null,
+      asesorId:resolvedAdvisorId(r.advisor_id,r.legacy_advisor_id),
     })),
     servicios:(services.length ? services.map(r=>({...cloudCleanObject(r.payload || {}),id:r.id,nombre:r.name,activo:r.active})) : cloudDefaults.servicios.map(s=>({...s}))),
-    colaboradores:collaborators.map(r=>({...cloudCleanObject(r.payload || {}),id:r.id,nombre:r.name,activo:r.active,asesorId:r.advisor_id || r.legacy_advisor_id || null})),
+    colaboradores:collaborators.map(r=>({...cloudCleanObject(r.payload || {}),id:r.id,nombre:r.name,activo:r.active,asesorId:resolvedAdvisorId(r.advisor_id,r.legacy_advisor_id)})),
     asesores:[...cloudProfiles,...legacyVisible],
     plantillas:(templates.length ? templates.map(r=>({...cloudCleanObject(r.payload || {}),id:r.id,nombre:r.name,tipo:r.template_type || (r.payload || {}).tipo || 'whatsapp'})) : PLANTILLAS_DEFAULT.map(p=>({...p}))),
     configuracion:{...cloudDefaults.configuracion,...settingsPayload},

@@ -445,6 +445,7 @@ function poblarSelectColaborador(){
 // ==================== LEADS / PROSPECTOS ====================
 let editingLeadId = null;
 let leadParaArchivar = null;
+let leadConversionPendienteId = null;
 let archivadosLeadsAbiertos = true;
 
 const LEAD_ESTADOS = {
@@ -565,7 +566,6 @@ function openModalLead(id){
   if(l?.estado==='archivado'){
     estadoSel.insertAdjacentHTML('beforeend','<option value="archivado">📦 Archivado</option>');
     setVal('lead-estado','archivado');
-    estadoSel.disabled=true;
   } else {
     setVal('lead-estado',l?l.estado:'semanas');
   }
@@ -611,7 +611,24 @@ function guardarLead(){
   };
   if(editingLeadId){
     const idx=store.leads.findIndex(l=>l.id===editingLeadId);
-    if(idx>=0) store.leads[idx]={...store.leads[idx],...lead};
+    if(idx>=0){
+      const actualizado={...store.leads[idx],...lead};
+      if(leadAnterior?.estado==='archivado'&&lead.estado!=='archivado'){
+        delete actualizado.archivoTipo;
+        delete actualizado.causaArchivo;
+        delete actualizado.causaArchivoId;
+        delete actualizado.notasArchivo;
+        delete actualizado.fechaArchivo;
+        delete actualizado.fechaUltimoRetiro;
+        delete actualizado.fechaRecontacto;
+        actualizado.recontactar=false;
+        actualizado.recontactoVencido=false;
+        const notaReactivado='REACTIVADO MANUALMENTE: '+fmtDateTime(new Date());
+        actualizado.notas=((actualizado.notas||'')+'\n'+notaReactivado).trim();
+        store.agenda=(store.agenda||[]).filter(e=>e.id!=='ev_recontacto_'+actualizado.id);
+      }
+      store.leads[idx]=actualizado;
+    }
     showToast('Prospecto actualizado','success');
   } else {
     store.leads.push(lead);
@@ -714,24 +731,28 @@ function convertirLeadACliente(){
   if(!editingLeadId) return;
   const l=store.leads.find(x=>x.id===editingLeadId);
   if(!l) return;
+  const borrador={...l,
+    nombre:(getVal('lead-nombre')||l.nombre||'').trim(),
+    telefono:getVal('lead-tel')||l.telefono||'',
+    curp:(getVal('lead-curp')||l.curp||'').toUpperCase(),
+    servicio:getVal('lead-servicio')||l.servicio||'retiro_desempleo',
+    colaboradorId:getVal('lead-colaborador')||l.colaboradorId||null,
+    notas:getVal('lead-notas')||l.notas||'',
+  };
   closeModal('modal-lead');
-  openModalCliente();
+  openModalCliente(l.id);
   // Precargar datos del lead
   setTimeout(()=>{
-    setVal('fc-nombre',l.nombre);
-    setVal('fc-telefono',l.telefono||'');
-    setVal('fc-curp',l.curp||'');
-    setVal('fc-servicio',l.servicio||'retiro_desempleo');
+    setVal('fc-nombre',borrador.nombre);
+    setVal('fc-telefono',borrador.telefono);
+    setVal('fc-curp',borrador.curp);
+    setVal('fc-servicio',borrador.servicio);
     onServicioChange();
-    setVal('fc-etapa',stagesFor(l.servicio||'retiro_desempleo')[0].id);
-    setVal('fc-notas','Convertido desde prospecto.'+(l.notas?' '+l.notas:''));
-    setVal('fc-colaborador',l.colaboradorId||'');
+    setVal('fc-etapa',stagesFor(borrador.servicio)[0].id);
+    setVal('fc-notas','Convertido desde prospecto.'+(borrador.notas?' '+borrador.notas:''));
+    setVal('fc-colaborador',borrador.colaboradorId||'');
     poblarSelectColaborador();
-    if(l.colaboradorId) setVal('fc-colaborador',l.colaboradorId);
-    // Marcar lead como aprobado y archivado
-    l.estado='archivado';
-    l.causaArchivo='Convertido a cliente';
-    saveStore();
+    if(borrador.colaboradorId) setVal('fc-colaborador',borrador.colaboradorId);
   },100);
 }
 

@@ -77,7 +77,7 @@ function openPerfil(id){
   const finanzasConfiguradas=c.finanzasConfiguradas===true;
   const finMontoValor=finanzasConfiguradas?(c.montoRetiro??c.montoAfore??''):(c.montoRetiro||c.montoAfore||(esRetiro?35190:''));
   const finHonorariosValor=finanzasConfiguradas?(c.honorarios??''):(c.honorarios||c.honorariosCalc||(esRetiro?8000:''));
-  const finComisionValor=finanzasConfiguradas?(c.comision??''):(c.comision||c.comisionCalc||(esRetiro?3000:''));
+  const finComisionValor=finanzasConfiguradas?(c.comision??''):(c.comision||c.comisionCalc||(esRetiro?comisionDefaultParaAsesor(c.asesorId):''));
   perfilClienteActivo=id;
   perfilDirty=false;
   const stages=stagesFor(c.servicio);
@@ -293,7 +293,8 @@ function pTab(id, el){
 }
 
 // ---- MODAL CLIENTE ----
-function openModalCliente(){
+function openModalCliente(origenLeadId=null){
+  leadConversionPendienteId=origenLeadId||null;
   editingId=null;
   extraDocsModal=[];
   clearModalCliente();
@@ -311,6 +312,7 @@ function openModalCliente(){
 function editCliente(id){
   const c=store.clientes.find(x=>x.id===id);
   if(!c) return;
+  leadConversionPendienteId=null;
   editingId=id;
   extraDocsModal=[...(c.docsExtra||[])];
   document.getElementById('modal-cliente-title').textContent='Editar cliente';
@@ -415,6 +417,7 @@ function guardarCliente(){
   const docs={};
   document.querySelectorAll('#modal-docs-list .doc-check').forEach(el=>{ docs[el.dataset.doc]=el.classList.contains('checked'); });
   const oldCliente=editingId?store.clientes.find(c=>c.id===editingId):null;
+  const leadOrigenConversion=!editingId&&leadConversionPendienteId?store.leads.find(l=>l.id===leadConversionPendienteId):null;
   const montoFin=getVal('fc-monto').trim();
   const honorariosFin=getVal('fc-honorarios').trim();
   const comisionFin=getVal('fc-comision').trim();
@@ -439,7 +442,8 @@ function guardarCliente(){
     finanzasConfiguradas:editingId?true:[montoFin,honorariosFin,comisionFin].some(v=>v!==''),
   };
   // Calcular comisión automática si hay monto
-  const calc=calcComision(Number(cliente.montoAfore)||0, cliente.servicio);
+  const asesorCalculoId=oldCliente?.asesorId||leadOrigenConversion?.asesorId||asesorDestinoVista();
+  const calc=calcComision(Number(cliente.montoAfore)||0, cliente.servicio, asesorCalculoId);
   cliente.honorariosCalc=calc.honorarios;
   cliente.comisionCalc=calc.comision;
 
@@ -472,7 +476,7 @@ function guardarCliente(){
     cliente.id='c_'+Date.now();
     cliente.fechaRegistro=new Date().toISOString();
     cliente.historial=[];
-    cliente.asesorId=asesorDestinoVista();
+    cliente.asesorId=leadOrigenConversion?.asesorId||asesorDestinoVista();
     cliente.asesorNombre=(store.asesores.find(a=>a.id===cliente.asesorId)||sesionActiva||{}).nombre||'';
     cliente.fechaRetiroEstimada=calcFechaRetiro(cliente.fechaRegistro);
     cliente.fechaRetiroEstimadaManual=false;
@@ -497,8 +501,19 @@ function guardarCliente(){
         titulo:(proxNota||getSvcLabel(cliente.servicio)||'Seguimiento')+' — '+cliente.nombre,
         tipo:proxTipo, fecha:proxFecha, hora:proxHora,
         notas:proxNota, clienteId:cliente.id, completado:false,
+        asesorId:cliente.asesorId||sesionActiva?.id||null,
       });
       addHist(cliente,'agenda','Próxima acción agendada: '+proxFecha);
+    }
+    if(leadOrigenConversion){
+      leadOrigenConversion.estado='archivado';
+      leadOrigenConversion.archivoTipo='definitivo';
+      leadOrigenConversion.causaArchivo='Convertido a cliente';
+      leadOrigenConversion.causaArchivoId='convertido_cliente';
+      leadOrigenConversion.fechaArchivo=new Date().toISOString();
+      cliente.origenLeadId=leadOrigenConversion.id;
+      addHist(cliente,'registro','Prospecto convertido a cliente');
+      leadConversionPendienteId=null;
     }
     showToast('Cliente agregado correctamente','success');
   }
