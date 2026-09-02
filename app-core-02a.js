@@ -95,8 +95,9 @@ function renderDashboard(){
   <!-- AGENDA DEL DÍA — PROMINENTE -->
   ${(()=>{
     const hoyStr=new Date().toISOString().split('T')[0];
-    const eventosHoyList=(store.agenda||[]).filter(e=>e.fecha===hoyStr&&!e.completado&&!e.cancelarRecordatorio);
-    const vencidos=(store.agenda||[]).filter(e=>e.fecha<hoyStr&&!e.completado);
+    const agendaVisible=eventosVistaActual();
+    const eventosHoyList=agendaVisible.filter(e=>e.fecha===hoyStr&&!e.completado&&!e.cancelarRecordatorio);
+    const vencidos=agendaVisible.filter(e=>e.fecha<hoyStr&&!e.completado);
     if(!eventosHoyList.length&&!vencidos.length) return '';
     const TIPO_LABELS={llamada:'📞 Llamada',whatsapp:'💬 WhatsApp',meet:'🎥 Meet',cita:'📅 Cita',recordatorio:'🔔 Recordatorio',vencimiento:'⏰ Vencimiento',otro:'📌 Otro'};
     const TIPO_COLORS={llamada:'#3b82f6',whatsapp:'#25d366',meet:'#8b5cf6',cita:'#0ea5e9',recordatorio:'#10b981',vencimiento:'#ef4444',otro:'#64748b'};
@@ -333,11 +334,12 @@ function renderClientes(){
   const descartados=cl.filter(c=>c.descartado);
   const activos=cl.filter(c=>!c.descartado);
   const alertas=alertasSeguimiento(activos);
-  const misColabs=(store.colaboradores||[]).filter(c=>{
-    if(!sesionActiva) return true;
-    return isAdmin()||c.asesorId===sesionActiva.id;
-  });
+  const misColabs=colaboradoresVistaActual().filter(c=>c.activo!==false);
   return `
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+    <div><div class="section-title">Clientes</div><div class="section-sub" style="margin-bottom:0;">Base de clientes y seguimiento de trámites</div></div>
+    <div style="margin-left:auto;">${getSelectorVistaHTML(true)}</div>
+  </div>
   ${alertas.length>0?`
   <div style="margin-bottom:12px;">
     <div class="alerta-firma alerta-amarilla" style="flex-direction:column;align-items:flex-start;gap:4px;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
@@ -492,4 +494,3 @@ function toggleOtrosServiciosPipeline(){
   otrosServiciosPipelineAbierto=!otrosServiciosPipelineAbierto;
   renderPage('pipeline');
 }
-
