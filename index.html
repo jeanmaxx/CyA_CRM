@@ -108,18 +108,18 @@
 
 <!-- MODAL PERFIL CLIENTE (centrado, grande) -->
 <div class="modal-overlay" id="modal-perfil">
-  <div class="modal modal-lg">
-    <div class="modal-header">
-      <div>
+  <div class="modal modal-lg client-profile-modal">
+    <div class="modal-header profile-header">
+      <div class="profile-header-copy">
         <div class="modal-title" id="perfil-title">Perfil del cliente</div>
         <div style="font-size:12px;color:var(--text-muted)" id="perfil-sub"></div>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div class="profile-header-actions">
         <button class="btn" id="perfil-edit-btn">✎ Editar</button>
         <button class="btn btn-primary" id="perfil-save-btn" onclick="guardarCambiosPerfil()">Guardar cambios</button>
         <button class="btn" id="perfil-regresar-prospecto-btn" style="font-size:12px;color:var(--warning);" onclick="abrirRegresoProspecto(perfilClienteActivo)">↩ Regresar a prospectos</button>
         <button class="btn" id="perfil-descartar-btn" style="color:var(--text-muted);font-size:12px;" onclick="abrirDescarte(perfilClienteActivo)">Descartar</button>
-        <button class="btn btn-icon" onclick="closeModal('modal-perfil')">✕</button>
+        <button class="btn btn-icon profile-close" onclick="closeModal('modal-perfil')" aria-label="Cerrar expediente">✕</button>
       </div>
     </div>
     <div class="modal-body" id="perfil-body"></div>
@@ -128,13 +128,13 @@
 
 <!-- MODAL NUEVO / EDITAR CLIENTE -->
 <div class="modal-overlay" id="modal-cliente">
-  <div class="modal">
+  <div class="modal client-edit-modal">
     <div class="modal-header">
       <div class="modal-title" id="modal-cliente-title">Nuevo cliente</div>
       <button class="btn btn-icon" onclick="closeModal('modal-cliente')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="tabs" id="modal-tabs">
+      <div class="tabs client-edit-tabs" id="modal-tabs">
         <div class="tab active" onclick="switchTab('tab-contacto',0)">Contacto</div>
         <div class="tab" onclick="switchTab('tab-datos-extra',1)">Datos adicionales</div>
       </div>
@@ -350,7 +350,7 @@
         </div>
       </div>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer client-edit-footer">
           <button class="btn" onclick="closeModal('modal-cliente')">Cancelar</button>
           <button class="btn btn-primary" onclick="guardarCliente()">Guardar cliente</button>
     </div>
