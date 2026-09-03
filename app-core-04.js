@@ -796,6 +796,8 @@ function formatoMoneda(valor){
 }
 
 function comisionEfectiva(cliente){
+  const conciliada=comisionCompartidaPorConciliar(cliente);
+  if(conciliada!==null) return conciliada;
   if(tieneMontoFinanciero(cliente?.comision)) return redondearMoneda(cliente.comision);
   return redondearMoneda(cliente?.comisionCalc||0);
 }
@@ -819,12 +821,43 @@ function porcentajeComisionColaborador(cliente,colaborador){
   return Math.max(0,Math.min(100,Number.isFinite(valor)?valor:50))/100;
 }
 
+function colaboradorDeCliente(cliente){
+  return cliente?.colaboradorId?(store.colaboradores||[]).find(x=>x.id===cliente.colaboradorId):null;
+}
+
+// Concilia registros anteriores en los que quedó guardada la referencia automática
+// ($4,997 en el caso reportado) aunque la distribución configurada era $3,000 para
+// el asesor y $2,000 para el colaborador. El ajuste es deliberadamente estrecho:
+// solo aplica a importes automáticos a menos de $10 del total exacto esperado.
+function comisionCompartidaPorConciliar(cliente){
+  const colaborador=colaboradorDeCliente(cliente);
+  if(!colaborador||cliente?.comisionManual===true) return null;
+  const porcentaje=porcentajeComisionColaborador(cliente,colaborador);
+  if(porcentaje<=0||porcentaje>=1) return null;
+  const actual=tieneMontoFinanciero(cliente?.comision)?Number(cliente.comision):Number(cliente?.comisionCalc||0);
+  if(!Number.isFinite(actual)||actual<=0) return null;
+  const netoAsesor=comisionDefaultParaAsesor(cliente?.asesorId);
+  const objetivo=Math.round(netoAsesor/(1-porcentaje));
+  return Math.abs(actual-objetivo)<=10?objetivo:null;
+}
+
+function conciliarComisionCompartida(cliente){
+  const objetivo=comisionCompartidaPorConciliar(cliente);
+  if(objetivo===null) return false;
+  cliente.comision=objetivo;
+  cliente.comisionManual=true;
+  cliente.comisionConciliada=true;
+  return true;
+}
+
 function comisionDelColaborador(cliente,colaborador){
-  return redondearMoneda(comisionEfectiva(cliente)*porcentajeComisionColaborador(cliente,colaborador));
+  // Las comisiones operativas se pagan en pesos completos; así no se generan
+  // centavos artificiales al repartir un porcentaje.
+  return Math.round(comisionEfectiva(cliente)*porcentajeComisionColaborador(cliente,colaborador));
 }
 
 function comisionDelAsesor(cliente,colaborador){
-  return redondearMoneda(comisionEfectiva(cliente)-comisionDelColaborador(cliente,colaborador));
+  return Math.round(comisionEfectiva(cliente))-comisionDelColaborador(cliente,colaborador);
 }
 
 function calcComision(monto, servicioId, advisorId){

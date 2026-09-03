@@ -336,13 +336,13 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">📅 Cita biométrica AFORE</label>
-            <input class="form-input" id="fc-fecha-biometrica" type="date">
-            <div class="form-helper">Alertas 1 y 2 días antes</div>
+            <input class="form-input input-fecha-mx" id="fc-fecha-biometrica" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" oninput="mascaraFechaMX(this)" onblur="validarVisualFechaMX(this)">
+            <div class="form-helper">Formato: dd/mm/aaaa · Alertas 1 y 2 días antes</div>
           </div>
           <div class="form-group">
             <label class="form-label">📋 Fecha solicitud AFORE (manual)</label>
-            <input class="form-input" id="fc-fecha-solicitud-manual" type="date">
-            <div class="form-helper">Reemplaza el cálculo automático de 45 días</div>
+            <input class="form-input input-fecha-mx" id="fc-fecha-solicitud-manual" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" oninput="mascaraFechaMX(this)" onblur="validarVisualFechaMX(this)">
+            <div class="form-helper">Formato: dd/mm/aaaa · Reemplaza el cálculo automático de 45 días</div>
           </div>
         </div>
         <hr class="divider">
@@ -1017,15 +1017,15 @@
 
 <script src="app-core-01.js?v=20260903-saludos"></script>
 <script src="app-core-02a.js?v=20260903-dashboard-prioridades"></script>
-<script src="app-core-02b.js?v=20260903-dashboard-prioridades"></script>
-<script src="app-core-03.js?v=20260903-dashboard-prioridades"></script>
-<script src="app-core-04.js?v=20260903-dashboard-prioridades"></script>
+<script src="app-core-02b.js?v=20260903-finanzas-fecha-afore"></script>
+<script src="app-core-03.js?v=20260903-finanzas-fecha-afore"></script>
+<script src="app-core-04.js?v=20260903-finanzas-fecha-afore"></script>
 <script src="app-core-05.js?v=20260903-dashboard-prioridades"></script>
 <script src="app-core-06.js?v=20260903-dashboard-prioridades"></script>
 <script src="app-core-07.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="cloud-config.js"></script>
-<script src="cloud-adapter.js?v=20260903-finanzas-contrato"></script>
+<script src="cloud-adapter.js?v=20260903-finanzas-fecha-afore"></script>
 <script>
 initCloudApp();
 </script>

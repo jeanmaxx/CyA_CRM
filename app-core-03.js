@@ -216,8 +216,12 @@ function guardarFinanzas(id){
   c.montoAfore=c.montoRetiro;
   c.honorarios=honorariosManual===''?'':Number(honorariosManual);
   c.comision=comisionManual===''?'':Number(comisionManual);
-  c.honorariosCalc=c.honorarios;
-  c.comisionCalc=c.comision;
+  c.comisionManual=comisionManual!=='';
+  // La referencia automática permanece separada de los importes capturados.
+  // Esto evita que una edición manual vuelva a convertirse en un cálculo estimado.
+  const referencia=calcComision(Number(c.montoAfore)||0,c.servicio,c.asesorId);
+  c.honorariosCalc=referencia.honorarios;
+  c.comisionCalc=referencia.comision;
   c.estadoPago=estadoPago||'';
   c.fechaRetiroEstimada=fechaEst;
   c.fechaRetiroEstimadaManual=true;

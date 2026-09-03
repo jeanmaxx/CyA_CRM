@@ -278,6 +278,7 @@ function cloudRepairOperationalOwnership(){
     if(ownerId){event.asesorId=ownerId;changed=true;}
   }
   for(const client of (store.clientes||[])){
+    if(conciliarComisionCompartida(client)) changed=true;
     if(!client.archivado&&!client.descartado&&comisionEfectiva(client)>0&&!String(client.estadoPago||'').trim()){
       client.estadoPago='Pendiente';
       changed=true;

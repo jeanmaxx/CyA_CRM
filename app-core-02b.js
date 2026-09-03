@@ -78,11 +78,12 @@ function renderPipeline(){
 function openPerfil(id){
   const c=store.clientes.find(x=>x.id===id);
   if(!c) return;
+  const colaboradorFinanzas=colaboradorDeCliente(c);
   const esRetiro=c.servicio==='retiro_desempleo';
   const finanzasConfiguradas=c.finanzasConfiguradas===true;
   const finMontoValor=finanzasConfiguradas?(c.montoRetiro??c.montoAfore??''):(c.montoRetiro||c.montoAfore||(esRetiro?35190:''));
   const finHonorariosValor=finanzasConfiguradas?(c.honorarios??''):(c.honorarios||c.honorariosCalc||(esRetiro?8000:''));
-  const finComisionValor=finanzasConfiguradas?(c.comision??''):(c.comision||c.comisionCalc||(esRetiro?comisionDefaultParaAsesor(c.asesorId):''));
+  const finComisionValor=finanzasConfiguradas?(tieneMontoFinanciero(c.comision)?comisionEfectiva(c):''):(c.comision||c.comisionCalc||(esRetiro?comisionDefaultParaAsesor(c.asesorId):''));
   const estadoPagoPerfil=estadoPagoEfectivo(c);
   perfilClienteActivo=id;
   perfilDirty=false;
@@ -267,6 +268,7 @@ function openPerfil(id){
         <div class="info-row"><span class="ir-label">Cantidad a retirar de AFORE</span><span class="ir-value">${(c.montoRetiro||c.montoAfore)?'$'+Number(c.montoRetiro||c.montoAfore).toLocaleString('es-MX'):'— (pendiente)'}</span></div>
         <div class="info-row"><span class="ir-label">Honorarios empresa</span><span class="ir-value">${c.honorarios?'$'+Number(c.honorarios).toLocaleString('es-MX'):'—'}</span></div>
         <div class="info-row"><span class="ir-label">Comisión aplicada</span><span class="ir-value" style="color:var(--success);font-size:15px;">${comisionEfectiva(c)>0?formatoMoneda(comisionEfectiva(c))+(tieneMontoFinanciero(c.comision)?'':' (estimada)'):'—'}</span></div>
+        ${colaboradorFinanzas&&comisionEfectiva(c)>0?`<div class="info-row"><span class="ir-label">Distribución de comisión</span><span class="ir-value">Asesor ${formatoMoneda(comisionDelAsesor(c,colaboradorFinanzas))} · ${escapeHTMLBasico(colaboradorFinanzas.nombre)} ${formatoMoneda(comisionDelColaborador(c,colaboradorFinanzas))}</span></div>`:''}
         <div class="info-row"><span class="ir-label">Estado de pago</span><span class="ir-value" style="${estadoPagoPerfil==='Cobrado'?'color:var(--success)':estadoPagoPerfil==='Pendiente'?'color:var(--warning)':''}">${estadoPagoPerfil||'—'}</span></div>
       </div>
       <hr class="divider">
@@ -276,7 +278,7 @@ function openPerfil(id){
         <div class="form-group"><label class="form-label">Honorarios <span style="color:var(--text-muted);font-weight:400">(editable)</span></label><input class="form-input" id="fin-hon-${c.id}" value="${finHonorariosValor}" type="number" style="font-size:12px;"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Comisión <span style="color:var(--text-muted);font-weight:400">(editable)</span></label><input class="form-input" id="fin-com-${c.id}" value="${finComisionValor}" type="number" style="font-size:12px;"></div>
+        <div class="form-group"><label class="form-label">${colaboradorFinanzas?'Comisión total a repartir':'Comisión'} <span style="color:var(--text-muted);font-weight:400">(editable)</span></label><input class="form-input" id="fin-com-${c.id}" value="${finComisionValor}" type="number" style="font-size:12px;"></div>
         <div class="form-group"><label class="form-label">Fecha retiro estimada <span style="color:var(--text-muted);font-weight:400">(editable)</span></label><input class="form-input" id="fin-fecha-${c.id}" value="${c.fechaRetiroEstimada||''}" type="date" style="font-size:12px;"></div>
       </div>
       <div class="form-row">
@@ -339,10 +341,10 @@ function editCliente(id){
   setVal('fc-nss',c.nss);setVal('fc-curp',c.curp);setVal('fc-rfc',c.rfc);
   setVal('fc-monto',c.montoAfore);setVal('fc-domicilio',c.domicilio);
   setVal('fc-banco',c.banco||'');setVal('fc-clabe',c.clabe||'');
-  setVal('fc-fecha-biometrica',c.fechaBiometrica||'');
-  setVal('fc-fecha-solicitud-manual',c.fechaSolicitudManual||'');
+  setFechaMX('fc-fecha-biometrica',c.fechaBiometrica||'');
+  setFechaMX('fc-fecha-solicitud-manual',c.fechaSolicitudManual||'');
   setVal('fc-honorarios',c.honorarios||c.honorariosCalc||'');
-  setVal('fc-comision',c.comision||c.comisionCalc||'');
+  setVal('fc-comision',comisionEfectiva(c)||'');
   // Re-validar indicadores
   const nssEl=document.getElementById('fc-nss');
   if(nssEl&&nssEl.value) validateNSS(nssEl);
@@ -429,6 +431,10 @@ function guardarCliente(){
   const montoFin=getVal('fc-monto').trim();
   const honorariosFin=getVal('fc-honorarios').trim();
   const comisionFin=getVal('fc-comision').trim();
+  const fechaBiometrica=leerFechaMX('fc-fecha-biometrica');
+  if(fechaBiometrica===null){switchTab('tab-datos-extra',1);return;}
+  const fechaSolicitudManual=leerFechaMX('fc-fecha-solicitud-manual');
+  if(fechaSolicitudManual===null){switchTab('tab-datos-extra',1);return;}
   const cliente={...(oldCliente||{}),
     nombre,telefono:tel,email:getVal('fc-email'),ciudad:getVal('fc-ciudad'),
     servicio:svc,etapa:stagesFor(svc).some(s=>s.id===getVal('fc-etapa'))?getVal('fc-etapa'):stagesFor(svc)[0].id,fuente:getVal('fc-fuente'),notas:getVal('fc-notas'),
@@ -443,8 +449,8 @@ function guardarCliente(){
     colPct:Number(getVal('fc-col-pct'))||50,
     banco:getVal('fc-banco')||'',
     clabe:getVal('fc-clabe')||'',
-    fechaBiometrica:getVal('fc-fecha-biometrica')||'',
-    fechaSolicitudManual:getVal('fc-fecha-solicitud-manual')||'',
+    fechaBiometrica,
+    fechaSolicitudManual,
     honorarios:honorariosFin===''?'':Number(honorariosFin),
     comision:comisionFin===''?'':Number(comisionFin),
     finanzasConfiguradas:editingId?true:[montoFin,honorariosFin,comisionFin].some(v=>v!==''),
@@ -454,6 +460,10 @@ function guardarCliente(){
   const calc=calcComision(Number(cliente.montoAfore)||0, cliente.servicio, asesorCalculoId);
   cliente.honorariosCalc=calc.honorarios;
   cliente.comisionCalc=calc.comision;
+  cliente.comisionManual=comisionFin!==''&&(
+    oldCliente?.comisionManual===true||
+    Math.abs(Number(comisionFin)-Number(calc.comision||0))>0.009
+  );
   if(comisionEfectiva(cliente)>0&&!String(cliente.estadoPago||'').trim()) cliente.estadoPago='Pendiente';
   if(cliente.servicio==='retiro_desempleo'){
     const etapas=stagesFor(cliente.servicio);
