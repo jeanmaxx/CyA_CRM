@@ -83,6 +83,7 @@ function openPerfil(id){
   const finMontoValor=finanzasConfiguradas?(c.montoRetiro??c.montoAfore??''):(c.montoRetiro||c.montoAfore||(esRetiro?35190:''));
   const finHonorariosValor=finanzasConfiguradas?(c.honorarios??''):(c.honorarios||c.honorariosCalc||(esRetiro?8000:''));
   const finComisionValor=finanzasConfiguradas?(c.comision??''):(c.comision||c.comisionCalc||(esRetiro?comisionDefaultParaAsesor(c.asesorId):''));
+  const estadoPagoPerfil=estadoPagoEfectivo(c);
   perfilClienteActivo=id;
   perfilDirty=false;
   const stages=stagesFor(c.servicio);
@@ -198,10 +199,10 @@ function openPerfil(id){
       <div style="margin-bottom:16px;">
         <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Estado del contrato</div>
         <div class="profile-contract-status">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-            <input type="checkbox" id="chk-firmado-${c.id}" ${c.contratoFirmado?'checked':''} onchange="toggleContratoFirmado('${c.id}',this)" style="width:16px;height:16px;">
-            Contrato firmado
-          </label>
+          <div>
+            <div style="font-size:13px;font-weight:600;">${c.contratoFirmado?'Contrato firmado':'Contrato pendiente de firma'}</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:3px;">El estado se actualiza al avanzar a la etapa 3 · Firmado</div>
+          </div>
           ${c.contratoFirmado?`<span class="chip chip-green">✓ Firmado</span>`:`<span class="chip chip-red">✗ Pendiente</span>`}
         </div>
         ${c.contratoFirmado?`
@@ -258,15 +259,15 @@ function openPerfil(id){
         <div style="font-size:11px;color:var(--accent-blue);font-weight:600;margin-bottom:8px;">CÁLCULO AUTOMÁTICO — Monto AFORE: $${Number(c.montoAfore).toLocaleString('es-MX')}</div>
         <div class="profile-finance-auto-grid">
           <div><div style="font-size:10px;color:var(--text-muted)">Honorarios empresa</div><div style="font-size:14px;font-weight:600;">$${Number(c.honorariosCalc||0).toLocaleString('es-MX')}</div></div>
-          <div><div style="font-size:10px;color:var(--text-muted)">Tu comisión calc.</div><div style="font-size:14px;font-weight:600;color:var(--warning);">$${Number(c.comisionCalc||0).toLocaleString('es-MX')}</div></div>
+          <div><div style="font-size:10px;color:var(--text-muted)">Comisión automática de referencia</div><div style="font-size:14px;font-weight:600;color:var(--warning);">${formatoMoneda(c.comisionCalc||0)}</div></div>
           <div><div style="font-size:10px;color:var(--text-muted)">Retiro est.</div><div style="font-size:13px;font-weight:600;">${fmtDate(c.fechaRetiroEstimada)}</div></div>
         </div>
       </div>`:''}
       <div class="info-rows" style="margin-bottom:14px;">
         <div class="info-row"><span class="ir-label">Cantidad a retirar de AFORE</span><span class="ir-value">${(c.montoRetiro||c.montoAfore)?'$'+Number(c.montoRetiro||c.montoAfore).toLocaleString('es-MX'):'— (pendiente)'}</span></div>
         <div class="info-row"><span class="ir-label">Honorarios empresa</span><span class="ir-value">${c.honorarios?'$'+Number(c.honorarios).toLocaleString('es-MX'):'—'}</span></div>
-        <div class="info-row"><span class="ir-label">Tu comisión</span><span class="ir-value" style="color:var(--success);font-size:15px;">${c.comision?'$'+Number(c.comision).toLocaleString('es-MX'):c.comisionCalc?'$'+Number(c.comisionCalc).toLocaleString('es-MX')+' (estimada)':'—'}</span></div>
-        <div class="info-row"><span class="ir-label">Estado de pago</span><span class="ir-value" style="${c.estadoPago==='Cobrado'?'color:var(--success)':c.estadoPago==='Pendiente'?'color:var(--warning)':''}">${c.estadoPago||'—'}</span></div>
+        <div class="info-row"><span class="ir-label">Comisión aplicada</span><span class="ir-value" style="color:var(--success);font-size:15px;">${comisionEfectiva(c)>0?formatoMoneda(comisionEfectiva(c))+(tieneMontoFinanciero(c.comision)?'':' (estimada)'):'—'}</span></div>
+        <div class="info-row"><span class="ir-label">Estado de pago</span><span class="ir-value" style="${estadoPagoPerfil==='Cobrado'?'color:var(--success)':estadoPagoPerfil==='Pendiente'?'color:var(--warning)':''}">${estadoPagoPerfil||'—'}</span></div>
       </div>
       <hr class="divider">
       <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Editar / confirmar datos de cobro</div>
@@ -282,7 +283,7 @@ function openPerfil(id){
         <div class="form-group"><label class="form-label">Estado de pago</label>
           <select class="form-select" id="fin-estado-${c.id}" style="font-size:12px;">
             <option value="">— Seleccionar —</option>
-            ${['Pendiente','Cobrado','Pagará con pagaré'].map(o=>`<option value="${o}" ${c.estadoPago===o?'selected':''}>${o}</option>`).join('')}
+            ${['Pendiente','Cobrado','Pagará con pagaré'].map(o=>`<option value="${o}" ${estadoPagoPerfil===o?'selected':''}>${o}</option>`).join('')}
           </select>
         </div>
       </div>
@@ -453,6 +454,16 @@ function guardarCliente(){
   const calc=calcComision(Number(cliente.montoAfore)||0, cliente.servicio, asesorCalculoId);
   cliente.honorariosCalc=calc.honorarios;
   cliente.comisionCalc=calc.comision;
+  if(comisionEfectiva(cliente)>0&&!String(cliente.estadoPago||'').trim()) cliente.estadoPago='Pendiente';
+  if(cliente.servicio==='retiro_desempleo'){
+    const etapas=stagesFor(cliente.servicio);
+    const indiceFirma=etapas.findIndex(s=>s.id==='contrato_firmado');
+    const indiceActual=etapas.findIndex(s=>s.id===cliente.etapa);
+    if(indiceFirma>=0&&indiceActual>=indiceFirma&&!cliente.contratoFirmado){
+      cliente.contratoFirmado=true;
+      cliente.fechaFirmaContrato=cliente.fechaFirmaContrato||new Date().toISOString().split('T')[0];
+    }
+  }
 
   if(editingId){
     const idx=store.clientes.findIndex(c=>c.id===editingId);
@@ -462,7 +473,7 @@ function guardarCliente(){
       cliente.fechaRegistro=old.fechaRegistro;
       cliente.historial=old.historial||[];
       cliente.montoRetiro=cliente.montoAfore;
-      cliente.estadoPago=old.estadoPago;
+      cliente.estadoPago=old.estadoPago||(comisionEfectiva(cliente)>0?'Pendiente':'');
       // Fecha retiro: si ya existe y fue editada manualmente, preservar; si no, calcular
       cliente.fechaRetiroEstimada=old.fechaRetiroEstimadaManual
         ? old.fechaRetiroEstimada

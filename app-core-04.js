@@ -779,6 +779,54 @@ function comisionDefaultParaAsesor(advisorId){
   return asesor&&asesor.rol!=='admin'?2000:3000;
 }
 
+function tieneMontoFinanciero(valor){
+  return valor!==''&&valor!==null&&valor!==undefined&&Number.isFinite(Number(valor));
+}
+
+function redondearMoneda(valor){
+  return Math.round((Number(valor)||0)*100)/100;
+}
+
+function formatoMoneda(valor){
+  const monto=redondearMoneda(valor);
+  return '$'+monto.toLocaleString('es-MX',{
+    minimumFractionDigits:Number.isInteger(monto)?0:2,
+    maximumFractionDigits:2,
+  });
+}
+
+function comisionEfectiva(cliente){
+  if(tieneMontoFinanciero(cliente?.comision)) return redondearMoneda(cliente.comision);
+  return redondearMoneda(cliente?.comisionCalc||0);
+}
+
+function comisionEstaCobrada(cliente){
+  return String(cliente?.estadoPago||'').trim().toLocaleLowerCase('es-MX')==='cobrado';
+}
+
+function comisionEstaPendiente(cliente){
+  return comisionEfectiva(cliente)>0&&!comisionEstaCobrada(cliente);
+}
+
+function estadoPagoEfectivo(cliente){
+  const estado=String(cliente?.estadoPago||'').trim();
+  return estado||(comisionEstaPendiente(cliente)?'Pendiente':'');
+}
+
+function porcentajeComisionColaborador(cliente,colaborador){
+  const especifico=cliente?.colPct;
+  const valor=tieneMontoFinanciero(especifico)?Number(especifico):Number(colaborador?.pctComision??50);
+  return Math.max(0,Math.min(100,Number.isFinite(valor)?valor:50))/100;
+}
+
+function comisionDelColaborador(cliente,colaborador){
+  return redondearMoneda(comisionEfectiva(cliente)*porcentajeComisionColaborador(cliente,colaborador));
+}
+
+function comisionDelAsesor(cliente,colaborador){
+  return redondearMoneda(comisionEfectiva(cliente)-comisionDelColaborador(cliente,colaborador));
+}
+
 function calcComision(monto, servicioId, advisorId){
   if(!monto||monto<=0) return {honorarios:0,comision:0};
   // Buscar esquema del servicio si se pasa

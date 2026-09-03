@@ -152,35 +152,6 @@ function updateRolUI(){
   if(adminSection) adminSection.style.display=sesionActiva.rol==='admin'?'':'none';
 }
 
-async function toggleContratoFirmado(id, checkbox){
-  const c=store.clientes.find(x=>x.id===id);
-  if(!c) return;
-  c.contratoFirmado=checkbox.checked;
-  if(checkbox.checked){
-    if(!c.fechaFirmaContrato) c.fechaFirmaContrato=new Date().toISOString().split('T')[0];
-    addHist(c,'contrato','✅ Contrato marcado como firmado');
-    if(!c.fechaRetiroEstimadaManual) c.fechaRetiroEstimada=calcFechaRetiro(c.fechaFirmaContrato+'T12:00:00');
-    if(c.servicio==='retiro_desempleo') await agendarRecordatorio45(c);
-    showToast('Contrato marcado como firmado','success');
-  } else {
-    c.fechaFirmaContrato='';
-    addHist(c,'contrato','Contrato desmarcado como firmado');
-    showToast('Contrato desmarcado','info');
-  }
-  saveStore();
-  const alertaEl=document.getElementById('perfil-alerta-firma');
-  if(alertaEl) alertaEl.style.display=(!c.contratoFirmado&&c.servicio==='retiro_desempleo')?'':'none';
-}
-
-async function guardarFechaFirma(id, fecha){
-  const c=store.clientes.find(x=>x.id===id);
-  if(!c) return;
-  c.fechaFirmaContrato=fecha;
-  if(!c.fechaRetiroEstimadaManual) c.fechaRetiroEstimada=calcFechaRetiro(fecha+'T12:00:00');
-  addHist(c,'contrato','Fecha de firma actualizada: '+fmtDate(fecha));
-  saveStore();
-  showToast('Fecha de firma guardada','success');
-}
 function guardarFechaFirma(id, fecha){
   const c=store.clientes.find(x=>x.id===id);
   if(!c) return;
@@ -698,36 +669,26 @@ function renderConfiguracion(){
 function renderFinanzas(){
   const cl=(clientesVistaActual()||[]).filter(c=>!c.descartado&&!c.archivado);
   // Cobradas
-  const cobradas=cl.filter(c=>c.comision&&c.estadoPago==='Cobrado');
-  const totalCobrado=cobradas.reduce((s,c)=>s+Number(c.comision||0),0);
+  const cobradas=cl.filter(c=>comisionEfectiva(c)>0&&comisionEstaCobrada(c));
+  const totalCobrado=redondearMoneda(cobradas.reduce((s,c)=>s+comisionEfectiva(c),0));
   // Próximas (calculadas, no cobradas)
-  const comisionRegistrada=c=>Number(c.comisionCalc||c.comision||0);
-  const proximas=cl.filter(c=>comisionRegistrada(c)>0&&c.estadoPago!=='Cobrado'&&c.fechaRetiroEstimada);
-  const totalProximo=proximas.reduce((s,c)=>s+comisionRegistrada(c),0);
+  const proximas=cl.filter(c=>comisionEstaPendiente(c)&&c.fechaRetiroEstimada);
+  const totalProximo=redondearMoneda(proximas.reduce((s,c)=>s+comisionEfectiva(c),0));
 
   // Comisiones de colaboradores
   const misColabs=colaboradoresVistaActual();
   const resumenColabs=misColabs.map(col=>{
     const clCol=cl.filter(c=>c.colaboradorId===col.id);
-    const cobradoCol=clCol.filter(c=>c.estadoPago==='Cobrado').reduce((s,c)=>{
-      const pct=(c.colPct||col.pctComision||50)/100;
-      return s+Number(c.comision||0)*pct;
-    },0);
-    const pendienteCol=clCol.filter(c=>c.estadoPago!=='Cobrado').reduce((s,c)=>{
-      const pct=(c.colPct||col.pctComision||50)/100;
-      return s+comisionRegistrada(c)*pct;
-    },0);
-    const miParteCol=clCol.filter(c=>c.estadoPago==='Cobrado').reduce((s,c)=>{
-      const pct=1-(c.colPct||col.pctComision||50)/100;
-      return s+Number(c.comision||0)*pct;
-    },0);
+    const cobradoCol=redondearMoneda(clCol.filter(comisionEstaCobrada).reduce((s,c)=>s+comisionDelColaborador(c,col),0));
+    const pendienteCol=redondearMoneda(clCol.filter(comisionEstaPendiente).reduce((s,c)=>s+comisionDelColaborador(c,col),0));
+    const miParteCol=redondearMoneda(clCol.filter(comisionEstaCobrada).reduce((s,c)=>s+comisionDelAsesor(c,col),0));
     return {col,clientes:clCol.length,cobradoCol,pendienteCol,miParteCol};
   });
-  const totalColaboradoresCobrado=resumenColabs.reduce((s,r)=>s+r.cobradoCol,0);
-  const totalColaboradoresPendiente=resumenColabs.reduce((s,r)=>s+r.pendienteCol,0);
-  const totalColaboradores=totalColaboradoresCobrado+totalColaboradoresPendiente;
-  const totalProximoReal=Math.max(0,totalProximo-totalColaboradoresPendiente);
-  const totalComisiones=totalCobrado+totalProximo;
+  const totalColaboradoresCobrado=redondearMoneda(resumenColabs.reduce((s,r)=>s+r.cobradoCol,0));
+  const totalColaboradoresPendiente=redondearMoneda(resumenColabs.reduce((s,r)=>s+r.pendienteCol,0));
+  const totalColaboradores=redondearMoneda(totalColaboradoresCobrado+totalColaboradoresPendiente);
+  const totalProximoReal=redondearMoneda(Math.max(0,totalProximo-totalColaboradoresPendiente));
+  const totalComisiones=redondearMoneda(totalCobrado+totalProximo);
 
   // Agrupar próximas por mes
   const porMes={};
@@ -738,8 +699,7 @@ function renderFinanzas(){
     if(!porMes[key]) porMes[key]={label,clientes:[],total:0};
     porMes[key].clientes.push(c);
     const col=c.colaboradorId?(store.colaboradores||[]).find(x=>x.id===c.colaboradorId):null;
-    const pctCol=col?(Number(c.colPct||col.pctComision||50)/100):0;
-    porMes[key].total+=comisionRegistrada(c)*(1-pctCol);
+    porMes[key].total=redondearMoneda(porMes[key].total+(col?comisionDelAsesor(c,col):comisionEfectiva(c)));
   });
   const mesesOrdenados=Object.keys(porMes).sort();
 
@@ -752,22 +712,22 @@ function renderFinanzas(){
   <div class="kpi-grid finance-kpis">
     <div class="kpi-card kpi-accent-green">
       <div class="kpi-label">Total cobrado</div>
-      <div class="kpi-value">$${totalCobrado.toLocaleString('es-MX')}</div>
+      <div class="kpi-value">${formatoMoneda(totalCobrado)}</div>
       <div class="kpi-sub">${cobradas.length} trámite${cobradas.length!==1?'s':''} cobrado${cobradas.length!==1?'s':''}</div>
     </div>
     <div class="kpi-card kpi-accent-amber">
       <div class="kpi-label">Próximas comisiones reales</div>
-      <div class="kpi-value">$${totalProximoReal.toLocaleString('es-MX')}</div>
+      <div class="kpi-value">${formatoMoneda(totalProximoReal)}</div>
       <div class="kpi-sub">Después de colaboraciones</div>
     </div>
     <div class="kpi-card kpi-accent-purple">
       <div class="kpi-label">Comisiones de colaboradores</div>
-      <div class="kpi-value">$${totalColaboradores.toLocaleString('es-MX')}</div>
+      <div class="kpi-value">${formatoMoneda(totalColaboradores)}</div>
       <div class="kpi-sub">Cobradas + pendientes compartidas</div>
     </div>
     <div class="kpi-card kpi-accent-blue">
       <div class="kpi-label">Comisiones totales</div>
-      <div class="kpi-value">$${totalComisiones.toLocaleString('es-MX')}</div>
+      <div class="kpi-value">${formatoMoneda(totalComisiones)}</div>
       <div class="kpi-sub">Total bruto cobrado + por cobrar</div>
     </div>
   </div>
@@ -788,7 +748,7 @@ function renderFinanzas(){
         <div class="comision-mes">
           <div class="comision-mes-header">
             <span class="comision-mes-label">${porMes[key].label}</span>
-            <span class="comision-mes-total">$${porMes[key].total.toLocaleString('es-MX')}</span>
+            <span class="comision-mes-total">${formatoMoneda(porMes[key].total)}</span>
           </div>
           ${porMes[key].clientes.map(c=>`
             <div class="comision-item" onclick="openPerfil('${c.id}')">
@@ -797,7 +757,7 @@ function renderFinanzas(){
                 <div class="comision-nombre">${c.nombre}</div>
                 <div class="comision-fecha">Retiro est. ${fmtDate(c.fechaRetiroEstimada)} · ${c.etapa==='espera_45'?'En espera':stageLabel(c.etapa,c.servicio)}</div>
               </div>
-              ${(()=>{const col=c.colaboradorId?(store.colaboradores||[]).find(x=>x.id===c.colaboradorId):null;const pct=col?Number(c.colPct||col.pctComision||50)/100:0;return `<div class="comision-monto">$${(comisionRegistrada(c)*(1-pct)).toLocaleString('es-MX')}</div>`;})()}
+              ${(()=>{const col=c.colaboradorId?(store.colaboradores||[]).find(x=>x.id===c.colaboradorId):null;return `<div class="comision-monto">${formatoMoneda(col?comisionDelAsesor(c,col):comisionEfectiva(c))}</div>`;})()}
             </div>
           `).join('')}
         </div>
@@ -807,7 +767,7 @@ function renderFinanzas(){
     <div class="card finance-detail-card">
       <div class="card-header">
         <div class="card-title">Comisiones cobradas</div>
-        <span style="font-size:12px;color:var(--success);font-weight:600">$${totalCobrado.toLocaleString('es-MX')}</span>
+        <span style="font-size:12px;color:var(--success);font-weight:600">${formatoMoneda(totalCobrado)}</span>
       </div>
       ${cobradas.length===0?`
         <div class="empty-state">
@@ -822,7 +782,7 @@ function renderFinanzas(){
             <div class="comision-nombre">${c.nombre}</div>
             <div class="comision-fecha">${getSvcLabel(c.servicio)} · Monto retirado: $${Number(c.montoRetiro||0).toLocaleString('es-MX')}</div>
           </div>
-          <div class="comision-monto" style="color:var(--success)">$${Number(c.comision||0).toLocaleString('es-MX')}</div>
+          <div class="comision-monto" style="color:var(--success)">${formatoMoneda(comisionEfectiva(c))}</div>
         </div>
       `).join('')}
     </div>
@@ -832,7 +792,7 @@ function renderFinanzas(){
     <div class="card-header"><div class="card-title">Colaboradores — comisiones compartidas</div></div>
     <div class="table-wrap"><table>
       <thead><tr><th>Colaborador</th><th>Zona</th><th>Clientes</th><th>Su comisión cobrada</th><th>Su comisión pendiente</th><th>Mi parte cobrada</th></tr></thead>
-      <tbody>${resumenColabs.map(({col,clientes,cobradoCol,pendienteCol,miParteCol})=>`<tr><td style="font-weight:500;">${col.nombre}</td><td class="td-muted">${col.ciudad||'—'}</td><td>${clientes}</td><td style="color:var(--success);">$${cobradoCol.toLocaleString('es-MX')}</td><td style="color:var(--warning);">$${pendienteCol.toLocaleString('es-MX')}</td><td style="color:var(--success);font-weight:600;">$${miParteCol.toLocaleString('es-MX')}</td></tr>`).join('')}</tbody>
+      <tbody>${resumenColabs.map(({col,clientes,cobradoCol,pendienteCol,miParteCol})=>`<tr><td style="font-weight:500;">${col.nombre}</td><td class="td-muted">${col.ciudad||'—'}</td><td>${clientes}</td><td style="color:var(--success);">${formatoMoneda(cobradoCol)}</td><td style="color:var(--warning);">${formatoMoneda(pendienteCol)}</td><td style="color:var(--success);font-weight:600;">${formatoMoneda(miParteCol)}</td></tr>`).join('')}</tbody>
     </table></div>
   </div>`:''}`;
 }

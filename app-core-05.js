@@ -943,7 +943,7 @@ function renderAsesores(){
     total: store.clientes.filter(c=>c.asesorId===id).length,
     activos: store.clientes.filter(c=>c.asesorId===id&&c.etapa!=='concluido').length,
     concluidos: store.clientes.filter(c=>c.asesorId===id&&c.etapa==='concluido').length,
-    comisiones: store.clientes.filter(c=>c.asesorId===id&&c.estadoPago==='Cobrado').reduce((s,c)=>s+Number(c.comision||0),0),
+    comisiones: store.clientes.filter(c=>c.asesorId===id&&comisionEstaCobrada(c)).reduce((s,c)=>s+comisionEfectiva(c),0),
   });
 
   // Top asesor del mes
@@ -992,7 +992,7 @@ function renderAsesores(){
             <button class="btn btn-icon" onclick="openModalAsesor('${a.id}')" title="Editar">✎</button>
           </div>
           <div class="asesor-stats" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-            ${[['Clientes',st.total],['Activos',st.activos],['Concluidos',st.concluidos],['Comisiones','$'+st.comisiones.toLocaleString('es-MX')]].map(([l,v])=>`
+            ${[['Clientes',st.total],['Activos',st.activos],['Concluidos',st.concluidos],['Comisiones',formatoMoneda(st.comisiones)]].map(([l,v])=>`
               <div class="asesor-stat">
                 <div class="asesor-stat-val">${v}</div>
                 <div class="asesor-stat-lbl">${l}</div>
@@ -1026,7 +1026,7 @@ function renderAsesores(){
               <td>${st.total}</td>
               <td>${st.activos}</td>
               <td>${st.concluidos}</td>
-              <td style="color:var(--success)">$${st.comisiones.toLocaleString('es-MX')}</td>
+              <td style="color:var(--success)">${formatoMoneda(st.comisiones)}</td>
               <td>
                 <div style="display:flex;align-items:center;gap:8px;">
                   <div class="progress-bar-wrap" style="flex:1;min-width:60px;margin:0;"><div class="progress-bar" style="width:${Math.min(conversion.tasa,100)}%;"></div></div>
@@ -1056,7 +1056,7 @@ function renderAsesores(){
         </div>
         <div class="advisor-performance-progress"><div class="progress-bar-wrap"><div class="progress-bar" style="width:${Math.min(conversion.tasa,100)}%;"></div></div></div>
         <div class="advisor-performance-details"><span>Desde prospecto <strong>${conversion.desdeProspecto}</strong></span><span>Directos <strong>${conversion.directos}</strong></span><span>Activos <strong>${st.activos}</strong></span><span>Concluidos <strong>${st.concluidos}</strong></span></div>
-        <div class="advisor-performance-commission"><span>Comisiones cobradas</span><strong>$${st.comisiones.toLocaleString('es-MX')}</strong></div>
+        <div class="advisor-performance-commission"><span>Comisiones cobradas</span><strong>${formatoMoneda(st.comisiones)}</strong></div>
       </article>`;
     }).join('')}
   </div>`;

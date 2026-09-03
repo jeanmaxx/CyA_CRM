@@ -337,14 +337,8 @@ function renderColaboradores(){
     const asesor=store.asesores.find(a=>a.id===col.asesorId);
     const clientes=store.clientes.filter(c=>c.colaboradorId===col.id);
     const conversion=metricasConversion({colaboradorId:col.id});
-    const comisionTotal=clientes.filter(c=>c.estadoPago==='Cobrado').reduce((s,c)=>{
-      const pct=(c.colPct||col.pctComision||50)/100;
-      return s+Number(c.comision||0)*pct;
-    },0);
-    const pendiente=clientes.filter(c=>c.estadoPago==='Pendiente').reduce((s,c)=>{
-      const pct=(c.colPct||col.pctComision||50)/100;
-      return s+Number(c.comisionCalc||0)*pct;
-    },0);
+    const comisionTotal=redondearMoneda(clientes.filter(comisionEstaCobrada).reduce((s,c)=>s+comisionDelColaborador(c,col),0));
+    const pendiente=redondearMoneda(clientes.filter(comisionEstaPendiente).reduce((s,c)=>s+comisionDelColaborador(c,col),0));
     return {col,asesor,conversion,comisionTotal,pendiente};
   });
   const filas=datos.map(({col,asesor,conversion,comisionTotal,pendiente})=>{
@@ -358,7 +352,7 @@ function renderColaboradores(){
           </div>
         </div>
       </td>
-      <td><div style="min-width:110px;">${asesor?asesor.nombre:'—'}<div style="font-size:10px;color:var(--text-muted);">${col.pctComision||50}% de comisión</div></div></td>
+      <td><div style="min-width:110px;">${asesor?asesor.nombre:'—'}<div style="font-size:10px;color:var(--text-muted);">${col.pctComision||50}% predeterminado</div></div></td>
       <td>${conversion.oportunidades}</td>
       <td>${conversion.desdeProspecto}</td>
       <td>${conversion.directos}</td>
@@ -369,8 +363,8 @@ function renderColaboradores(){
           <span style="font-size:11px;min-width:38px;">${formatoTasaConversion(conversion.tasa)}</span>
         </div>
       </td>
-      <td style="color:var(--success);">$${comisionTotal.toLocaleString('es-MX')}</td>
-      <td>$${pendiente.toLocaleString('es-MX')}</td>
+      <td style="color:var(--success);">${formatoMoneda(comisionTotal)}</td>
+      <td>${formatoMoneda(pendiente)}</td>
       <td><button class="btn btn-icon" onclick="openModalColaborador('${col.id}')" title="Editar">✎</button></td>
     </tr>`;
   }).join('');
@@ -385,14 +379,14 @@ function renderColaboradores(){
         <span class="chip ${col.activo?'chip-green':'chip-red'}">${col.activo?'Activo':'Inactivo'}</span>
         <button class="btn btn-icon" onclick="openModalColaborador('${col.id}')" title="Editar ${col.nombre}" aria-label="Editar ${col.nombre}">✎</button>
       </div>
-      <div class="collaborator-mobile-advisor">Reporta a <strong>${asesor?asesor.nombre:'—'}</strong> · ${col.pctComision||50}% de comisión</div>
+      <div class="collaborator-mobile-advisor">Reporta a <strong>${asesor?asesor.nombre:'—'}</strong> · ${col.pctComision||50}% predeterminado</div>
       <div class="collaborator-mobile-metrics">
         <div><strong>${conversion.oportunidades}</strong><span>Oportunidades</span></div>
         <div><strong>${conversion.clientes}</strong><span>Clientes</span></div>
         <div><strong>${formatoTasaConversion(conversion.tasa)}</strong><span>Conversión</span></div>
       </div>
       <div class="collaborator-mobile-breakdown"><span>Desde prospecto: <strong>${conversion.desdeProspecto}</strong></span><span>Directos: <strong>${conversion.directos}</strong></span></div>
-      <div class="collaborator-mobile-money"><span><small>Cobrado</small><strong>$${comisionTotal.toLocaleString('es-MX')}</strong></span><span><small>Pendiente</small><strong>$${pendiente.toLocaleString('es-MX')}</strong></span></div>
+      <div class="collaborator-mobile-money"><span><small>Cobrado</small><strong>${formatoMoneda(comisionTotal)}</strong></span><span><small>Pendiente</small><strong>${formatoMoneda(pendiente)}</strong></span></div>
     </article>`).join('');
   return `
   <div class="module-toolbar collaborators-toolbar">

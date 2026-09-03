@@ -37,8 +37,8 @@ function renderDashboard(){
   const leads=leadsVistaActual();
   const enRevision=leads.filter(l=>l.estado==='semanas').length;
   const aprobados=leads.filter(l=>l.estado==='aprobado').length;
-  const comisiones=cl.filter(c=>c.comision&&c.estadoPago==='Cobrado').reduce((s,c)=>s+Number(c.comision||0),0);
-  const proximasComisiones=cl.filter(c=>c.comisionCalc&&c.estadoPago!=='Cobrado').reduce((s,c)=>s+Number(c.comisionCalc||0),0);
+  const comisiones=cl.filter(comisionEstaCobrada).reduce((s,c)=>s+comisionEfectiva(c),0);
+  const proximasComisiones=cl.filter(comisionEstaPendiente).reduce((s,c)=>s+comisionEfectiva(c),0);
   const hoyStr=new Date().toISOString().split('T')[0];
 
   const today=new Date();

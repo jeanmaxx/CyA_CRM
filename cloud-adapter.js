@@ -278,6 +278,20 @@ function cloudRepairOperationalOwnership(){
     if(ownerId){event.asesorId=ownerId;changed=true;}
   }
   for(const client of (store.clientes||[])){
+    if(!client.archivado&&!client.descartado&&comisionEfectiva(client)>0&&!String(client.estadoPago||'').trim()){
+      client.estadoPago='Pendiente';
+      changed=true;
+    }
+    if(client.servicio==='retiro_desempleo'&&client.contratoFirmado===true){
+      const etapas=stagesFor(client.servicio);
+      const indiceActual=etapas.findIndex(s=>s.id===client.etapa);
+      const indiceFirma=etapas.findIndex(s=>s.id==='contrato_firmado');
+      if(indiceActual>=0&&indiceFirma>=0&&indiceActual<indiceFirma){
+        client.etapa='contrato_firmado';
+        addHist(client,'etapa','Etapa conciliada automáticamente con el contrato firmado');
+        changed=true;
+      }
+    }
     if(client.servicio!=='retiro_desempleo'||client.contratoFirmado!==true) continue;
     const before=(store.agenda||[]).length;
     agendarRecordatorio45(client);
