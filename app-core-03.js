@@ -85,7 +85,7 @@ async function avanzarEtapa(id){
   }
   // Al pasar a dado_alta: iniciar 45 días
   if(next.id==='dado_alta'){
-    if(!c.fechaAltaAfore) c.fechaAltaAfore=new Date().toISOString().split('T')[0];
+    if(!c.fechaAltaAfore) c.fechaAltaAfore=fechaISOLocal(new Date());
     if(c.servicio==='retiro_desempleo') await agendarRecordatorio45(c);
     addHist(c,'etapa','Dado de alta — inicia conteo de 45 días');
   }

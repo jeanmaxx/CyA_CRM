@@ -114,6 +114,44 @@ function leerFechaMX(id,obligatoria=false){
 function setFechaMX(id,valor){ const input=document.getElementById(id); if(input) input.value=fechaISOaMX(valor); }
 function fmtDateShort(iso){ return fmtDate(iso); }
 function fmtDateTime(valor){ const d=valor instanceof Date?valor:new Date(valor); if(isNaN(d)) return String(valor||'—'); return `${fmtDate(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function parseFechaFlexible(valor){
+  if(!valor) return null;
+  if(valor instanceof Date) return isNaN(valor.getTime())?null:new Date(valor.getTime());
+  const s=String(valor).trim();
+  let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m){
+    const d=new Date(Number(m[3]),Number(m[2])-1,Number(m[1]),Number(m[4]||0),Number(m[5]||0),Number(m[6]||0));
+    if(d.getFullYear()===Number(m[3])&&d.getMonth()===Number(m[2])-1&&d.getDate()===Number(m[1])) return d;
+    return null;
+  }
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?/);
+  if(m){
+    if(/[TZ]|[+-]\d{2}:?\d{2}$/.test(s.slice(10))){ const iso=new Date(s); if(!isNaN(iso.getTime())) return iso; }
+    const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4]||0),Number(m[5]||0),Number(m[6]||0));
+    if(d.getFullYear()===Number(m[1])&&d.getMonth()===Number(m[2])-1&&d.getDate()===Number(m[3])) return d;
+    return null;
+  }
+  const meses={ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,sept:8,oct:9,nov:10,dic:11};
+  const antiguo=s.toLocaleLowerCase('es-MX').match(/(\d{1,2})\s+([a-záéíóú]+)\.?\s+(\d{4})(?:,?\s+(\d{1,2}):(\d{2}))?/);
+  if(antiguo){
+    const clave=antiguo[2].normalize('NFD').replace(/[\u0300-\u036f]/g,'').slice(0,4);
+    const mes=meses[clave]??meses[clave.slice(0,3)];
+    if(mes!==undefined){
+      const d=new Date(Number(antiguo[3]),mes,Number(antiguo[1]),Number(antiguo[4]||0),Number(antiguo[5]||0));
+      if(d.getMonth()===mes&&d.getDate()===Number(antiguo[1])) return d;
+    }
+  }
+  const d=new Date(s);
+  return isNaN(d.getTime())?null:d;
+}
+function diasTranscurridosDesde(valor,referencia=new Date()){
+  const inicio=parseFechaFlexible(valor);
+  const fin=parseFechaFlexible(referencia);
+  if(!inicio||!fin) return 0;
+  const inicioDia=Date.UTC(inicio.getFullYear(),inicio.getMonth(),inicio.getDate());
+  const finDia=Date.UTC(fin.getFullYear(),fin.getMonth(),fin.getDate());
+  return Math.max(0,Math.floor((finDia-inicioDia)/86400000));
+}
 function fmtFechaHistorial(valor){
   if(!valor) return '—';
   const s=String(valor);
@@ -127,7 +165,7 @@ function fmtFechaHistorial(valor){
 }
 function getVal(id){ return document.getElementById(id)?.value||''; }
 function setVal(id,v){ const el=document.getElementById(id); if(el) el.value=v||''; }
-function addHist(c,tipo,texto){ if(!c.historial) c.historial=[]; const ahora=new Date(); c.historial.push({tipo,texto,fecha:`${fmtDate(ahora)} ${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`}); }
+function addHist(c,tipo,texto){ if(!c.historial) c.historial=[]; c.historial.push({tipo,texto,fecha:new Date().toISOString()}); }
 function showToast(msg,type){
   const ct=document.getElementById('toast-container');
   const t=document.createElement('div');

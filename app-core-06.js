@@ -246,32 +246,24 @@ function copiarPlantilla(){
 // ==================== SEGUIMIENTO AUTOMÁTICO ====================
 // Días límite por etapa antes de mostrar alerta
 const DIAS_ALERTA_ETAPA = {
-  perfilamiento: 3,
-  documentacion: 7,
-  pendiente_firma: 5,
+  generando_contrato: 3,
+  contrato_firmas: 5,
   contrato_firmado: 3,
-  espera_45: 50,       // más generoso, es espera real
-  solicitud_afore: 2,
-  deposito: 2,
-  cobro_honorarios: 2,
+  dado_alta: 15,
+  afore_actualizada: 2,
+  solicitud_realizada: 2,
+  deposito_recibido: 2,
 };
 
 function calcularDiasSinMovimiento(c){
   if(!c.historial||c.historial.length===0){
-    // Usar fecha de registro
-    const reg=new Date(c.fechaRegistro||Date.now());
-    return Math.floor((Date.now()-reg.getTime())/(1000*60*60*24));
+    return diasTranscurridosDesde(c.fechaRegistro||new Date());
   }
   // Última actividad relevante (etapa o edición)
   const relevantes=c.historial.filter(h=>h.tipo==='etapa'||h.tipo==='registro'||h.tipo==='edicion');
   if(!relevantes.length) return 0;
   const ultimo=relevantes[relevantes.length-1];
-  // Parsear fecha del historial (formato "07 ago 2026, 10:30")
-  try{
-    const d=new Date(ultimo.fecha);
-    if(!isNaN(d.getTime())) return Math.floor((Date.now()-d.getTime())/(1000*60*60*24));
-  }catch(e){}
-  return 0;
+  return diasTranscurridosDesde(ultimo.fecha);
 }
 
 function alertasSeguimiento(clientes){

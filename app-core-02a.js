@@ -19,13 +19,170 @@ function renderPage(page){
 }
 
 // ---- DASHBOARD ----
-let dashboardVistaElegibilidad='lista';
+let dashboardVistaElegibilidad='grafica';
 let dashboardVistaDescarte='lista';
+let dashboardAgendaAbierta=true;
+let dashboardAccionesAbiertas=true;
 
 function toggleDashboardCard(tipo){
   if(tipo==='elegibilidad') dashboardVistaElegibilidad=dashboardVistaElegibilidad==='lista'?'grafica':'lista';
   if(tipo==='descarte') dashboardVistaDescarte=dashboardVistaDescarte==='lista'?'grafica':'lista';
   renderPage('dashboard');
+}
+
+function toggleDashboardPanel(tipo){
+  if(tipo==='agenda') dashboardAgendaAbierta=!dashboardAgendaAbierta;
+  if(tipo==='acciones') dashboardAccionesAbiertas=!dashboardAccionesAbiertas;
+  renderPage('dashboard');
+}
+
+function agendaPrioritariaDashboard(){
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const fin=new Date(hoy);fin.setDate(fin.getDate()+((7-fin.getDay())%7));
+  const hoyISO=fechaISOLocal(hoy),finISO=fechaISOLocal(fin);
+  return eventosVistaActual().filter(e=>{
+    if(e.completado||e.cancelarRecordatorio||!/^\d{4}-\d{2}-\d{2}$/.test(e.fecha||'')) return false;
+    return e.fecha<=finISO;
+  }).sort((a,b)=>`${a.fecha} ${a.hora||'23:59'}`.localeCompare(`${b.fecha} ${b.hora||'23:59'}`)).map(e=>({
+    ...e,vencido:e.fecha<hoyISO,hoy:e.fecha===hoyISO,
+  }));
+}
+
+function renderDashboardAgendaPrioritaria(){
+  const eventos=agendaPrioritariaDashboard();
+  const vencidos=eventos.filter(e=>e.vencido).length;
+  const TIPO_LABELS={llamada:'Llamada',whatsapp:'WhatsApp',meet:'Meet',cita:'Cita',recordatorio:'Recordatorio',vencimiento:'Vencimiento',otro:'Otro'};
+  const TIPO_COLORS={llamada:'#3b82f6',whatsapp:'#25d366',meet:'#8b5cf6',cita:'#0ea5e9',recordatorio:'#10b981',vencimiento:'#ef4444',otro:'#64748b'};
+  return `<section class="card dashboard-priority-card dashboard-agenda-card">
+    <div class="card-header dashboard-priority-header" role="button" tabindex="0" aria-expanded="${dashboardAgendaAbierta}" onclick="toggleDashboardPanel('agenda')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDashboardPanel('agenda');}">
+      <div class="dashboard-priority-title">
+        <span class="dashboard-collapse-icon">${dashboardAgendaAbierta?'▾':'▸'}</span>
+        <div><div class="card-title">Agenda prioritaria</div><div class="dashboard-priority-sub">Vencidos y actividades pendientes hasta el domingo</div></div>
+        <span class="chip ${vencidos?'chip-red':'chip-blue'}">${eventos.length}</span>
+      </div>
+      <button class="btn dashboard-panel-link" onclick="event.stopPropagation();navigate('agenda',document.querySelector('[data-page=agenda]'))">Ver agenda completa</button>
+    </div>
+    ${dashboardAgendaAbierta?`<div class="card-body dashboard-priority-body">
+      ${eventos.length?`<div class="dashboard-priority-scroll">${eventos.map(e=>{
+        const cliente=e.clienteId?(store.clientes||[]).find(c=>c.id===e.clienteId):null;
+        const etiqueta=e.vencido?'Vencido':e.hoy?'Hoy':fmtDate(e.fecha);
+        return `<div class="dashboard-agenda-row ${e.vencido?'dashboard-row-danger':''}">
+          <div class="dashboard-event-date ${e.vencido?'is-overdue':e.hoy?'is-today':''}">${etiqueta}</div>
+          <div class="dashboard-event-marker" style="background:${TIPO_COLORS[e.tipo]||TIPO_COLORS.otro}"></div>
+          <div class="dashboard-event-copy">
+            <div class="dashboard-event-title">${escapeHTMLBasico(e.titulo)}</div>
+            <div class="dashboard-event-meta">${escapeHTMLBasico(TIPO_LABELS[e.tipo]||e.tipo||'Evento')}${e.hora?' · '+escapeHTMLBasico(e.hora):''}${cliente?.nombre?' · '+escapeHTMLBasico(cliente.nombre):''}</div>
+          </div>
+          <button class="btn dashboard-agenda-action" onclick="event.stopPropagation();completarEvento('${e.id}')">✓ Hecho</button>
+        </div>`;
+      }).join('')}</div>`:`<div class="dashboard-priority-empty">✓ No tienes actividades vencidas ni pendientes para el resto de esta semana.</div>`}
+    </div>`:''}
+  </section>`;
+}
+
+function fechaEntradaEtapaDadoAlta(cliente){
+  if(cliente.fechaAltaAfore) return cliente.fechaAltaAfore;
+  const historial=[...(cliente.historial||[])].reverse();
+  const entrada=historial.find(h=>h.tipo==='etapa'&&/dado de alta/i.test(h.texto||''));
+  return entrada?.fecha||cliente.fechaRegistro||new Date();
+}
+
+function obtenerSiguienteAccion(cliente,referencia=new Date()){
+  if(!cliente||cliente.descartado||cliente.archivado||cliente.devueltoAProspectos||cliente.servicio!=='retiro_desempleo') return null;
+  const base={clienteId:cliente.id,etapa:cliente.etapa,nombre:cliente.nombre||'Cliente'};
+  if(cliente.etapa==='contrato_firmado') return {...base,clave:'dar_alta',grupo:'Dar de alta a',boton:'Marcar dado de alta',tipo:'avanzar',tono:'normal',detalle:'Contrato firmado'};
+  if(cliente.etapa==='dado_alta'){
+    if(!cliente.fechaBiometrica){
+      const dias=diasTranscurridosDesde(fechaEntradaEtapaDadoAlta(cliente),referencia);
+      const tono=dias>=25?'rojo':dias>=15?'naranja':'normal';
+      return {...base,clave:'solicitar_cita',grupo:'Solicitar cita en AFORE a',boton:'Registrar cita',tipo:'cita',tono,dias,detalle:`${dias} día${dias!==1?'s':''} desde el alta`};
+    }
+    const hoyISO=fechaISOLocal(referencia);
+    if(cliente.fechaBiometrica>hoyISO) return {...base,clave:'cita_programada',grupo:'Dar seguimiento a cita AFORE de',boton:'Abrir cliente',tipo:'abrir',tono:'normal',detalle:`Cita: ${fmtDate(cliente.fechaBiometrica)}`};
+    const retraso=diasTranscurridosDesde(cliente.fechaBiometrica,referencia);
+    return {...base,clave:'confirmar_afore',grupo:'Confirmar actualización AFORE de',boton:'Marcar AFORE actualizada',tipo:'avanzar',tono:retraso>0?'naranja':'normal',detalle:retraso?`Cita hace ${retraso} día${retraso!==1?'s':''}`:'Cita programada para hoy'};
+  }
+  if(cliente.etapa==='afore_actualizada') return {...base,clave:'solicitar_retiro',grupo:'Solicitar retiro a',boton:'Marcar solicitud realizada',tipo:'avanzar',tono:'normal',detalle:'AFORE actualizada'};
+  if(cliente.etapa==='solicitud_realizada') return {...base,clave:'revisar_deposito',grupo:'Revisar depósito de',boton:'Confirmar depósito',tipo:'avanzar',tono:'normal',detalle:'Solicitud realizada'};
+  if(cliente.etapa==='deposito_recibido') return {...base,clave:'cobrar_honorarios',grupo:'Cobrar honorarios a',boton:'Confirmar honorarios',tipo:'avanzar',tono:'normal',detalle:'Depósito recibido'};
+  return null;
+}
+
+function accionDashboardPospuestaHoy(cliente,accion){
+  const usuario=sesionActiva?.id||'local';
+  const registro=cliente?.accionesDashboardPospuestas?.[usuario];
+  return Boolean(registro&&registro.fecha===fechaISOLocal(new Date())&&registro.clave===accion.clave&&registro.etapa===cliente.etapa);
+}
+
+function accionesSiguientesDashboard(){
+  return (clientesVistaActual()||[]).map(c=>({cliente:c,accion:obtenerSiguienteAccion(c)})).filter(x=>x.accion);
+}
+
+function renderDashboardSiguientesAcciones(){
+  const todas=accionesSiguientesDashboard();
+  const visibles=todas.filter(x=>!accionDashboardPospuestaHoy(x.cliente,x.accion));
+  const pospuestas=todas.length-visibles.length;
+  const orden=['dar_alta','solicitar_cita','cita_programada','confirmar_afore','solicitar_retiro','revisar_deposito','cobrar_honorarios'];
+  const grupos=orden.map(clave=>visibles.filter(x=>x.accion.clave===clave)).filter(g=>g.length);
+  return `<section class="card dashboard-priority-card dashboard-actions-card">
+    <div class="card-header dashboard-priority-header" role="button" tabindex="0" aria-expanded="${dashboardAccionesAbiertas}" onclick="toggleDashboardPanel('acciones')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDashboardPanel('acciones');}">
+      <div class="dashboard-priority-title">
+        <span class="dashboard-collapse-icon">${dashboardAccionesAbiertas?'▾':'▸'}</span>
+        <div><div class="card-title">Siguientes acciones</div><div class="dashboard-priority-sub">Pendientes derivados de la etapa actual de cada cliente</div></div>
+        <span class="chip chip-blue">${visibles.length}</span>
+      </div>
+      ${pospuestas?`<span class="dashboard-snoozed-count">${pospuestas} pospuesta${pospuestas!==1?'s':''} por hoy</span>`:''}
+    </div>
+    ${dashboardAccionesAbiertas?`<div class="card-body dashboard-priority-body">
+      ${grupos.length?`<div class="dashboard-actions-list">${grupos.map(grupo=>{
+        const titulo=grupo[0].accion.grupo;
+        return `<div class="dashboard-action-group">
+          <div class="dashboard-action-group-title">${escapeHTMLBasico(titulo)} <span>${grupo.length}</span></div>
+          ${grupo.map(({cliente,accion})=>`<div class="dashboard-action-row action-tone-${accion.tono}">
+            <div class="dashboard-action-person">
+              <button class="dashboard-person-link" onclick="openPerfil('${cliente.id}')">${escapeHTMLBasico(cliente.nombre)}</button>
+              <span>${escapeHTMLBasico(accion.detalle)}</span>
+            </div>
+            <div class="dashboard-action-buttons">
+              <button class="btn dashboard-snooze-btn" onclick="posponerAccionDashboard('${cliente.id}','${accion.clave}',event)">Posponer por hoy</button>
+              <button class="btn btn-primary dashboard-do-btn" onclick="realizarAccionDashboard('${cliente.id}','${accion.clave}',event)">${escapeHTMLBasico(accion.boton)}</button>
+            </div>
+          </div>`).join('')}
+        </div>`;
+      }).join('')}</div>`:`<div class="dashboard-priority-empty">✓ No hay siguientes acciones pendientes${pospuestas?' visibles; las pendientes se pospusieron por hoy.':'.'}</div>`}
+    </div>`:''}
+  </section>`;
+}
+
+async function posponerAccionDashboard(clienteId,clave,event){
+  event?.stopPropagation();
+  const cliente=(store.clientes||[]).find(c=>c.id===clienteId);
+  const accion=obtenerSiguienteAccion(cliente);
+  if(!cliente||!accion||accion.clave!==clave) return renderPage('dashboard');
+  const usuario=sesionActiva?.id||'local';
+  const anterior=cliente.accionesDashboardPospuestas?.[usuario];
+  cliente.accionesDashboardPospuestas={...(cliente.accionesDashboardPospuestas||{}),[usuario]:{clave,etapa:cliente.etapa,fecha:fechaISOLocal(new Date())}};
+  try{
+    await supaGuardarCliente(cliente);
+    showToast('Acción pospuesta hasta mañana','info');
+  }catch(error){
+    if(anterior) cliente.accionesDashboardPospuestas[usuario]=anterior; else delete cliente.accionesDashboardPospuestas[usuario];
+  }
+  renderPage('dashboard');
+}
+
+async function realizarAccionDashboard(clienteId,clave,event){
+  event?.stopPropagation();
+  const cliente=(store.clientes||[]).find(c=>c.id===clienteId);
+  const accion=obtenerSiguienteAccion(cliente);
+  if(!cliente||!accion||accion.clave!==clave){ renderPage('dashboard'); return; }
+  if(accion.tipo==='cita'){
+    editCliente(clienteId);
+    setTimeout(()=>{switchTab('tab-datos-extra',1);document.getElementById('fc-fecha-biometrica')?.focus();},30);
+    return;
+  }
+  if(accion.tipo==='abrir'){ openPerfil(clienteId); return; }
+  await avanzarEtapa(clienteId);
 }
 
 function renderDashboard(){
@@ -55,14 +212,10 @@ function renderDashboard(){
     <div class="dashboard-view-selector">${getSelectorVistaHTML(true)}</div>
   </div>
 
-  ${(()=>{
-    const alertas=alertasSeguimiento(cl);
-    if(!alertas.length) return '';
-    return `<div class="alerta-firma alerta-amarilla" style="margin-bottom:16px;cursor:pointer;flex-direction:column;align-items:flex-start;" onclick="navigate('clientes',document.querySelector('[data-page=clientes]'))">
-      <div style="font-weight:600;">⚠ ${alertas.length} cliente${alertas.length!==1?'s':''} sin movimiento — ir a Clientes para ver</div>
-      <div style="font-size:11px;margin-top:2px;">${alertas.slice(0,3).map(a=>`${a.cliente.nombre.split(' ')[0]} (${a.dias}d en ${a.etapa})`).join(' · ')}${alertas.length>3?` · +${alertas.length-3} más`:''}</div>
-    </div>`;
-  })()}
+  <div class="dashboard-priority-stack">
+    ${renderDashboardAgendaPrioritaria()}
+    ${renderDashboardSiguientesAcciones()}
+  </div>
 
   <div class="kpi-grid dashboard-kpis">
     <div class="kpi-card kpi-accent-blue">
@@ -91,42 +244,6 @@ function renderDashboard(){
       <div class="kpi-sub">Trámites cerrados</div>
     </div>
   </div>
-
-  <!-- AGENDA DEL DÍA — PROMINENTE -->
-  ${(()=>{
-    const hoyStr=new Date().toISOString().split('T')[0];
-    const agendaVisible=eventosVistaActual();
-    const eventosHoyList=agendaVisible.filter(e=>e.fecha===hoyStr&&!e.completado&&!e.cancelarRecordatorio);
-    const vencidos=agendaVisible.filter(e=>e.fecha<hoyStr&&!e.completado);
-    if(!eventosHoyList.length&&!vencidos.length) return '';
-    const TIPO_LABELS={llamada:'📞 Llamada',whatsapp:'💬 WhatsApp',meet:'🎥 Meet',cita:'📅 Cita',recordatorio:'🔔 Recordatorio',vencimiento:'⏰ Vencimiento',otro:'📌 Otro'};
-    const TIPO_COLORS={llamada:'#3b82f6',whatsapp:'#25d366',meet:'#8b5cf6',cita:'#0ea5e9',recordatorio:'#10b981',vencimiento:'#ef4444',otro:'#64748b'};
-    return `<div class="card" style="margin-bottom:20px;border-top:2px solid var(--accent-blue);">
-      <div class="card-header dashboard-agenda-header">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="card-title">📅 Agenda de hoy</div>
-          ${vencidos.length>0?`<span class="chip chip-red" style="font-size:10px;">⚠ ${vencidos.length} vencido${vencidos.length!==1?'s':''}</span>`:''}
-        </div>
-        <button class="btn" style="font-size:12px;" onclick="navigate('agenda',document.querySelector('[data-page=agenda]'))">Ver agenda completa</button>
-      </div>
-      <div class="card-body" style="padding:8px 16px;">
-        ${eventosHoyList.length===0&&vencidos.length>0?`<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">Sin eventos para hoy, pero hay ${vencidos.length} evento${vencidos.length!==1?'s':''} vencidos.</div>`:''}
-        ${eventosHoyList.sort((a,b)=>a.hora>b.hora?1:-1).map(e=>{
-          const c=e.clienteId?(store.clientes.find(x=>x.id===e.clienteId)):{};
-          return `<div class="dashboard-agenda-row">
-            <div style="width:3px;height:36px;border-radius:2px;background:${TIPO_COLORS[e.tipo]||'#64748b'};flex-shrink:0;"></div>
-            <div style="width:44px;text-align:right;font-size:11px;color:var(--text-muted);flex-shrink:0;">${e.hora||'—'}</div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:500;color:var(--text-primary);">${e.titulo}</div>
-              <div style="font-size:11px;color:var(--text-muted);">${TIPO_LABELS[e.tipo]||e.tipo}${c&&c.nombre?' · '+c.nombre:''}</div>
-            </div>
-            <button class="btn dashboard-agenda-action" onclick="completarEvento('${e.id}')">✓ Hecho</button>
-          </div>`;
-        }).join('')}
-        ${vencidos.length>0?`<div style="padding:8px 0;font-size:12px;color:var(--danger);">+ ${vencidos.length} evento${vencidos.length!==1?'s':''} vencido${vencidos.length!==1?'s':''} — <span style="cursor:pointer;text-decoration:underline;" onclick="navigate('agenda',document.querySelector('[data-page=agenda]'))">ver en agenda</span></div>`:''}
-      </div>
-    </div>`;
-  })()}
 
   <div class="dash-grid">
     <div class="card">
@@ -342,8 +459,9 @@ function renderClientes(){
   </div>
   ${alertas.length>0?`
   <div class="clients-alerts">
-    <div class="alerta-firma alerta-amarilla client-alerts-toggle" role="button" tabindex="0" aria-expanded="false" onclick="toggleAlertasClientes(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAlertasClientes(this);}">
-      <div style="font-weight:600;">⚠ ${alertas.length} cliente${alertas.length!==1?'s':''} sin movimiento — click para ver</div>
+    <div class="client-alerts-toggle" role="button" tabindex="0" aria-expanded="false" onclick="toggleAlertasClientes(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAlertasClientes(this);}">
+      <div class="client-alerts-toggle-title"><span class="client-alerts-arrow">▸</span><span>Seguimientos atrasados</span><span class="chip chip-amber">${alertas.length}</span></div>
+      <span class="client-alerts-toggle-sub">Contraído para mantener el espacio de trabajo despejado</span>
     </div>
     <div class="client-alerts-list" id="alertas-seguimiento-list" hidden>
       ${alertas.map(a=>`
@@ -492,6 +610,7 @@ function toggleAlertasClientes(el){
   const abrir=list.hidden;
   list.hidden=!abrir;
   el.setAttribute('aria-expanded',String(abrir));
+  const flecha=el.querySelector('.client-alerts-arrow');if(flecha) flecha.textContent=abrir?'▾':'▸';
 }
 
 function toggleDescartadosView(){

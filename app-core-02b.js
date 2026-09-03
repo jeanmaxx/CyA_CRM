@@ -463,6 +463,13 @@ function guardarCliente(){
       cliente.contratoFirmado=true;
       cliente.fechaFirmaContrato=cliente.fechaFirmaContrato||new Date().toISOString().split('T')[0];
     }
+    if(cliente.etapa==='dado_alta'){
+      if(!oldCliente||oldCliente.etapa!=='dado_alta') cliente.fechaAltaAfore=fechaISOLocal(new Date());
+      else if(!cliente.fechaAltaAfore){
+        const baseAlta=parseFechaFlexible(fechaEntradaEtapaDadoAlta(oldCliente));
+        cliente.fechaAltaAfore=fechaISOLocal(baseAlta||new Date());
+      }
+    }
   }
 
   if(editingId){

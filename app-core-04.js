@@ -724,8 +724,8 @@ function completarEvento(id){
   if(e.clienteId){ const c=store.clientes.find(x=>x.id===e.clienteId); if(c) addHist(c,'agenda','Evento completado: '+e.titulo); }
   saveStore();
   showToast('Evento completado','success');
-  renderPage('agenda');
-  setTimeout(renderCalMini,50);
+  renderPage(currentPage==='dashboard'?'dashboard':'agenda');
+  if(currentPage==='agenda') setTimeout(renderCalMini,50);
 }
 
 function eliminarEvento(){
