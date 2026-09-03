@@ -78,24 +78,29 @@ async function cloudLoadStore(){
   cloudLegacyAdvisors=(settingsPayload.__legacyAdvisors || []).map(a=>({...a,pin:''}));
   delete settingsPayload.__legacyAdvisors;
 
-  const cloudProfiles=await Promise.all(profiles.map(async p=>({
-    id:p.id,
-    legacyId:p.legacy_id || '',
-    nombre:p.full_name,
-    nombres:p.given_names || String(p.full_name || '').trim().split(/\s+/)[0] || '',
-    apellidos:p.surnames || String(p.full_name || '').trim().split(/\s+/).slice(1).join(' '),
-    ciudad:p.city || '',
-    rol:p.role === 'admin' ? 'admin' : 'asesor',
-    activo:p.active !== false,
-    foto:await cloudSignedAvatar(p.photo_path),
-    fotoPath:p.photo_path || '',
-    email:p.email || '',
-    fechaAlta:p.created_at,
-    cloudUser:true,
-  })));
+  let normalizedProfileNames=false;
+  const cloudProfiles=await Promise.all(profiles.map(async p=>{
+    const nombres=capitalizarNombre(p.given_names || String(p.full_name || '').trim().split(/\s+/)[0] || '');
+    const apellidos=capitalizarNombre(p.surnames || String(p.full_name || '').trim().split(/\s+/).slice(1).join(' '));
+    const nombre=[nombres,apellidos].filter(Boolean).join(' ') || capitalizarNombre(p.full_name);
+    if(nombre!==String(p.full_name || '').trim() || nombres!==String(p.given_names || '').trim() || apellidos!==String(p.surnames || '').trim()) normalizedProfileNames=true;
+    return {
+      id:p.id,
+      legacyId:p.legacy_id || '',
+      nombre,nombres,apellidos,
+      ciudad:p.city || '',
+      rol:p.role === 'admin' ? 'admin' : 'asesor',
+      activo:p.active !== false,
+      foto:await cloudSignedAvatar(p.photo_path),
+      fotoPath:p.photo_path || '',
+      email:p.email || '',
+      fechaAlta:p.created_at,
+      cloudUser:true,
+    };
+  }));
 
   const profileLegacyIds=new Set(cloudProfiles.flatMap(p=>[p.id,p.legacyId]).filter(Boolean));
-  const legacyVisible=cloudLegacyAdvisors.filter(a=>!profileLegacyIds.has(a.id));
+  const legacyVisible=cloudLegacyAdvisors.filter(a=>!profileLegacyIds.has(a.id)).map(normalizarDatosAsesor);
   const advisorByLegacyId=new Map(cloudProfiles.filter(p=>p.legacyId).map(p=>[p.legacyId,p.id]));
   const resolvedAdvisorId=(advisorId,legacyAdvisorId)=>advisorId||advisorByLegacyId.get(legacyAdvisorId)||legacyAdvisorId||null;
 
@@ -135,7 +140,7 @@ async function cloudLoadStore(){
   cloudKnownIds.agenda_events=new Set(events.map(r=>r.id));
   cloudKnownIds.message_templates=new Set(templates.map(r=>r.id));
 
-  return {needsSeed:!services.length || !templates.length};
+  return {needsSeed:!services.length || !templates.length,normalizedProfileNames};
 }
 
 function cloudServiceRows(){
@@ -215,7 +220,7 @@ async function cloudSyncProfiles(){
   const profiles=(store.asesores || []).filter(a=>cloudIsUuid(a.id) && (isAdmin() || a.id===sesionActiva?.id));
   for(const a of profiles){
     const {error}=await supabaseClient.from('profiles').update({
-      full_name:a.nombre || 'Asesor',given_names:asesorNombres(a)||null,surnames:asesorApellidos(a)||null,
+      full_name:asesorNombreCompleto(a)||'Asesor',given_names:asesorNombres(a)||null,surnames:asesorApellidos(a)||null,
       city:a.ciudad || null,active:a.activo !== false,
     }).eq('id',a.id);
     if(error) throw new Error(`profiles: ${error.message}`);
@@ -344,7 +349,7 @@ async function cloudEnterSession(session){
     sesionActiva={...profile,email:session.user.email};
     cloudReady=true;
     const repairedOperationalData=cloudRepairOperationalOwnership();
-    if((isAdmin()&&loadState?.needsSeed)||repairedOperationalData) await cloudSyncNow({throwOnError:true});
+    if((isAdmin()&&(loadState?.needsSeed||loadState?.normalizedProfileNames))||repairedOperationalData) await cloudSyncNow({throwOnError:true});
     const screen=document.getElementById('login-screen'); if(screen) screen.style.display='none';
     const main=document.querySelector('.main'); if(main) main.style.display='flex';
     const sidebar=document.getElementById('main-sidebar'); if(sidebar) sidebar.style.display='flex';
@@ -436,8 +441,8 @@ async function cloudInvokeAdvisor(body){
 }
 
 guardarAsesor=async function(){
-  const nombres=(getVal('as-nombres') || '').trim();
-  const apellidos=(getVal('as-apellidos') || '').trim();
+  const nombres=capitalizarNombre(getVal('as-nombres'));
+  const apellidos=capitalizarNombre(getVal('as-apellidos'));
   const nombre=[nombres,apellidos].filter(Boolean).join(' ');
   const email=(getVal('as-email') || '').trim().toLowerCase();
   const password=getVal('as-pin');

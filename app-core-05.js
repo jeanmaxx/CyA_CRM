@@ -8,18 +8,46 @@ function closeModal(id){
   const el=document.getElementById(id); if(el) el.classList.remove('open');
 }
 function initials(n){ if(!n) return '?'; const p=n.trim().split(' ').filter(Boolean); return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():p[0][0].toUpperCase(); }
+function capitalizarNombre(valor){
+  const particulas=new Set(['de','del','la','las','los','y','e','da','das','do','dos','van','von']);
+  return String(valor||'').trim().toLocaleLowerCase('es-MX').split(/\s+/).filter(Boolean).map((palabra,indice)=>{
+    if(indice>0&&particulas.has(palabra)) return palabra;
+    return palabra.replace(/(^|[-'])([a-záéíóúüñ])/gi,(_,separador,letra)=>separador+letra.toLocaleUpperCase('es-MX'));
+  }).join(' ');
+}
+function escapeHTMLBasico(valor){
+  return String(valor??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function asesorNombres(asesor){
   const guardados=String(asesor?.nombres||'').trim();
-  if(guardados) return guardados;
-  return String(asesor?.nombre||'').trim().split(/\s+/).filter(Boolean)[0]||'';
+  if(guardados) return capitalizarNombre(guardados);
+  return capitalizarNombre(String(asesor?.nombre||'').trim().split(/\s+/).filter(Boolean)[0]||'');
 }
 function asesorApellidos(asesor){
   const guardados=String(asesor?.apellidos||'').trim();
-  if(guardados) return guardados;
-  return String(asesor?.nombre||'').trim().split(/\s+/).filter(Boolean).slice(1).join(' ');
+  if(guardados) return capitalizarNombre(guardados);
+  return capitalizarNombre(String(asesor?.nombre||'').trim().split(/\s+/).filter(Boolean).slice(1).join(' '));
 }
 function asesorNombreCompleto(asesor){
-  return [asesorNombres(asesor),asesorApellidos(asesor)].filter(Boolean).join(' ').trim()||String(asesor?.nombre||'').trim();
+  return [asesorNombres(asesor),asesorApellidos(asesor)].filter(Boolean).join(' ').trim()||capitalizarNombre(asesor?.nombre);
+}
+function normalizarDatosAsesor(asesor){
+  const nombres=asesorNombres(asesor);
+  const apellidos=asesorApellidos(asesor);
+  return {...asesor,nombres,apellidos,nombre:[nombres,apellidos].filter(Boolean).join(' ').trim()||capitalizarNombre(asesor?.nombre)};
+}
+function obtenerSaludosDashboard(){
+  return {...SALUDOS_DASHBOARD_DEFAULT,...(store.configuracion?.saludos_dashboard||{})};
+}
+function personalizarSaludoDashboard(plantilla,asesor){
+  const nombre=asesorNombres(asesor).split(/\s+/).filter(Boolean)[0]||capitalizarNombre(store.configuracion?.asesor).split(/\s+/)[0]||'Asesor';
+  return String(plantilla||'¡Hola, {nombre}!').replace(/\{\{\s*nombre\s*\}\}/gi,nombre).replace(/\{\s*nombre\s*\}/gi,nombre);
+}
+function saludoDashboardActual(asesor,fecha=new Date()){
+  const dias=['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+  const clave=dias[fecha.getDay()];
+  const plantilla=obtenerSaludosDashboard()[clave]||SALUDOS_DASHBOARD_DEFAULT[clave];
+  return personalizarSaludoDashboard(plantilla,asesor);
 }
 function stageLabel(etapa,svc){ const st=stagesFor(svc||'retiro_desempleo'); const f=st.find(s=>s.id===etapa); return f?f.label:etapa||'—'; }
 function stageCls(etapa,svc){ const st=stagesFor(svc||'retiro_desempleo'); const i=st.findIndex(s=>s.id===etapa); if(etapa==='concluido') return 'stage-2'; if(i<=1) return 'stage-1'; if(i<=3) return 'stage-5'; return 'stage-3'; }
@@ -137,7 +165,7 @@ function toggleBloqueoFirma(){
 }
 function guardarConfig(){
   store.configuracion.nombre_app=document.getElementById('cfg-nombre').value.trim()||'C&A CRM Suite';
-  store.configuracion.asesor=document.getElementById('cfg-asesor').value.trim()||'Emmanuel Álvarez';
+  store.configuracion.asesor=capitalizarNombre(document.getElementById('cfg-asesor').value)||'Emmanuel Álvarez';
   saveStore();
   document.getElementById('app-name-display').textContent=store.configuracion.nombre_app;
   document.title=store.configuracion.nombre_app;
@@ -760,7 +788,7 @@ function actualizarSidebarSesion(){
       av.style.display='flex';
     }
   }
-  if(nm) nm.textContent=sesionActiva.nombre;
+  if(nm) nm.textContent=asesorNombreCompleto(sesionActiva);
   if(rb){
     rb.textContent=sesionActiva.rol==='admin'?'Admin':'Asesor';
     rb.className='rol-badge '+(sesionActiva.rol==='admin'?'rol-admin':'rol-asesor');
@@ -1120,8 +1148,8 @@ function validarPasswordAsesor(val){
 }
 
 async function guardarAsesor(){
-  const nombres=(getVal('as-nombres')||'').trim();
-  const apellidos=(getVal('as-apellidos')||'').trim();
+  const nombres=capitalizarNombre(getVal('as-nombres'));
+  const apellidos=capitalizarNombre(getVal('as-apellidos'));
   const nombre=[nombres,apellidos].filter(Boolean).join(' ');
   const password=getVal('as-pin');
   const password2=getVal('as-pin2');

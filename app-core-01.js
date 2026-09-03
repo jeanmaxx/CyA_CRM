@@ -28,6 +28,16 @@ const DOCS_CATALOGO = [
   {id:'cartilla_imss',label:'Cartilla del IMSS'},
 ];
 
+const SALUDOS_DASHBOARD_DEFAULT = {
+  lunes:'¡Hola, {nombre}, a iniciar la semana con todo!',
+  martes:'2 de 6, ¡sí se puede {nombre}!',
+  miercoles:'Mitad de semana {nombre}, ¡a cerrar esos prospectos!',
+  jueves:'¡Hola {nombre}, qué gusto verte de nuevo!',
+  viernes:'Cerrando la semana {nombre}, ¡a darlo todo!',
+  sabado:'Hola {nombre}, ¡cerrando la semana como los campeones!',
+  domingo:'¿Trabajando en domingo {nombre}? ¡Estos esfuerzos son los que hacen la diferencia!'
+};
+
 let store = {
   clientes:[], servicios:[], agenda:[],
   asesores:[], colaboradores:[], leads:[],
@@ -39,6 +49,7 @@ let store = {
     ciudad_contrato:'Tequisquiapan, Querétaro',
     pin_admin:'', bloqueo_firma:true,
     logo_empresa: '',  // base64
+    saludos_dashboard:{...SALUDOS_DASHBOARD_DEFAULT},
   }
 };
 let sesionActiva = null; // { id, nombre, rol, pin, foto }
@@ -118,6 +129,7 @@ function loadStore(){
   if(store.configuracion.pin_admin===undefined) store.configuracion.pin_admin='';
   if(store.configuracion.bloqueo_firma===undefined) store.configuracion.bloqueo_firma=true;
   if(!store.configuracion.logo_empresa) store.configuracion.logo_empresa='';
+  store.configuracion.saludos_dashboard={...SALUDOS_DASHBOARD_DEFAULT,...(store.configuracion.saludos_dashboard||{})};
   // La versión en la nube nunca crea usuarios ni contraseñas locales.
   // Completar también los recordatorios creados en versiones anteriores.
   store.agenda.forEach(evento=>{

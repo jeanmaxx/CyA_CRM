@@ -499,10 +499,67 @@ function calcElegible(){
 
 // ==================== CONFIG ====================
 let configOrdenMenuAbierto=false;
+let configSaludosDashboardAbierto=false;
 
 function toggleConfigOrdenMenu(){
   configOrdenMenuAbierto=!configOrdenMenuAbierto;
   renderPage('configuracion');
+}
+
+function toggleConfigSaludosDashboard(){
+  configSaludosDashboardAbierto=!configSaludosDashboardAbierto;
+  renderPage('configuracion');
+}
+
+function renderCardSaludosDashboard(){
+  const dias=[
+    ['lunes','Lunes'],['martes','Martes'],['miercoles','Miércoles'],['jueves','Jueves'],
+    ['viernes','Viernes'],['sabado','Sábado'],['domingo','Domingo']
+  ];
+  const claves=['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+  const saludos=obtenerSaludosDashboard();
+  const claveHoy=claves[new Date().getDay()];
+  const saludoHoy=personalizarSaludoDashboard(saludos[claveHoy],sesionActiva);
+  return `<div class="card config-greetings-card">
+    <div class="card-header" style="cursor:pointer;" onclick="toggleConfigSaludosDashboard()">
+      <div><div class="card-title">${configSaludosDashboardAbierto?'▾':'▸'} Saludos del Dashboard</div><div class="config-card-sub">Un mensaje diferente para cada día de la semana</div></div>
+    </div>
+    <div class="card-body" style="${configSaludosDashboardAbierto?'':'display:none;'}">
+      <div class="config-greeting-preview">
+        <span>Vista previa de hoy</span>
+        <strong id="cfg-saludo-preview">${escapeHTMLBasico(saludoHoy)}</strong>
+      </div>
+      <div class="config-greetings-list">
+        ${dias.map(([clave,etiqueta])=>`<div class="form-group config-greeting-row">
+          <label class="form-label" for="cfg-saludo-${clave}">${etiqueta}</label>
+          <textarea class="form-textarea" id="cfg-saludo-${clave}" rows="2" oninput="actualizarPreviewSaludosDashboard()">${escapeHTMLBasico(saludos[clave]||'')}</textarea>
+        </div>`).join('')}
+      </div>
+      <div class="form-helper" style="margin-bottom:12px;">Usa <strong>{nombre}</strong> en el lugar donde debe aparecer el primer nombre del asesor.</div>
+      <button class="btn btn-primary" onclick="guardarSaludosDashboard()">Guardar saludos</button>
+    </div>
+  </div>`;
+}
+
+function actualizarPreviewSaludosDashboard(){
+  const claves=['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+  const clave=claves[new Date().getDay()];
+  const campo=document.getElementById('cfg-saludo-'+clave);
+  const preview=document.getElementById('cfg-saludo-preview');
+  if(preview) preview.textContent=personalizarSaludoDashboard(campo?.value||SALUDOS_DASHBOARD_DEFAULT[clave],sesionActiva);
+}
+
+function guardarSaludosDashboard(){
+  const claves=['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+  const saludos={};
+  for(const clave of claves){
+    const valor=String(document.getElementById('cfg-saludo-'+clave)?.value||'').trim();
+    saludos[clave]=valor||SALUDOS_DASHBOARD_DEFAULT[clave];
+  }
+  store.configuracion.saludos_dashboard=saludos;
+  saveStore();
+  showToast('Saludos del Dashboard guardados','success');
+  actualizarPreviewSaludosDashboard();
 }
 
 function renderCardAcceso(){
@@ -555,6 +612,7 @@ function renderConfiguracion(){
         <button class="btn btn-primary" onclick="guardarConfig()">Guardar cambios</button>
       </div>
     </div>
+    ${renderCardSaludosDashboard()}
     <div class="card">
       <div class="card-header"><div class="card-title">Datos de la empresa (para contratos)</div></div>
       <div class="card-body">

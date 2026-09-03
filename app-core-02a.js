@@ -49,7 +49,7 @@ function renderDashboard(){
   <div class="dashboard-hero">
     <div>
       <div style="margin-bottom:4px;font-size:12px;color:var(--text-muted)">${dias[today.getDay()]}, ${fmtDate(fechaISOLocal(today))}</div>
-      <div class="section-title">Bienvenido, ${asesorNombres(sesionActiva)||store.configuracion.asesor||'Emmanuel'}</div>
+      <div class="section-title dashboard-greeting">${escapeHTMLBasico(saludoDashboardActual(sesionActiva,today))}</div>
       <div class="section-sub" style="margin-bottom:0;">Resumen de tu cartera de clientes.</div>
     </div>
     <div class="dashboard-view-selector">${getSelectorVistaHTML(true)}</div>
