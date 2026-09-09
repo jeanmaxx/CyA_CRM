@@ -293,7 +293,7 @@ let vistaActual = 'propia'; // 'propia' | 'director' | asesor_id
 function getSelectorVistaHTML(compacto=false){
   if(!isAdmin()) return '';
   const asesores = store.asesores
-    .filter(a=>a.activo!==false&&a.id!==sesionActiva?.id)
+    .filter(a=>a.activo!==false&&a.rol!=='tech_admin'&&a.id!==sesionActiva?.id)
     .sort((a,b)=>String(a.nombre||'').localeCompare(String(b.nombre||''),'es'));
   return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:${compacto?'0':'16px'};">
     <span style="font-size:12px;color:var(--text-muted);">Vista:</span>
@@ -352,7 +352,7 @@ function colaboradoresVistaActual(){
 
 // ==================== REORDENAR PESTAÑAS ====================
 // Orden default del sidebar (guardado en localStorage)
-const NAV_DEFAULT = ['dashboard','leads','clientes','pipeline','contratos','plantillas','agenda','finanzas','servicios','colaboradores','asesores','configuracion'];
+const NAV_DEFAULT = ['dashboard','leads','clientes','pipeline','contratos','plantillas','agenda','finanzas','servicios','colaboradores','asesores','configuracion','cuenta'];
 let navOrder = [...NAV_DEFAULT];
 
 function loadNavOrder(){
@@ -391,8 +391,8 @@ function aplicarOrdenSidebar(){
   const secciones={
     principal:['dashboard','leads','clientes','pipeline'],
     operaciones:['contratos','plantillas','agenda','finanzas','colaboradores'],
-    administracion:['servicios','asesores'],
-    cuenta:['configuracion'],
+    administracion:['servicios','asesores','configuracion'],
+    cuenta:['cuenta'],
   };
   const ordenPorSeccion={principal:[],operaciones:[],administracion:[],cuenta:[]};
   navOrder.forEach(page=>{

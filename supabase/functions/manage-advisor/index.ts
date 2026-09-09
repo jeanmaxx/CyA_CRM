@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 
 const allowedOrigins = new Set([
   'https://jeanmaxx.github.io',
@@ -48,12 +48,24 @@ Deno.serve(async (req: Request) => {
     const { data: caller } = await admin.from('profiles')
       .select('id,organization_id,role,active')
       .eq('id', authData.user.id).single();
-    if (!caller || caller.role !== 'admin' || caller.active !== true) {
-      return respond(req, 403, { error: 'Solo un administrador puede gestionar asesores' });
-    }
-
+    if (!caller || caller.active !== true) return respond(req, 403, { error: 'Cuenta inactiva' });
     const body = await req.json();
     const action = String(body.action || 'upsert');
+    if (caller.role !== 'tech_admin') {
+      // One-time setup is limited to the original operational administrator.
+      const { data: technical } = await admin.from('profiles').select('id').eq('organization_id',caller.organization_id).eq('role','tech_admin').eq('active',true).limit(1);
+      const { data: founders } = await admin.from('profiles').select('id').eq('organization_id',caller.organization_id).eq('role','admin').eq('active',true).order('created_at').order('id').limit(1);
+      if (action !== 'bootstrap' || technical?.length || founders?.[0]?.id !== caller.id) {
+        return respond(req,403,{error:'Solo el administrador técnico puede gestionar cuentas'});
+      }
+    }
+    if (!['upsert','bootstrap','delete'].includes(action)) return respond(req,400,{error:'Acción inválida'});
+    const targetId = String(body.id || '');
+    if (action === 'bootstrap' && targetId) return respond(req,400,{error:'La cuenta técnica debe ser una cuenta nueva'});
+    if (targetId) {
+      const { data: target } = await admin.from('profiles').select('id,organization_id,role').eq('id',targetId).single();
+      if (!target || target.organization_id !== caller.organization_id) return respond(req,403,{error:'La cuenta no pertenece a esta organización'});
+    }
 
     if (action === 'delete') {
       const targetId = String(body.id || '');
@@ -68,15 +80,15 @@ Deno.serve(async (req: Request) => {
     const email = String(body.email || '').trim().toLowerCase();
     const password = String(body.password || '');
     const city = String(body.city || '').trim();
-    const role = body.role === 'admin' ? 'admin' : 'advisor';
-    const active = body.active !== false;
+    const role = action === 'bootstrap' ? 'tech_admin' : body.role === 'tech_admin' ? 'tech_admin' : body.role === 'admin' ? 'admin' : 'advisor';
+    const active = action === 'bootstrap' || body.active !== false;
     const requestedId = String(body.id || '');
     const legacyId = String(body.legacyId || '') || null;
     if (!fullName || !email) return respond(req, 400, { error: 'Nombre y correo son obligatorios' });
     if (!requestedId && !validPassword(password)) {
       return respond(req, 400, { error: 'La contraseña temporal no cumple los requisitos' });
     }
-    if (requestedId === authData.user.id && (role !== 'admin' || !active)) {
+    if (requestedId === authData.user.id && (role !== 'tech_admin' || !active)) {
       return respond(req, 400, { error: 'No puedes quitar tu propio acceso de administrador' });
     }
 
@@ -110,7 +122,10 @@ Deno.serve(async (req: Request) => {
       role,
       active,
     }, { onConflict: 'id' });
-    if (profileError) throw profileError;
+    if (profileError) {
+      if (!requestedId) await admin.auth.admin.deleteUser(userId);
+      throw profileError;
+    }
 
     if (legacyId) {
       for (const table of ['collaborators', 'leads', 'clients', 'agenda_events']) {

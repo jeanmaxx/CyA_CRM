@@ -12,7 +12,7 @@
 <link rel="manifest" href="site.webmanifest?v=20260903">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="styles.css?v=20260903-dashboard-prioridades">
+<link rel="stylesheet" href="styles.css?v=20260909-operacion-tecnica">
 </head>
 <body>
 
@@ -70,12 +70,14 @@
       <div class="nav-item" data-page="asesores" onclick="navigate('asesores',this)">
         <span class="nav-icon">&#x25D1;</span><span class="nav-label">Asesores</span>
       </div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-section-label">Cuenta</div>
       <div class="nav-item" data-page="configuracion" onclick="navigate('configuracion',this)">
         <span class="nav-icon">&#x25CC;</span><span class="nav-label">Configuración</span>
       </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Cuenta</div>
+      <div class="nav-item" data-page="cuenta" onclick="navigate('cuenta',this)"><span class="nav-icon">◉</span><span class="nav-label">Mi cuenta</span></div>
+
     </div>
   </nav>
   <div class="sidebar-footer">
@@ -283,14 +285,6 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">RFC <span style="color:var(--text-muted);font-weight:400">(13 caracteres)</span></label>
-            <div class="nss-wrap">
-              <input class="form-input input-upper" id="fc-rfc" placeholder="XXXX000000XXX" maxlength="13"
-                oninput="this.value=this.value.replace(/[^A-Z0-9]/g,'').toUpperCase().slice(0,13);validateAlphaNum(this,'rfc-indicator',13)">
-              <span class="nss-indicator" id="rfc-indicator"></span>
-            </div>
-          </div>
-          <div class="form-group">
             <label class="form-label">Cantidad a retirar de AFORE</label>
             <input class="form-input" id="fc-monto" type="number" placeholder="$ 0.00"
               oninput="previewCalculo()">
@@ -315,6 +309,15 @@
           <input class="form-input input-upper" id="fc-domicilio" placeholder="CALLE, NÚMERO, COLONIA, MUNICIPIO, CP"
             oninput="this.value=this.value.toUpperCase()">
         </div>
+<details class="optional-data"><summary>Datos opcionales · RFC</summary>          <div class="form-group">
+            <label class="form-label">RFC <span style="color:var(--text-muted);font-weight:400">(13 caracteres)</span></label>
+            <div class="nss-wrap">
+              <input class="form-input input-upper" id="fc-rfc" placeholder="XXXX000000XXX" maxlength="13"
+                oninput="this.value=this.value.replace(/[^A-Z0-9]/g,'').toUpperCase().slice(0,13);validateAlphaNum(this,'rfc-indicator',13)">
+              <span class="nss-indicator" id="rfc-indicator"></span>
+            </div>
+          </div>
+</details>
         <hr class="divider">
         <div class="form-section">Datos bancarios</div>
         <div class="form-row">
@@ -532,7 +535,7 @@
 <!-- ===== PANTALLA DE LOGIN ===== -->
 <div id="login-screen" class="login-screen">
   <div id="login-logo-wrap" class="login-logo">
-    <span id="login-logo-text" style="font-family:var(--font-display);font-weight:700;font-size:18px;color:#fff;">C&A</span>
+    <img src="assets/icons/icon-512x512.png" alt="Casillas & Asociados" style="width:100%;height:100%;object-fit:contain;background:#fff;">
   </div>
   <div class="login-app-name" id="login-app-name">C&A CRM Suite</div>
   <div class="login-sub">Casillas &amp; Asociados — Selecciona tu perfil</div>
@@ -615,7 +618,7 @@
           <label class="form-label">Rol</label>
           <select class="form-select" id="as-rol">
             <option value="asesor">Asesor</option>
-            <option value="admin">Administrador</option>
+            <option value="tech_admin">Administrador técnico</option><option value="admin">Administrador</option>
           </select>
         </div>
         <div class="form-group">
@@ -700,7 +703,7 @@
         <div class="form-group">
           <label class="form-label">CURP</label>
           <input class="form-input input-upper" id="lead-curp" maxlength="18" placeholder="18 caracteres"
-            oninput="this.value=this.value.replace(/[^A-ZÑ0-9]/gi,'').toUpperCase().slice(0,18);validarCurpLead();renderLeadElegibilidad(recogerElegibilidadLead())">
+            oninput="this.value=this.value.replace(/[^A-ZÑ0-9]/gi,'').toUpperCase().slice(0,18);validarCurpLead();actualizarNacimientoDesdeCurp()">
           <div class="curp-warning" id="lead-curp-warning"></div>
         </div>
         <div class="form-group">
@@ -958,34 +961,6 @@
   </div>
 </div>
 
-<!-- POPUP BLOQUEO FIRMA -->
-<div class="popup-overlay" id="popup-bloqueo">
-  <div class="popup-box">
-    <div class="popup-icon">🔒</div>
-    <div class="popup-title">Contrato no firmado</div>
-    <div class="popup-text">Se requiere contrato firmado para continuar.<br>Solicita autorización al administrador si necesitas forzar el avance.</div>
-    <div class="popup-actions">
-      <button class="btn btn-primary" onclick="closePopup('popup-bloqueo')">Entendido</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL PIN ADMIN — autorizar avance sin firma -->
-<div class="popup-overlay" id="popup-pin">
-  <div class="popup-box">
-    <div class="popup-icon">🔑</div>
-    <div class="popup-title">Autorización de administrador</div>
-    <div class="popup-text" id="popup-pin-desc">Ingresa las credenciales de un administrador para autorizar el avance sin contrato firmado.</div>
-    <input class="form-input" id="pin-email-field" type="email" placeholder="Correo del administrador" autocomplete="username" style="text-align:left;font-size:14px;margin-bottom:8px;">
-    <input class="form-input" id="pin-input-field" type="password" placeholder="Contraseña de administrador" autocomplete="current-password" onkeydown="if(event.key==='Enter')verificarPinAdmin()" style="text-align:left;letter-spacing:normal;font-size:14px;">
-    <div id="pin-error" style="color:var(--danger);font-size:12px;margin-bottom:12px;display:none;">Contraseña incorrecta. Intenta de nuevo.</div>
-    <div class="popup-actions">
-      <button class="btn" onclick="closePopup('popup-pin')">Cancelar</button>
-      <button class="btn btn-primary" onclick="verificarPinAdmin()">Autorizar</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL DE CONTRASEÑA DEL USUARIO ACTUAL -->
 <div class="popup-overlay" id="popup-pin-config">
   <div class="popup-box">
@@ -1015,17 +990,22 @@
 
 <div class="toast-container" id="toast-container"></div>
 
-<script src="app-core-01.js?v=20260903-saludos"></script>
-<script src="app-core-02a.js?v=20260903-dashboard-prioridades"></script>
-<script src="app-core-02b.js?v=20260903-finanzas-fecha-afore"></script>
-<script src="app-core-03.js?v=20260903-finanzas-fecha-afore"></script>
-<script src="app-core-04.js?v=20260903-finanzas-fecha-afore"></script>
-<script src="app-core-05.js?v=20260903-dashboard-prioridades"></script>
-<script src="app-core-06.js?v=20260903-dashboard-prioridades"></script>
-<script src="app-core-07.js"></script>
+<script src="app-core-01.js?v=20260909-operacion-tecnica"></script>
+<script src="app-core-02a.js?v=20260909-operacion-tecnica"></script>
+<script src="app-core-02b.js?v=20260909-operacion-tecnica"></script>
+<script src="app-core-03.js?v=20260909-operacion-tecnica"></script>
+<script src="app-core-04.js?v=20260909-operacion-tecnica"></script>
+<script src="app-core-05.js?v=20260909-operacion-tecnica"></script>
+<script src="app-core-06.js?v=20260909-operacion-tecnica"></script>
+<script src="app-core-07.js?v=20260909-operacion-tecnica"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="cloud-config.js"></script>
-<script src="cloud-adapter.js?v=20260903-finanzas-fecha-afore"></script>
+<script src="cloud-adapter.js?v=20260909-operacion-tecnica"></script>
+<script src="vendor/jszip-3.10.1.min.js"></script>
+<script src="vendor/docx-preview-0.3.6.min.js"></script>
+<script src="app-workflow.js?v=20260909-operacion-tecnica"></script>
+<script src="app-prospect-workflow.js?v=20260909-operacion-tecnica"></script>
+<script src="app-contract-word.js?v=20260909-operacion-tecnica"></script>
 <script>
 initCloudApp();
 </script>

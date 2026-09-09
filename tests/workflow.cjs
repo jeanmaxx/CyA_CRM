@@ -1,0 +1,24 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const fields={};const elements={};
+const context={console,Date,Intl,Math,JSON,Set,Map,Array,Number,String,Boolean,RegExp,Object,Promise,Error,URL,Blob,Uint8Array,TextEncoder,setTimeout:()=>0,clearTimeout(){},localStorage:{getItem(){return null},setItem(){}},window:{addEventListener(){}},document:{addEventListener(){},getElementById:id=>elements[id]||null,querySelector:()=>null,querySelectorAll:()=>[]},crypto:require('crypto').webcrypto};
+context.matchMedia=()=>({matches:false,addEventListener(){},addListener(){}});context.window=context;vm.createContext(context);
+const repo=process.cwd();for(const file of ['app-core-01.js','app-core-02a.js','app-core-02b.js','app-core-03.js','app-core-04.js','app-core-05.js','app-core-06.js','app-core-07.js','app-workflow.js','app-prospect-workflow.js','app-contract-word.js'])vm.runInContext(fs.readFileSync(file,'utf8').replace('\ninitResponsiveShell();','\n'),context,{filename:file});
+const run=s=>vm.runInContext(s,context);
+assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:106,cotizaImss:'no',retiro5:'no'},'2026-09-09').cumple"),true);
+assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:105,cotizaImss:'no',retiro5:'no'},'2026-09-09').cumple"),false);
+for(const e of [{semanas:200,cotizaImss:'',retiro5:'no'},{semanas:200,cotizaImss:'si',retiro5:'no'},{semanas:200,cotizaImss:'no',retiro5:'no',fechaRetiro:'2022-09-01'}]){context.e=e;assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',e,'2026-09-09').cumple"),false);}
+assert.equal(run("evaluarCriteriosIniciales('asesoria_pension',{semanas:500,fechaNacimiento:'1966-09-09',ley:'73',conservacionDerechos:'si'},'2026-09-09').cumple"),true);
+assert.equal(run("evaluarCriteriosIniciales('asesoria_pension',{semanas:500,fechaNacimiento:'1966-09-09',ley:'',conservacionDerechos:'si'},'2026-09-09').cumple"),false);
+assert.equal(run("evaluarCriteriosIniciales('asesoria_pension',{semanas:875,fechaNacimiento:'1966-09-09',ley:'97',conservacionDerechos:'no'},'2026-09-09').cumple"),true);
+assert.equal(run("evaluarCriteriosIniciales('asesoria_pension',{semanas:874,fechaNacimiento:'1966-09-09',ley:'97'},'2026-09-09').cumple"),false);
+assert.equal(run("evaluarCriteriosIniciales('asesoria_pension',{semanas:600,fechaNacimiento:'1966-09-09',ley:'73',primeraCotizacion:'1998-01-01',conservacionDerechos:'si'},'2026-09-09').cumple"),false);
+run("store.agenda=[];sesionActiva={id:'owner',nombre:'Asesor Prueba',rol:'admin'};store.leads=[{id:'old',estado:'archivado',archivoTipo:'temporal',fechaRecontacto:'2026-01-01',fechaInicio:'2025-01-01'}];procesarRecontactosLeads()");
+assert.equal(run('store.leads[0].estado'),'archivado');assert.equal(run('store.leads[0].fechaInicio'),'2025-01-01');
+run("var c={id:'sample',nombre:'Prueba',servicio:'retiro_desempleo',etapa:'dado_alta',fechaAltaAfore:'2026-08-01',asesorId:'owner'};agendarRecordatorio45(c);c.fechaAltaAfore='2026-08-05';agendarRecordatorio45(c);");
+assert.equal(run('store.agenda.length'),1);assert.equal(run('store.agenda[0].fecha'),'2026-09-19');
+assert.equal(run("dineroEnLetras(13000)"),'TRECE MIL PESOS 00/100 M.N.');assert.equal(run("dineroEnLetras(21000.15)"),'VEINTIÚN MIL PESOS 15/100 M.N.');
+assert.equal(run("isTechnicalAdmin()"),false);assert.equal(run('isAdmin()'),true);
+run("sesionActiva.rol='tech_admin'");assert.equal(run('isTechnicalAdmin()'),true);assert.equal(run('isAdmin()'),true);
+context.JSZip=require('jszip');
+context.vars={CLIENTE_NOMBRE:'CLIENTE DE PRUEBA SIN DATOS REALES',CLIENTE_DOMICILIO:'CALLE DE PRUEBA 123, COLONIA CENTRO, QUERÉTARO, C.P. 76000',EMPRESA_REPRESENTANTE:'REPRESENTANTE DE PRUEBA',EMPRESA_DOMICILIO:'DOMICILIO EMPRESARIAL DE PRUEBA',CIUDAD_CONTRATO:'Tequisquiapan, Querétaro',FECHA_CONTRATO:'09 DE SEPTIEMBRE DE 2026',PAGARE_VENCIMIENTO:'29 DE OCTUBRE DE 2026',MONTO_RETIRO:'$35,000.00',MONTO_RETIRO_LETRAS:'TREINTA Y CINCO MIL PESOS 00/100 M.N.',HONORARIOS:'$8,000.00',HONORARIOS_LETRAS:'OCHO MIL PESOS 00/100 M.N.',PAGARE_MONTO:'$13,000.00',PAGARE_MONTO_LETRAS:'TRECE MIL PESOS 00/100 M.N.',SALDO_MINIMO:'$35,000.00',SALDO_MINIMO_LETRAS:'TREINTA Y CINCO MIL PESOS 00/100 M.N.',PAGARE_COBRANZA:'$5,000.00'};
+(async()=>{context.bytes=await require('./contract-fixture.cjs')();const out=await run('crearDocxContrato(vars,bytes)');const z=await context.JSZip.loadAsync(out);for(const fn of Object.keys(z.files).filter(n=>n.endsWith('.xml'))){const t=await z.file(fn).async('string');assert(!t.includes('{{CLIENTE_'));}console.log('PASS: eligibility boundaries, no inferred regime, recontact retention, corrected reminder, roles, money words and generated Word.');})();

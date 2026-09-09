@@ -12,7 +12,7 @@ const SERVICIOS_DEFAULT = [
     plantilla:'[CENTRO]CONTRATO DE PRESTACION DE SERVICIOS[/CENTRO]\n\nQue celebran por una parte {{EMPRESA_NOMBRE}} con domicilio en {{EMPRESA_DOMICILIO}}, a quien en lo sucesivo se le referira en este contrato como LA EMPRESA y por otra al mayor de edad a {{CLIENTE_NOMBRE}} con domicilio ubicado en {{CLIENTE_DOMICILIO}}, a quien se le referira como EL CONTRATANTE DEL SERVICIO.\n\nLAS PARTES patentizan su conformidad para sujetarse a este contrato al tenor literal de las siguientes DECLARACIONES Y CLAUSULAS:\n[SEPARADOR]\n[CENTRO]DECLARACIONES[/CENTRO]\n\nI.   Declara LA EMPRESA estar dedicada a la mediacion y tramitologia en materia de Seguridad Social, relacionada con las Administradoras de Fondos para el Retiro (AFORES).\nII.  Que le ha informado a EL CONTRATANTE DEL SERVICIO que su obligacion bajo el presente contrato es una obligacion de medios y resultados.\nIII. Declara EL CONTRATANTE DEL SERVICIO ser mayor de edad, mexicano, con capacidad legal, manifestando que es su deseo contratar los servicios de la empresa.\nIV.  Sigue declarando EL CONTRATANTE DEL SERVICIO que cuenta con la capacidad legal y los recursos economicos necesarios para celebrar el presente contrato.\nV.   Declara EL CONTRATANTE DEL SERVICIO que esta enterado del presupuesto de los honorarios que son materia del presente contrato.\nVI.  Sigue declarando EL CONTRATANTE DEL SERVICIO que ha proporcionado a LA EMPRESA toda la informacion y documentacion de los asuntos encomendados.\n[SEPARADOR]\n[CENTRO]CLAUSULAS[/CENTRO]\n\n[NEGRITA]PRIMERA.- OBJETO.[/NEGRITA] LA EMPRESA se obliga frente a EL CONTRATANTE DEL SERVICIO a realizar las siguientes actividades:\na) BUSCAR QUE EL CONTRATANTE OBTENGA UN APOYO POR DESEMPLEO DE {{MONTO_RETIRO}} CON ASESORAMIENTO DE LA EMPRESA, SIEMPRE Y CUANDO TENGA UN SALDO EN AFORE MAYOR A $35,000.00\nb) ACOMPANAR EN EL PROCESO AL CONTRATANTE DEL SERVICIO HASTA QUE HAYA OBTENIDO SU RECURSO.\nc) ASESORAR Y ACLARAR DUDAS DEL CONTRATANTE DURANTE TODO EL PROCESO.\nd) CAMBIO DE AFORE Y ACTUALIZACION DE INFORMACION PARA AGILIZAR EL TRAMITE.\ne) ALTA ANTE EL IMSS CON SALARIO DIARIO INTEGRADO DE $1,200.00\nf) ACOMPANAMIENTO PARA APERTURA DE CUENTA PARA DEPOSITOS\ng) PROCESOS DE COBRO DENTRO DE LA AFORE PARA LA OBTENCION DEL RECURSO.\n\n[NEGRITA]SEGUNDA.- Honorarios.[/NEGRITA] EL CONTRATANTE DEL SERVICIO se obliga a pagar a LA EMPRESA la cantidad de {{HONORARIOS}} de la cantidad recuperada de la AFORE. Este pago debera efectuarse dentro de 12 horas habiles a partir del deposito hecho por la AFORE.\n\n[NEGRITA]TERCERA.-[/NEGRITA] EL CONTRATANTE DEL SERVICIO encomienda con caracter de EXCLUSIVO a LA EMPRESA la gestoria y tramitologia para la obtencion del monto de retiro por desempleo.\n\n[NEGRITA]CUARTA.-[/NEGRITA] EL CONTRATANTE DEL SERVICIO entrega a LA EMPRESA toda la informacion y documentos necesarios para el tramite.\n\n[NEGRITA]QUINTA.-[/NEGRITA] EL CONTRATANTE DEL SERVICIO da la exclusividad por un periodo de 2 meses para concluir el tramite.\n\n[NEGRITA]SEXTA.-[/NEGRITA] En caso de desistimiento, EL CONTRATANTE DEL SERVICIO pagara una penalizacion de $3,500.00 en un plazo maximo de 72 horas.\n\n[NEGRITA]SEPTIMA.-[/NEGRITA] La naturaleza del presente contrato es civil, regulado por el Codigo Civil del Estado de Queretaro.\n\n[NEGRITA]OCTAVA.-[/NEGRITA] Las partes no tienen relacion laboral ni subordinacion alguna.\n\n[NEGRITA]NOVENA.-[/NEGRITA] El presente contrato tendra duracion de 2 meses a partir de la fecha de firma.\n\n[NEGRITA]DECIMA.-[/NEGRITA] Cualquier modificacion debe constar por escrito y estar firmado por las partes.\n\n[NEGRITA]DECIMA PRIMERA.-[/NEGRITA] Ambas partes se someten al fuero de las leyes del Estado de Queretaro y a los tribunales de San Juan del Rio, Queretaro.\n[SEPARADOR]\nEnteradas las partes, firman el presente contrato por duplicado el {{FECHA_CONTRATO}} en {{CIUDAD_CONTRATO}}.\n\n[FIRMA]LA EMPRESA - {{EMPRESA_REPRESENTANTE}} | EL CONTRATANTE DEL SERVICIO - {{CLIENTE_NOMBRE}}[/FIRMA]'
   },
   { id:'asesoria_pension', nombre:'Asesoría pensión', activo:true, descripcion:'Orientación y gestión para trámites de pensión IMSS/ISSSTE.', esquema:'manual', docs:['ine','nss','curp','acta'], plantilla:'CONTRATO DE ASESORÍA PENSIÓN\n\n[Plantilla por definir]' },
-  { id:'correccion_imss', nombre:'CORRECCIÓN ANTE IMSS', activo:true, descripcion:'Acompañamiento para correcciones de datos y documentos ante el IMSS.', esquema:'manual', docs:['ine','nss','curp','acta','comprobante'], plantilla:'CONTRATO DE CORRECCIÓN ANTE IMSS\n\n[Plantilla por definir]' },
+  { id:'correccion_imss', nombre:'Corrección ante IMSS', activo:true, descripcion:'Acompañamiento para correcciones de datos y documentos ante el IMSS.', esquema:'manual', docs:['ine','nss','curp','acta','comprobante'], plantilla:'CONTRATO DE Corrección ante IMSS\n\n[Plantilla por definir]' },
   { id:'seguro_social', nombre:'Servicio de seguro social', activo:true, descripcion:'Gestión de trámites y servicios ante el IMSS.', esquema:'manual', docs:['ine','nss','curp'], plantilla:'CONTRATO SEGURO SOCIAL\n\n[Plantilla por definir]' },
   { id:'ppr', nombre:'PPR (Plan Personal de Retiro)', activo:true, descripcion:'Asesoría y contratación de Plan Personal de Retiro.', esquema:'manual', docs:['ine','nss','curp','acta','comprobante','rfc','estado_cuenta'], plantilla:'CONTRATO PPR\n\n[Plantilla por definir]' },
 ];
@@ -90,7 +90,7 @@ function loadStore(){
   const serviciosCorreccion=store.servicios.filter(esCorreccion);
   const idsCorreccion=new Set([...correccionIds,...serviciosCorreccion.map(s=>s.id)]);
   const baseCorreccion=serviciosCorreccion.find(s=>s.id==='correccion_imss')||serviciosCorreccion[0]||{};
-  const servicioCorreccion={...baseCorreccion,...SERVICIOS_DEFAULT.find(s=>s.id==='correccion_imss'),id:'correccion_imss',nombre:'CORRECCIÓN ANTE IMSS',esquema:'manual'};
+  const servicioCorreccion={...baseCorreccion,...SERVICIOS_DEFAULT.find(s=>s.id==='correccion_imss'),id:'correccion_imss',nombre:'Corrección ante IMSS',esquema:'manual'};
   store.servicios=store.servicios.filter(s=>!esCorreccion(s));
   store.servicios.push(servicioCorreccion);
   [...store.clientes,...store.leads].forEach(registro=>{ if(idsCorreccion.has(registro.servicio)) registro.servicio='correccion_imss'; });
@@ -181,10 +181,10 @@ const DOCS_RETIRO=[
 const DOCS_PPR=[...DOCS_RETIRO,{id:'estado_cuenta',label:'Estado de cuenta bancario'}];
 const DOCS_DEFAULT=DOCS_RETIRO.slice(0,4);
 // SERVICIOS label helper — lee del store en tiempo real
-const SERVICIOS_STATIC={retiro_desempleo:'Retiro desempleo',asesoria_pension:'Asesoría pensión',correccion_imss:'CORRECCIÓN ANTE IMSS',seguro_social:'Seguro social',ppr:'PPR'};
+const SERVICIOS_STATIC={retiro_desempleo:'Retiro desempleo',asesoria_pension:'Asesoría pensión',correccion_imss:'Corrección ante IMSS',seguro_social:'Seguro social',ppr:'PPR'};
 function getSvcLabel(id){ const s=store.servicios.find(x=>x.id===id); return s?s.nombre:(SERVICIOS_STATIC[id]||id||'—'); }
 const FUENTES={facebook:'Facebook',instagram:'Instagram',tiktok:'TikTok',recomendacion:'Recomendación',circulo_calido:'Círculo cálido',de_colaborador:'De colaborador',otro:'Otro'};
-const SERVICIOS={retiro_desempleo:'Retiro desempleo',asesoria_pension:'Asesoría pensión',correccion_imss:'CORRECCIÓN ANTE IMSS',seguro_social:'Seguro social',ppr:'PPR'};
+const SERVICIOS={retiro_desempleo:'Retiro desempleo',asesoria_pension:'Asesoría pensión',correccion_imss:'Corrección ante IMSS',seguro_social:'Seguro social',ppr:'PPR'};
 const FUENTE_COLORS=['#3b82f6','#ec4899','#a855f7','#10b981','#f59e0b','#64748b'];
 
 function stagesFor(svc){
@@ -209,8 +209,8 @@ function getServicio(id){ return store.servicios.find(s=>s.id===id)||null; }
 function navigate(page, el){
   // Control de acceso: asesor no puede entrar a módulos de admin
   const soloAdmin=['servicios','asesores','configuracion'];
-  if(soloAdmin.includes(page)&&!isAdmin()){
-    showToast('Acceso restringido — solo administradores','warn');
+  if(soloAdmin.includes(page)&&!isTechnicalAdmin()){
+    showToast('Acceso reservado al administrador técnico','warn');
     return;
   }
   currentPage=page;
@@ -230,6 +230,7 @@ function navigate(page, el){
     colaboradores:['Colaboradores','Red de colaboradores y comisiones'],
     servicios:['Servicios','Catálogo y reglas de operación'],
     asesores:['Asesores','Gestión del equipo y rendimiento'],
+    cuenta:['Mi cuenta','Foto de perfil y contraseña'],
     configuracion:['Configuración','Ajustes del sistema']
   };
   const [t,s]=titles[page]||[page,''];

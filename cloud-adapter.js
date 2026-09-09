@@ -63,7 +63,7 @@ async function cloudSignedAvatar(path){
 }
 
 async function cloudLoadStore(){
-  const [profiles,settings,services,collaborators,leads,clients,events,templates]=await Promise.all([
+  const [profiles,settings,services,collaborators,leads,clients,events,templates,contractTemplates]=await Promise.all([
     cloudSelect('profiles'),
     cloudSelect('app_settings'),
     cloudSelect('services'),
@@ -72,8 +72,10 @@ async function cloudLoadStore(){
     cloudSelect('clients'),
     cloudSelect('agenda_events'),
     cloudSelect('message_templates'),
+    cloudSelect('contract_templates'),
   ]);
 
+  privateContractTemplate=contractTemplates.find(t=>t.version===CONTRACT_TEMPLATE_VERSION&&t.active)||null;
   const settingsPayload=cloudCleanObject(settings[0]?.payload || {});
   cloudLegacyAdvisors=(settingsPayload.__legacyAdvisors || []).map(a=>({...a,pin:''}));
   delete settingsPayload.__legacyAdvisors;
@@ -89,7 +91,7 @@ async function cloudLoadStore(){
       legacyId:p.legacy_id || '',
       nombre,nombres,apellidos,
       ciudad:p.city || '',
-      rol:p.role === 'admin' ? 'admin' : 'asesor',
+      rol:p.role === 'tech_admin' ? 'tech_admin' : p.role === 'admin' ? 'admin' : 'asesor',
       activo:p.active !== false,
       foto:await cloudSignedAvatar(p.photo_path),
       fotoPath:p.photo_path || '',
@@ -111,11 +113,13 @@ async function cloudLoadStore(){
       servicio:r.service_id || '',etapa:r.stage,asesorId:resolvedAdvisorId(r.advisor_id,r.legacy_advisor_id),
       colaboradorId:r.collaborator_id || null,archivado:r.archived,descartado:r.discarded,
       fechaRegistro:(r.payload || {}).fechaRegistro || r.created_at,
+      fechaCaptura:(r.payload || {}).fechaCaptura || r.created_at,
     })),
     leads:leads.map(r=>({
       ...cloudCleanObject(r.payload || {}),
       id:r.id,nombre:r.name,telefono:r.phone || '',curp:r.curp || '',
       servicio:r.service_id || '',estado:r.status,archivoTipo:r.archive_type || null,
+      fechaCaptura:(r.payload || {}).fechaCaptura || r.created_at,
       fechaRecontacto:r.recontact_date || null,asesorId:resolvedAdvisorId(r.advisor_id,r.legacy_advisor_id),
       colaboradorId:r.collaborator_id || null,
     })),
@@ -126,7 +130,7 @@ async function cloudLoadStore(){
       clienteId:r.client_id || null,leadId:r.lead_id || null,
       asesorId:resolvedAdvisorId(r.advisor_id,r.legacy_advisor_id),
     })),
-    servicios:(services.length ? services.map(r=>({...cloudCleanObject(r.payload || {}),id:r.id,nombre:r.name,activo:r.active})) : cloudDefaults.servicios.map(s=>({...s}))),
+    servicios:(services.length ? services.map(r=>({...cloudCleanObject(r.payload || {}),id:r.id,nombre:r.id==='correccion_imss'?'Corrección ante IMSS':r.name,activo:r.active})) : cloudDefaults.servicios.map(s=>({...s}))),
     colaboradores:collaborators.map(r=>({...cloudCleanObject(r.payload || {}),id:r.id,nombre:r.name,activo:r.active,asesorId:resolvedAdvisorId(r.advisor_id,r.legacy_advisor_id)})),
     asesores:[...cloudProfiles,...legacyVisible],
     plantillas:(templates.length ? templates.map(r=>({...cloudCleanObject(r.payload || {}),id:r.id,nombre:r.name,tipo:r.template_type || (r.payload || {}).tipo || 'whatsapp'})) : PLANTILLAS_DEFAULT.map(p=>({...p}))),
@@ -217,7 +221,7 @@ async function cloudDeleteRemovedCollection({table,currentIds,removed}){
 }
 
 async function cloudSyncProfiles(){
-  const profiles=(store.asesores || []).filter(a=>cloudIsUuid(a.id) && (isAdmin() || a.id===sesionActiva?.id));
+  const profiles=(store.asesores || []).filter(a=>cloudIsUuid(a.id) && isTechnicalAdmin());
   for(const a of profiles){
     const {error}=await supabaseClient.from('profiles').update({
       full_name:asesorNombreCompleto(a)||'Asesor',given_names:asesorNombres(a)||null,surnames:asesorApellidos(a)||null,
@@ -230,7 +234,12 @@ async function cloudSyncProfiles(){
 
 async function cloudSyncNow(options={}){
   if(!cloudReady) return false;
-  if(cloudSyncRunning){ cloudSyncPending=true; return true; }
+  if(cloudSyncRunning){
+    cloudSyncPending=true;
+    if(!options.throwOnError) return true;
+    while(cloudSyncRunning) await new Promise(resolve=>setTimeout(resolve,60));
+    return cloudSyncNow(options);
+  }
   cloudSyncRunning=true;
   try{
     await cloudSyncProfiles();
@@ -243,7 +252,7 @@ async function cloudSyncNow(options={}){
     pendingDeletes.push(await cloudUpsertCollection('clients',cloudClientRows()));
     pendingDeletes.push(await cloudUpsertCollection('agenda_events',cloudEventRows()));
     pendingDeletes.push(await cloudUpsertCollection('message_templates',cloudTemplateRows()));
-    if(isAdmin()){
+    if(isTechnicalAdmin()){
       pendingDeletes.push(await cloudUpsertCollection('services',cloudServiceRows()));
       const settingsPayload={...cloudCleanObject(store.configuracion || {}),__legacyAdvisors:cloudLegacyAdvisors};
       const {error}=await supabaseClient.from('app_settings').upsert({organization_id:CA_ORG_ID,payload:settingsPayload},{onConflict:'organization_id'});
@@ -387,7 +396,7 @@ volverLoginGrid=cloudPrepareLogin;
 cerrarSesion=async function(){
   cloudReady=false;
   await supabaseClient.auth.signOut();
-  sesionActiva=null;
+  sesionActiva=null;privateContractTemplate=null;wordContractCurrent=null;
   store={clientes:[],servicios:[],agenda:[],asesores:[],colaboradores:[],leads:[],configuracion:{...cloudDefaults.configuracion}};
   cloudPrepareLogin();
 };
@@ -405,49 +414,6 @@ guardarPinAdmin=async function(){
   closePopup('popup-pin-config');showToast('Contraseña actualizada','success');
 };
 
-openPinAutorizacion=function(clienteId){
-  pinCallbackClienteId=clienteId;
-  const email=document.getElementById('pin-email-field');
-  const password=document.getElementById('pin-input-field');
-  const error=document.getElementById('pin-error');
-  if(email) email.value=isAdmin()?(sesionActiva?.email || ''):'';
-  if(password) password.value='';
-  if(error) error.style.display='none';
-  document.getElementById('popup-pin')?.classList.add('open');
-  setTimeout(()=>isAdmin()?password?.focus():email?.focus(),50);
-};
-
-verificarPinAdmin=async function(){
-  const email=(document.getElementById('pin-email-field')?.value || '').trim();
-  const password=document.getElementById('pin-input-field')?.value || '';
-  const errorBox=document.getElementById('pin-error');
-  if(errorBox) errorBox.style.display='none';
-  if(!email || !password){ if(errorBox){errorBox.textContent='Ingresa correo y contraseña del administrador.';errorBox.style.display='block';} return; }
-  const verifier=window.supabase.createClient(
-    window.CA_CLOUD_CONFIG.supabaseUrl,
-    window.CA_CLOUD_CONFIG.supabasePublishableKey,
-    {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}
-  );
-  try{
-    const {data,error}=await verifier.auth.signInWithPassword({email,password});
-    if(error || !data.user) throw new Error('Credenciales incorrectas');
-    const {data:profile,error:profileError}=await verifier.from('profiles').select('id,full_name,role,active').eq('id',data.user.id).single();
-    if(profileError || !profile || profile.role!=='admin' || profile.active!==true) throw new Error('La cuenta no es un administrador activo');
-    const cliente=store.clientes.find(x=>x.id===pinCallbackClienteId);
-    if(cliente){
-      cliente.autorizadoSinFirma=true;
-      cliente.autorizadoSinFirmaBy=profile.full_name || 'Administrador';
-      cliente.autorizadoSinFirmaFecha=fmtDateTime(new Date());
-      addHist(cliente,'autorizacion','⚠ Avance sin firma autorizado por '+cliente.autorizadoSinFirmaBy+' — '+cliente.autorizadoSinFirmaFecha);
-      await cloudSyncNow({throwOnError:true});
-      closePopup('popup-pin');showToast('Autorización concedida. Puedes avanzar la etapa.','success');openPerfil(pinCallbackClienteId);
-    }
-  }catch(error){
-    if(errorBox){errorBox.textContent=error.message || 'No fue posible autorizar';errorBox.style.display='block';}
-    const passwordInput=document.getElementById('pin-input-field');if(passwordInput){passwordInput.value='';passwordInput.focus();}
-  }finally{ await verifier.auth.signOut(); }
-};
-
 async function cloudInvokeAdvisor(body){
   const {data,error}=await supabaseClient.functions.invoke('manage-advisor',{body});
   if(error) throw new Error(data?.error || error.message || 'No se pudo ejecutar la gestión de asesores');
@@ -456,6 +422,7 @@ async function cloudInvokeAdvisor(body){
 }
 
 guardarAsesor=async function(){
+  if(!isTechnicalAdmin() && !(technicalBootstrapMode&&canBootstrapTechnicalAdmin())) return showToast('Acceso reservado al administrador técnico','warn');
   const nombres=capitalizarNombre(getVal('as-nombres'));
   const apellidos=capitalizarNombre(getVal('as-apellidos'));
   const nombre=[nombres,apellidos].filter(Boolean).join(' ');
@@ -471,17 +438,17 @@ guardarAsesor=async function(){
   if(password&&password!==password2){showToast('Las contraseñas no coinciden','warn');return;}
   try{
     const result=await cloudInvokeAdvisor({
-      action:'upsert',
+      action:technicalBootstrapMode?'bootstrap':'upsert',
       id:anterior&&cloudIsUuid(anterior.id)?anterior.id:null,
       legacyId:anterior&&!cloudIsUuid(anterior.id)?anterior.id:(anterior?.legacyId || null),
       fullName:nombre,email,password,city:getVal('as-ciudad'),
-      role:getVal('as-rol')==='admin'?'admin':'advisor',
+      role:technicalBootstrapMode?'tech_admin':getVal('as-rol')==='tech_admin'?'tech_admin':getVal('as-rol')==='admin'?'admin':'advisor',
       active:getVal('as-activo')!=='false',
     });
     const userId=result.userId;
     let foto=anterior?.foto || '';
     let fotoPath=anterior?.fotoPath || '';
-    if(asesorFotoTemp){
+    if(asesorFotoTemp&&!technicalBootstrapMode){
       fotoPath=`${CA_ORG_ID}/${userId}/avatar.jpg`;
       await cloudUploadDataUrl('crm-avatars',fotoPath,asesorFotoTemp);
       const {error}=await supabaseClient.from('profiles').update({photo_path:fotoPath}).eq('id',userId);
@@ -491,7 +458,7 @@ guardarAsesor=async function(){
     const asesor={
       id:userId,legacyId:anterior&&!cloudIsUuid(anterior.id)?anterior.id:(anterior?.legacyId || ''),
       nombre,nombres,apellidos,ciudad:getVal('as-ciudad'),email:result.email || email,
-      rol:getVal('as-rol')==='admin'?'admin':'asesor',activo:getVal('as-activo')!=='false',
+      rol:technicalBootstrapMode?'tech_admin':getVal('as-rol')==='tech_admin'?'tech_admin':getVal('as-rol')==='admin'?'admin':'asesor',activo:technicalBootstrapMode||getVal('as-activo')!=='false',
       foto,fotoPath,fechaAlta:anterior?.fechaAlta || new Date().toISOString(),cloudUser:true,
     };
     if(anterior){
@@ -503,7 +470,7 @@ guardarAsesor=async function(){
     }else store.asesores.push(asesor);
     if(sesionActiva?.id===userId){sesionActiva={...asesor};actualizarSidebarSesion();}
     await cloudSyncNow({throwOnError:true});
-    closeModal('modal-asesor');renderPage('asesores');showToast(anterior?'Asesor actualizado':'Asesor creado','success');
+    closeModal('modal-asesor');technicalBootstrapMode=false;renderPage(isTechnicalAdmin()?'asesores':'cuenta');showToast(anterior?'Asesor actualizado':'Asesor creado','success');
   }catch(error){console.error(error);showToast('No se pudo guardar el asesor: '+error.message,'warn');}
 };
 
@@ -519,7 +486,7 @@ eliminarAsesor=async function(){
       for(const item of (collection || [])) if(item.asesorId===asesor.id) item.asesorId=null;
     }
     await cloudSyncNow({throwOnError:true});
-    closeModal('modal-asesor');renderPage('asesores');showToast('Asesor eliminado','info');
+    closeModal('modal-asesor');technicalBootstrapMode=false;renderPage(isTechnicalAdmin()?'asesores':'cuenta');showToast('Asesor eliminado','info');
   }catch(error){console.error(error);showToast('No se pudo eliminar el asesor: '+error.message,'warn');}
 };
 

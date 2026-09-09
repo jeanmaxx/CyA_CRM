@@ -131,8 +131,7 @@ function openPerfil(id){
       let alertas='';
       if(c.servicio==='retiro_desempleo'){
         if(!c.contratoFirmado){
-          alertas+=`<div class="alerta-firma alerta-roja">🔴 Contrato pendiente de firma — requerido para avanzar en el proceso</div>`;
-          if(c.autorizadoSinFirma) alertas+=`<div class="alerta-firma alerta-amarilla">⚠ Avance sin firma autorizado para la siguiente etapa</div>`;
+          alertas+=`<div class="alerta-firma">Contrato pendiente de firma · seguimiento a cargo del asesor</div>`;
         } else {
           alertas+=`<div class="alerta-firma alerta-verde">✓ Contrato firmado el ${fmtDate(c.fechaFirmaContrato||'')}</div>`;
         }
@@ -172,7 +171,7 @@ function openPerfil(id){
     <!-- DATOS ADICIONALES -->
     <div class="tab-panel" id="pd-datos">
       <div class="info-rows">
-        ${[['NSS',c.nss||'—'],['CURP',c.curp||'—'],['RFC',c.rfc||'—'],['Domicilio',c.domicilio||'—'],['Banco',c.banco||'—'],['CLABE',c.clabe||'—'],['Cita actualización AFORE',c.fechaBiometrica?fmtDate(c.fechaBiometrica):'—'],['Cantidad a retirar de AFORE',c.montoAfore?'$'+Number(c.montoAfore).toLocaleString('es-MX'):'—']].map(([l,v])=>`<div class="info-row"><span class="ir-label">${l}</span><span class="ir-value">${v}</span></div>`).join('')}
+        ${[['Registro',fmtDate(c.fechaRegistro)],['Dado de alta',fmtDate(c.fechaAltaAfore)],['AFORE',c.afore||'—'],['NSS',c.nss||'—'],['CURP',c.curp||'—'],['Domicilio',c.domicilio||'—'],['Banco',c.banco||'—'],['CLABE',c.clabe||'—'],['Cita actualización AFORE',c.fechaBiometrica?fmtDate(c.fechaBiometrica):'—'],['Cantidad a retirar de AFORE',c.montoAfore?'$'+Number(c.montoAfore).toLocaleString('es-MX'):'—']].map(([l,v])=>`<div class="info-row"><span class="ir-label">${l}</span><span class="ir-value">${v}</span></div>`).join('')}
       </div>
     </div>
     <!-- DOCS -->
@@ -209,18 +208,10 @@ function openPerfil(id){
         ${c.contratoFirmado?`
         <div style="margin-top:10px;">
           <label class="form-label">Fecha de firma</label>
-          <input class="form-input" type="date" id="fecha-firma-${c.id}" value="${c.fechaFirmaContrato||''}"
+          <input class="form-input input-fecha-mx" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" id="fecha-firma-${c.id}" value="${fechaISOaMX(c.fechaFirmaContrato||'')}" oninput="mascaraFechaMX(this)"
             onchange="guardarFechaFirma('${c.id}',this.value)" style="max-width:200px;font-size:12px;">
         </div>`:''}
-        ${!c.contratoFirmado && isAdmin()?`
-        <div style="margin-top:12px;padding:10px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:var(--radius-sm);">
-          <div style="font-size:11px;color:#a78bfa;font-weight:600;margin-bottom:6px;">AUTORIZACIÓN DE ADMINISTRADOR</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Autoriza el avance sin firma para este cliente (una sola vez).</div>
-          <button class="btn" onclick="openPinAutorizacion('${c.id}')" style="font-size:12px;">
-            🔑 Autorizar avance sin firma
-          </button>
-          ${c.autorizadoSinFirma?`<span class="chip chip-purple" style="margin-left:8px;">✓ Autorizado</span>`:''}
-        </div>`:''}
+
       </div>
       <hr class="divider">
       <!-- Historial de contratos generados -->
@@ -232,11 +223,11 @@ function openPerfil(id){
           <div class="hist-contrato-icon">▤</div>
           <div style="flex:1;">
             <div style="font-size:12px;font-weight:500;">${h.servicio||'—'}</div>
-            <div style="font-size:11px;color:var(--text-muted);">Generado el ${h.fecha} · Por ${h.generadoPor||'—'}</div>
+            <div style="font-size:11px;color:var(--text-muted);">Generado el ${fmtDateTime(h.fecha)} · Por ${h.generadoPor||'—'}</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center;">
             <span class="chip chip-gray" style="font-size:10px;">${h.estado||'Generado'}</span>
-            ${h.htmlSnapshot?`<button class="btn" style="font-size:10px;padding:3px 8px;" onclick="verVersionContrato('${c.id}','${h.id}')">Ver</button>`:''}
+            ${(h.htmlSnapshot||h.docxPath)?`<button class="btn" style="font-size:10px;padding:3px 8px;" onclick="verVersionContrato('${c.id}','${h.id}')">Ver</button>`:''}
           </div>
         </div>`).join('')}
       <div style="margin-top:12px;">
@@ -353,6 +344,7 @@ function editCliente(id){
   const rfcEl=document.getElementById('fc-rfc');
   if(rfcEl&&rfcEl.value) validateAlphaNum(rfcEl,'rfc-indicator',13);
   onServicioChange(c.docs);
+  setVal('fc-etapa',c.etapa);
   checkElegibilidad();
   switchTab('tab-contacto',0);
   document.getElementById('modal-cliente').classList.add('open');
@@ -417,7 +409,7 @@ function switchTab(id,idx){
   panels.forEach(p=>p.classList.toggle('active',p.id===id));
 }
 
-function guardarCliente(){
+async function guardarCliente(){
   const nombre=(document.getElementById('fc-nombre').value||'').trim();
   const tel=(document.getElementById('fc-telefono').value||'').trim();
   const svc=document.getElementById('fc-servicio').value;
@@ -435,7 +427,19 @@ function guardarCliente(){
   if(fechaBiometrica===null){switchTab('tab-datos-extra',1);return;}
   const fechaSolicitudManual=leerFechaMX('fc-fecha-solicitud-manual');
   if(fechaSolicitudManual===null){switchTab('tab-datos-extra',1);return;}
-  const cliente={...(oldCliente||{}),
+  const fechasReales=leerFechasCliente();
+  if(!fechasReales){switchTab('tab-datos-extra',1);return;}
+  let confirmacionFirma=null;let confirmacionAvance=null;
+  const etapaDestino=getVal('fc-etapa');
+  if(svc==='retiro_desempleo'&&!oldCliente?.contratoFirmado&&etapaDestino==='contrato_firmado'){
+    confirmacionFirma=await confirmarFirmaCliente({nombre,fechaFirmaContrato:fechasReales.fechaFirmaContrato});
+    if(!confirmacionFirma)return;
+    fechasReales.fechaFirmaContrato=confirmacionFirma.fecha;
+  }else if(svc==='retiro_desempleo'&&!oldCliente?.contratoFirmado&&['dado_alta','afore_actualizada','solicitud_realizada','deposito_recibido','honorarios_recibidos'].includes(etapaDestino)&&oldCliente?.etapa!==etapaDestino){
+    confirmacionAvance=await confirmarFirmaCliente({nombre},false);if(!confirmacionAvance)return;
+  }
+  const cliente={...JSON.parse(JSON.stringify(oldCliente||{})),
+    ...fechasReales,afore:getVal('fc-afore'),
     nombre,telefono:tel,email:getVal('fc-email'),ciudad:getVal('fc-ciudad'),
     servicio:svc,etapa:stagesFor(svc).some(s=>s.id===getVal('fc-etapa'))?getVal('fc-etapa'):stagesFor(svc)[0].id,fuente:getVal('fc-fuente'),notas:getVal('fc-notas'),
     nss:getVal('fc-nss'),curp:getVal('fc-curp'),rfc:getVal('fc-rfc'),
@@ -465,21 +469,12 @@ function guardarCliente(){
     Math.abs(Number(comisionFin)-Number(calc.comision||0))>0.009
   );
   if(comisionEfectiva(cliente)>0&&!String(cliente.estadoPago||'').trim()) cliente.estadoPago='Pendiente';
+  if(confirmacionFirma) aplicarConfirmacionFirma(cliente,confirmacionFirma);
+  if(confirmacionAvance)addHist(cliente,'contrato','Avance con firma pendiente confirmado por '+confirmacionAvance.usuario+(confirmacionAvance.nota?' · '+confirmacionAvance.nota:''));
   if(cliente.servicio==='retiro_desempleo'){
-    const etapas=stagesFor(cliente.servicio);
-    const indiceFirma=etapas.findIndex(s=>s.id==='contrato_firmado');
-    const indiceActual=etapas.findIndex(s=>s.id===cliente.etapa);
-    if(indiceFirma>=0&&indiceActual>=indiceFirma&&!cliente.contratoFirmado){
-      cliente.contratoFirmado=true;
-      cliente.fechaFirmaContrato=cliente.fechaFirmaContrato||new Date().toISOString().split('T')[0];
-    }
-    if(cliente.etapa==='dado_alta'){
-      if(!oldCliente||oldCliente.etapa!=='dado_alta') cliente.fechaAltaAfore=fechaISOLocal(new Date());
-      else if(!cliente.fechaAltaAfore){
-        const baseAlta=parseFechaFlexible(fechaEntradaEtapaDadoAlta(oldCliente));
-        cliente.fechaAltaAfore=fechaISOLocal(baseAlta||new Date());
-      }
-    }
+    const etapaIdx=stagesFor(cliente.servicio).findIndex(s=>s.id===cliente.etapa);
+    if(etapaIdx>=3&&!cliente.fechaAltaAfore&&oldCliente?.etapa!==cliente.etapa) cliente.fechaAltaAfore=fechaISOLocal(new Date());
+    if(cliente.etapa==='solicitud_realizada') cliente.fechaSolicitudRealizada=cliente.fechaSolicitudManual||oldCliente?.fechaSolicitudRealizada||fechaISOLocal(new Date());
   }
 
   if(editingId){
@@ -487,8 +482,9 @@ function guardarCliente(){
     if(idx>=0){
       const old=store.clientes[idx];
       cliente.id=editingId;
-      cliente.fechaRegistro=old.fechaRegistro;
-      cliente.historial=old.historial||[];
+      cliente.fechaRegistro=fechasReales.fechaRegistro;
+      cliente.fechaCaptura=old.fechaCaptura||old.fechaRegistro;
+      cliente.historial=cliente.historial||old.historial||[];
       cliente.montoRetiro=cliente.montoAfore;
       cliente.estadoPago=old.estadoPago||(comisionEfectiva(cliente)>0?'Pendiente':'');
       // Fecha retiro: si ya existe y fue editada manualmente, preservar; si no, calcular
@@ -505,12 +501,13 @@ function guardarCliente(){
       }
       addHist(cliente,'edicion','Datos actualizados');
       store.clientes[idx]=cliente;
-      showToast('Cliente actualizado','success');
+
     }
   } else {
     cliente.id='c_'+Date.now();
-    cliente.fechaRegistro=new Date().toISOString();
-    cliente.historial=[];
+    cliente.fechaRegistro=fechasReales.fechaRegistro;
+    cliente.fechaCaptura=new Date().toISOString();
+    cliente.historial=cliente.historial||[];
     cliente.asesorId=leadOrigenConversion?.asesorId||asesorDestinoVista();
     cliente.asesorNombre=(store.asesores.find(a=>a.id===cliente.asesorId)||sesionActiva||{}).nombre||'';
     cliente.fechaRetiroEstimada=calcFechaRetiro(cliente.fechaRegistro);
@@ -558,10 +555,13 @@ function guardarCliente(){
       store.leads=store.leads.filter(l=>l.id!==leadOrigenConversion.id);
       leadConversionPendienteId=null;
     }
-    showToast('Cliente agregado correctamente','success');
+
   }
+  editingId=cliente.id; // A failed synchronization retries this same record.
+  sincronizarFechasCliente(cliente,oldCliente);
+  try{await cloudSyncNow({throwOnError:true});}catch(e){showToast('Los cambios están pendientes de guardar. Intenta nuevamente.','warn');return;}
+  showToast(oldCliente?'Cliente actualizado':'Cliente agregado correctamente','success');
   clienteFormDirty=false;
-  saveStore();
   closeModal('modal-cliente');
   renderPage(currentPage);
 }

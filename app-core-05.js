@@ -164,8 +164,8 @@ function fmtFechaHistorial(valor){
   return s;
 }
 function getVal(id){ return document.getElementById(id)?.value||''; }
-function setVal(id,v){ const el=document.getElementById(id); if(el) el.value=v||''; }
-function addHist(c,tipo,texto){ if(!c.historial) c.historial=[]; c.historial.push({tipo,texto,fecha:new Date().toISOString()}); }
+function setVal(id,v){ const el=document.getElementById(id); if(el) el.value=v??''; }
+function addHist(c,tipo,texto){ if(!c.historial) c.historial=[]; c.historial.push({tipo,texto,fecha:new Date().toISOString(),usuarioId:sesionActiva?.id||null,usuario:sesionActiva?.nombre||'Sistema'}); }
 function showToast(msg,type){
   const ct=document.getElementById('toast-container');
   const t=document.createElement('div');
@@ -828,12 +828,12 @@ function actualizarSidebarSesion(){
   }
   if(nm) nm.textContent=asesorNombreCompleto(sesionActiva);
   if(rb){
-    rb.textContent=sesionActiva.rol==='admin'?'Admin':'Asesor';
+    rb.textContent=isTechnicalAdmin()?'Admin técnico':sesionActiva.rol==='admin'?'Admin':'Asesor';
     rb.className='rol-badge '+(sesionActiva.rol==='admin'?'rol-admin':'rol-asesor');
   }
   // Ocultar sección admin si es asesor
   const adminSection=document.getElementById('nav-admin-section');
-  if(adminSection) adminSection.style.display=sesionActiva.rol==='admin'?'':'none';
+  if(adminSection) adminSection.style.display=isTechnicalAdmin()?'':'none';
   // Actualizar nombre app
   document.getElementById('app-name-display').textContent=store.configuracion.nombre_app||'C&A CRM Suite';
   actualizarLogoSidebar();
@@ -846,7 +846,8 @@ function cerrarSesion(){
   mostrarLogin();
 }
 
-function isAdmin(){ return sesionActiva && sesionActiva.rol==='admin'; }
+function isAdmin(){ return Boolean(sesionActiva && ['admin','tech_admin'].includes(sesionActiva.rol)); }
+function isTechnicalAdmin(){ return sesionActiva?.rol==='tech_admin'; }
 function asesorId(){ return sesionActiva ? sesionActiva.id : null; }
 
 // Filtrar clientes por sesión
@@ -974,7 +975,7 @@ function formatoTasaConversion(tasa){
 }
 
 function renderAsesores(){
-  if(!isAdmin()) return renderComingSoon('asesores');
+  if(!isTechnicalAdmin()) return renderComingSoon('asesores');
   const asesores=store.asesores||[];
   // Estadísticas por asesor
   const statsAsesor=id=>({

@@ -1,0 +1,10 @@
+const CA_ORG_ID='test-org';const cloudFiles=new Map();
+const supabaseClient={storage:{from(){return {async upload(p,b){cloudFiles.set(p,b);return {error:null}},async download(p){return {data:cloudFiles.get(p),error:null}}}}}};
+async function cloudSyncNow(){document.body.dataset.saved='true';return true;}
+function saveStore(){document.body.dataset.saved='true';}
+const perfil={id:'test-owner',nombre:'Emmanuel Prueba',rol:'__ROLE__',activo:true,email:'prueba@example.invalid',cloudUser:true,fechaAlta:'2026-01-01'};
+store.asesores=[perfil];sesionActiva=perfil;store.servicios=SERVICIOS_DEFAULT.map(s=>({...s}));store.agenda=[];store.colaboradores=[];store.plantillas=PLANTILLAS_DEFAULT.map(p=>({...p}));
+store.clientes=[{id:'test-client',nombre:'CLIENTE DE PRUEBA',telefono:'5550000000',servicio:'retiro_desempleo',etapa:'documentacion',asesorId:perfil.id,fechaRegistro:'2026-08-01',fechaAltaAfore:'2026-08-25',montoAfore:35000,honorarios:8000,comision:3000,domicilio:'CALLE DE PRUEBA 123, COLONIA CENTRO, QUERÉTARO, C.P. 76000',ciudad:'Tequisquiapan',docs:{ine:true,nss:true,curp:true},historial:[],afore:'SURA'}];
+store.clientes[0].etapa=STAGES_RETIRO[1].id;
+store.leads=[{id:'test-lead',nombre:'PROSPECTO DE PRUEBA',telefono:'5550000001',servicio:'retiro_desempleo',estado:'semanas',asesorId:perfil.id,fechaInicio:'2026-09-01',elegibilidad:{semanas:106,cotizaImss:'no',retiro5:'no'}},{id:'test-arch',nombre:'RECONTACTO DE PRUEBA',telefono:'5550000002',servicio:'retiro_desempleo',estado:'archivado',archivoTipo:'temporal',asesorId:perfil.id,fechaInicio:'2026-08-01',fechaRecontacto:'2026-09-09',causaArchivo:'Retiro reciente'},{id:'test-final',nombre:'ARCHIVADO DE PRUEBA',servicio:'retiro_desempleo',estado:'archivado',archivoTipo:'definitivo',asesorId:perfil.id,fechaInicio:'2026-08-01',causaArchivo:'No contesta'}];
+document.getElementById('login-screen').style.display='none';document.querySelector('.main').style.display='flex';document.getElementById('main-sidebar').style.display='flex';actualizarSidebarSesion();updateRolUI();navigate('clientes');

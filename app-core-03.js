@@ -1,41 +1,7 @@
-// ==================== BLOQUEO FIRMA / PIN ====================
-let pinCallbackClienteId = null;
+// ==================== ACCESO Y ETAPAS ====================
 
 function closePopup(id){
   document.getElementById(id).classList.remove('open');
-}
-
-function openPinAutorizacion(clienteId){
-  pinCallbackClienteId = clienteId;
-  document.getElementById('pin-input-field').value='';
-  document.getElementById('pin-error').style.display='none';
-  document.getElementById('popup-pin').classList.add('open');
-}
-
-async function verificarPinAdmin(){
-  const password = document.getElementById('pin-input-field').value;
-  const administradores=(store.asesores||[]).filter(a=>a.rol==='admin'&&a.activo!==false);
-  let administradorAutorizador=null;
-  for(const admin of administradores){
-    if(await verificarPin(admin,password)){ administradorAutorizador=admin; break; }
-  }
-  if(!administradorAutorizador){
-    document.getElementById('pin-error').style.display='block';
-    document.getElementById('pin-input-field').value='';
-    return;
-  }
-  closePopup('popup-pin');
-  // Autorizar este cliente específico
-  const c = store.clientes.find(x=>x.id===pinCallbackClienteId);
-  if(c){
-    c.autorizadoSinFirma = true;
-    c.autorizadoSinFirmaBy = administradorAutorizador.nombre||'Administrador';
-    c.autorizadoSinFirmaFecha = fmtDateTime(new Date());
-    addHist(c,'autorizacion','⚠ Avance sin firma autorizado por '+c.autorizadoSinFirmaBy+' — '+c.autorizadoSinFirmaFecha);
-    saveStore();
-    showToast('Autorización concedida. Puedes avanzar la etapa.','success');
-    openPerfil(pinCallbackClienteId);
-  }
 }
 
 async function guardarPinAdmin(){
@@ -69,14 +35,7 @@ async function avanzarEtapa(id){
     showToast('⚠ Registra la fecha de cita biométrica AFORE antes de avanzar','warn');
     return;
   }
-  // BLOQUEO contrato firmado
-  const etapasPostFirma=['contrato_firmado','dado_alta','afore_actualizada','solicitud_realizada','deposito_recibido','honorarios_recibidos'];
-  if(etapasPostFirma.includes(next.id) && c.servicio==='retiro_desempleo' && !c.contratoFirmado && !c.autorizadoSinFirma && store.configuracion.bloqueo_firma){
-    document.getElementById('popup-bloqueo').classList.add('open');
-    return;
-  }
-  if(c.autorizadoSinFirma && next.id==='contrato_firmado') c.autorizadoSinFirma=false;
-
+  // Contrato firmado
   // Al pasar a contrato_firmado
   if(next.id==='contrato_firmado' && !c.contratoFirmado){
     c.contratoFirmado=true;
@@ -149,7 +108,7 @@ function updateRolUI(){
     badge.className='rol-badge '+(sesionActiva.rol==='admin'?'rol-admin':'rol-asesor');
   }
   const adminSection=document.getElementById('nav-admin-section');
-  if(adminSection) adminSection.style.display=sesionActiva.rol==='admin'?'':'none';
+  if(adminSection) adminSection.style.display=isTechnicalAdmin()?'':'none';
 }
 
 function guardarFechaFirma(id, fecha){
@@ -566,7 +525,7 @@ function renderCardOrdenMenu(){
 
 function renderConfiguracion(){
   const cfg=store.configuracion;
-  if(!isAdmin()) return `<div class="section-title">Configuración</div><div class="section-sub">Cuenta y preferencias personales</div><div style="max-width:560px;display:flex;flex-direction:column;gap:16px;">${renderCardAcceso()}${renderCardApariencia(cfg)}</div>`;
+  if(!isTechnicalAdmin()) return `<div class="section-title">Configuración</div><div class="section-sub">Cuenta y preferencias personales</div><div style="max-width:560px;display:flex;flex-direction:column;gap:16px;">${renderCardAcceso()}${renderCardApariencia(cfg)}</div>`;
   return `
   <div class="section-title">Configuración</div>
   <div class="section-sub">Ajustes generales del sistema</div>
@@ -627,33 +586,6 @@ function renderConfiguracion(){
       </div>
     </div>
     ${renderCardAcceso()}
-    <div class="card">
-      <div class="card-header"><div class="card-title">Seguridad y control de firma</div></div>
-      <div class="card-body">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div>
-            <div style="font-size:13px;font-weight:500;">Bloqueo por contrato sin firmar</div>
-            <div style="font-size:12px;color:var(--text-muted)">Impide avanzar etapas sin contrato firmado</div>
-          </div>
-          <label class="toggle" onclick="toggleBloqueoFirma()">
-            <div class="toggle-track ${cfg.bloqueo_firma?'on':''}" id="bloqueo-track"><div class="toggle-thumb"></div></div>
-          </label>
-        </div>
-        <div style="margin-bottom:14px;">
-          <div style="font-size:13px;font-weight:500;margin-bottom:4px;">Rol actual</div>
-          <select class="form-select" id="cfg-rol" style="font-size:13px;max-width:200px;">
-            <option value="admin" ${cfg.rol==='admin'?'selected':''}>Administrador</option>
-            <option value="asesor" ${cfg.rol==='asesor'?'selected':''}>Asesor</option>
-          </select>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Solo el Admin puede autorizar avances sin firma</div>
-        </div>
-        <div style="margin-top:14px;">
-          <button class="btn btn-primary" onclick="guardarConfigSeguridad()">Guardar seguridad</button>
-        </div>
-      </div>
-    </div>
-    ${renderCardApariencia(cfg)}
-    ${renderCardOrdenMenu()}
     <div class="card">
       <div class="card-header"><div class="card-title">Datos del sistema</div></div>
       <div class="card-body">

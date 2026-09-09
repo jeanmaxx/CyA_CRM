@@ -1,5 +1,6 @@
 // ==================== RENDER ====================
 function renderPage(page){
+  if(['configuracion','servicios','asesores'].includes(page)&&!isTechnicalAdmin()) page='cuenta';
   const el=document.getElementById('main-content');
   if(page==='dashboard')        el.innerHTML=renderDashboard();
   else if(page==='leads')       el.innerHTML=renderLeads();
@@ -14,6 +15,7 @@ function renderPage(page){
   else if(page==='asesores')    el.innerHTML=renderAsesores();
   else if(page==='colaboradores') el.innerHTML=renderColaboradores();
   else                          el.innerHTML=renderComingSoon(page);
+  if(page==='cuenta') el.innerHTML=renderMiCuenta();
   if(page==='agenda')     setTimeout(renderCalMini,50);
   if(page==='dashboard')  setTimeout(initCharts,50);
 }
@@ -518,14 +520,12 @@ function renderClientes(){
     <div class="table-wrap clients-table-wrap">
       <table>
         <thead><tr>
-          <th style="cursor:pointer;user-select:none;" onclick="ordenarClientes('nombre')">Cliente${flechaOrden('nombre')}</th>
+          <th onclick="ordenarClientes('fechaRegistro')" style="cursor:pointer;">Registro${flechaOrden('fechaRegistro')}</th>
+          <th onclick="ordenarClientes('nombre')" style="cursor:pointer;">Nombre${flechaOrden('nombre')}</th>
           <th>Teléfono</th>
-          <th style="cursor:pointer;user-select:none;" onclick="ordenarClientes('servicio')">Servicio${flechaOrden('servicio')}</th>
-          <th>Fuente</th>
-          <th style="cursor:pointer;user-select:none;" onclick="ordenarClientes('etapa')">Etapa${flechaOrden('etapa')}</th>
-          <th>Docs</th>
-          <th style="cursor:pointer;user-select:none;" onclick="ordenarClientes('fechaRegistro')">Registro${flechaOrden('fechaRegistro')}</th>
-          <th></th>
+          <th onclick="ordenarClientes('servicio')" style="cursor:pointer;">Servicio${flechaOrden('servicio')}</th>
+          <th onclick="ordenarClientes('etapa')" style="cursor:pointer;">Etapa${flechaOrden('etapa')}</th>
+          <th>Fecha de solicitud</th><th>Documentos</th><th></th>
         </tr></thead>
         <tbody id="tbody-cl">${renderClientesRows(aplicarOrden(cl))}</tbody>
       </table>
@@ -549,6 +549,7 @@ function renderClientesRows(cl){
     const docOk=docList.filter(d=>docs[d.id]).length;
     const docPct=docList.length>0?Math.round(docOk/docList.length*100):0;
     return `<tr>
+      <td class="td-muted">${fmtDate(c.fechaRegistro)}</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="client-avatar" style="width:30px;height:30px;font-size:11px;">${initials(c.nombre)}</div>
@@ -557,15 +558,14 @@ function renderClientesRows(cl){
       </td>
       <td class="td-muted">${c.telefono||'—'}</td>
       <td><span class="chip chip-gray" style="font-size:10px;">${getSvcLabel(c.servicio)}</span></td>
-      <td class="td-muted">${FUENTES[c.fuente]||'—'}</td>
       <td><span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span></td>
+      <td class="td-muted">${fmtDate(fechaSolicitudCliente(c))}</td>
       <td>
         <div style="display:flex;align-items:center;gap:6px;min-width:80px;">
           <div class="progress-bar-wrap" style="flex:1;margin:0;"><div class="progress-bar" style="width:${docPct}%;${docPct===100?'background:var(--success)':''}"></div></div>
           <span style="font-size:11px;color:var(--text-muted);width:28px">${docOk}/${docList.length}</span>
         </div>
       </td>
-      <td class="td-muted">${fmtDate(c.fechaRegistro)}</td>
       <td>
         <div style="display:flex;gap:4px;">
           <button class="action-btn" onclick="openPerfil('${c.id}')" title="Ver perfil">▤</button>
@@ -590,7 +590,7 @@ function renderClientesCards(cl){
         <div class="client-mobile-identity"><div class="client-mobile-name">${c.nombre}</div><div class="client-mobile-phone">${c.telefono||'Sin teléfono'}</div></div>
         <span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span>
       </div>
-      <div class="client-mobile-meta"><span>${getSvcLabel(c.servicio)}</span><span>${FUENTES[c.fuente]||'Fuente pendiente'}</span><span>${fmtDate(c.fechaRegistro)}</span></div>
+      <div class="client-mobile-meta"><span>${getSvcLabel(c.servicio)}</span><span>Registro: ${fmtDate(c.fechaRegistro)}</span><span>Solicitud: ${fmtDate(fechaSolicitudCliente(c))}</span></div>
       <div class="client-mobile-docs">
         <span>Documentos ${docOk}/${docList.length}</span>
         <div class="progress-bar-wrap"><div class="progress-bar" style="width:${docPct}%;${docPct===100?'background:var(--success)':''}"></div></div>
