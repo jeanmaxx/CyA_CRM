@@ -1,6 +1,6 @@
 // ==================== RENDER ====================
 function renderPage(page){
-  if(['configuracion','servicios','asesores'].includes(page)&&!isTechnicalAdmin()) page='cuenta';
+  if(((['configuracion','servicios'].includes(page)&&!isTechnicalAdmin())||(page==='asesores'&&!isAdmin()))) page='cuenta';
   const el=document.getElementById('main-content');
   if(page==='dashboard')        el.innerHTML=renderDashboard();
   else if(page==='leads')       el.innerHTML=renderLeads();
@@ -40,7 +40,7 @@ function toggleDashboardPanel(tipo){
 
 function agendaPrioritariaDashboard(){
   const hoy=new Date();hoy.setHours(0,0,0,0);
-  const fin=new Date(hoy);fin.setDate(fin.getDate()+((7-fin.getDay())%7));
+  const fin=new Date(hoy);fin.setDate(fin.getDate()+6);
   const hoyISO=fechaISOLocal(hoy),finISO=fechaISOLocal(fin);
   return eventosVistaActual().filter(e=>{
     if(e.completado||e.cancelarRecordatorio||!/^\d{4}-\d{2}-\d{2}$/.test(e.fecha||'')) return false;
@@ -59,7 +59,7 @@ function renderDashboardAgendaPrioritaria(){
     <div class="card-header dashboard-priority-header" role="button" tabindex="0" aria-expanded="${dashboardAgendaAbierta}" onclick="toggleDashboardPanel('agenda')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDashboardPanel('agenda');}">
       <div class="dashboard-priority-title">
         <span class="dashboard-collapse-icon">${dashboardAgendaAbierta?'▾':'▸'}</span>
-        <div><div class="card-title">Agenda prioritaria</div><div class="dashboard-priority-sub">Vencidos y actividades pendientes hasta el domingo</div></div>
+        <div><div class="card-title">Agenda prioritaria</div><div class="dashboard-priority-sub">Vencidos y próximos 7 días naturales</div></div>
         <span class="chip ${vencidos?'chip-red':'chip-blue'}">${eventos.length}</span>
       </div>
       <button class="btn dashboard-panel-link" onclick="event.stopPropagation();navigate('agenda',document.querySelector('[data-page=agenda]'))">Ver agenda completa</button>
@@ -86,7 +86,7 @@ function fechaEntradaEtapaDadoAlta(cliente){
   if(cliente.fechaAltaAfore) return cliente.fechaAltaAfore;
   const historial=[...(cliente.historial||[])].reverse();
   const entrada=historial.find(h=>h.tipo==='etapa'&&/dado de alta/i.test(h.texto||''));
-  return entrada?.fecha||cliente.fechaRegistro||new Date();
+  return entrada?.fecha||null;
 }
 
 function obtenerSiguienteAccion(cliente,referencia=new Date()){
@@ -95,6 +95,7 @@ function obtenerSiguienteAccion(cliente,referencia=new Date()){
   if(cliente.etapa==='contrato_firmado') return {...base,clave:'dar_alta',grupo:'Dar de alta a',boton:'Marcar dado de alta',tipo:'avanzar',tono:'normal',detalle:'Contrato firmado'};
   if(cliente.etapa==='dado_alta'){
     if(!cliente.fechaBiometrica){
+      if(!fechaEntradaEtapaDadoAlta(cliente))return {...base,clave:'confirmar_alta',grupo:'Confirmar fecha de alta de',boton:'Confirmar fecha de alta',tipo:'abrir',tono:'normal',detalle:'Fecha real pendiente'};
       const dias=diasTranscurridosDesde(fechaEntradaEtapaDadoAlta(cliente),referencia);
       const tono=dias>=25?'rojo':dias>=15?'naranja':'normal';
       return {...base,clave:'solicitar_cita',grupo:'Solicitar cita en AFORE a',boton:'Registrar cita',tipo:'cita',tono,dias,detalle:`${dias} día${dias!==1?'s':''} desde el alta`};
@@ -559,7 +560,7 @@ function renderClientesRows(cl){
       <td class="td-muted">${c.telefono||'—'}</td>
       <td><span class="chip chip-gray" style="font-size:10px;">${getSvcLabel(c.servicio)}</span></td>
       <td><span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span></td>
-      <td class="td-muted">${fmtDate(fechaSolicitudCliente(c))}</td>
+      <td class="td-muted">${etiquetaSolicitudCliente(c)}</td>
       <td>
         <div style="display:flex;align-items:center;gap:6px;min-width:80px;">
           <div class="progress-bar-wrap" style="flex:1;margin:0;"><div class="progress-bar" style="width:${docPct}%;${docPct===100?'background:var(--success)':''}"></div></div>
@@ -590,7 +591,7 @@ function renderClientesCards(cl){
         <div class="client-mobile-identity"><div class="client-mobile-name">${c.nombre}</div><div class="client-mobile-phone">${c.telefono||'Sin teléfono'}</div></div>
         <span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span>
       </div>
-      <div class="client-mobile-meta"><span>${getSvcLabel(c.servicio)}</span><span>Registro: ${fmtDate(c.fechaRegistro)}</span><span>Solicitud: ${fmtDate(fechaSolicitudCliente(c))}</span></div>
+      <div class="client-mobile-meta"><span>${getSvcLabel(c.servicio)}</span><span>Registro: ${fmtDate(c.fechaRegistro)}</span><span>Solicitud: ${etiquetaSolicitudCliente(c)}</span></div>
       <div class="client-mobile-docs">
         <span>Documentos ${docOk}/${docList.length}</span>
         <div class="progress-bar-wrap"><div class="progress-bar" style="width:${docPct}%;${docPct===100?'background:var(--success)':''}"></div></div>

@@ -181,7 +181,7 @@ function cloudClientRows(){
     archived:Boolean(c.archivado),discarded:Boolean(c.descartado),collaborator_id:c.colaboradorId || null,
     advisor_id:cloudIsUuid(c.asesorId) ? c.asesorId : null,
     legacy_advisor_id:cloudIsUuid(c.asesorId) ? null : (c.asesorId || null),
-    payload:cloudCleanObject(c),created_at:cloudTimestamp(c.fechaRegistro),
+    payload:cloudCleanObject(c),created_at:cloudTimestamp(c.fechaCaptura||c.fechaRegistro),
   }));
 }
 
@@ -287,6 +287,9 @@ function cloudRepairOperationalOwnership(){
     if(ownerId){event.asesorId=ownerId;changed=true;}
   }
   for(const client of (store.clientes||[])){
+    const agendaBefore=JSON.stringify(store.agenda);
+    sincronizarCitaAfore(client);
+    if(agendaBefore!==JSON.stringify(store.agenda))changed=true;
     if(conciliarComisionCompartida(client)) changed=true;
     if(!client.archivado&&!client.descartado&&comisionEfectiva(client)>0&&!String(client.estadoPago||'').trim()){
       client.estadoPago='Pendiente';
@@ -372,8 +375,9 @@ async function cloudEnterSession(session){
     if(!profile || profile.activo===false) throw new Error('El perfil no está activo');
     sesionActiva={...profile,email:session.user.email};
     cloudReady=true;
+    syncInitialize(session.user.id);
     const repairedOperationalData=cloudRepairOperationalOwnership();
-    if((isAdmin()&&(loadState?.needsSeed||loadState?.normalizedProfileNames))||repairedOperationalData) await cloudSyncNow({throwOnError:true});
+    if((isAdmin()&&(loadState?.needsSeed||loadState?.normalizedProfileNames))||repairedOperationalData) await cloudSyncNow();
     const screen=document.getElementById('login-screen'); if(screen) screen.style.display='none';
     const main=document.querySelector('.main'); if(main) main.style.display='flex';
     const sidebar=document.getElementById('main-sidebar'); if(sidebar) sidebar.style.display='flex';
@@ -422,7 +426,7 @@ async function cloudInvokeAdvisor(body){
 }
 
 guardarAsesor=async function(){
-  if(!isTechnicalAdmin() && !(technicalBootstrapMode&&canBootstrapTechnicalAdmin())) return showToast('Acceso reservado al administrador técnico','warn');
+  if(!isAdmin() && !(technicalBootstrapMode&&canBootstrapTechnicalAdmin())) return showToast('Acceso reservado al administrador técnico','warn');
   const nombres=capitalizarNombre(getVal('as-nombres'));
   const apellidos=capitalizarNombre(getVal('as-apellidos'));
   const nombre=[nombres,apellidos].filter(Boolean).join(' ');

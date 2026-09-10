@@ -15,7 +15,7 @@ onContratoServicioChange=function(){invalidarContratoActual();return onContratoS
 renderContratos=function(){
   wordContractCurrent=null;
   let html=renderContratosAnterior();
-  html=html.replace('id="ct-fecha" type="date" value="'+fechaISOLocal(new Date())+'"','id="ct-fecha" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" oninput="mascaraFechaMX(this)" value="'+fechaISOaMX(fechaISOLocal(new Date()))+'"');
+  html=html.replace(/id="ct-fecha" type="date" value="[^"]*"/,'id="ct-fecha" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" oninput="mascaraFechaMX(this)" value="'+fechaISOaMX(fechaISOLocal(new Date()))+'"');
   html=html.replace('id="ct-pagare-fecha" type="date"','id="ct-pagare-fecha" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" oninput="mascaraFechaMX(this)"');
   html=html.replace('<button class="btn" onclick="imprimirContrato()"', '<button class="btn" id="btn-word" onclick="descargarContratoWord()" style="display:none;">↓ Word</button><button class="btn" onclick="imprimirContrato()"');
   html=html.replace('👁 Vista previa','Generar contrato').replace('(honorarios + $5,000)','(honorarios + cobranza externa)').replace('Incluye $5,000 por cobranza externa en caso de requerirse','El importe de cobranza externa se puede ajustar en los datos del contrato.');
@@ -35,7 +35,7 @@ onContratoClienteChange=function(){
   invalidarContratoActual();
 };
 actualizarFechaPagare=function(){
-  const fecha=fechaMXaISO(getVal('ct-fecha'));if(fecha)setVal('ct-pagare-fecha',fechaISOaMX(sumarDiasISO(fecha,50)));
+  const fecha=fechaMXaISO(getVal('ct-fecha'));if(fecha)setVal('ct-pagare-fecha',fechaISOaMX(sumarDiasISO(fecha,60)));
 };
 function invalidarContratoActual(){
   wordContractCurrent=null;
@@ -71,7 +71,14 @@ async function crearDocxContrato(vars,templateBytes){
   const zip=await JSZip.loadAsync(templateBytes);
   for(const name of Object.keys(zip.files).filter(n=>/^word\/(document|header\d+|footer\d+)\.xml$/.test(n))){
     const xml=await zip.file(name).async('string');
-    const filled=xml.replace(/\{\{([A-Z_]+)\}\}/g,(_,key)=>{if(vars[key]===undefined)throw new Error('Falta el campo '+key);return escapeXML(vars[key]);});
+    let filled=xml.replace(/\{\{([A-Z_]+)\}\}/g,(_,key)=>{if(vars[key]===undefined)throw new Error('Falta el campo '+key);return escapeXML(vars[key]);});
+    if(/^word\/header\d+\.xml$/.test(name)&&vars.EMPRESA_DOMICILIO){
+      const logo=filled.match(/<w:p(?:\s[^>]*)?>[\s\S]*?<\/w:p>/)?.[0];
+      if(logo&&logo.includes('<w:drawing>')){
+        const table='<w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="2600"/><w:gridCol w:w="6760"/></w:tblGrid><w:tr><w:tc><w:tcPr><w:tcW w:w="2600" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr>'+logo+'</w:tc><w:tc><w:tcPr><w:tcW w:w="6760" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr><w:p><w:pPr><w:jc w:val="right"/><w:spacing w:after="0"/></w:pPr><w:r><w:rPr><w:sz w:val="20"/></w:rPr><w:t>'+escapeXML(vars.EMPRESA_DOMICILIO)+'</w:t></w:r></w:p></w:tc></w:tr></w:tbl><w:p><w:pPr><w:spacing w:after="0" w:line="20" w:lineRule="exact"/></w:pPr></w:p>';
+        filled=filled.replace(/(<w:hdr\b[^>]*>)[\s\S]*<\/w:hdr>/,'$1'+table+'</w:hdr>');
+      }
+    }
     zip.file(name,filled);
   }
   return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
@@ -90,7 +97,7 @@ generarContrato=async function(){
   try{
     const vars=datosContratoWord();const bytes=await crearDocxContrato(vars);
     wordContractCurrent={id:crypto.randomUUID(),clienteId,vars,bytes,saved:false,templateVersion:CONTRACT_TEMPLATE_VERSION};
-    await renderWordBytes(bytes,document.getElementById('ct-visor'));
+    try{await renderWordBytes(bytes,document.getElementById('ct-visor'));}catch(previewError){document.getElementById('ct-visor').textContent='Vista previa no disponible. Puedes descargar el Word. '+previewError.message;}
     document.getElementById('ct-visor-title').textContent='Contrato y pagaré · Word';
     for(const id of ['ct-acciones-bar','btn-imprimir','btn-word'])document.getElementById(id).style.display='';
     await guardarContratoHistorial();
@@ -130,7 +137,7 @@ imprimirContrato=async function(){
     await guardarContratoHistorial();
     const frame=document.createElement('iframe');frame.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(frame);
     const d=frame.contentDocument;d.open();d.write('<!doctype html><html><head><meta charset="utf-8"><title>Contrato y pagaré</title><style>@page{margin:0}body{margin:0}.docx-wrapper{padding:0!important;background:white!important}section.docx{box-shadow:none!important;margin:0!important;break-after:page}section.docx:last-child{break-after:auto}</style></head><body></body></html>');d.close();
-    await docx.renderAsync(wordContractCurrent.bytes,d.body,d.head,{inWrapper:true,useBase64URL:true,ignoreLastRenderedPageBreak:true});
+    await docx.renderAsync(wordContractCurrent.bytes,d.body,d.head,{className:'docx',inWrapper:true,breakPages:true,useBase64URL:true,renderHeaders:true,renderFooters:true,ignoreLastRenderedPageBreak:true});
     await d.fonts.ready;await Promise.all([...d.images].map(im=>im.complete?Promise.resolve():new Promise(resolve=>{im.onload=resolve;im.onerror=resolve;})));
     frame.contentWindow.focus();frame.contentWindow.print();setTimeout(()=>frame.remove(),60000);
   }catch(e){showToast('No se pudo preparar la impresión: '+e.message,'warn');}

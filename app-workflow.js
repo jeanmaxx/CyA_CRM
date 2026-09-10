@@ -55,14 +55,15 @@ const originalSidebarSesion=actualizarSidebarSesion;
 actualizarSidebarSesion=function(){originalSidebarSesion();updateRolUI();};
 updateRolUI=function(){
   if(!sesionActiva) return;
-  const admin=document.getElementById('nav-admin-section');if(admin) admin.hidden=!isTechnicalAdmin();
-  if(admin) admin.style.display=isTechnicalAdmin()?'':'none';
+  const admin=document.getElementById('nav-admin-section');if(admin) admin.hidden=!isAdmin();
+  if(admin) admin.style.display=isAdmin()?'':'none';
+  const svc=document.querySelector('[data-page="servicios"]');if(svc)svc.hidden=!isTechnicalAdmin();
   const cfg=document.querySelector('[data-page="configuracion"]');if(cfg) cfg.hidden=!isTechnicalAdmin();
   const badge=document.getElementById('sidebar-rol-badge');if(badge) badge.textContent=isTechnicalAdmin()?'Admin técnico':sesionActiva.rol==='admin'?'Admin':'Asesor';
 };
 const originalOpenAsesor=openModalAsesor;
 openModalAsesor=function(id){
-  if(!isTechnicalAdmin()&&!canBootstrapTechnicalAdmin()) return showToast('Acceso reservado al administrador técnico','warn');
+  if(!isAdmin()&&!canBootstrapTechnicalAdmin()) return showToast('Acceso reservado al administrador técnico','warn');
   technicalBootstrapMode=false;originalOpenAsesor(id);document.getElementById('as-rol').disabled=false;document.getElementById('as-activo').disabled=false;document.getElementById('asesor-foto-preview').parentElement.hidden=false;
 };
 const originalActualizarLogo=actualizarLogoSidebar;
@@ -111,7 +112,7 @@ agendarRecordatorio45=function(c){
   if(c.servicio!=='retiro_desempleo'||!c.fechaAltaAfore) return;
   const fecha=sumarDiasISO(c.fechaAltaAfore,45);if(!fecha) return;
   const matches=(store.agenda||[]).filter(e=>e.clienteId===c.id&&e.autoGenerado&&e.tipo==='vencimiento'&&(e.regla==='solicitud_45'||/^Solicitud AFORE/.test(e.titulo||''))&&!e.completado);
-  const data={titulo:'Solicitud AFORE — '+c.nombre,tipo:'vencimiento',fecha,hora:'09:00',notas:'Seguimiento operativo a 45 días desde Dado de alta. Verificar requisitos del trámite.',clienteId:c.id,asesorId:c.asesorId||sesionActiva?.id||null,completado:false,autoGenerado:true,regla:'solicitud_45'};
+  const data={titulo:'Solicitud AFORE — '+c.nombre,tipo:'vencimiento',fecha,hora:'09:00',notas:'Seguimiento operativo a 45 días desde Dado de alta. Verificar requisitos del trámite.',clienteId:c.id,asesorId:c.asesorId||sesionActiva?.id||null,completado:false,cancelarRecordatorio:false,autoGenerado:true,regla:'solicitud_45'};
   if(matches.length){Object.assign(matches[0],data);const duplicates=new Set(matches.slice(1).map(e=>e.id));store.agenda=store.agenda.filter(e=>!duplicates.has(e.id));}
   else {
     const after=stagesFor(c.servicio).findIndex(s=>s.id===c.etapa)>=stagesFor(c.servicio).findIndex(s=>s.id==='solicitud_realizada');
@@ -224,11 +225,11 @@ avanzarEtapa=async function(id){
   const agendaBefore=JSON.parse(JSON.stringify(store.agenda));sincronizarFechasCliente(c,original);
   const pos=store.clientes.indexOf(original);store.clientes[pos]=c;
   try{await cloudSyncNow({throwOnError:true});closeModal('modal-perfil');renderPage(currentPage);showToast('Etapa: '+next.label,'success');}
-  catch(e){store.clientes[pos]=original;store.agenda=agendaBefore;showToast('No se guardó el avance. Intenta nuevamente.','warn');}
+  catch(e){showToast('Avance pendiente de guardar. Conservamos el cambio para reintentar.','warn');}
 };
 guardarFechaFirma=async function(id,fecha){
   const c=store.clientes.find(x=>x.id===id);if(!c)return;
   const f=fechaMXaISO(fecha);if(!f||f>fechaISOLocal(new Date()))return showToast('Fecha de firma inválida','warn');
   const before=c.fechaFirmaContrato;const historyBefore=JSON.parse(JSON.stringify(c.historial||[]));c.fechaFirmaContrato=f;registrarCambioFecha(c,'fechaFirmaContrato',before,f,'Firma');
-  try{await cloudSyncNow({throwOnError:true});showToast('Fecha de firma guardada','success');}catch(e){c.fechaFirmaContrato=before;c.historial=historyBefore;showToast('No se guardó la fecha. Intenta nuevamente.','warn');}
+  try{await cloudSyncNow({throwOnError:true});showToast('Fecha de firma guardada','success');}catch(e){showToast('Fecha pendiente de guardar. Conservamos el cambio para reintentar.','warn');}
 };

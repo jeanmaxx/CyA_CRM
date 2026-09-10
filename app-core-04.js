@@ -43,7 +43,7 @@ function renderContratos(){
           <hr class="divider">
           <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Pagaré</div>
           <div class="form-group">
-            <label class="form-label">Vencimiento del pagaré <span style="color:var(--text-muted);font-weight:400">(50 días desde firma)</span></label>
+            <label class="form-label">Vencimiento del pagaré <span style="color:var(--text-muted);font-weight:400">(60 días desde firma)</span></label>
             <input class="form-input" id="ct-pagare-fecha" type="date" style="font-size:13px;">
           </div>
           <div class="form-group">
@@ -84,7 +84,7 @@ function actualizarFechaPagare(){
   const fechaContrato=document.getElementById('ct-fecha')?.value;
   if(!fechaContrato) return;
   const d=new Date(fechaContrato+'T12:00:00');
-  d.setDate(d.getDate()+50);
+  d.setDate(d.getDate()+60);
   const el=document.getElementById('ct-pagare-fecha');
   if(el) el.value=d.toISOString().split('T')[0];
 }
@@ -193,7 +193,7 @@ function onContratoClienteChange(){
   // Precargar monto pagaré (honorarios + 5000)
   if(honCalculado>0) setVal('ct-pagare-monto', honCalculado+5000);
 
-  // Precargar fecha pagaré (50 días desde fecha contrato)
+  // Precargar fecha pagaré (60 días desde fecha contrato)
   actualizarFechaPagare();
 
   // Reset estado guardado

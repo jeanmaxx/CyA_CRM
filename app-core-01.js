@@ -175,7 +175,7 @@ const DOCS_RETIRO=[
   {id:'acta',label:'Acta de nacimiento (actualizada)'},
   {id:'comprobante',label:'Comprobante de domicilio (máx. 3 meses)'},
   {id:'rfc',label:'RFC'},
-  {id:'cuenta_bancaria',label:'Datos bancarios (CLABE)'},
+  {id:'cuenta_bancaria',label:'Datos bancarios'},
   {id:'cita_afore',label:'Cita actualización AFORE'},
 ];
 const DOCS_PPR=[...DOCS_RETIRO,{id:'estado_cuenta',label:'Estado de cuenta bancario'}];
@@ -209,7 +209,7 @@ function getServicio(id){ return store.servicios.find(s=>s.id===id)||null; }
 function navigate(page, el){
   // Control de acceso: asesor no puede entrar a módulos de admin
   const soloAdmin=['servicios','asesores','configuracion'];
-  if(soloAdmin.includes(page)&&!isTechnicalAdmin()){
+  if((page==='asesores'?!isAdmin():soloAdmin.includes(page)&&!isTechnicalAdmin())){
     showToast('Acceso reservado al administrador técnico','warn');
     return;
   }

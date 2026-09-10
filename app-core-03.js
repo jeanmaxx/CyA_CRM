@@ -108,7 +108,8 @@ function updateRolUI(){
     badge.className='rol-badge '+(sesionActiva.rol==='admin'?'rol-admin':'rol-asesor');
   }
   const adminSection=document.getElementById('nav-admin-section');
-  if(adminSection) adminSection.style.display=isTechnicalAdmin()?'':'none';
+  if(adminSection) adminSection.style.display=isAdmin()?'':'none';
+  document.querySelectorAll('[data-page=servicios],[data-page=configuracion]').forEach(el=>el.style.display=isTechnicalAdmin()?'':'none');
 }
 
 function guardarFechaFirma(id, fecha){

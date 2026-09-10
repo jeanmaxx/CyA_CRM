@@ -6,6 +6,8 @@ vm.createContext(context);vm.runInContext(source,context);
 const caller={id:'founder',organization_id:'org',role:'admin',active:true};
 async function call(body,profiles=[caller],user='founder'){state={profiles,user,creations:0};const r=await handler(new Request('https://edge.invalid',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify(body)}));return r;}
 (async()=>{
+assert.equal((await call({action:'upsert',role:'advisor',fullName:'Nuevo Asesor',email:'advisor@example.invalid',password:'Example-1234',active:true})).status,200);assert.equal(state.saved.role,'advisor');
+assert.equal((await call({action:'upsert',role:'admin',fullName:'Otro',email:'other@example.invalid',password:'Example-1234'})).status,403);
 assert.equal((await call({action:'upsert'})).status,403);assert.equal(state.creations,0);
 assert.equal((await call({action:'bootstrap'},[caller,{...caller,id:'technical',role:'tech_admin'}])).status,403);
 assert.equal((await call({action:'bootstrap'},[caller,{...caller,id:'second'}],'second')).status,403);

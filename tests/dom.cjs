@@ -7,9 +7,10 @@ const w=dom.window,d=w.document;w.matchMedia=()=>({matches:false,addEventListene
 for(const f of ['app-core-01.js','app-core-02a.js','app-core-02b.js','app-core-03.js','app-core-04.js','app-core-05.js','app-core-06.js','app-core-07.js'])require('vm').runInContext(fs.readFileSync(f,'utf8').replace('\ninitResponsiveShell();','\n'),dom.getInternalVMContext());
 const run=s=>require('vm').runInContext(s,dom.getInternalVMContext()),value=(id,v)=>{const el=d.getElementById(id);assert(el,'Missing field '+id);el.value=v;};
 run(fs.readFileSync('tests/fixtures.js','utf8').replace('__ROLE__','admin').replace("actualizarSidebarSesion();updateRolUI();navigate('clientes');",''));
-for(const f of ['app-workflow.js','app-prospect-workflow.js','app-contract-word.js'])run(fs.readFileSync(f,'utf8'));
+for(const f of ['app-workflow.js','app-prospect-workflow.js','app-contract-word.js','app-operations.js'])run(fs.readFileSync(f,'utf8'));
 run("actualizarSidebarSesion();navigate('clientes')");
-assert(d.getElementById('nav-admin-section').hidden);
+assert(!d.getElementById('nav-admin-section').hidden);
+run("navigate('asesores')");assert(d.body.textContent.includes('Comparativa de rendimiento'));run("navigate('clientes')");
 const headers=[...d.querySelectorAll('#main-content th')].map(e=>e.textContent.trim());assert(headers.slice(4,11).join('|').startsWith('Registro ↓|Nombre ⇅|Teléfono|Servicio ⇅|Etapa ⇅|Fecha de solicitud|Documentos'),headers);assert(!headers.includes('Fuente'));
 run("navigate('cuenta')");assert(d.body.textContent.includes('Crear cuenta técnica'));run('abrirAltaTecnica()');assert.equal(d.getElementById('as-rol').value,'tech_admin');run("closeModal('modal-asesor')");
 run("navigate('configuracion')");assert(!d.getElementById('cfg-nombre'),'Ordinary admin can render global settings');

@@ -136,7 +136,7 @@ function onLeadServicioChange(){
   renderLeadElegibilidad(leadEligibilityDraft.porServicio?.[svc]||{});
 }
 
-function guardarLead(){
+async function guardarLead(){
   const nombre=(getVal('lead-nombre')||'').trim();
   if(!nombre){showToast('El nombre es obligatorio','warn');return;}
   const fechaRegistroLead=leerFechaMX('lead-fecha-registro');
@@ -182,12 +182,14 @@ function guardarLead(){
       registrarCambioFecha(actualizado,'fechaRegistro',leadAnterior.fechaRegistro||leadAnterior.fechaInicio,fechaRegistroLead,'Registro');
       store.leads[idx]=actualizado;
     }
-    showToast('Prospecto actualizado','success');
+
   } else {
     store.leads.push(lead);
-    showToast('Prospecto agregado','success');
+
   }
-  saveStore();
+  editingLeadId=lead.id;
+  try{await cloudSyncNow({throwOnError:true});}catch(e){showToast('Prospecto pendiente de guardar. Conservamos la captura para reintentar.','warn');return;}
+  showToast('Prospecto guardado en la nube','success');
   closeModal('modal-lead');
   renderPage('leads');
 }

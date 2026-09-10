@@ -346,7 +346,7 @@ function renderColaboradores(){
       </td>
       <td><div style="min-width:110px;">${asesor?asesor.nombre:'—'}<div style="font-size:10px;color:var(--text-muted);">${col.pctComision||50}% predeterminado</div></div></td>
       <td>${conversion.oportunidades}</td>
-      <td>${conversion.desdeProspecto}</td>
+
       <td>${conversion.directos}</td>
       <td>${conversion.clientes}</td>
       <td>
@@ -375,9 +375,9 @@ function renderColaboradores(){
       <div class="collaborator-mobile-metrics">
         <div><strong>${conversion.oportunidades}</strong><span>Oportunidades</span></div>
         <div><strong>${conversion.clientes}</strong><span>Clientes</span></div>
-        <div><strong>${formatoTasaConversion(conversion.tasa)}</strong><span>Conversión</span></div>
+        <div><strong>${formatoTasaConversion(conversion.tasa)}</strong><span>Efectividad</span></div>
       </div>
-      <div class="collaborator-mobile-breakdown"><span>Desde prospecto: <strong>${conversion.desdeProspecto}</strong></span><span>Directos: <strong>${conversion.directos}</strong></span></div>
+      <div class="collaborator-mobile-breakdown"><span>Directos: <strong>${conversion.directos}</strong></span></div>
       <div class="collaborator-mobile-money"><span><small>Cobrado</small><strong>${formatoMoneda(comisionTotal)}</strong></span><span><small>Pendiente</small><strong>${formatoMoneda(pendiente)}</strong></span></div>
     </article>`).join('');
   return `
@@ -387,7 +387,7 @@ function renderColaboradores(){
   </div>
   ${cols.length===0?`<div class="empty-state"><div class="empty-icon">◐</div><div class="empty-title">Sin colaboradores</div><div class="empty-sub">Agrega tus colaboradores externos</div><button class="btn btn-primary" onclick="openModalColaborador()">+ Nuevo</button></div>`:`
   <div class="card collaborators-table-card"><div class="table-wrap"><table>
-    <thead><tr><th>Colaborador</th><th>Asesor</th><th>Oportunidades</th><th>Desde prospecto</th><th>Directos</th><th>Clientes</th><th>Conversión</th><th>Cobrado</th><th>Pendiente</th><th></th></tr></thead>
+    <thead><tr><th>Colaborador</th><th>Asesor</th><th>Oportunidades</th><th>Directos</th><th>Clientes</th><th>Efectividad</th><th>Cobrado</th><th>Pendiente</th><th></th></tr></thead>
     <tbody>${filas}</tbody>
   </table></div></div>
   <div class="collaborators-mobile-list">${tarjetas}</div>`}`;

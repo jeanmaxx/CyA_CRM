@@ -833,7 +833,8 @@ function actualizarSidebarSesion(){
   }
   // Ocultar sección admin si es asesor
   const adminSection=document.getElementById('nav-admin-section');
-  if(adminSection) adminSection.style.display=isTechnicalAdmin()?'':'none';
+  if(adminSection) adminSection.style.display=isAdmin()?'':'none';
+  document.querySelectorAll('[data-page=servicios],[data-page=configuracion]').forEach(el=>el.style.display=isTechnicalAdmin()?'':'none');
   // Actualizar nombre app
   document.getElementById('app-name-display').textContent=store.configuracion.nombre_app||'C&A CRM Suite';
   actualizarLogoSidebar();
@@ -975,7 +976,7 @@ function formatoTasaConversion(tasa){
 }
 
 function renderAsesores(){
-  if(!isTechnicalAdmin()) return renderComingSoon('asesores');
+  if(!isAdmin()) return renderComingSoon('asesores');
   const asesores=store.asesores||[];
   // Estadísticas por asesor
   const statsAsesor=id=>({
@@ -1047,7 +1048,7 @@ function renderAsesores(){
     <div class="card-header"><div class="card-title">Comparativa de rendimiento</div></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Asesor</th><th>Oportunidades</th><th>Desde prospecto</th><th>Directos</th><th>Clientes totales</th><th>Activos</th><th>Concluidos</th><th>Comisiones</th><th>Conversión</th></tr></thead>
+        <thead><tr><th>Asesor</th><th>Oportunidades</th><th>Desde prospecto</th><th>Directos</th><th>Clientes totales</th><th>Activos</th><th>Concluidos</th><th>Comisiones</th><th>Efectividad</th></tr></thead>
         <tbody>
           ${asesores.map(a=>{
             const st=statsAsesor(a.id);
@@ -1091,7 +1092,7 @@ function renderAsesores(){
         <div class="advisor-performance-primary">
           <div><strong>${conversion.oportunidades}</strong><span>Oportunidades</span></div>
           <div><strong>${st.total}</strong><span>Clientes</span></div>
-          <div><strong>${formatoTasaConversion(conversion.tasa)}</strong><span>Conversión</span></div>
+          <div><strong>${formatoTasaConversion(conversion.tasa)}</strong><span>Efectividad</span></div>
         </div>
         <div class="advisor-performance-progress"><div class="progress-bar-wrap"><div class="progress-bar" style="width:${Math.min(conversion.tasa,100)}%;"></div></div></div>
         <div class="advisor-performance-details"><span>Desde prospecto <strong>${conversion.desdeProspecto}</strong></span><span>Directos <strong>${conversion.directos}</strong></span><span>Activos <strong>${st.activos}</strong></span><span>Concluidos <strong>${st.concluidos}</strong></span></div>

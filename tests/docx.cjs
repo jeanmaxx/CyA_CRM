@@ -6,12 +6,12 @@ w.matchMedia=()=>({matches:false,addEventListener(){},addListener(){}});w.HTMLEl
 for(const f of ['app-core-01.js','app-core-02a.js','app-core-02b.js','app-core-03.js','app-core-04.js','app-core-05.js','app-core-06.js','app-core-07.js'])run(fs.readFileSync(f,'utf8').replace('\ninitResponsiveShell();','\n'));
 run(fs.readFileSync('tests/fixtures.js','utf8').replace('__ROLE__','admin').replace("actualizarSidebarSesion();updateRolUI();navigate('clientes');",''));
 w.JSZip=require('jszip');
-for(const f of ['vendor/docx-preview-0.3.6.min.js','app-workflow.js','app-prospect-workflow.js','app-contract-word.js'])run(fs.readFileSync(f,'utf8'));
+for(const f of ['vendor/docx-preview-0.3.6.min.js','app-workflow.js','app-prospect-workflow.js','app-contract-word.js','app-operations.js'])run(fs.readFileSync(f,'utf8'));
 w.console=console;run("showToast=(...args)=>console.log('TOAST',...args)");w.JSZip=require('jszip');
 const deadline=setTimeout(()=>{console.error('Unresolved Word generation',d.body.textContent.slice(-500));dom.window.close();process.exitCode=1;},5000);
-(async()=>{const fixtureBase64=(await require('./contract-fixture.cjs')()).toString('base64');
+(async()=>{const fixtureBase64=process.env.QA_TEMPLATE?JSON.parse(fs.readFileSync(process.env.QA_TEMPLATE,'utf8')).content_base64:(await require('./contract-fixture.cjs')()).toString('base64');
 run("privateContractTemplate={defaults:{empresa_representante:'REPRESENTANTE DE PRUEBA',empresa_domicilio:'DOMICILIO EMPRESARIAL DE PRUEBA',ciudad_contrato:'CIUDAD DE PRUEBA'}}");run("navigate('contratos');selectedClienteId='test-client';onContratoClienteChange()");
-run('privateContractTemplate.content_base64='+JSON.stringify(fixtureBase64));await run('generarContrato()');assert.equal(run('wordContractCurrent.saved'),true);assert.equal(run('store.clientes[0].historialContratos.length'),1);assert(d.querySelector('#ct-visor section.docx'));assert(d.querySelector('#ct-visor footer'));assert(d.querySelector('#ct-visor header'));
+run('privateContractTemplate.content_base64='+JSON.stringify(fixtureBase64));await run('generarContrato()');assert.equal(run('wordContractCurrent.saved'),true);if(process.env.QA_DOCX_OUTPUT)fs.writeFileSync(process.env.QA_DOCX_OUTPUT,Buffer.from(run('wordContractCurrent.bytes')));assert.equal(run('store.clientes[0].historialContratos.length'),1);assert(d.querySelector('#ct-visor section.docx'));assert(d.querySelector('#ct-visor footer'));assert(d.querySelector('#ct-visor header'));
 assert.equal(d.querySelectorAll('#ct-visor section.docx').length,4);assert.equal(d.querySelectorAll('#ct-visor footer').length,4);
 await run('guardarContratoHistorial()');assert.equal(run('store.clientes[0].historialContratos.length'),1);
 const version=run('store.clientes[0].historialContratos[0].id');const date=run('store.clientes[0].historialContratos[0].fecha');assert(date.includes('T'));

@@ -142,7 +142,7 @@ function openPerfil(id){
           const faltantes=docList.filter(d=>!docs[d.id]).map(d=>d.label);
           alertas+=`<div class="alerta-firma alerta-amarilla" style="align-items:flex-start;">⚠ <span><strong>Documentos pendientes:</strong> ${faltantes.join(', ')}</span></div>`;
         }
-        if(!c.banco||!c.clabe) alertas+=`<div class="alerta-firma alerta-amarilla">⚠ Falta cuenta bancaria completa</div>`;
+        if(!c.banco) alertas+=`<div class="alerta-firma alerta-amarilla">⚠ Falta cuenta bancaria completa</div>`;
         if(!c.fechaBiometrica) alertas+=`<div class="alerta-firma alerta-amarilla">⚠ Falta cita de actualización de datos en AFORE</div>`;
       }
       return alertas;
@@ -157,7 +157,7 @@ function openPerfil(id){
       <div class="tab active" onclick="pTab('pd-contacto',this)">Contacto</div>
       <div class="tab" onclick="pTab('pd-datos',this)">Datos adicionales</div>
       <div class="tab" onclick="pTab('pd-docs',this)">Documentos</div>
-      <div class="tab" onclick="pTab('pd-contratos',this)">Contratos</div>
+      <div class="tab" onclick="pTab('pd-contratos',this)">Contratos y alta</div><div class="tab" onclick="pTab('pd-cita-afore',this)">Cita AFORE</div>
       <div class="tab" onclick="pTab('pd-historial',this)">Historial</div>
       <div class="tab" onclick="pTab('pd-finanzas',this)">Finanzas</div>
     </div>
@@ -171,7 +171,7 @@ function openPerfil(id){
     <!-- DATOS ADICIONALES -->
     <div class="tab-panel" id="pd-datos">
       <div class="info-rows">
-        ${[['Registro',fmtDate(c.fechaRegistro)],['Dado de alta',fmtDate(c.fechaAltaAfore)],['AFORE',c.afore||'—'],['NSS',c.nss||'—'],['CURP',c.curp||'—'],['Domicilio',c.domicilio||'—'],['Banco',c.banco||'—'],['CLABE',c.clabe||'—'],['Cita actualización AFORE',c.fechaBiometrica?fmtDate(c.fechaBiometrica):'—'],['Cantidad a retirar de AFORE',c.montoAfore?'$'+Number(c.montoAfore).toLocaleString('es-MX'):'—']].map(([l,v])=>`<div class="info-row"><span class="ir-label">${l}</span><span class="ir-value">${v}</span></div>`).join('')}
+        ${[['Registro',fmtDate(c.fechaRegistro)],['Dado de alta',fmtDate(c.fechaAltaAfore)],['AFORE',c.afore||'—'],['NSS',c.nss||'—'],['CURP',c.curp||'—'],['Domicilio',c.domicilio||'—'],['Banco',c.banco||'—'],['Nivel BBVA',esCuentaBBVA(c.banco)?(c.nivelCuentaBBVA?'Nivel '+c.nivelCuentaBBVA:'Sin especificar'):'—'],['Cita actualización AFORE',c.fechaBiometrica?fmtDate(c.fechaBiometrica):'—'],['Cantidad a retirar de AFORE',c.montoAfore?'$'+Number(c.montoAfore).toLocaleString('es-MX'):'—']].map(([l,v])=>`<div class="info-row"><span class="ir-label">${l}</span><span class="ir-value">${v}</span></div>`).join('')}
       </div>
     </div>
     <!-- DOCS -->
@@ -193,6 +193,7 @@ function openPerfil(id){
         <button class="btn" onclick="addExtraDocPerfil('${c.id}')" style="font-size:12px;flex-shrink:0;">+ Agregar</button>
       </div>
     </div>
+    <div class="tab-panel" id="pd-cita-afore">${fichaAforeHTML(c.afore)}<p>Cita: ${fmtDate(c.fechaBiometrica)} ${esc(c.horaBiometrica||'Hora por confirmar')}</p><p>${esc(c.sucursalAfore||'')}</p><button class="btn" onclick="editCliente('${c.id}');switchTab('tab-cita-afore',2)">Editar cita</button></div>
     <!-- CONTRATOS -->
     <div class="tab-panel" id="pd-contratos">
       <!-- Estado firma -->
@@ -205,12 +206,7 @@ function openPerfil(id){
           </div>
           ${c.contratoFirmado?`<span class="chip chip-green">✓ Firmado</span>`:`<span class="chip chip-red">✗ Pendiente</span>`}
         </div>
-        ${c.contratoFirmado?`
-        <div style="margin-top:10px;">
-          <label class="form-label">Fecha de firma</label>
-          <input class="form-input input-fecha-mx" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" id="fecha-firma-${c.id}" value="${fechaISOaMX(c.fechaFirmaContrato||'')}" oninput="mascaraFechaMX(this)"
-            onchange="guardarFechaFirma('${c.id}',this.value)" style="max-width:200px;font-size:12px;">
-        </div>`:''}
+        <div class="form-row">${inputFecha('perfil-firma',c.fechaFirmaContrato,'Fecha real de firma')}${inputFecha('perfil-alta',c.fechaAltaAfore,'Fecha real de Dado de alta')}</div><p>Solicitud prevista: ${etiquetaSolicitudCliente(c)}</p><button class="btn btn-primary" onclick="guardarFechasContratoAlta('${c.id}')">Guardar fechas</button>
 
       </div>
       <hr class="divider">
@@ -424,11 +420,11 @@ async function guardarCliente(){
   const honorariosFin=getVal('fc-honorarios').trim();
   const comisionFin=getVal('fc-comision').trim();
   const fechaBiometrica=leerFechaMX('fc-fecha-biometrica');
-  if(fechaBiometrica===null){switchTab('tab-datos-extra',1);return;}
+  if(fechaBiometrica===null){switchTab('tab-cita-afore',2);return;}
   const fechaSolicitudManual=leerFechaMX('fc-fecha-solicitud-manual');
-  if(fechaSolicitudManual===null){switchTab('tab-datos-extra',1);return;}
+  if(fechaSolicitudManual===null){switchTab('tab-contratos-alta',3);return;}
   const fechasReales=leerFechasCliente();
-  if(!fechasReales){switchTab('tab-datos-extra',1);return;}
+  if(!fechasReales){switchTab('tab-contratos-alta',3);return;}
   let confirmacionFirma=null;let confirmacionAvance=null;
   const etapaDestino=getVal('fc-etapa');
   if(svc==='retiro_desempleo'&&!oldCliente?.contratoFirmado&&etapaDestino==='contrato_firmado'){
@@ -452,7 +448,9 @@ async function guardarCliente(){
     colaboradorId:getVal('fc-colaborador')||null,
     colPct:Number(getVal('fc-col-pct'))||50,
     banco:getVal('fc-banco')||'',
-    clabe:getVal('fc-clabe')||'',
+    clabe:oldCliente?.clabe||'',
+    nivelCuentaBBVA:esCuentaBBVA(getVal('fc-banco'))?getVal('fc-nivel-bbva'):(oldCliente?.nivelCuentaBBVA||''),
+    horaBiometrica:getVal('fc-hora-afore'),sucursalAfore:getVal('fc-sucursal-afore'),
     fechaBiometrica,
     fechaSolicitudManual,
     honorarios:honorariosFin===''?'':Number(honorariosFin),
@@ -567,7 +565,7 @@ async function guardarCliente(){
 }
 
 function eliminar(id){
-  if(!confirm('¿Eliminar este cliente? No se puede deshacer.')) return;
+  if(!confirm('¿Enviar este cliente a la papelera de recuperación?')) return;
   store.clientes=store.clientes.filter(c=>c.id!==id);
   saveStore();
   showToast('Cliente eliminado','info');

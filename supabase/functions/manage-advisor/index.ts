@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
     if (!caller || caller.active !== true) return respond(req, 403, { error: 'Cuenta inactiva' });
     const body = await req.json();
     const action = String(body.action || 'upsert');
-    if (caller.role !== 'tech_admin') {
+    if (caller.role !== 'tech_admin' && !(caller.role === 'admin' && action === 'upsert')) {
       // One-time setup is limited to the original operational administrator.
       const { data: technical } = await admin.from('profiles').select('id').eq('organization_id',caller.organization_id).eq('role','tech_admin').eq('active',true).limit(1);
       const { data: founders } = await admin.from('profiles').select('id').eq('organization_id',caller.organization_id).eq('role','admin').eq('active',true).order('created_at').order('id').limit(1);
@@ -59,12 +59,13 @@ Deno.serve(async (req: Request) => {
         return respond(req,403,{error:'Solo el administrador técnico puede gestionar cuentas'});
       }
     }
+    if (caller.role === 'admin' && action === 'upsert' && body.role !== 'advisor') return respond(req,403,{error:'Solo puedes gestionar cuentas de asesores comunes'});
     if (!['upsert','bootstrap','delete'].includes(action)) return respond(req,400,{error:'Acción inválida'});
     const targetId = String(body.id || '');
     if (action === 'bootstrap' && targetId) return respond(req,400,{error:'La cuenta técnica debe ser una cuenta nueva'});
     if (targetId) {
       const { data: target } = await admin.from('profiles').select('id,organization_id,role').eq('id',targetId).single();
-      if (!target || target.organization_id !== caller.organization_id) return respond(req,403,{error:'La cuenta no pertenece a esta organización'});
+      if (!target || target.organization_id !== caller.organization_id || (caller.role === 'admin' && action === 'upsert' && target.role !== 'advisor')) return respond(req,403,{error:'La cuenta no pertenece a esta organización'});
     }
 
     if (action === 'delete') {

@@ -2,7 +2,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
 const fields={};const elements={};
 const context={console,Date,Intl,Math,JSON,Set,Map,Array,Number,String,Boolean,RegExp,Object,Promise,Error,URL,Blob,Uint8Array,TextEncoder,setTimeout:()=>0,clearTimeout(){},localStorage:{getItem(){return null},setItem(){}},window:{addEventListener(){}},document:{addEventListener(){},getElementById:id=>elements[id]||null,querySelector:()=>null,querySelectorAll:()=>[]},crypto:require('crypto').webcrypto};
 context.matchMedia=()=>({matches:false,addEventListener(){},addListener(){}});context.window=context;vm.createContext(context);
-const repo=process.cwd();for(const file of ['app-core-01.js','app-core-02a.js','app-core-02b.js','app-core-03.js','app-core-04.js','app-core-05.js','app-core-06.js','app-core-07.js','app-workflow.js','app-prospect-workflow.js','app-contract-word.js'])vm.runInContext(fs.readFileSync(file,'utf8').replace('\ninitResponsiveShell();','\n'),context,{filename:file});
+const repo=process.cwd();for(const file of ['app-core-01.js','app-core-02a.js','app-core-02b.js','app-core-03.js','app-core-04.js','app-core-05.js','app-core-06.js','app-core-07.js','app-workflow.js','app-prospect-workflow.js','app-contract-word.js','app-operations.js'])vm.runInContext(fs.readFileSync(file,'utf8').replace('\ninitResponsiveShell();','\n'),context,{filename:file});
 const run=s=>vm.runInContext(s,context);
 assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:106,cotizaImss:'no',retiro5:'no'},'2026-09-09').cumple"),true);
 assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:105,cotizaImss:'no',retiro5:'no'},'2026-09-09').cumple"),false);
