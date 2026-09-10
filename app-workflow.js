@@ -101,6 +101,12 @@ function leerFechasCliente(){
   return out;
 }
 function sumarDiasISO(fecha,dias){const d=parseFechaFlexible(fecha);if(!d) return '';d.setDate(d.getDate()+dias);return fechaISOLocal(d);}
+function sumarMesesISO(fecha,meses){
+  const d=parseFechaFlexible(fecha);if(!d)return '';
+  const dia=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+meses);
+  d.setDate(Math.min(dia,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+  return fechaISOLocal(d);
+}
 function sincronizarFechasCliente(c,anterior){
   for(const [key,label] of [['fechaRegistro','Registro'],['fechaAltaAfore','Dado de alta'],['fechaFirmaContrato','Firma']]) registrarCambioFecha(c,key,anterior?.[key],c[key],label);
   if(c.fechaAltaAfore){
@@ -154,7 +160,7 @@ function renderLeadElegibilidad(existing={}){
   const svc=getVal('lead-servicio');const e=existing.porServicio?.[svc]||existing;
   let html='';
   if(svc==='retiro_desempleo'){
-    html=`<div class="form-row"><div class="form-group"><label class="form-label">Semanas cotizadas (criterio inicial: más de 105)</label><input class="form-input" id="lead-el-semanas" type="number" min="0" step="1" value="${esc(e.semanas)}" oninput="actualizarElegibilidadInicial()"></div>${triSelect('lead-el-cotiza','¿Cotiza actualmente ante el IMSS?',e.cotizaImss)}</div><div class="form-row">${triSelect('lead-el-retiro','¿Retiró en los últimos 5 años?',e.retiro5)}${inputFecha('lead-el-fecha-retiro',e.fechaRetiro,'Fecha del último retiro, si se conoce')}</div>`;
+    html=`<div class="form-row"><div class="form-group"><label class="form-label">Semanas cotizadas (criterio inicial: mínimo 105)</label><input class="form-input" id="lead-el-semanas" type="number" min="0" step="1" value="${esc(e.semanas)}" oninput="actualizarElegibilidadInicial()"></div>${triSelect('lead-el-cotiza','¿Cotiza actualmente ante el IMSS?',e.cotizaImss)}</div><div class="form-row">${triSelect('lead-el-retiro','¿Retiró en los últimos 5 años?',e.retiro5)}${inputFecha('lead-el-fecha-retiro',e.fechaRetiro,'Fecha del último retiro, si se conoce')}</div>`;
   }else if(svc==='asesoria_pension'){
     html=`<div class="form-row">${inputFecha('lead-el-fecha-nac',e.fechaNacimiento||extraerFechaCurp(getVal('lead-curp')),'Fecha de nacimiento · desde CURP')}<div class="form-group"><label class="form-label">Semanas cotizadas</label><input class="form-input" id="lead-el-semanas" type="number" min="0" step="1" value="${esc(e.semanas)}" oninput="actualizarElegibilidadInicial()"></div></div><div class="form-row">${inputFecha('lead-el-primera-cotizacion',e.primeraCotizacion,'Fecha de primera cotización al IMSS')}<div class="form-group"><label class="form-label">Régimen verificado</label><select class="form-select" id="lead-el-ley" onchange="actualizarElegibilidadInicial()"><option value="">Por verificar</option><option value="73" ${e.ley==='73'?'selected':''}>Ley 73 · régimen de transición</option><option value="97" ${e.ley==='97'?'selected':''}>Ley 97</option></select></div></div>${triSelect('lead-el-conservacion','¿Cuenta con conservación de derechos?',e.conservacionDerechos)}<p class="form-helper">La CURP permite obtener la edad. Verifica la primera cotización en la constancia del IMSS para identificar el régimen. El filtro de asesoría comienza a los 58 años; no confirma el derecho a pensionarse.</p>`;
   }else{
@@ -173,9 +179,24 @@ function edadEnFecha(fecha,hoy=fechaISOLocal(new Date())){if(!fecha||fecha>hoy)r
 function evaluarCriteriosIniciales(svc,e,hoy=fechaISOLocal(new Date())){
   const n=Number(e.semanas);const entero=e.semanas!==''&&e.semanas!=null&&Number.isInteger(n)&&n>=0;
   if(svc==='retiro_desempleo'){
-    let retiro=e.retiro5==='no';
-    if(e.fechaRetiro){const aniversario=String(Number(e.fechaRetiro.slice(0,4))+5)+e.fechaRetiro.slice(4);retiro=retiro&&aniversario<=hoy;}
-    return {cumple:entero&&n>105&&e.cotizaImss==='no'&&retiro,detalle:'Filtro inicial: más de 105 semanas, sin cotización actual y sin retiro durante los últimos 5 años. Sujeto a revisión del expediente.'};
+    const alertas=[];
+    if(entero&&n<105)alertas.push({tono:'amarillo',texto:'No cuenta con las 105 semanas requeridas; revisar primero el saldo en AFORE.'});
+    if(e.cotizaImss==='si')alertas.push({tono:'rojo',texto:'Servicio de IMSS activo; recontactar en una semana y verificar la baja.'});
+    let retiroCumple=e.retiro5==='no';
+    let fechaRecontacto='';
+    if(e.retiro5==='si'||e.fechaRetiro){
+      retiroCumple=false;
+      if(!e.fechaRetiro)alertas.push({tono:'amarillo',texto:'Cambiar a REVISIÓN DE SINDOS y verificar la fecha del último retiro.'});
+      else{
+        const cinco=sumarMesesISO(e.fechaRetiro,60),inicio=sumarMesesISO(e.fechaRetiro,59);
+        if(hoy>=cinco)retiroCumple=true;
+        else if(hoy>=inicio)alertas.push({tono:'amarillo',texto:'No cumple todavía los 5 años, pero puede comenzar el trámite. Cumple 5 años el '+fmtDate(cinco)+'.'});
+        else{fechaRecontacto=inicio;alertas.push({tono:'rojo',texto:'No elegible por el momento. Archivar y contactar a partir del '+fmtDate(inicio)+'.'});}
+      }
+    }
+    const cumple=entero&&n>=105&&e.cotizaImss==='no'&&retiroCumple;
+    if(cumple)alertas.push({tono:'verde',texto:'Cumple criterios iniciales.'});
+    return {cumple,alertas,fechaRecontacto,detalle:alertas.map(a=>a.texto).join(' ')};
   }
   if(svc==='asesoria_pension'){
     const edad=edadEnFecha(e.fechaNacimiento,hoy);const min97=Math.min(1000,750+Math.max(0,Number(hoy.slice(0,4))-2021)*25);const minimo=e.ley==='73'?500:min97;
@@ -187,7 +208,12 @@ function evaluarCriteriosIniciales(svc,e,hoy=fechaISOLocal(new Date())){
 function actualizarElegibilidadInicial(){
   const el=document.getElementById('lead-initial-criteria');if(!el)return;
   const r=evaluarCriteriosIniciales(getVal('lead-servicio'),leerElegibilidadActual());
-  el.classList.toggle('criteria-ok',r.cumple);el.innerHTML=`<strong>${r.cumple?'✓ Cumple criterios iniciales':'Por revisar'}</strong><div class="form-helper">${esc(r.detalle)}</div>`;
+  if(Array.isArray(r.alertas)){
+    el.className='initial-criteria';
+    el.innerHTML=r.alertas.map(a=>`<div class="criteria-alert criteria-${a.tono}"><strong>${a.tono==='verde'?'✓ ':a.tono==='rojo'?'● ':'⚠ '}${esc(a.texto)}</strong></div>`).join('')||'<div class="form-helper">Completa los datos para evaluar los criterios iniciales.</div>';
+  }else{
+    el.classList.toggle('criteria-ok',r.cumple);el.innerHTML=`<strong>${r.cumple?'✓ Cumple criterios iniciales':'Por revisar'}</strong><div class="form-helper">${esc(r.detalle)}</div>`;
+  }
 }
 function validarFechasElegibilidad(){
   const hoy=fechaISOLocal(new Date());for(const id of ['lead-el-fecha-nac','lead-el-primera-cotizacion','lead-el-fecha-retiro']){if(!document.getElementById(id))continue;const f=leerFechaMX(id);if(f===null)return false;if(f>hoy){showToast('Revisa las fechas de elegibilidad: no pueden ser futuras','warn');return false;}}

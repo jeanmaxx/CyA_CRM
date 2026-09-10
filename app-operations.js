@@ -43,15 +43,52 @@ function sincronizarCitaAfore(c){
  else {const etapas=stagesFor(c.servicio);const actualizada=etapas.findIndex(s=>s.id==='afore_actualizada');store.agenda.push({...data,completado:actualizada>=0&&etapas.findIndex(s=>s.id===c.etapa)>=actualizada});}
 }
 const syncDatesPrevious=sincronizarFechasCliente;
-sincronizarFechasCliente=function(c,anterior){syncDatesPrevious(c,anterior);sincronizarCitaAfore(c);if(!c.fechaAltaAfore){store.agenda.filter(e=>e.clienteId===c.id&&e.regla==='solicitud_45'&&!e.completado).forEach(e=>e.cancelarRecordatorio=true);}};
+sincronizarFechasCliente=function(c,anterior){syncDatesPrevious(c,anterior);sincronizarCitaAfore(c);sincronizarFlujoInicialCliente(c);if(!c.fechaAltaAfore){store.agenda.filter(e=>e.clienteId===c.id&&e.regla==='solicitud_45'&&!e.completado).forEach(e=>e.cancelarRecordatorio=true);}};
 verificarAlertasAFOREDiarias=function(){for(const c of store.clientes||[])sincronizarCitaAfore(c);saveStore();};
 fechaSolicitudCliente=function(c){return c.servicio==='retiro_desempleo'&&c.fechaAltaAfore?sumarDiasISO(c.fechaAltaAfore,45):'';};
 function etiquetaSolicitudCliente(c){return c.servicio!=='retiro_desempleo'?'—':c.fechaAltaAfore?fmtDate(fechaSolicitudCliente(c)):'Confirmar fecha de alta';}
+
+const siguienteAccionPrevious=obtenerSiguienteAccion;
+obtenerSiguienteAccion=function(cliente,referencia=new Date()){
+ if(cliente?.servicio==='retiro_desempleo'&&!cliente.descartado&&!cliente.archivado&&!cliente.devueltoAProspectos){
+  const base={clienteId:cliente.id,etapa:cliente.etapa,nombre:cliente.nombre||'Cliente',tipo:'avanzar',tono:'normal',prioritariaAgenda:true};
+  if(cliente.etapa==='generando_contrato')return {...base,clave:'enviar_firma',grupo:'Enviar a firmas',boton:'Marcar enviado a firma',detalle:'Contrato por enviar'};
+  if(cliente.etapa==='contrato_firmas')return {...base,clave:'confirmar_firma',grupo:'Confirmar contrato firmado',boton:'Confirmar firma',detalle:'Contrato enviado a firma'};
+  if(cliente.etapa==='contrato_firmado')return {...base,clave:'confirmar_alta',grupo:'Confirmar alta',boton:'Confirmar alta',detalle:'Contrato firmado'};
+ }
+ return siguienteAccionPrevious(cliente,referencia);
+};
+function procesoPendienteCliente(c){return obtenerSiguienteAccion(c)?.boton||'Sin proceso pendiente';}
+function datosFlujoInicial(c){return [
+ {etapa:'generando_contrato',regla:'flujo_enviar_firma',titulo:'Enviar contrato a firma — '+c.nombre,boton:'Marcar enviado a firma'},
+ {etapa:'contrato_firmas',regla:'flujo_confirmar_firma',titulo:'Confirmar contrato firmado — '+c.nombre,boton:'Confirmar firma'},
+ {etapa:'contrato_firmado',regla:'flujo_confirmar_alta',titulo:'Confirmar alta — '+c.nombre,boton:'Confirmar alta'},
+];}
+function sincronizarFlujoInicialCliente(c){
+ if(c.servicio!=='retiro_desempleo')return;
+ store.agenda||=[];const stages=stagesFor(c.servicio),idx=stages.findIndex(s=>s.id===c.etapa);
+ for(const [paso,def] of datosFlujoInicial(c).entries()){
+  const id='ev_'+def.regla+'_'+c.id;let e=store.agenda.find(x=>x.id===id);
+  if(c.archivado||c.descartado||c.devueltoAProspectos){if(e)e.cancelarRecordatorio=true;continue;}
+  if(idx<paso)continue;
+  if(idx>paso&&!e)continue;
+  if(!e){e={id,regla:def.regla,titulo:def.titulo,tipo:'recordatorio',fecha:fechaISOLocal(new Date()),hora:'09:00',notas:'Seguimiento prioritario del inicio del trámite.',clienteId:c.id,asesorId:c.asesorId||null,autoGenerado:true,completado:false,cancelarRecordatorio:false};store.agenda.push(e);}
+  e.titulo=def.titulo;e.asesorId=c.asesorId||e.asesorId||null;e.cancelarRecordatorio=false;
+  const completo=idx>paso;
+  if(completo&&!e.completado)e.completadoEn=new Date().toISOString();
+  e.completado=completo;
+ }
+}
+function botonEventoAgenda(e){return datosFlujoInicial({nombre:''}).find(x=>x.regla===e?.regla)?.boton||'✓ Hecho';}
+const completarEventoPrevious=completarEvento;
+completarEvento=async function(id){const e=store.agenda.find(x=>x.id===id);if(e?.regla?.startsWith('flujo_')&&e.clienteId)return avanzarEtapa(e.clienteId);return completarEventoPrevious(id);};
+const repairPrevious=typeof cloudRepairOperationalOwnership==='function'?cloudRepairOperationalOwnership:()=>false;
+cloudRepairOperationalOwnership=function(){const before=JSON.stringify(store.agenda);const changed=repairPrevious();for(const c of store.clientes||[])sincronizarFlujoInicialCliente(c);return changed||before!==JSON.stringify(store.agenda);};
 async function guardarFechasContratoAlta(id){const c=store.clientes.find(c=>c.id===id);if(!c)return;const firma=leerFechaMX('perfil-firma'),alta=leerFechaMX('perfil-alta');if(firma===null||alta===null)return;if(firma>fechaISOLocal(new Date())||alta>fechaISOLocal(new Date()))return showToast('Las fechas reales no pueden estar en el futuro','warn');const old=cloudCleanObject(c);c.fechaFirmaContrato=firma;c.fechaAltaAfore=alta;sincronizarFechasCliente(c,old);try{await cloudSyncNow({throwOnError:true});showToast('Fechas guardadas en el historial','success');renderPage(currentPage);}catch(e){showToast('Fechas pendientes de guardar','warn');}}
 function oficinasEmpresa(){const rows=store.configuracion.oficinas||[];if(rows.length)return rows;return [{id:'principal',nombre:'Oficina principal',domicilio:store.configuracion.empresa_domicilio||privateContractTemplate?.defaults?.empresa_domicilio||'',ciudad:store.configuracion.ciudad_contrato||privateContractTemplate?.defaults?.ciudad_contrato||''}];}
-function oficinaElegida(){const o=oficinasEmpresa().find(o=>o.id===getVal('ct-oficina'));if(!o)return;setVal('ct-word-empresa-dom',o.domicilio);setVal('ct-word-ciudad',o.ciudad);invalidarContratoActual();}
+function oficinaElegida(){const o=oficinasEmpresa().find(o=>o.id===getVal('ct-oficina'));if(!o)return;setVal('ct-word-empresa-dom',o.domicilio);setVal('ct-word-ciudad',o.ciudad);const address=document.getElementById('ct-office-address');if(address)address.textContent=o.domicilio;invalidarContratoActual();}
 const contractClientPrevious=onContratoClienteChange;
-onContratoClienteChange=function(){contractClientPrevious();const body=document.getElementById('ct-word-fields-body');if(!body)return;const offices=oficinasEmpresa();body.insertAdjacentHTML('afterbegin',`<div class="form-group"><label class="form-label">Oficina para este contrato</label><select class="form-select" id="ct-oficina" onchange="oficinaElegida()">${offices.map(o=>`<option value="${esc(o.id)}">${esc(o.nombre)}</option>`).join('')}</select></div>`);const preferred=store.configuracion.oficinaPorAsesor?.[sesionActiva?.id];if(offices.some(o=>o.id===preferred))setVal('ct-oficina',preferred);oficinaElegida();};
+onContratoClienteChange=function(){contractClientPrevious();const slot=document.getElementById('ct-office-slot');if(!slot)return;const offices=oficinasEmpresa();slot.innerHTML=`<div class="form-group"><label class="form-label">Oficina para este contrato</label><select class="form-select" id="ct-oficina" onchange="oficinaElegida()">${offices.map(o=>`<option value="${esc(o.id)}">${esc(o.nombre)}</option>`).join('')}</select></div><div class="contract-office-address" id="ct-office-address"></div>`;const preferred=store.configuracion.oficinaPorAsesor?.[sesionActiva?.id];if(offices.some(o=>o.id===preferred))setVal('ct-oficina',preferred);oficinaElegida();};
 const configPrevious=renderConfiguracion;
 renderConfiguracion=function(){let html=configPrevious();const offices=oficinasEmpresa();html=html.replace('<button class="btn btn-primary" onclick="guardarConfigEmpresa()">',`<div class="form-group"><label class="form-label">Oficinas · una por línea: nombre | domicilio | ciudad</label><textarea class="form-textarea" id="cfg-oficinas" rows="5">${esc(offices.map(o=>[o.nombre,o.domicilio,o.ciudad].join(' | ')).join('\n'))}</textarea></div><button class="btn btn-primary" onclick="guardarConfigEmpresa()">`);return html+`<div class="card"><div class="card-header">Directorio AFORE</div><div class="card-body">${AFORE_OPTIONS.map((n,i)=>{const a=fichaAfore(n);return `<details><summary>${esc(n)}</summary>${contractTextField('dir-web-'+i,'Página web (https://)',a.web||'')}${contractTextField('dir-tel-'+i,'Teléfono',a.telefono||'')}<label class="form-label">Documentos para actualización de expediente</label><textarea class="form-textarea" id="dir-docs-${i}">${esc(a.documentos||'')}</textarea></details>`;}).join('')}<button class="btn btn-primary" onclick="guardarDirectorioAfore()">Guardar directorio</button></div></div>`;};
 guardarConfigEmpresa=async function(){if(!isTechnicalAdmin())return;const rows=getVal('cfg-oficinas').split('\n').filter(s=>s.trim()).map(s=>s.split('|').map(v=>v.trim()));if(rows.some(r=>r.length!==3||r.some(v=>!v)))return showToast('Cada oficina requiere nombre | domicilio | ciudad','warn');const old=oficinasEmpresa();store.configuracion.oficinas=rows.map(([nombre,domicilio,ciudad])=>({id:old.find(o=>o.nombre===nombre)?.id||crypto.randomUUID(),nombre,domicilio,ciudad}));Object.assign(store.configuracion,{empresa_nombre:getVal('cfg-empresa-nombre'),empresa_representante:getVal('cfg-empresa-rep'),empresa_domicilio:getVal('cfg-empresa-dom'),ciudad_contrato:getVal('cfg-ciudad')});try{await cloudSyncNow({throwOnError:true});showToast('Oficinas guardadas','success');}catch(e){showToast('Cambios pendientes de guardar','warn');}};

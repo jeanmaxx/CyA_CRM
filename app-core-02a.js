@@ -75,7 +75,7 @@ function renderDashboardAgendaPrioritaria(){
             <div class="dashboard-event-title">${escapeHTMLBasico(e.titulo)}</div>
             <div class="dashboard-event-meta">${escapeHTMLBasico(TIPO_LABELS[e.tipo]||e.tipo||'Evento')}${e.hora?' · '+escapeHTMLBasico(e.hora):''}${cliente?.nombre?' · '+escapeHTMLBasico(cliente.nombre):''}</div>
           </div>
-          <button class="btn dashboard-agenda-action" onclick="event.stopPropagation();completarEvento('${e.id}')">✓ Hecho</button>
+          <button class="btn dashboard-agenda-action" onclick="event.stopPropagation();completarEvento('${e.id}')">${escapeHTMLBasico(botonEventoAgenda(e))}</button>
         </div>`;
       }).join('')}</div>`:`<div class="dashboard-priority-empty">✓ No tienes actividades vencidas ni pendientes para el resto de esta semana.</div>`}
     </div>`:''}
@@ -118,7 +118,7 @@ function accionDashboardPospuestaHoy(cliente,accion){
 }
 
 function accionesSiguientesDashboard(){
-  return (clientesVistaActual()||[]).map(c=>({cliente:c,accion:obtenerSiguienteAccion(c)})).filter(x=>x.accion);
+  return (clientesVistaActual()||[]).map(c=>({cliente:c,accion:obtenerSiguienteAccion(c)})).filter(x=>x.accion&&!x.accion.prioritariaAgenda);
 }
 
 function renderDashboardSiguientesAcciones(){
@@ -460,21 +460,6 @@ function renderClientes(){
     <div><div class="section-title">Clientes</div><div class="section-sub" style="margin-bottom:0;">Base de clientes y seguimiento de trámites</div></div>
     <div class="clients-view-selector">${getSelectorVistaHTML(true)}</div>
   </div>
-  ${alertas.length>0?`
-  <div class="clients-alerts">
-    <div class="client-alerts-toggle" role="button" tabindex="0" aria-expanded="false" onclick="toggleAlertasClientes(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAlertasClientes(this);}">
-      <div class="client-alerts-toggle-title"><span class="client-alerts-arrow">▸</span><span>Seguimientos atrasados</span><span class="chip chip-amber">${alertas.length}</span></div>
-      <span class="client-alerts-toggle-sub">Contraído para mantener el espacio de trabajo despejado</span>
-    </div>
-    <div class="client-alerts-list" id="alertas-seguimiento-list" hidden>
-      ${alertas.map(a=>`
-        <div class="client-alert-item" role="button" tabindex="0" onclick="openPerfil('${a.cliente.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPerfil('${a.cliente.id}');}">
-          <div class="client-avatar" style="width:28px;height:28px;font-size:10px;flex-shrink:0;">${initials(a.cliente.nombre)}</div>
-          <div class="client-alert-main"><span style="font-weight:500;font-size:13px;">${a.cliente.nombre}</span> <span style="font-size:11px;color:var(--text-muted);">· ${a.etapa}</span></div>
-          <span class="chip chip-amber" style="font-size:10px;">${a.dias} día${a.dias!==1?'s':''} sin movimiento</span>
-        </div>`).join('')}
-    </div>
-  </div>`:''}
   <div class="filter-bar client-filter-bar">
     <div class="search-wrap">
       <span class="search-icon">⌕</span>
@@ -523,10 +508,10 @@ function renderClientes(){
         <thead><tr>
           <th onclick="ordenarClientes('fechaRegistro')" style="cursor:pointer;">Registro${flechaOrden('fechaRegistro')}</th>
           <th onclick="ordenarClientes('nombre')" style="cursor:pointer;">Nombre${flechaOrden('nombre')}</th>
-          <th>Teléfono</th>
           <th onclick="ordenarClientes('servicio')" style="cursor:pointer;">Servicio${flechaOrden('servicio')}</th>
-          <th onclick="ordenarClientes('etapa')" style="cursor:pointer;">Etapa${flechaOrden('etapa')}</th>
-          <th>Fecha de solicitud</th><th>Documentos</th><th></th>
+          <th onclick="ordenarClientes('etapa')" style="cursor:pointer;">Etapa actual${flechaOrden('etapa')}</th>
+          <th onclick="ordenarClientes('procesoPendiente')" style="cursor:pointer;">Proceso pendiente${flechaOrden('procesoPendiente')}</th>
+          <th onclick="ordenarClientes('fechaSolicitud')" style="cursor:pointer;">Fecha de solicitud${flechaOrden('fechaSolicitud')}</th><th>Documentos</th><th></th>
         </tr></thead>
         <tbody id="tbody-cl">${renderClientesRows(aplicarOrden(cl))}</tbody>
       </table>
@@ -557,9 +542,9 @@ function renderClientesRows(cl){
           <span class="td-link" onclick="openPerfil('${c.id}')">${c.nombre}</span>
         </div>
       </td>
-      <td class="td-muted">${c.telefono||'—'}</td>
       <td><span class="chip chip-gray" style="font-size:10px;">${getSvcLabel(c.servicio)}</span></td>
       <td><span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span></td>
+      <td class="td-muted">${escapeHTMLBasico(procesoPendienteCliente(c))}</td>
       <td class="td-muted">${etiquetaSolicitudCliente(c)}</td>
       <td>
         <div style="display:flex;align-items:center;gap:6px;min-width:80px;">
@@ -591,7 +576,7 @@ function renderClientesCards(cl){
         <div class="client-mobile-identity"><div class="client-mobile-name">${c.nombre}</div><div class="client-mobile-phone">${c.telefono||'Sin teléfono'}</div></div>
         <span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span>
       </div>
-      <div class="client-mobile-meta"><span>${getSvcLabel(c.servicio)}</span><span>Registro: ${fmtDate(c.fechaRegistro)}</span><span>Solicitud: ${etiquetaSolicitudCliente(c)}</span></div>
+      <div class="client-mobile-meta"><span>${getSvcLabel(c.servicio)}</span><span>Registro: ${fmtDate(c.fechaRegistro)}</span><span>Pendiente: ${escapeHTMLBasico(procesoPendienteCliente(c))}</span><span>Solicitud: ${etiquetaSolicitudCliente(c)}</span></div>
       <div class="client-mobile-docs">
         <span>Documentos ${docOk}/${docList.length}</span>
         <div class="progress-bar-wrap"><div class="progress-bar" style="width:${docPct}%;${docPct===100?'background:var(--success)':''}"></div></div>

@@ -5,7 +5,13 @@ context.matchMedia=()=>({matches:false,addEventListener(){},addListener(){}});co
 const repo=process.cwd();for(const file of ['app-core-01.js','app-core-02a.js','app-core-02b.js','app-core-03.js','app-core-04.js','app-core-05.js','app-core-06.js','app-core-07.js','app-workflow.js','app-prospect-workflow.js','app-contract-word.js','app-operations.js'])vm.runInContext(fs.readFileSync(file,'utf8').replace('\ninitResponsiveShell();','\n'),context,{filename:file});
 const run=s=>vm.runInContext(s,context);
 assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:106,cotizaImss:'no',retiro5:'no'},'2026-09-09').cumple"),true);
-assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:105,cotizaImss:'no',retiro5:'no'},'2026-09-09').cumple"),false);
+assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:105,cotizaImss:'no',retiro5:'no'},'2026-09-09').cumple"),true);
+
+assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:104,cotizaImss:'no',retiro5:'no'},'2026-09-10').alertas[0].tono"),'amarillo');
+assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:105,cotizaImss:'si',retiro5:'no'},'2026-09-10').alertas[0].tono"),'rojo');
+assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:105,cotizaImss:'no',retiro5:'si',fechaRetiro:'2021-09-10'},'2026-09-10').cumple"),true);
+assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:105,cotizaImss:'no',retiro5:'si',fechaRetiro:'2021-10-10'},'2026-09-10').alertas[0].tono"),'amarillo');
+assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',{semanas:105,cotizaImss:'no',retiro5:'si',fechaRetiro:'2022-01-10'},'2026-09-10').fechaRecontacto"),'2026-12-10');
 for(const e of [{semanas:200,cotizaImss:'',retiro5:'no'},{semanas:200,cotizaImss:'si',retiro5:'no'},{semanas:200,cotizaImss:'no',retiro5:'no',fechaRetiro:'2022-09-01'}]){context.e=e;assert.equal(run("evaluarCriteriosIniciales('retiro_desempleo',e,'2026-09-09').cumple"),false);}
 assert.equal(run("evaluarCriteriosIniciales('asesoria_pension',{semanas:500,fechaNacimiento:'1966-09-09',ley:'73',conservacionDerechos:'si'},'2026-09-09').cumple"),true);
 assert.equal(run("evaluarCriteriosIniciales('asesoria_pension',{semanas:500,fechaNacimiento:'1966-09-09',ley:'',conservacionDerechos:'si'},'2026-09-09').cumple"),false);

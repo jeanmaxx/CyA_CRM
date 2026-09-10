@@ -14,19 +14,19 @@ function renderContratos(){
         <div class="card-header"><div class="card-title">Datos del documento</div></div>
         <div class="card-body">
           <div class="form-group">
-            <label class="form-label">Tipo de servicio</label>
-            <select class="form-select" id="ct-servicio" onchange="onContratoServicioChange()" style="font-size:13px;">
-              <option value="">— Seleccionar —</option>
-              ${svcs.map(s=>`<option value="${s.id}">${s.nombre}</option>`).join('')}
-            </select>
-          </div>
-          <div class="form-group">
             <label class="form-label">Buscar cliente</label>
             <div class="autocomplete-wrap">
               <input class="form-input" id="ct-cliente-input" placeholder="Escribe el nombre del cliente..."
                 oninput="filtrarClientesAuto(this.value)" autocomplete="off" style="font-size:13px;">
               <div class="autocomplete-list" id="ct-cliente-list"></div>
             </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo de servicio</label>
+            <select class="form-select" id="ct-servicio" onchange="onContratoServicioChange()" style="font-size:13px;">
+              <option value="">— Seleccionar —</option>
+              ${svcs.map(s=>`<option value="${s.id}">${s.nombre}</option>`).join('')}
+            </select>
           </div>
           <div class="form-group">
             <label class="form-label">Fecha del contrato</label>
@@ -363,6 +363,7 @@ let agendaFechaSeleccionada = fechaISOLocal(new Date());
 let agendaVistaActual = 'lista'; // 'semana' | 'lista'
 let agendaSemanaOffset = 0;
 let agendaFuturosAbiertos = false;
+let agendaRealizadosAbiertos = false;
 let editingEventoId = null;
 let agEventoClienteId = null;
 
@@ -413,20 +414,31 @@ function renderAgenda(){
   <div id="agenda-content">
     ${agendaVistaActual==='semana'?renderAgendaSemana():renderAgendaLista()}
   </div>
-  ${renderEventosFuturos()}`;
+  ${renderEventosFuturos()}
+  ${renderEventosRealizados()}`;
 }
 
 function toggleEventosFuturos(){ agendaFuturosAbiertos=!agendaFuturosAbiertos; renderPage('agenda'); }
 
 function renderEventosFuturos(){
   const {limite}=getVentanaAgenda();
-  const futuros=eventosVistaActual().filter(e=>e.fecha>=limite).sort((a,b)=>a.fecha===b.fecha?(a.hora||'').localeCompare(b.hora||''):a.fecha.localeCompare(b.fecha));
+  const futuros=eventosVistaActual().filter(e=>!e.completado&&e.fecha>=limite).sort((a,b)=>a.fecha===b.fecha?(a.hora||'').localeCompare(b.hora||''):a.fecha.localeCompare(b.fecha));
   const porFecha={}; futuros.forEach(e=>{ if(!porFecha[e.fecha]) porFecha[e.fecha]=[]; porFecha[e.fecha].push(e); });
   return `<div class="archivados-section" style="margin-top:16px;">
     <div class="archivados-header" onclick="toggleEventosFuturos()"><span>${agendaFuturosAbiertos?'▾':'▸'} EVENTOS FUTUROS</span><span style="font-size:10px;color:var(--text-muted);">${futuros.length} evento${futuros.length!==1?'s':''} después del próximo mes</span></div>
     <div style="padding:12px;${agendaFuturosAbiertos?'':'display:none;'}">
       ${futuros.length?Object.keys(porFecha).sort().map(fecha=>`<div class="agenda-day-header">${fmtDate(fecha)}</div>${porFecha[fecha].map(e=>renderEventoItem(e,false)).join('')}`).join(''):'<div style="font-size:12px;color:var(--text-muted);padding:8px;">Sin eventos futuros</div>'}
     </div>
+  </div>`;
+}
+
+function toggleEventosRealizados(){agendaRealizadosAbiertos=!agendaRealizadosAbiertos;renderPage('agenda');}
+function renderEventosRealizados(){
+  const realizados=eventosVistaActual().filter(e=>e.completado).sort((a,b)=>`${a.fecha||''} ${a.hora||''}`.localeCompare(`${b.fecha||''} ${b.hora||''}`));
+  const porFecha={};realizados.forEach(e=>{if(!porFecha[e.fecha])porFecha[e.fecha]=[];porFecha[e.fecha].push(e);});
+  return `<div class="archivados-section" style="margin-top:16px;">
+    <div class="archivados-header" onclick="toggleEventosRealizados()"><span>${agendaRealizadosAbiertos?'▾':'▸'} EVENTOS REALIZADOS</span><span style="font-size:10px;color:var(--text-muted);">${realizados.length} archivado${realizados.length!==1?'s':''}</span></div>
+    <div style="padding:12px;${agendaRealizadosAbiertos?'':'display:none;'}">${realizados.length?Object.keys(porFecha).sort().map(fecha=>`<div class="agenda-day-header">${fmtDate(fecha)}</div>${porFecha[fecha].map(e=>renderEventoItem(e,false)).join('')}`).join(''):'<div style="font-size:12px;color:var(--text-muted);padding:8px;">Sin eventos realizados</div>'}</div>
   </div>`;
 }
 
@@ -444,7 +456,7 @@ function renderAgendaSemana(){
   for(let h=8;h<=18;h++) horas.push(h);
   const SLOT_H = 52; // px por hora
   const ventana=getVentanaAgenda();
-  const eventos = eventosVistaActual().filter(e=>e.fecha>=ventana.inicio&&e.fecha<ventana.limite);
+  const eventos = eventosVistaActual().filter(e=>!e.completado&&e.fecha>=ventana.inicio&&e.fecha<ventana.limite);
   const inicioLabel = fmtDate(fechaISOLocal(inicio));
   const fin = dias[6];
   const finLabel = fmtDate(fechaISOLocal(fin));
@@ -529,7 +541,7 @@ function renderAgendaSemana(){
 function renderAgendaLista(){
   const hoyStr=fechaISOLocal(new Date());
   const ventana=getVentanaAgenda();
-  const eventos=eventosVistaActual().filter(e=>e.fecha>=ventana.inicio&&e.fecha<ventana.limite);
+  const eventos=eventosVistaActual().filter(e=>!e.completado&&e.fecha>=ventana.inicio&&e.fecha<ventana.limite);
   const dias={};
   eventos.forEach(e=>{ if(!dias[e.fecha]) dias[e.fecha]=[]; dias[e.fecha].push(e); });
   const fechasVisibles=Object.keys(dias).sort();
@@ -541,7 +553,7 @@ function renderAgendaLista(){
       +'<button class="btn btn-primary" onclick="openModalAgenda()">+ Nuevo evento</button></div>';
   }
 
-  const resumen=[['Mes actual y siguiente',eventos.length],['Pendientes',eventos.filter(e=>!e.completado&&e.fecha>=hoyStr).length],['Vencidos del mes',eventos.filter(e=>e.fecha<hoyStr&&!e.completado).length],['Completados',eventos.filter(e=>e.completado).length]];
+  const resumen=[['Mes actual y siguiente',eventos.length],['Pendientes',eventos.filter(e=>e.fecha>=hoyStr).length],['Vencidos del mes',eventos.filter(e=>e.fecha<hoyStr).length]];
   let resumenHTML=resumen.map(function(r){ return '<div class="info-row"><span class="ir-label">'+r[0]+'</span><span class="ir-value">'+r[1]+'</span></div>'; }).join('');
 
   let proximasHTML='';
@@ -582,7 +594,7 @@ function renderEventoItem(e, pasado){
     <div class="agenda-event-badge">
       ${e.completado
         ?'<span class="chip chip-green" style="font-size:10px;">✓ Listo</span>'
-        :`<button class="btn" style="font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();completarEvento('${e.id}')">Completar</button>`}
+        :`<button class="btn" style="font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();completarEvento('${e.id}')">${escapeHTMLBasico(botonEventoAgenda(e))}</button>`}
     </div>
   </div>`;
 }
@@ -615,7 +627,7 @@ function renderCalMini(){
   const primerDia=new Date(anio,mes,1).getDay();
   const ultimoDia=new Date(anio,mes+1,0).getDate();
   const hoyStr=fechaISOLocal(hoy);
-  const eventFechas=new Set(eventosVistaActual().map(e=>e.fecha));
+  const eventFechas=new Set(eventosVistaActual().filter(e=>!e.completado).map(e=>e.fecha));
   for(let i=0;i<primerDia;i++) html+=`<div class="cal-mini-day otro-mes"></div>`;
   for(let d=1;d<=ultimoDia;d++){
     const fs=`${anio}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -646,7 +658,7 @@ function openModalAgenda(id, fechaPre, horaPre){
     const e=store.agenda.find(x=>x.id===id);
     if(e){
       setVal('ag-titulo',e.titulo); setVal('ag-tipo',e.tipo);
-      setVal('ag-fecha',e.fecha); setVal('ag-hora',e.hora||'10:00');
+      setFechaMX('ag-fecha',e.fecha); setVal('ag-hora',e.hora||'10:00');
       setVal('ag-notas',e.notas||'');
       agEventoClienteId=e.clienteId||null;
       const ci=document.getElementById('ag-cliente-input');
@@ -655,7 +667,7 @@ function openModalAgenda(id, fechaPre, horaPre){
     }
   } else {
     setVal('ag-titulo',''); setVal('ag-tipo','llamada');
-    setVal('ag-fecha',fechaPre||new Date().toISOString().split('T')[0]);
+    setFechaMX('ag-fecha',fechaPre||fechaISOLocal(new Date()));
     setVal('ag-hora',horaPre||'10:00'); setVal('ag-notas','');
     const ci=document.getElementById('ag-cliente-input'); if(ci) ci.value='';
   }
@@ -685,9 +697,9 @@ function selAgCliente(id,nombre){
 
 function guardarEvento(){
   const titulo=(getVal('ag-titulo')||'').trim();
-  const fecha=getVal('ag-fecha');
+  const fecha=leerFechaMX('ag-fecha');
   if(!titulo){showToast('El título es obligatorio','warn');return;}
-  if(!fecha){showToast('La fecha es obligatoria','warn');return;}
+  if(!fecha){showToast('Registra una fecha válida en formato dd/mm/aaaa','warn');return;}
   const eventoAnterior=editingEventoId?store.agenda.find(x=>x.id===editingEventoId):null;
   const clienteEvento=agEventoClienteId?store.clientes.find(c=>c.id===agEventoClienteId):null;
   const evento={

@@ -307,6 +307,8 @@ function aplicarOrden(clientes){
     }
     else if(campo==='elegible'){ va=a.elegible||''; vb=b.elegible||''; }
     else if(campo==='servicio'){ va=getSvcLabel(a.servicio)||''; vb=getSvcLabel(b.servicio)||''; }
+    if(campo==='fechaSolicitud'){va=fechaSolicitudCliente(a)||'9999-12-31';vb=fechaSolicitudCliente(b)||'9999-12-31';}
+    if(campo==='procesoPendiente'){va=stagesFor(a.servicio).findIndex(s=>s.id===a.etapa);vb=stagesFor(b.servicio).findIndex(s=>s.id===b.etapa);}
     if(va<vb) return -1*mult;
     if(va>vb) return 1*mult;
     return 0;
@@ -347,7 +349,6 @@ function renderColaboradores(){
       <td><div style="min-width:110px;">${asesor?asesor.nombre:'—'}<div style="font-size:10px;color:var(--text-muted);">${col.pctComision||50}% predeterminado</div></div></td>
       <td>${conversion.oportunidades}</td>
 
-      <td>${conversion.directos}</td>
       <td>${conversion.clientes}</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
@@ -377,7 +378,6 @@ function renderColaboradores(){
         <div><strong>${conversion.clientes}</strong><span>Clientes</span></div>
         <div><strong>${formatoTasaConversion(conversion.tasa)}</strong><span>Efectividad</span></div>
       </div>
-      <div class="collaborator-mobile-breakdown"><span>Directos: <strong>${conversion.directos}</strong></span></div>
       <div class="collaborator-mobile-money"><span><small>Cobrado</small><strong>${formatoMoneda(comisionTotal)}</strong></span><span><small>Pendiente</small><strong>${formatoMoneda(pendiente)}</strong></span></div>
     </article>`).join('');
   return `
@@ -387,7 +387,7 @@ function renderColaboradores(){
   </div>
   ${cols.length===0?`<div class="empty-state"><div class="empty-icon">◐</div><div class="empty-title">Sin colaboradores</div><div class="empty-sub">Agrega tus colaboradores externos</div><button class="btn btn-primary" onclick="openModalColaborador()">+ Nuevo</button></div>`:`
   <div class="card collaborators-table-card"><div class="table-wrap"><table>
-    <thead><tr><th>Colaborador</th><th>Asesor</th><th>Oportunidades</th><th>Directos</th><th>Clientes</th><th>Efectividad</th><th>Cobrado</th><th>Pendiente</th><th></th></tr></thead>
+    <thead><tr><th>Colaborador</th><th>Asesor</th><th>Oportunidades</th><th>Clientes</th><th>Efectividad</th><th>Cobrado</th><th>Pendiente</th><th></th></tr></thead>
     <tbody>${filas}</tbody>
   </table></div></div>
   <div class="collaborators-mobile-list">${tarjetas}</div>`}`;
@@ -804,7 +804,10 @@ function archivarLead(){
   leadParaArchivar=editingLeadId;
   closeModal('modal-lead');
   const lead=store.leads.find(l=>l.id===editingLeadId);
-  const causaActual=causaArchivoCodigo(lead);
+  const elegRetiro=lead?.elegibilidad?.porServicio?.retiro_desempleo||lead?.elegibilidad||{};
+  const fechaRetiro=elegRetiro.fechaRetiro||'';
+  const requiereRecontacto=fechaRetiro&&fechaISOLocal(new Date())<sumarMesesISO(fechaRetiro,59);
+  const causaActual=requiereRecontacto?'retiro_menos_5':causaArchivoCodigo(lead);
   const titulo=document.getElementById('modal-archivar-lead-title');
   if(titulo) titulo.textContent=lead?.estado==='archivado'?'Cambiar causa de archivo':'Archivar prospecto';
   const btnConfirmar=document.getElementById('lead-confirmar-archivo-btn');
@@ -812,7 +815,7 @@ function archivarLead(){
   setVal('lead-causa-archivo',causaActual);
   setVal('lead-otros-texto',causaActual==='otros'?(lead?.causaArchivo||''):'');
   setVal('lead-archivo-notas',lead?.notasArchivo||'');
-  setFechaMX('lead-fecha-ultimo-retiro',lead?.fechaUltimoRetiro||'');
+  setFechaMX('lead-fecha-ultimo-retiro',lead?.fechaUltimoRetiro||fechaRetiro);
   toggleLeadOtros();
   document.getElementById('modal-archivar-lead').classList.add('open');
 }
@@ -876,10 +879,10 @@ function confirmarArchivarLead(){
   }
   if(causa==='retiro_menos_5'){
     lead.fechaUltimoRetiro=fechaUltimoRetiro;
-    const d=new Date(lead.fechaUltimoRetiro+'T10:00:00'); d.setFullYear(d.getFullYear()+4); d.setMonth(d.getMonth()+11);
-    lead.fechaRecontacto=d.toISOString().split('T')[0];
+    lead.fechaRecontacto=sumarMesesISO(lead.fechaUltimoRetiro,59);
     const eventoId='ev_recontacto_'+lead.id;
-    if(!(store.agenda||[]).some(e=>e.id===eventoId)) store.agenda.push({id:eventoId,titulo:'Recontactar prospecto — posible nuevo retiro por desempleo',tipo:'recordatorio',fecha:lead.fechaRecontacto,hora:'10:00',notas:notasRecontactoLead(lead),leadId:lead.id,completado:false,autoGenerado:true,asesorId:lead.asesorId||null});
+    const datosEvento={id:eventoId,titulo:'Recontactar prospecto — posible nuevo retiro por desempleo',tipo:'recordatorio',fecha:lead.fechaRecontacto,hora:'10:00',notas:notasRecontactoLead(lead),leadId:lead.id,completado:false,cancelarRecordatorio:false,autoGenerado:true,asesorId:lead.asesorId||null};
+    const evento=(store.agenda||[]).find(e=>e.id===eventoId);if(evento)Object.assign(evento,datosEvento);else store.agenda.push(datosEvento);
   }
   saveStore();
   closeModal('modal-archivar-lead');

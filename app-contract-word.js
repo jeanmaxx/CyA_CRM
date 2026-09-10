@@ -25,10 +25,11 @@ renderContratos=function(){
 function contractTextField(id,label,value,wide=false){return `<div class="form-group ${wide?'wide':''}"><label class="form-label" for="${id}">${label}</label><input class="form-input" id="${id}" value="${esc(value)}"></div>`;}
 onContratoClienteChange=function(){
   onContratoClienteAnterior();
+  const redundantPreview=document.getElementById('ct-datos-preview');if(redundantPreview)redundantPreview.style.display='none';
   const c=store.clientes.find(c=>c.id===selectedClienteId);if(!c)return;
   const cfg={...(privateContractTemplate?.defaults||{}),...store.configuracion};
   const el=document.getElementById('ct-word-fields-body');
-  if(el)el.innerHTML=`<div class="contract-fields">${contractTextField('ct-word-nombre','Nombre del cliente',c.nombre,true)}${contractTextField('ct-word-domicilio','Domicilio del cliente',c.domicilio,true)}${contractTextField('ct-word-representante','Representante de la empresa',cfg.empresa_representante||privateContractTemplate?.defaults?.empresa_representante||'',true)}${contractTextField('ct-word-empresa-dom','Domicilio de la empresa',cfg.empresa_domicilio||privateContractTemplate?.defaults?.empresa_domicilio||'',true)}${contractTextField('ct-word-ciudad','Lugar de firma',cfg.ciudad_contrato||privateContractTemplate?.defaults?.ciudad_contrato||'',true)}<div class="form-group"><label class="form-label">Saldo mínimo de referencia</label><input class="form-input" type="number" id="ct-word-saldo" value="35000" min="0" step="0.01"></div><div class="form-group"><label class="form-label">Cobranza externa</label><input class="form-input" type="number" id="ct-word-cobranza" value="5000" min="0" step="0.01"></div></div><p class="form-helper">Estos ajustes se aplican a esta versión del documento. El expediente conserva sus datos originales.</p>`;
+  if(el)el.innerHTML=`<div class="contract-fields"><div class="contract-subsection">Datos del cliente</div>${contractTextField('ct-word-nombre','Nombre del cliente',c.nombre,true)}${contractTextField('ct-word-domicilio','Domicilio del cliente',c.domicilio,true)}<div class="contract-subsection">Datos de la empresa</div>${contractTextField('ct-word-representante','Representante de la empresa',cfg.empresa_representante||privateContractTemplate?.defaults?.empresa_representante||'',true)}<div id="ct-office-slot" class="wide"></div><input type="hidden" id="ct-word-empresa-dom" value="${esc(cfg.empresa_domicilio||privateContractTemplate?.defaults?.empresa_domicilio||'')}"><div class="form-group wide"><label class="form-label" for="ct-word-ciudad">Lugar de firma · municipio y estado de la oficina</label><input class="form-input" id="ct-word-ciudad" value="${esc(cfg.ciudad_contrato||privateContractTemplate?.defaults?.ciudad_contrato||'')}" readonly></div><div class="form-group"><label class="form-label">Saldo de retiro</label><input class="form-input" type="number" id="ct-word-saldo" value="35000" min="0" step="0.01"></div><div class="form-group"><label class="form-label">Cobranza externa</label><input class="form-input" type="number" id="ct-word-cobranza" value="5000" min="0" step="0.01"></div></div><p class="form-helper">Estos ajustes se aplican a esta versión del documento. El expediente conserva sus datos originales.</p>`;
   if(tieneMontoFinanciero(c.honorarios)){setVal('ct-honorarios',c.honorarios);setVal('ct-pagare-monto',Number(c.honorarios)+5000);}
   setVal('ct-fecha',fechaISOaMX(c.fechaFirmaContrato||fechaISOLocal(new Date())));
   actualizarFechaPagare();
@@ -79,6 +80,7 @@ async function crearDocxContrato(vars,templateBytes){
         filled=filled.replace(/(<w:hdr\b[^>]*>)[\s\S]*<\/w:hdr>/,'$1'+table+'</w:hdr>');
       }
     }
+    if(/^word\/footer\d+\.xml$/.test(name))filled=filled.replace(/(<w:ftr\b[^>]*>)[\s\S]*<\/w:ftr>/,'$1<w:p/></w:ftr>');
     zip.file(name,filled);
   }
   return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
