@@ -206,3 +206,13 @@ window.CA_CLOUD_CONFIG = Object.freeze({
     }
   },25);
 })();
+
+// Load the dedicated operational workspace without changing the legacy script order.
+(function loadOperationalBoard(){
+  if(document.querySelector('script[data-cya-operational-board]'))return;
+  const script=document.createElement('script');
+  script.src='app-operational-board.js?v=20260911-tablero-operativo';
+  script.async=false;
+  script.dataset.cyaOperationalBoard='1';
+  document.head.appendChild(script);
+})();
