@@ -26,7 +26,7 @@ window.CA_CLOUD_CONFIG = Object.freeze({
   const installer=setInterval(()=>{
     attempts++;
     setLoginBranding();
-    if(typeof window.cloudPrepareLogin!=='function'||typeof window.sincronizarCitaAfore!=='function'||typeof window.completarEvento!=='function'||typeof window.cloudRepairOperationalOwnership!=='function'){
+    if(typeof cloudPrepareLogin!=='function'||typeof sincronizarCitaAfore!=='function'||typeof completarEvento!=='function'||typeof cloudRepairOperationalOwnership!=='function'){
       if(attempts>120)clearInterval(installer);
       return;
     }
@@ -34,22 +34,22 @@ window.CA_CLOUD_CONFIG = Object.freeze({
     window.__cyaSessionConsistencyInstalled=true;
     clearInterval(installer);
 
-    const prepareLoginBase=window.cloudPrepareLogin;
-    window.cloudPrepareLogin=function(){
+    const prepareLoginBase=cloudPrepareLogin;
+    cloudPrepareLogin=function(){
       const result=prepareLoginBase.apply(this,arguments);
       setLoginBranding();
       return result;
     };
-    window.mostrarLogin=window.cloudPrepareLogin;
-    window.volverLoginGrid=window.cloudPrepareLogin;
+    mostrarLogin=cloudPrepareLogin;
+    volverLoginGrid=cloudPrepareLogin;
 
-    const syncCitaBase=window.sincronizarCitaAfore;
-    window.sincronizarCitaAfore=function(cliente){
+    const syncCitaBase=sincronizarCitaAfore;
+    sincronizarCitaAfore=function(cliente){
       const result=syncCitaBase.apply(this,arguments);
       if(!cliente||cliente.servicio!=='retiro_desempleo')return result;
-      const evento=(window.store?.agenda||[]).find(e=>e.id==='ev_cita_afore_'+cliente.id);
+      const evento=(store?.agenda||[]).find(e=>e.id==='ev_cita_afore_'+cliente.id);
       if(!evento)return result;
-      const etapas=typeof window.stagesFor==='function'?window.stagesFor(cliente.servicio):[];
+      const etapas=stagesFor(cliente.servicio);
       const etapaActual=etapas.findIndex(s=>s.id===cliente.etapa);
       const etapaActualizada=etapas.findIndex(s=>s.id==='afore_actualizada');
       if(etapaActualizada>=0&&etapaActual>=etapaActualizada){
@@ -60,21 +60,21 @@ window.CA_CLOUD_CONFIG = Object.freeze({
       return result;
     };
 
-    const repairBase=window.cloudRepairOperationalOwnership;
-    window.cloudRepairOperationalOwnership=function(){
-      const before=JSON.stringify(window.store?.agenda||[]);
+    const repairBase=cloudRepairOperationalOwnership;
+    cloudRepairOperationalOwnership=function(){
+      const before=JSON.stringify(store?.agenda||[]);
       const originalChanged=repairBase.apply(this,arguments);
-      for(const cliente of (window.store?.clientes||[]))window.sincronizarCitaAfore(cliente);
-      return Boolean(originalChanged||before!==JSON.stringify(window.store?.agenda||[]));
+      for(const cliente of (store?.clientes||[]))sincronizarCitaAfore(cliente);
+      return Boolean(originalChanged||before!==JSON.stringify(store?.agenda||[]));
     };
 
-    const completarBase=window.completarEvento;
-    window.completarEvento=async function(id){
+    const completarBase=completarEvento;
+    completarEvento=async function(id){
       const result=await Promise.resolve(completarBase.apply(this,arguments));
-      const evento=(window.store?.agenda||[]).find(e=>e.id===id);
-      if(evento?.completado&&window.cloudReady&&typeof window.cloudSyncNow==='function'){
-        try{await window.cloudSyncNow({throwOnError:true});}
-        catch(error){window.showToast?.('El evento se marcó como hecho, pero la sincronización quedó pendiente.','warn');}
+      const evento=(store?.agenda||[]).find(e=>e.id===id);
+      if(evento?.completado&&cloudReady&&typeof cloudSyncNow==='function'){
+        try{await cloudSyncNow({throwOnError:true});}
+        catch(error){showToast?.('El evento se marcó como hecho, pero la sincronización quedó pendiente.','warn');}
       }
       return result;
     };
