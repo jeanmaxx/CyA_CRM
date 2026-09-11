@@ -12,7 +12,7 @@
       padding:12px 14px!important;
       border:1px solid var(--border)!important;
       border-radius:var(--radius-md)!important;
-      background:var(--bg-card)!important;
+      background-color:var(--bg-card)!important;
       box-shadow:none!important;
     }
     .dashboard-personal-left{gap:15px!important;}
@@ -30,13 +30,13 @@
     .dashboard-personal-hero .dashboard-greeting{color:var(--text-primary)!important;}
     .dashboard-personal-sub{color:var(--text-muted)!important;}
 
-    /* Mi cuenta: use the supplied C&A artwork as the actual profile-card background. */
+    /* Mi cuenta: compatibility base; the managed banner module may replace the image. */
     .account-profile-hero{
       position:relative!important;
       overflow:hidden!important;
       isolation:isolate!important;
       min-height:310px!important;
-      background:var(--bg-card)!important;
+      background-color:var(--bg-card)!important;
       border-color:var(--border)!important;
       box-shadow:none!important;
     }
