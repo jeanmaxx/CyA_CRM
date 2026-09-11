@@ -81,11 +81,11 @@ window.CA_CLOUD_CONFIG = Object.freeze({
   },25);
 })();
 
-// Visual SLA for the two priority contract steps shown in Dashboard.
+// Visual SLA for priority contract steps shown in Dashboard.
 // Day of entry counts as day 1: 1-2 green, 3-4 amber, 5+ red.
 (function installContractStagePriorityTrafficLight(){
   if(typeof agendaPrioritariaDashboard!=='function'||typeof renderDashboardAgendaPrioritaria!=='function')return;
-  const REGLAS_CONTRATO=new Set(['flujo_enviar_firma','flujo_confirmar_firma']);
+  const REGLAS_CONTRATO=new Set(['flujo_enviar_firma','flujo_confirmar_firma','flujo_confirmar_alta']);
 
   function estadoSeguimientoContrato(evento,referencia){
     if(!REGLAS_CONTRATO.has(evento?.regla)||!evento?.fecha)return null;
@@ -159,4 +159,50 @@ window.CA_CLOUD_CONFIG = Object.freeze({
     `;
     document.head.appendChild(style);
   }
+})();
+
+// SLA for the advisor-controlled "Solicitar cita AFORE" action in the
+// Siguientes acciones card. This installer waits until app-operations.js has
+// wrapped obtenerSiguienteAccion, so it always runs on the final workflow.
+(function installAforeAppointmentActionTrafficLight(){
+  let attempts=0;
+  const installer=setInterval(()=>{
+    attempts++;
+    if(typeof datosFlujoInicial!=='function'||typeof obtenerSiguienteAccion!=='function'||typeof diasTranscurridosDesde!=='function'){
+      if(attempts>160)clearInterval(installer);
+      return;
+    }
+    if(window.__cyaAforeAppointmentTrafficLightInstalled){clearInterval(installer);return;}
+    window.__cyaAforeAppointmentTrafficLightInstalled=true;
+    clearInterval(installer);
+
+    const obtenerBase=obtenerSiguienteAccion;
+    obtenerSiguienteAccion=function(cliente,referencia=new Date()){
+      const accion=obtenerBase(cliente,referencia);
+      if(!accion||accion.clave!=='solicitar_cita')return accion;
+      const fechaBase=cliente?.fechaAltaAfore||(typeof fechaEntradaEtapaDadoAlta==='function'?fechaEntradaEtapaDadoAlta(cliente):null);
+      if(!fechaBase)return accion;
+      const dia=Math.max(1,diasTranscurridosDesde(fechaBase,referencia)+1);
+      let estado;
+      if(dia<=5)estado={etiqueta:'En tiempo',tono:'verde'};
+      else if(dia<=10)estado={etiqueta:'Pendiente',tono:'amarillo'};
+      else if(dia<=15)estado={etiqueta:'Urgente',tono:'naranja'};
+      else estado={etiqueta:'Vencido',tono:'rojo'};
+      return {...accion,tono:estado.tono,estadoSemaforo:estado.etiqueta,diaSemaforo:dia,detalle:`${estado.etiqueta} · Día ${dia} desde el alta`};
+    };
+
+    if(!document.getElementById('cya-afore-action-priority-styles')){
+      const style=document.createElement('style');
+      style.id='cya-afore-action-priority-styles';
+      style.textContent=`
+        .dashboard-action-row.action-tone-verde{border-left-color:var(--success);background:rgba(16,185,129,.055);}
+        .dashboard-action-row.action-tone-verde .dashboard-action-person span{color:var(--success);font-weight:600;}
+        .dashboard-action-row.action-tone-amarillo{border-left-color:var(--warning);background:rgba(245,158,11,.055);}
+        .dashboard-action-row.action-tone-amarillo .dashboard-action-person span{color:var(--warning);font-weight:600;}
+        .dashboard-action-row.action-tone-naranja .dashboard-action-person span,
+        .dashboard-action-row.action-tone-rojo .dashboard-action-person span{font-weight:600;}
+      `;
+      document.head.appendChild(style);
+    }
+  },25);
 })();
