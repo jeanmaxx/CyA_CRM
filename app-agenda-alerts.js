@@ -181,3 +181,13 @@
     if(typeof currentPage!=='undefined'&&currentPage==='agenda'&&typeof renderPage==='function')renderPage('agenda');
   },25);
 })();
+
+// Load the dedicated account workspace after the core account functions are available.
+(function loadAccountWorkspace(){
+  if(document.querySelector('script[data-cya-account-ui]'))return;
+  const script=document.createElement('script');
+  script.src='app-account-ui.js?v=20260911-mi-cuenta';
+  script.async=false;
+  script.dataset.cyaAccountUi='1';
+  document.head.appendChild(script);
+})();
