@@ -26,6 +26,13 @@ function validPassword(password: string) {
     && /\d/.test(password) && /[^A-Za-z0-9]/.test(password);
 }
 
+function validBirthDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+  return date.toISOString().slice(0, 10) === value && value <= new Date().toISOString().slice(0, 10);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(req) });
   if (req.method !== 'POST') return respond(req, 405, { error: 'Método no permitido' });
@@ -52,7 +59,6 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const action = String(body.action || 'upsert');
     if (caller.role !== 'tech_admin' && !(caller.role === 'admin' && action === 'upsert')) {
-      // One-time setup is limited to the original operational administrator.
       const { data: technical } = await admin.from('profiles').select('id').eq('organization_id',caller.organization_id).eq('role','tech_admin').eq('active',true).limit(1);
       const { data: founders } = await admin.from('profiles').select('id').eq('organization_id',caller.organization_id).eq('role','admin').eq('active',true).order('created_at').order('id').limit(1);
       if (action !== 'bootstrap' || technical?.length || founders?.[0]?.id !== caller.id) {
@@ -63,13 +69,15 @@ Deno.serve(async (req: Request) => {
     if (!['upsert','bootstrap','delete'].includes(action)) return respond(req,400,{error:'Acción inválida'});
     const targetId = String(body.id || '');
     if (action === 'bootstrap' && targetId) return respond(req,400,{error:'La cuenta técnica debe ser una cuenta nueva'});
+
+    let existingBirthDate: string | null = null;
     if (targetId) {
-      const { data: target } = await admin.from('profiles').select('id,organization_id,role').eq('id',targetId).single();
+      const { data: target } = await admin.from('profiles').select('id,organization_id,role,birth_date').eq('id',targetId).single();
       if (!target || target.organization_id !== caller.organization_id || (caller.role === 'admin' && action === 'upsert' && target.role !== 'advisor')) return respond(req,403,{error:'La cuenta no pertenece a esta organización'});
+      existingBirthDate = target.birth_date || null;
     }
 
     if (action === 'delete') {
-      const targetId = String(body.id || '');
       if (!targetId) return respond(req, 400, { error: 'Falta el asesor' });
       if (targetId === authData.user.id) return respond(req, 400, { error: 'No puedes eliminar tu propia cuenta' });
       const { error } = await admin.auth.admin.deleteUser(targetId);
@@ -86,11 +94,14 @@ Deno.serve(async (req: Request) => {
     const requestedId = String(body.id || '');
     const legacyId = String(body.legacyId || '') || null;
     if (!fullName || !email) return respond(req, 400, { error: 'Nombre y correo son obligatorios' });
-    if (!requestedId && !validPassword(password)) {
-      return respond(req, 400, { error: 'La contraseña temporal no cumple los requisitos' });
-    }
-    if (requestedId === authData.user.id && (role !== 'tech_admin' || !active)) {
-      return respond(req, 400, { error: 'No puedes quitar tu propio acceso de administrador' });
+    if (!requestedId && !validPassword(password)) return respond(req, 400, { error: 'La contraseña temporal no cumple los requisitos' });
+    if (requestedId === authData.user.id && (role !== 'tech_admin' || !active)) return respond(req, 400, { error: 'No puedes quitar tu propio acceso de administrador' });
+
+    let birthDate = existingBirthDate;
+    if (caller.role === 'tech_admin' && Object.prototype.hasOwnProperty.call(body, 'birthDate')) {
+      const requestedBirthDate = body.birthDate === null || body.birthDate === '' ? null : String(body.birthDate);
+      if (requestedBirthDate && !validBirthDate(requestedBirthDate)) return respond(req,400,{error:'Fecha de nacimiento inválida'});
+      birthDate = requestedBirthDate;
     }
 
     let userId = requestedId;
@@ -122,6 +133,7 @@ Deno.serve(async (req: Request) => {
       city: city || null,
       role,
       active,
+      birth_date: birthDate,
     }, { onConflict: 'id' });
     if (profileError) {
       if (!requestedId) await admin.auth.admin.deleteUser(userId);
