@@ -45,6 +45,12 @@
     return Number(accion?.diaSemaforo??accion?.dias??accion?.retraso??0)||0;
   }
 
+  function naturalActionDetail(accion){
+    const dia=Number(accion?.diaSemaforo||0);
+    if(dia&&accion?.estadoSemaforo)return `${accion.estadoSemaforo} · ${dia} día${dia===1?'':'s'} desde el alta`;
+    return accion?.detalle||'Pendiente de seguimiento';
+  }
+
   function orderedActionDefinitions(allItems){
     const known=new Set(ACTION_GROUPS.map(x=>x.key));
     const extras=[];
@@ -99,7 +105,7 @@
                 ${groupVisible.map(({cliente,accion})=>`<div class="dashboard-action-row action-tone-${accion.tono||'normal'}">
                   <div class="dashboard-action-person">
                     <button class="dashboard-person-link" onclick="openPerfil('${cliente.id}')">${escapeHTMLBasico(cliente.nombre)}</button>
-                    <span>${escapeHTMLBasico(accion.detalle||'Pendiente de seguimiento')}</span>
+                    <span>${escapeHTMLBasico(naturalActionDetail(accion))}</span>
                   </div>
                   <div class="dashboard-action-buttons">
                     <button class="btn dashboard-snooze-btn" onclick="posponerAccionDashboard('${cliente.id}','${accion.clave}',event)">Posponer por hoy</button>
