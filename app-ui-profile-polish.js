@@ -15,6 +15,11 @@
       background-color:var(--bg-card)!important;
       box-shadow:none!important;
     }
+    /* Clear the legacy Dashboard gradient/image when no managed banner exists. */
+    .dashboard-personal-hero:not(.cya-has-banner){
+      background:var(--bg-card)!important;
+      background-image:none!important;
+    }
     .dashboard-personal-left{gap:15px!important;}
     .dashboard-personal-avatar{
       width:72px!important;
