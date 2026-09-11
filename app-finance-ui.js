@@ -246,3 +246,13 @@
     if(typeof currentPage!=='undefined'&&currentPage==='finanzas'&&typeof renderPage==='function')renderPage('finanzas');
   },25);
 })();
+
+// Load Agenda alert intelligence from the already-versioned auxiliary UI module.
+(function loadSmartAgendaAlerts(){
+  if(document.querySelector('script[data-cya-agenda-alerts]'))return;
+  const script=document.createElement('script');
+  script.src='app-agenda-alerts.js?v=20260911-alertas-inteligentes';
+  script.async=false;
+  script.dataset.cyaAgendaAlerts='1';
+  document.head.appendChild(script);
+})();
