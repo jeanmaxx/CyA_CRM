@@ -226,3 +226,13 @@ window.CA_CLOUD_CONFIG = Object.freeze({
   script.dataset.cyaPendingFixes='1';
   document.head.appendChild(script);
 })();
+
+// Finance cards use their own chronological priority and interaction controls.
+(function loadFinanceSectionControls(){
+  if(document.querySelector('script[data-cya-finance-ui]'))return;
+  const script=document.createElement('script');
+  script.src='app-finance-ui.js?v=20260911-finanzas-cronologicas';
+  script.async=false;
+  script.dataset.cyaFinanceUi='1';
+  document.head.appendChild(script);
+})();
