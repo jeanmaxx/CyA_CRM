@@ -30,8 +30,10 @@
   }
 
   function financialTimestamp(record){
+    // Real process/financial dates first. Estimated future dates do not define
+    // recency because they would incorrectly put the furthest projection first.
     return recordTimestamp(record,[
-      'fechaCierre','fechaHonorarios','fechaDeposito','fechaRetiroReal','fechaRetiroEstimada',
+      'fechaCierre','fechaHonorarios','fechaDeposito','fechaRetiroReal',
       'fechaSolicitudManual','fechaSolicitudRealizada','fechaAltaAfore','fechaFirmaContrato',
       'fechaRegistro','fechaCaptura','fechaInicio'
     ]);
@@ -107,20 +109,13 @@
     }
   }
 
-  function reorderFinanceMonthsNewestFirst(){
-    const months=[...document.querySelectorAll('.comision-mes')];
-    if(months.length<2)return;
-    const parent=months[0].parentElement;
-    if(!parent||!months.every(month=>month.parentElement===parent))return;
-    months.reverse().forEach(month=>parent.appendChild(month));
-  }
-
   let attempts=0;
   const installer=setInterval(()=>{
     attempts++;
     const ready=typeof renderLeads==='function'&&typeof renderClientes==='function'&&typeof renderFinanzas==='function'&&
       typeof renderAsesores==='function'&&typeof openPerfil==='function'&&typeof ordenarProspectos==='function'&&
-      typeof aplicarOrden==='function'&&typeof AFORE_OPTIONS!=='undefined'&&typeof DIRECTORIO_AFORE_BASE!=='undefined';
+      typeof aplicarOrden==='function'&&typeof renderArchivadosPorCausa==='function'&&
+      typeof AFORE_OPTIONS!=='undefined'&&typeof DIRECTORIO_AFORE_BASE!=='undefined';
     if(!ready){
       cleanDocumentTitle();
       if(attempts>240)clearInterval(installer);
@@ -167,6 +162,15 @@
         archiveCollapsed['causa:'+String(lead.causaArchivo||'Sin causa especificada')]=true;
       }
     }
+    const renderArchivadosPorCausaBase=renderArchivadosPorCausa;
+    renderArchivadosPorCausa=function(items){
+      if(!Object.prototype.hasOwnProperty.call(archiveCollapsed,'definitivos'))archiveCollapsed.definitivos=true;
+      for(const lead of (items||[])){
+        const key='causa:'+String(lead.causaArchivo||'Sin causa especificada');
+        if(!Object.prototype.hasOwnProperty.call(archiveCollapsed,key))archiveCollapsed[key]=true;
+      }
+      return renderArchivadosPorCausaBase(items);
+    };
 
     // Clientes: enforce recent-first default and compare real dates rather than raw text.
     clientesOrden.campo='fechaRegistro';
@@ -182,7 +186,8 @@
       });
     };
 
-    // Finanzas: latest financial/client records first; future projection months newest first visually.
+    // Finanzas: most recently updated/advanced records first. Future projection
+    // months keep their natural chronological order so the closest month remains first.
     const renderFinanzasBase=renderFinanzas;
     renderFinanzas=function(){
       const originalClients=store.clientes;
@@ -190,7 +195,6 @@
       let html;
       try{html=renderFinanzasBase.apply(this,arguments);}
       finally{store.clientes=originalClients;}
-      setTimeout(reorderFinanceMonthsNewestFirst,0);
       return html;
     };
 
