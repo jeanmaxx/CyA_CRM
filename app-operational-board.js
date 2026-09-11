@@ -6,8 +6,6 @@
   const GOLD='#C9A96E';
   const NAVY='#0f2744';
   const ACTION_GROUPS=[
-    {key:'dar_alta',label:'Dar de alta a'},
-    {key:'confirmar_alta',label:'Confirmar alta de'},
     {key:'solicitar_cita',label:'Solicitar cita en AFORE a'},
     {key:'cita_programada',label:'Dar seguimiento a cita AFORE de'},
     {key:'confirmar_afore',label:'Confirmar actualización AFORE de'},
@@ -18,15 +16,17 @@
   const actionGroupsCollapsed={};
 
   function ensureOperationalNav(){
-    if(document.querySelector('[data-page="operativo"]'))return;
     const dashboard=document.querySelector('.nav-item[data-page="dashboard"]');
     if(!dashboard)return;
-    const item=document.createElement('div');
-    item.className='nav-item';
-    item.dataset.page='operativo';
-    item.setAttribute('onclick',"navigate('operativo',this)");
-    item.innerHTML='<span class="nav-icon">▦</span><span class="nav-label">Tablero Operativo</span>';
-    dashboard.insertAdjacentElement('afterend',item);
+    let item=document.querySelector('[data-page="operativo"]');
+    if(!item){
+      item=document.createElement('div');
+      item.className='nav-item';
+      item.dataset.page='operativo';
+      item.setAttribute('onclick',"navigate('operativo',this)");
+      item.innerHTML='<span class="nav-icon">▦</span><span class="nav-label">Tablero Operativo</span>';
+    }
+    if(dashboard.nextElementSibling!==item)dashboard.insertAdjacentElement('afterend',item);
   }
 
   function operationalActions(){
