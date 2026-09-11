@@ -188,7 +188,7 @@ window.CA_CLOUD_CONFIG = Object.freeze({
       else if(dia<=10)estado={etiqueta:'Pendiente',tono:'amarillo'};
       else if(dia<=15)estado={etiqueta:'Urgente',tono:'naranja'};
       else estado={etiqueta:'Vencido',tono:'rojo'};
-      return {...accion,tono:estado.tono,estadoSemaforo:estado.etiqueta,diaSemaforo:dia,detalle:`${estado.etiqueta} · Día ${dia} desde el alta`};
+      return {...accion,tono:estado.tono,estadoSemaforo:estado.etiqueta,diaSemaforo:dia,detalle:`${estado.etiqueta} · ${dia} día${dia!==1?'s':''} desde el alta`};
     };
 
     if(!document.getElementById('cya-afore-action-priority-styles')){
@@ -214,5 +214,15 @@ window.CA_CLOUD_CONFIG = Object.freeze({
   script.src='app-operational-board.js?v=20260911-tablero-operativo';
   script.async=false;
   script.dataset.cyaOperationalBoard='1';
+  document.head.appendChild(script);
+})();
+
+// Load recovered refinements that depend on the later workflow/operations scripts.
+(function loadRecoveredCRMRefinements(){
+  if(document.querySelector('script[data-cya-pending-fixes]'))return;
+  const script=document.createElement('script');
+  script.src='app-pending-fixes.js?v=20260911-pendientes-recuperados';
+  script.async=false;
+  script.dataset.cyaPendingFixes='1';
   document.head.appendChild(script);
 })();
