@@ -1,6 +1,7 @@
 /* Native Word template: every saved version includes its immutable DOCX and captured fields. */
-const CONTRACT_TEMPLATE_VERSION='retiro-contrato-pagare-v2';
+const CONTRACT_TEMPLATE_VERSION='retiro-contrato-pagare-v3';
 const DOCX_MIME='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const WORD_NS='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 let wordContractCurrent=null;
 let privateContractTemplate=null;
 let wordGenerationBusy=false;
@@ -17,9 +18,9 @@ renderContratos=function(){
   let html=renderContratosAnterior();
   html=html.replace(/id="ct-fecha" type="date" value="[^"]*"/,'id="ct-fecha" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" oninput="mascaraFechaMX(this)" value="'+fechaISOaMX(fechaISOLocal(new Date()))+'"');
   html=html.replace('id="ct-pagare-fecha" type="date"','id="ct-pagare-fecha" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" oninput="mascaraFechaMX(this)"');
-  html=html.replace('<button class="btn" onclick="imprimirContrato()"', '<button class="btn" id="btn-word" onclick="descargarContratoWord()" style="display:none;">↓ Word</button><button class="btn" onclick="imprimirContrato()"');
+  html=html.replace('<button class="btn" onclick="imprimirContrato()"','<button class="btn" id="btn-word" onclick="descargarContratoWord()" style="display:none;">↓ Word</button><button class="btn" onclick="imprimirContrato()"');
   html=html.replace(/<button class="btn btn-primary" style="width:100%;font-size:14px;" onclick="generarContrato\(\)">👁 Vista previa<\/button>/,'').replace('(honorarios + $5,000)','(honorarios + cobranza externa)').replace('Incluye $5,000 por cobranza externa en caso de requerirse','El importe de cobranza externa se puede ajustar en los datos del contrato.');
-  html=html.replace('<div class="card" id="ct-datos-preview"', '<div class="card" id="ct-word-fields"><div class="card-header"><div class="card-title">Datos editables del contrato</div></div><div class="card-body" id="ct-word-fields-body"><p class="form-helper">Selecciona un cliente para cargar sus datos.</p></div></div><div class="card" id="ct-datos-preview"');
+  html=html.replace('<div class="card" id="ct-datos-preview"','<div class="card" id="ct-word-fields"><div class="card-header"><div class="card-title">Datos editables del contrato</div></div><div class="card-body" id="ct-word-fields-body"><p class="form-helper">Selecciona un cliente para cargar sus datos.</p></div></div><div class="card" id="ct-datos-preview"');
   return html;
 };
 function contractTextField(id,label,value,wide=false){return `<div class="form-group ${wide?'wide':''}"><label class="form-label" for="${id}">${label}</label><input class="form-input" id="${id}" value="${esc(value)}"></div>`;}
@@ -35,9 +36,7 @@ onContratoClienteChange=function(){
   actualizarFechaPagare();
   invalidarContratoActual();
 };
-actualizarFechaPagare=function(){
-  const fecha=fechaMXaISO(getVal('ct-fecha'));if(fecha)setVal('ct-pagare-fecha',fechaISOaMX(sumarDiasISO(fecha,60)));
-};
+actualizarFechaPagare=function(){const fecha=fechaMXaISO(getVal('ct-fecha'));if(fecha)setVal('ct-pagare-fecha',fechaISOaMX(sumarDiasISO(fecha,60)));};
 function invalidarContratoActual(){
   wordContractCurrent=null;
   const badge=document.getElementById('ct-guardado-badge');if(badge)badge.style.display='none';
@@ -56,10 +55,17 @@ function numeroALetrasEntero(n){
 function apocoparNumero(text){return text.replace(/VEINTIUNO$/,'VEINTIÚN').replace(/UNO$/,'UN');}
 function dineroEnLetras(value){const cents=Math.round(Number(value)*100);const pesos=Math.floor(cents/100);return apocoparNumero(numeroALetrasEntero(pesos))+(pesos&&pesos%1000000===0?' DE':'')+(pesos===1?' PESO ':' PESOS ')+String(cents%100).padStart(2,'0')+'/100 M.N.';}
 function fechaContratoLarga(iso){const d=parseFechaFlexible(iso);if(!d)return '';return `${String(d.getDate()).padStart(2,'0')} DE ${['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'][d.getMonth()]} DE ${d.getFullYear()}`;}
+function textoNormalizadoContrato(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function estadoOficinaContrato(){
+  const texto=textoNormalizadoContrato([getVal('ct-word-ciudad'),getVal('ct-word-empresa-dom')].join(' '));
+  if(/\b(hidalgo|hgo\.?)(\b|$)/.test(texto))return 'Hidalgo';
+  if(/\b(queretaro|qro\.?)(\b|$)/.test(texto))return 'Querétaro';
+  return 'Querétaro';
+}
 function datosContratoWord(){
   const fecha=leerFechaMX('ct-fecha');const vence=leerFechaMX('ct-pagare-fecha');
   if(!fecha||!vence||vence<fecha)throw new Error('Revisa la fecha de firma y el vencimiento del pagaré');
-  const vars={CLIENTE_NOMBRE:getVal('ct-word-nombre').trim().toUpperCase(),CLIENTE_DOMICILIO:getVal('ct-word-domicilio').trim().toUpperCase(),EMPRESA_REPRESENTANTE:getVal('ct-word-representante').trim().toUpperCase(),EMPRESA_DOMICILIO:getVal('ct-word-empresa-dom').trim(),CIUDAD_CONTRATO:getVal('ct-word-ciudad').trim(),FECHA_CONTRATO:fechaContratoLarga(fecha),PAGARE_VENCIMIENTO:fechaContratoLarga(vence)};
+  const vars={CLIENTE_NOMBRE:getVal('ct-word-nombre').trim().toUpperCase(),CLIENTE_DOMICILIO:getVal('ct-word-domicilio').trim().toUpperCase(),EMPRESA_REPRESENTANTE:getVal('ct-word-representante').trim().toUpperCase(),EMPRESA_DOMICILIO:getVal('ct-word-empresa-dom').trim(),CIUDAD_CONTRATO:getVal('ct-word-ciudad').trim(),ESTADO_OFICINA:estadoOficinaContrato(),FECHA_CONTRATO:fechaContratoLarga(fecha),PAGARE_VENCIMIENTO:fechaContratoLarga(vence)};
   for(const v of Object.values(vars))if(!v)throw new Error('Completa nombre, domicilios, representante, lugar y fechas del documento');
   const monetary=[['ct-monto','MONTO_RETIRO'],['ct-honorarios','HONORARIOS'],['ct-pagare-monto','PAGARE_MONTO'],['ct-word-saldo','SALDO_MINIMO'],['ct-word-cobranza','PAGARE_COBRANZA']];
   const raw={};for(const [id,key] of monetary){const s=getVal(id);const n=Number(s);if(s===''||!Number.isFinite(n)||n<0||n>999999999)throw new Error('Revisa los importes del documento');raw[key]=n;vars[key]=n.toLocaleString('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2,maximumFractionDigits:2});vars[key+'_LETRAS']=dineroEnLetras(n);}
@@ -67,12 +73,64 @@ function datosContratoWord(){
   return vars;
 }
 function escapeXML(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));}
+function wordDirectChild(parent,localName){return Array.from(parent?.childNodes||[]).find(n=>n.nodeType===1&&n.namespaceURI===WORD_NS&&n.localName===localName)||null;}
+function wordEnsureChild(parent,localName,first=false){
+  let el=wordDirectChild(parent,localName);if(el)return el;
+  el=parent.ownerDocument.createElementNS(WORD_NS,'w:'+localName);
+  if(first&&parent.firstChild)parent.insertBefore(el,parent.firstChild);else parent.appendChild(el);
+  return el;
+}
+function wordSetVal(el,value){el.setAttributeNS(WORD_NS,'w:val',String(value));}
+function reemplazarCodigoCivilContrato(xml,estado){
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  if(doc.getElementsByTagName('parsererror').length)return xml;
+  const patron=/C[oó]digo Civil del Estado de (?:Quer[eé]taro|Hidalgo)/i;
+  for(const p of Array.from(doc.getElementsByTagNameNS(WORD_NS,'p'))){
+    const texts=Array.from(p.getElementsByTagNameNS(WORD_NS,'t'));if(!texts.length)continue;
+    const completo=texts.map(t=>t.textContent||'').join('');const match=patron.exec(completo);if(!match)continue;
+    const start=match.index,end=start+match[0].length;let cursor=0,insertado=false;
+    for(const t of texts){
+      const original=t.textContent||'',next=cursor+original.length;
+      if(next<=start||cursor>=end){cursor=next;continue;}
+      const left=start>cursor?original.slice(0,start-cursor):'';const right=end<next?original.slice(end-cursor):'';
+      if(!insertado){t.textContent=left+'Código Civil del Estado de '+estado+(end<next?right:'');insertado=true;}
+      else t.textContent=end<next?right:'';
+      cursor=next;
+    }
+    break;
+  }
+  return new XMLSerializer().serializeToString(doc);
+}
+function ajustarMaquetacionContratoWord(xml){
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  if(doc.getElementsByTagName('parsererror').length)return xml;
+  for(const p of Array.from(doc.getElementsByTagNameNS(WORD_NS,'p'))){
+    const text=(p.textContent||'').replace(/\s+/g,' ').trim();if(!text)continue;
+    const firma=/LA EMPRESA|EL CONTRATANTE DEL SERVICIO|FIRMA/i.test(text);
+    const pPr=wordEnsureChild(p,'pPr',true);const spacing=wordEnsureChild(pPr,'spacing');
+    wordSetVal(spacing,'line',firma?360:300);wordSetVal(spacing,'lineRule','auto');
+    wordSetVal(spacing,'after',firma?180:80);if(firma)wordSetVal(spacing,'before',360);
+    for(const r of Array.from(p.getElementsByTagNameNS(WORD_NS,'r'))){
+      if(!(r.textContent||'').trim())continue;
+      const rPr=wordEnsureChild(r,'rPr',true);
+      for(const tag of ['sz','szCs']){
+        const size=wordEnsureChild(rPr,tag);const current=Number(size.getAttributeNS(WORD_NS,'val')||size.getAttribute('w:val')||0);
+        if(!current||current<24)wordSetVal(size,24);
+      }
+    }
+  }
+  return new XMLSerializer().serializeToString(doc);
+}
 async function crearDocxContrato(vars,templateBytes){
   if(!templateBytes){if(!privateContractTemplate?.content_base64)throw new Error('La plantilla Word no está disponible en esta sesión');templateBytes=Uint8Array.from(atob(privateContractTemplate.content_base64),c=>c.charCodeAt(0));}
   const zip=await JSZip.loadAsync(templateBytes);
   for(const name of Object.keys(zip.files).filter(n=>/^word\/(document|header\d+|footer\d+)\.xml$/.test(n))){
     const xml=await zip.file(name).async('string');
     let filled=xml.replace(/\{\{([A-Z_]+)\}\}/g,(_,key)=>{if(vars[key]===undefined)throw new Error('Falta el campo '+key);return escapeXML(vars[key]);});
+    if(name==='word/document.xml'){
+      filled=reemplazarCodigoCivilContrato(filled,vars.ESTADO_OFICINA);
+      filled=ajustarMaquetacionContratoWord(filled);
+    }
     if(/^word\/header\d+\.xml$/.test(name)&&vars.EMPRESA_DOMICILIO){
       const logo=filled.match(/<w:p(?:\s[^>]*)?>[\s\S]*?<\/w:p>/)?.[0];
       if(logo&&logo.includes('<w:drawing>')){
@@ -144,6 +202,60 @@ imprimirContrato=async function(){
     await d.fonts.ready;await Promise.all([...d.images].map(im=>im.complete?Promise.resolve():new Promise(resolve=>{im.onload=resolve;im.onerror=resolve;})));
     frame.contentWindow.focus();frame.contentWindow.print();setTimeout(()=>frame.remove(),60000);
   }catch(e){showToast('No se pudo preparar la impresión: '+e.message,'warn');}
+};
+
+// Solicitud rechazada is an alternative branch after Solicitud realizada, not a mandatory step for approved requests.
+const SOLICITUD_RECHAZADA_STAGE={id:'solicitud_rechazada',label:'Solicitud rechazada',short:'7·Rechazada'};
+function conEtapaSolicitudRechazada(callback){
+  const existing=STAGES_RETIRO.findIndex(s=>s.id===SOLICITUD_RECHAZADA_STAGE.id);if(existing>=0)return callback();
+  const solicitud=STAGES_RETIRO.findIndex(s=>s.id==='solicitud_realizada');const pos=solicitud>=0?solicitud+1:STAGES_RETIRO.length;
+  STAGES_RETIRO.splice(pos,0,SOLICITUD_RECHAZADA_STAGE);try{return callback();}finally{STAGES_RETIRO.splice(pos,1);}
+}
+const stageLabelContratoV3=stageLabel;
+stageLabel=function(etapa,svc){return etapa==='solicitud_rechazada'?'Solicitud rechazada':stageLabelContratoV3(etapa,svc);};
+const stageClsContratoV3=stageCls;
+stageCls=function(etapa,svc){return etapa==='solicitud_rechazada'?'stage-5':stageClsContratoV3(etapa,svc);};
+const renderPipelineContratoV3=renderPipeline;
+renderPipeline=function(){return conEtapaSolicitudRechazada(()=>renderPipelineContratoV3());};
+const openPerfilContratoV3=openPerfil;
+openPerfil=function(id){
+  const c=store.clientes.find(x=>x.id===id);
+  if(c?.servicio==='retiro_desempleo'&&c.etapa==='solicitud_rechazada')conEtapaSolicitudRechazada(()=>openPerfilContratoV3(id));else openPerfilContratoV3(id);
+  if(c?.servicio==='retiro_desempleo'&&c.etapa==='solicitud_realizada'){
+    const current=document.querySelector('#perfil-body .profile-stage-current');
+    if(current&&!document.getElementById('btn-solicitud-rechazada'))current.insertAdjacentHTML('beforeend',` <button class="btn" id="btn-solicitud-rechazada" style="margin-left:10px;color:var(--danger);border-color:rgba(239,68,68,.45);" onclick="marcarSolicitudRechazada('${id}')">Solicitud rechazada</button>`);
+  }
+};
+async function marcarSolicitudRechazada(id){
+  const original=store.clientes.find(x=>x.id===id);if(!original||original.servicio!=='retiro_desempleo'||original.etapa!=='solicitud_realizada')return;
+  if(!confirm('¿Marcar la solicitud de '+original.nombre+' como rechazada?'))return;
+  const c=JSON.parse(JSON.stringify(original));c.etapa='solicitud_rechazada';c.fechaSolicitudRechazada=fechaISOLocal(new Date());c.solicitudRechazadaEn=new Date().toISOString();addHist(c,'etapa','Solicitud rechazada');
+  const pos=store.clientes.indexOf(original);store.clientes[pos]=c;
+  try{await cloudSyncNow({throwOnError:true});closeModal('modal-perfil');renderPage(currentPage);showToast('Etapa: Solicitud rechazada','warn');}
+  catch(e){showToast('El cambio quedó pendiente de sincronizar.','warn');}
+}
+async function avanzarSolicitudRechazadaADeposito(id){
+  const original=store.clientes.find(x=>x.id===id);if(!original)return;
+  const c=JSON.parse(JSON.stringify(original));
+  if(c.montoAfore&&!c.estadoPago){const calc=calcComision(Number(c.montoAfore),c.servicio,c.asesorId);if(!tieneMontoFinanciero(c.honorarios))c.honorarios=calc.honorarios;if(!tieneMontoFinanciero(c.comision))c.comision=calc.comision;c.comisionCalc=calc.comision;c.estadoPago='Pendiente';}
+  c.etapa='deposito_recibido';addHist(c,'etapa','Avanzó a: Depósito recibido · solicitud previamente rechazada');
+  const pos=store.clientes.indexOf(original);store.clientes[pos]=c;
+  try{await cloudSyncNow({throwOnError:true});closeModal('modal-perfil');renderPage(currentPage);showToast('Etapa: Depósito recibido','success');}
+  catch(e){showToast('Avance pendiente de guardar. Conservamos el cambio para reintentar.','warn');}
+}
+const avanzarEtapaContratoV3=avanzarEtapa;
+avanzarEtapa=async function(id){const c=store.clientes.find(x=>x.id===id);if(c?.servicio==='retiro_desempleo'&&c.etapa==='solicitud_rechazada')return avanzarSolicitudRechazadaADeposito(id);return avanzarEtapaContratoV3(id);};
+function asegurarCausaSolicitudRechazada(){
+  const select=document.getElementById('descarte-causa');if(!select||select.querySelector('option[value="solicitud_rechazada"]'))return;
+  const option=document.createElement('option');option.value='solicitud_rechazada';option.textContent='Solicitud rechazada';const otros=select.querySelector('option[value="otros"]');select.insertBefore(option,otros||null);
+}
+asegurarCausaSolicitudRechazada();
+const abrirDescarteContratoV3=abrirDescarte;
+abrirDescarte=function(id){asegurarCausaSolicitudRechazada();return abrirDescarteContratoV3(id);};
+const confirmarDescarteContratoV3=confirmarDescarte;
+confirmarDescarte=function(){
+  if(getVal('descarte-causa')==='solicitud_rechazada'){setVal('descarte-causa','otros');setVal('descarte-otros-texto','Solicitud rechazada');}
+  return confirmarDescarteContratoV3();
 };
 
 // Any edit invalidates the generated snapshot so a previous version cannot be exported by mistake.
