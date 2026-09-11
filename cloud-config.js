@@ -211,7 +211,7 @@ window.CA_CLOUD_CONFIG = Object.freeze({
 (function loadOperationalBoard(){
   if(document.querySelector('script[data-cya-operational-board]'))return;
   const script=document.createElement('script');
-  script.src='app-operational-board.js?v=20260911-tablero-operativo';
+  script.src='app-operational-board.js?v=20260911-tablero-operativo-2';
   script.async=false;
   script.dataset.cyaOperationalBoard='1';
   document.head.appendChild(script);
@@ -234,5 +234,16 @@ window.CA_CLOUD_CONFIG = Object.freeze({
   script.src='app-finance-ui.js?v=20260911-finanzas-cronologicas';
   script.async=false;
   script.dataset.cyaFinanceUi='1';
+  document.head.appendChild(script);
+})();
+
+// Final visual polish for Dashboard and Mi cuenta. It is intentionally loaded
+// independently so the rules win over older dynamically injected UI styles.
+(function loadProfileVisualPolish(){
+  if(document.querySelector('script[data-cya-profile-polish]'))return;
+  const script=document.createElement('script');
+  script.src='app-ui-profile-polish.js?v=20260911-1154';
+  script.async=false;
+  script.dataset.cyaProfilePolish='1';
   document.head.appendChild(script);
 })();
