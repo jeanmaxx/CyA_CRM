@@ -92,3 +92,14 @@
   const observer=new MutationObserver(removeLegacyRibbon);
   observer.observe(document.documentElement,{childList:true,subtree:true});
 })();
+
+// Load the organization-managed banners, messages and birthday personalization last,
+// so its settings can safely override the static compatibility styles above.
+(function loadDashboardCustomization(){
+  if(document.querySelector('script[data-cya-dashboard-customization]'))return;
+  const script=document.createElement('script');
+  script.src='app-dashboard-customization.js?v=20260911-1504';
+  script.async=false;
+  script.dataset.cyaDashboardCustomization='1';
+  document.head.appendChild(script);
+})();
