@@ -1,4 +1,4 @@
-/* Dedicated operational board. Keeps Dashboard focused on statistics and moves daily follow-up into its own workspace. */
+/* Dedicated operational board and supervisory UI refinements. */
 (function installOperationalBoard(){
   if(window.__cyaOperationalBoardModuleLoaded)return;
   window.__cyaOperationalBoardModuleLoaded=true;
@@ -33,8 +33,18 @@
     return typeof accionesSiguientesDashboard==='function'?accionesSiguientesDashboard():[];
   }
 
+  function isOwnClient(cliente){
+    return Boolean(cliente?.asesorId&&sesionActiva?.id&&cliente.asesorId===sesionActiva.id);
+  }
+
+  // A snooze is personal to the responsible advisor. When an administrator
+  // supervises another advisor, personal snoozes must never hide that advisor's work.
+  function actionSnoozedForCurrentView(cliente,accion){
+    return isOwnClient(cliente)&&typeof accionDashboardPospuestaHoy==='function'&&accionDashboardPospuestaHoy(cliente,accion);
+  }
+
   function operationalVisibleActions(items){
-    return items.filter(({cliente,accion})=>!accionDashboardPospuestaHoy(cliente,accion));
+    return items.filter(({cliente,accion})=>!actionSnoozedForCurrentView(cliente,accion));
   }
 
   function actionSeverity(accion){
@@ -78,7 +88,7 @@
     const all=operationalActions();
     const visible=operationalVisibleActions(all);
     const definitions=orderedActionDefinitions(all);
-    const totalPostponed=all.length-visible.length;
+    const totalPostponed=all.filter(({cliente,accion})=>actionSnoozedForCurrentView(cliente,accion)).length;
 
     return `<section class="card dashboard-priority-card dashboard-actions-card operational-actions-card">
       <div class="card-header dashboard-priority-header" role="button" tabindex="0" aria-expanded="${dashboardAccionesAbiertas}" onclick="toggleDashboardPanel('acciones')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDashboardPanel('acciones');}">
@@ -93,7 +103,7 @@
           ${definitions.map(def=>{
             const groupAll=all.filter(x=>x.accion?.clave===def.key);
             const groupVisible=visible.filter(x=>x.accion?.clave===def.key).sort((a,b)=>actionSeverity(b.accion)-actionSeverity(a.accion)||actionDays(b.accion)-actionDays(a.accion)||String(a.cliente?.nombre||'').localeCompare(String(b.cliente?.nombre||''),'es'));
-            const postponed=groupAll.length-groupVisible.length;
+            const postponed=groupAll.filter(({cliente,accion})=>actionSnoozedForCurrentView(cliente,accion)).length;
             const collapsed=Object.prototype.hasOwnProperty.call(actionGroupsCollapsed,def.key)?actionGroupsCollapsed[def.key]:groupAll.length===0;
             const tone=groupTone(groupAll);
             return `<div class="dashboard-action-group operational-action-group ${tone?'group-'+tone:''}">
@@ -108,7 +118,7 @@
                     <span>${escapeHTMLBasico(naturalActionDetail(accion))}</span>
                   </div>
                   <div class="dashboard-action-buttons">
-                    <button class="btn dashboard-snooze-btn" onclick="posponerAccionDashboard('${cliente.id}','${accion.clave}',event)">Posponer por hoy</button>
+                    ${isOwnClient(cliente)?`<button class="btn dashboard-snooze-btn" onclick="posponerAccionDashboard('${cliente.id}','${accion.clave}',event)">Posponer por hoy</button>`:''}
                     <button class="btn btn-primary dashboard-do-btn" onclick="realizarAccionDashboard('${cliente.id}','${accion.clave}',event)">${escapeHTMLBasico(accion.boton)}</button>
                   </div>
                 </div>`).join('')}
@@ -128,7 +138,7 @@
     const visible=operationalVisibleActions(all);
     const overdue=events.filter(e=>e.vencido).length+all.filter(x=>x.accion?.tono==='rojo').length;
     const urgent=all.filter(x=>x.accion?.tono==='naranja').length;
-    const postponed=all.length-visible.length;
+    const postponed=all.filter(({cliente,accion})=>actionSnoozedForCurrentView(cliente,accion)).length;
     const today=new Date();
     const summary=`<div class="operational-summary">
       <div class="operational-summary-item"><span class="operational-summary-number">${events.length+all.length}</span><span>pendientes operativos</span></div>
@@ -169,6 +179,29 @@
     return actionsRenderer();
   };
 
+  // Personal mini-header for Dashboard: photo/avatar, greeting and daily context.
+  const dashboardRenderer=renderDashboard;
+  renderDashboard=function(){
+    let html=dashboardRenderer.apply(this,arguments);
+    const a=sesionActiva||{};
+    const today=new Date();
+    const nombre=(typeof asesorNombres==='function'?asesorNombres(a):String(a.nombre||'Asesor').split(/\s+/)[0])||'Asesor';
+    const greeting=typeof saludoDashboardActual==='function'?saludoDashboardActual(a,today):`¡Hola, ${nombre}!`;
+    const avatar=a.foto?`<img src="${escapeHTMLBasico(a.foto)}" alt="Foto de ${escapeHTMLBasico(nombre)}">`:`<span>${escapeHTMLBasico(typeof initials==='function'?initials(a.nombre||nombre):nombre.slice(0,2).toUpperCase())}</span>`;
+    const hero=`<div class="dashboard-hero dashboard-personal-hero">
+      <div class="dashboard-personal-left">
+        <div class="dashboard-personal-avatar">${avatar}</div>
+        <div class="dashboard-personal-copy">
+          <div class="dashboard-personal-date">${fmtDate(fechaISOLocal(today))}</div>
+          <div class="section-title dashboard-greeting">${escapeHTMLBasico(greeting)}</div>
+          <div class="section-sub dashboard-personal-sub">Resumen de tu cartera y prioridades del día.</div>
+        </div>
+      </div>
+      <div class="dashboard-view-selector">${getSelectorVistaHTML(true)}</div>
+    </div>`;
+    return html.replace(/<div class="dashboard-hero">[\s\S]*?<div class="dashboard-priority-stack">/,hero+'\n\n  <div class="dashboard-priority-stack">');
+  };
+
   const renderPageBase=renderPage;
   renderPage=function(page){
     const target=page==='dashboard'&&currentPage==='operativo'?'operativo':page;
@@ -196,6 +229,7 @@
     renderPage('operativo');
   };
 
+  const brandingLogo=window.CA_CLOUD_CONFIG?`${window.CA_CLOUD_CONFIG.supabaseUrl}/storage/v1/object/public/crm-branding/${window.CA_CLOUD_CONFIG.organizationId}/logo.png`:'';
   if(!document.getElementById('cya-operational-board-styles')){
     const style=document.createElement('style');
     style.id='cya-operational-board-styles';
@@ -232,6 +266,28 @@
       .operational-group-body .dashboard-action-row:first-child{border-top:0;}
       .operational-group-note,.operational-group-empty{padding:9px 11px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted);}
       .operational-header-counts{margin-left:auto;display:flex;align-items:center;gap:10px;}
+
+      .dashboard-personal-hero{align-items:center;padding:14px 16px;border:1px solid rgba(201,169,110,.34);border-radius:var(--radius-lg);background:linear-gradient(135deg,rgba(15,39,68,.98),rgba(20,49,82,.93));box-shadow:0 10px 28px rgba(0,0,0,.12);}
+      .dashboard-personal-left{display:flex;align-items:center;gap:14px;min-width:0;}
+      .dashboard-personal-avatar{width:60px;height:60px;flex:0 0 60px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.08);border:2px solid ${GOLD};box-shadow:0 0 0 4px rgba(201,169,110,.10);font-family:var(--font-display);font-size:20px;font-weight:700;color:#fff;}
+      .dashboard-personal-avatar img{width:100%;height:100%;object-fit:cover;}
+      .dashboard-personal-copy{min-width:0;}
+      .dashboard-personal-date{font-size:11px;color:rgba(255,255,255,.62);margin-bottom:2px;}
+      .dashboard-personal-hero .dashboard-greeting{color:#fff;margin:0;font-size:20px;line-height:1.15;}
+      .dashboard-personal-sub{color:rgba(255,255,255,.70)!important;margin:4px 0 0!important;}
+
+      .account-card{position:relative!important;max-width:720px;overflow:hidden!important;background:linear-gradient(135deg,rgba(8,25,46,.98),rgba(15,39,68,.96) 58%,rgba(27,54,85,.94))!important;border-color:rgba(201,169,110,.38)!important;box-shadow:0 12px 32px rgba(0,0,0,.16);}
+      .account-card::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 15% 0%,rgba(201,169,110,.16),transparent 34%)${brandingLogo?`,url("${brandingLogo}") right 28px center/150px auto no-repeat`:''};opacity:.72;}
+      .account-card .card-body{position:relative;z-index:1;text-align:center;padding:30px 24px;}
+      .account-profile{position:relative;z-index:1;flex-direction:column!important;justify-content:center!important;gap:12px!important;text-align:center;margin-bottom:22px!important;}
+      .account-photo{width:106px!important;height:106px!important;margin:0 auto;border:3px solid ${GOLD};background:rgba(255,255,255,.10)!important;color:#fff!important;box-shadow:0 0 0 5px rgba(201,169,110,.10),0 8px 24px rgba(0,0,0,.22);}
+      .account-profile strong{display:block;font-family:var(--font-display);font-size:22px;color:#fff;letter-spacing:.2px;}
+      .account-profile p{color:rgba(255,255,255,.66)!important;margin:4px 0!important;}
+      .account-profile span{color:${GOLD};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;}
+      .account-card .form-helper{color:rgba(255,255,255,.58)!important;}
+      .account-card .btn{margin:3px;}
+      .account-ribbon,.profile-ribbon,.account-profile-ribbon{display:none!important;}
+
       @media(max-width:900px){
         .operational-hero{align-items:flex-start;}
         .operational-hero-tools{max-width:62%;}
@@ -244,6 +300,11 @@
         .operational-view-selector{align-self:flex-end;}
         .operational-group-header{padding:9px;}
         .operational-group-count{min-width:21px;height:21px;font-size:12px;}
+        .dashboard-personal-hero{display:flex;flex-direction:column;align-items:stretch;padding:13px;}
+        .dashboard-personal-left{align-items:center;}
+        .dashboard-personal-avatar{width:52px;height:52px;flex-basis:52px;}
+        .dashboard-personal-hero .dashboard-view-selector{align-self:flex-end;margin-top:8px;}
+        .account-card::before{background:radial-gradient(circle at 20% 0%,rgba(201,169,110,.16),transparent 42%);}
       }
     `;
     document.head.appendChild(style);
