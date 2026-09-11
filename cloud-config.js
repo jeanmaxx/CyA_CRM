@@ -80,3 +80,83 @@ window.CA_CLOUD_CONFIG = Object.freeze({
     };
   },25);
 })();
+
+// Visual SLA for the two priority contract steps shown in Dashboard.
+// Day of entry counts as day 1: 1-2 green, 3-4 amber, 5+ red.
+(function installContractStagePriorityTrafficLight(){
+  if(typeof agendaPrioritariaDashboard!=='function'||typeof renderDashboardAgendaPrioritaria!=='function')return;
+  const REGLAS_CONTRATO=new Set(['flujo_enviar_firma','flujo_confirmar_firma']);
+
+  function estadoSeguimientoContrato(evento,referencia){
+    if(!REGLAS_CONTRATO.has(evento?.regla)||!evento?.fecha)return null;
+    const transcurridos=diasTranscurridosDesde(evento.fecha,referencia);
+    const dia=Math.max(1,transcurridos+1);
+    if(dia<=2)return {clave:'en_tiempo',etiqueta:'En tiempo',clase:'is-on-time',color:'var(--success)',dia};
+    if(dia<=4)return {clave:'pendiente',etiqueta:'Pendiente',clase:'is-pending',color:'var(--warning)',dia};
+    return {clave:'vencido',etiqueta:'Vencido',clase:'is-overdue',color:'var(--danger)',dia};
+  }
+
+  agendaPrioritariaDashboard=function(){
+    const hoy=new Date();hoy.setHours(0,0,0,0);
+    const fin=new Date(hoy);fin.setDate(fin.getDate()+6);
+    const hoyISO=fechaISOLocal(hoy),finISO=fechaISOLocal(fin);
+    return eventosVistaActual().filter(e=>{
+      if(e.completado||e.cancelarRecordatorio||!/^\d{4}-\d{2}-\d{2}$/.test(e.fecha||''))return false;
+      return e.fecha<=finISO;
+    }).sort((a,b)=>`${a.fecha} ${a.hora||'23:59'}`.localeCompare(`${b.fecha} ${b.hora||'23:59'}`)).map(e=>{
+      const seguimientoContrato=estadoSeguimientoContrato(e,hoy);
+      return {
+        ...e,
+        seguimientoContrato,
+        vencido:seguimientoContrato?seguimientoContrato.clave==='vencido':e.fecha<hoyISO,
+        hoy:e.fecha===hoyISO,
+      };
+    });
+  };
+
+  renderDashboardAgendaPrioritaria=function(){
+    const eventos=agendaPrioritariaDashboard();
+    const vencidos=eventos.filter(e=>e.vencido).length;
+    const TIPO_LABELS={llamada:'Llamada',whatsapp:'WhatsApp',meet:'Meet',cita:'Cita',recordatorio:'Recordatorio',vencimiento:'Vencimiento',otro:'Otro'};
+    const TIPO_COLORS={llamada:'#3b82f6',whatsapp:'#25d366',meet:'#8b5cf6',cita:'#0ea5e9',recordatorio:'#10b981',vencimiento:'#ef4444',otro:'#64748b'};
+    return `<section class="card dashboard-priority-card dashboard-agenda-card">
+      <div class="card-header dashboard-priority-header" role="button" tabindex="0" aria-expanded="${dashboardAgendaAbierta}" onclick="toggleDashboardPanel('agenda')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDashboardPanel('agenda');}">
+        <div class="dashboard-priority-title">
+          <span class="dashboard-collapse-icon">${dashboardAgendaAbierta?'▾':'▸'}</span>
+          <div><div class="card-title">Agenda prioritaria</div><div class="dashboard-priority-sub">Vencidos y próximos 7 días naturales</div></div>
+          <span class="chip ${vencidos?'chip-red':'chip-blue'}">${eventos.length}</span>
+        </div>
+        <button class="btn dashboard-panel-link" onclick="event.stopPropagation();navigate('agenda',document.querySelector('[data-page=agenda]'))">Ver agenda completa</button>
+      </div>
+      ${dashboardAgendaAbierta?`<div class="card-body dashboard-priority-body">
+        ${eventos.length?`<div class="dashboard-priority-scroll">${eventos.map(e=>{
+          const cliente=e.clienteId?(store.clientes||[]).find(c=>c.id===e.clienteId):null;
+          const seguimiento=e.seguimientoContrato;
+          const etiqueta=seguimiento?.etiqueta||(e.vencido?'Vencido':e.hoy?'Hoy':fmtDate(e.fecha));
+          const claseFecha=seguimiento?.clase||(e.vencido?'is-overdue':e.hoy?'is-today':'');
+          const colorMarcador=seguimiento?.color||(TIPO_COLORS[e.tipo]||TIPO_COLORS.otro);
+          return `<div class="dashboard-agenda-row ${e.vencido?'dashboard-row-danger':''}">
+            <div class="dashboard-event-date ${claseFecha}">${etiqueta}</div>
+            <div class="dashboard-event-marker" style="background:${colorMarcador}"></div>
+            <div class="dashboard-event-copy">
+              <div class="dashboard-event-title">${escapeHTMLBasico(e.titulo)}</div>
+              <div class="dashboard-event-meta">${escapeHTMLBasico(TIPO_LABELS[e.tipo]||e.tipo||'Evento')}${e.hora?' · '+escapeHTMLBasico(e.hora):''}${cliente?.nombre?' · '+escapeHTMLBasico(cliente.nombre):''}</div>
+            </div>
+            <button class="btn dashboard-agenda-action" onclick="event.stopPropagation();completarEvento('${e.id}')">${escapeHTMLBasico(botonEventoAgenda(e))}</button>
+          </div>`;
+        }).join('')}</div>`:`<div class="dashboard-priority-empty">✓ No tienes actividades vencidas ni pendientes para el resto de esta semana.</div>`}
+      </div>`:''}
+    </section>`;
+  };
+
+  if(!document.getElementById('cya-contract-stage-priority-styles')){
+    const style=document.createElement('style');
+    style.id='cya-contract-stage-priority-styles';
+    style.textContent=`
+      .dashboard-event-date.is-on-time{color:var(--success);background:rgba(16,185,129,.11);font-weight:600;}
+      .dashboard-event-date.is-pending{color:var(--warning);background:rgba(245,158,11,.11);font-weight:600;}
+      .dashboard-event-date.is-overdue{font-weight:600;}
+    `;
+    document.head.appendChild(style);
+  }
+})();
