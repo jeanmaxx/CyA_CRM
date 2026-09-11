@@ -80,10 +80,7 @@
           <span class="dashboard-collapse-icon">${dashboardAccionesAbiertas?'▾':'▸'}</span>
           <div><div class="card-title">Siguientes acciones</div><div class="dashboard-priority-sub">Procesos que requieren intervención para que el expediente continúe avanzando</div></div>
         </div>
-        <div class="operational-header-counts">
-          ${totalPostponed?`<span class="dashboard-snoozed-count">${totalPostponed} pospuesta${totalPostponed!==1?'s':''} por hoy</span>`:''}
-          <span class="operational-total-badge">${all.length}</span>
-        </div>
+        ${totalPostponed?`<div class="operational-header-counts"><span class="dashboard-snoozed-count">${totalPostponed} pospuesta${totalPostponed!==1?'s':''} por hoy</span></div>`:''}
       </div>
       ${dashboardAccionesAbiertas?`<div class="card-body dashboard-priority-body operational-actions-body">
         <div class="dashboard-actions-list operational-actions-list">
@@ -127,20 +124,23 @@
     const urgent=all.filter(x=>x.accion?.tono==='naranja').length;
     const postponed=all.length-visible.length;
     const today=new Date();
+    const summary=`<div class="operational-summary">
+      <div class="operational-summary-item"><span class="operational-summary-number">${events.length+all.length}</span><span>pendientes operativos</span></div>
+      <div class="operational-summary-item is-urgent"><span class="operational-summary-number">${urgent}</span><span>urgentes</span></div>
+      <div class="operational-summary-item is-overdue"><span class="operational-summary-number">${overdue}</span><span>vencidos</span></div>
+      ${postponed?`<div class="operational-summary-item is-muted"><span class="operational-summary-number">${postponed}</span><span>pospuestos hoy</span></div>`:''}
+    </div>`;
     return `<div class="operational-board">
       <div class="dashboard-hero operational-hero">
-        <div>
+        <div class="operational-hero-copy">
           <div style="margin-bottom:4px;font-size:12px;color:var(--text-muted)">${fmtDate(fechaISOLocal(today))}</div>
           <div class="section-title">Tablero Operativo</div>
           <div class="section-sub" style="margin-bottom:0;">Seguimiento diario para que ningún expediente se detenga.</div>
         </div>
-        <div class="dashboard-view-selector">${getSelectorVistaHTML(true)}</div>
-      </div>
-      <div class="operational-summary">
-        <div class="operational-summary-item"><span class="operational-summary-number">${events.length+all.length}</span><span>pendientes operativos</span></div>
-        <div class="operational-summary-item is-urgent"><span class="operational-summary-number">${urgent}</span><span>urgentes</span></div>
-        <div class="operational-summary-item is-overdue"><span class="operational-summary-number">${overdue}</span><span>vencidos</span></div>
-        ${postponed?`<div class="operational-summary-item is-muted"><span class="operational-summary-number">${postponed}</span><span>pospuestos hoy</span></div>`:''}
+        <div class="operational-hero-tools">
+          ${summary}
+          <div class="dashboard-view-selector operational-view-selector">${getSelectorVistaHTML(true)}</div>
+        </div>
       </div>
       <div class="dashboard-priority-stack operational-priority-stack">
         ${renderDashboardAgendaPrioritaria()}
@@ -196,16 +196,20 @@
     style.textContent=`
       .dashboard-priority-stack:empty{display:none!important;}
       .operational-board{display:block;}
-      .operational-hero{margin-bottom:14px;}
-      .operational-summary{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:14px;}
-      .operational-summary-item{display:flex;align-items:baseline;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-card);font-size:11px;color:var(--text-muted);}
-      .operational-summary-number{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text-primary);line-height:1;}
+      .operational-hero{margin-bottom:14px;align-items:center;}
+      .operational-hero-copy{min-width:230px;}
+      .operational-hero-tools{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:9px;min-width:0;}
+      .operational-summary{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px;margin:0;}
+      .operational-summary-item{display:flex;align-items:baseline;gap:6px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-card);font-size:10px;color:var(--text-muted);}
+      .operational-summary-number{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--text-primary);line-height:1;}
       .operational-summary-item.is-urgent{border-color:rgba(249,115,22,.42);}
       .operational-summary-item.is-urgent .operational-summary-number{color:#f97316;}
       .operational-summary-item.is-overdue{border-color:rgba(239,68,68,.42);}
       .operational-summary-item.is-overdue .operational-summary-number{color:var(--danger);}
       .operational-summary-item.is-muted .operational-summary-number{color:var(--text-muted);}
+      .operational-view-selector{margin-left:0;}
       .operational-priority-stack{gap:14px;}
+      .operational-board .dashboard-priority-header .card-title{text-transform:uppercase;letter-spacing:.55px;}
       .operational-board .dashboard-priority-scroll,.operational-board .dashboard-actions-list{max-height:none!important;overflow:visible!important;}
       .operational-actions-body{padding:8px 14px 14px;}
       .operational-actions-list{display:grid;gap:9px;padding:0;}
@@ -217,16 +221,23 @@
       .operational-group-header:hover{background:var(--bg-hover);}
       .operational-group-label{display:flex;align-items:center;gap:8px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.45px;}
       .operational-group-arrow{width:13px;color:var(--text-muted);font-size:12px;}
-      .operational-group-count,.operational-total-badge{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:${GOLD};color:${NAVY};font-family:var(--font-display);font-size:14px;font-weight:700;box-shadow:0 0 0 1px rgba(201,169,110,.22);}
+      .operational-group-count{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:22px;height:22px;padding:0 5px;border-radius:999px;background:${GOLD};color:${NAVY};font-family:var(--font-display);font-size:13px;font-weight:700;line-height:1;box-shadow:0 0 0 1px rgba(201,169,110,.22);}
       .operational-group-count.is-zero{background:var(--bg-hover);color:var(--text-muted);box-shadow:none;}
       .operational-group-body .dashboard-action-row:first-child{border-top:0;}
       .operational-group-note,.operational-group-empty{padding:9px 11px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted);}
       .operational-header-counts{margin-left:auto;display:flex;align-items:center;gap:10px;}
+      @media(max-width:900px){
+        .operational-hero{align-items:flex-start;}
+        .operational-hero-tools{max-width:62%;}
+      }
       @media(max-width:700px){
-        .operational-summary{display:grid;grid-template-columns:1fr 1fr;}
+        .operational-hero{display:flex;flex-direction:column;align-items:stretch;}
+        .operational-hero-tools{width:100%;max-width:none;align-items:stretch;margin-left:0;}
+        .operational-summary{display:grid;grid-template-columns:1fr 1fr;justify-content:stretch;}
         .operational-summary-item{min-width:0;}
+        .operational-view-selector{align-self:flex-end;}
         .operational-group-header{padding:9px;}
-        .operational-group-count{width:26px;height:26px;}
+        .operational-group-count{min-width:21px;height:21px;font-size:12px;}
       }
     `;
     document.head.appendChild(style);
