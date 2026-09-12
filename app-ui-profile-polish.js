@@ -108,3 +108,13 @@
   script.dataset.cyaDashboardCustomization='1';
   document.head.appendChild(script);
 })();
+
+// Reorganize the technical administrator settings after the appearance module is ready.
+(function loadTechnicalConfigWorkspace(){
+  if(document.querySelector('script[data-cya-config-workspace]'))return;
+  const script=document.createElement('script');
+  script.src='app-config-workspace.js?v=20260911-2042';
+  script.async=false;
+  script.dataset.cyaConfigWorkspace='1';
+  document.head.appendChild(script);
+})();
