@@ -118,3 +118,20 @@
   script.dataset.cyaConfigWorkspace='1';
   document.head.appendChild(script);
 })();
+
+// Personal administration and advisor performance are separate workspaces.
+(function loadPersonnelWorkspace(){
+  if(!document.querySelector('script[data-cya-personnel-styles]')){
+    const styles=document.createElement('script');
+    styles.src='app-personnel-styles.js?v=20260911-2115';
+    styles.async=false;
+    styles.dataset.cyaPersonnelStyles='1';
+    document.head.appendChild(styles);
+  }
+  if(document.querySelector('script[data-cya-personnel-workspace]'))return;
+  const script=document.createElement('script');
+  script.src='app-personnel-workspace.js?v=20260911-2115';
+  script.async=false;
+  script.dataset.cyaPersonnelWorkspace='1';
+  document.head.appendChild(script);
+})();
