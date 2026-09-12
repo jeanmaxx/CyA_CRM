@@ -135,3 +135,13 @@
   script.dataset.cyaPersonnelWorkspace='1';
   document.head.appendChild(script);
 })();
+
+// Collaborators follows the same global view selector as Dashboard, Prospectos and Clientes.
+(function loadCollaboratorViewScope(){
+  if(document.querySelector('script[data-cya-collaborator-view]'))return;
+  const script=document.createElement('script');
+  script.src='app-collaborator-view.js?v=20260911-2308';
+  script.async=false;
+  script.dataset.cyaCollaboratorView='1';
+  document.head.appendChild(script);
+})();
