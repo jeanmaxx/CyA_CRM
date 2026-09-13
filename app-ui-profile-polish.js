@@ -146,31 +146,47 @@
   document.head.appendChild(script);
 })();
 
-// Operational cleanup: the missing AFORE appointment is no longer shown as a profile warning.
-// Existing appointment dates, agenda reminders and the Cita AFORE workflow remain untouched.
-(function removeObsoleteAforeMissingWarning(){
-  if(window.__cyaAforeMissingWarningCleanupInstalled)return;
-  window.__cyaAforeMissingWarningCleanupInstalled=true;
+// Operational profile alerts: AFORE appointment remains required; bank alerts no longer imply
+// that an account number or CLABE is required. The account level applies only to BBVA in the current model.
+(function refineOperationalProfileAlerts(){
+  if(window.__cyaOperationalProfileAlertsInstalled)return;
+  window.__cyaOperationalProfileAlertsInstalled=true;
   let attempts=0;
   const timer=setInterval(()=>{
     attempts++;
-    if(typeof openPerfil!=='function'){
+    if(typeof openPerfil!=='function'||typeof store==='undefined'){
       if(attempts>240)clearInterval(timer);
       return;
     }
     clearInterval(timer);
     const openPerfilBase=openPerfil;
-    openPerfil=function(){
+    openPerfil=function(id){
       const result=openPerfilBase.apply(this,arguments);
-      const clean=()=>{
+      const patch=()=>{
         const body=document.getElementById('perfil-body');
-        if(!body)return;
-        [...body.querySelectorAll('.alerta-firma.alerta-amarilla')].forEach(alerta=>{
-          if(/Falta cita de actualización de datos en AFORE/i.test(alerta.textContent||''))alerta.remove();
-        });
+        const cliente=(store.clientes||[]).find(c=>c.id===id);
+        if(!body||!cliente||cliente.servicio!=='retiro_desempleo')return;
+
+        const alerts=[...body.querySelectorAll('.alerta-firma.alerta-amarilla')];
+        let bankAlert=alerts.find(el=>/Falta cuenta bancaria completa|Falta capturar banco|Falta capturar nivel de cuenta BBVA/i.test(el.textContent||''));
+
+        if(!cliente.banco){
+          if(bankAlert) bankAlert.textContent='⚠ Falta capturar banco';
+        }else if(typeof esCuentaBBVA==='function'&&esCuentaBBVA(cliente.banco)&&!cliente.nivelCuentaBBVA){
+          if(!bankAlert){
+            bankAlert=document.createElement('div');
+            bankAlert.className='alerta-firma alerta-amarilla';
+            const summary=body.querySelector('.profile-summary-grid');
+            if(summary) body.insertBefore(bankAlert,summary);
+            else body.appendChild(bankAlert);
+          }
+          bankAlert.textContent='⚠ Falta capturar nivel de cuenta BBVA';
+        }else if(bankAlert){
+          bankAlert.remove();
+        }
       };
-      clean();
-      setTimeout(clean,0);
+      patch();
+      setTimeout(patch,0);
       return result;
     };
   },25);
