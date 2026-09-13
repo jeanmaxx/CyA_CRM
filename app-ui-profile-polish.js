@@ -145,3 +145,33 @@
   script.dataset.cyaCollaboratorView='1';
   document.head.appendChild(script);
 })();
+
+// Operational cleanup: the missing AFORE appointment is no longer shown as a profile warning.
+// Existing appointment dates, agenda reminders and the Cita AFORE workflow remain untouched.
+(function removeObsoleteAforeMissingWarning(){
+  if(window.__cyaAforeMissingWarningCleanupInstalled)return;
+  window.__cyaAforeMissingWarningCleanupInstalled=true;
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    if(typeof openPerfil!=='function'){
+      if(attempts>240)clearInterval(timer);
+      return;
+    }
+    clearInterval(timer);
+    const openPerfilBase=openPerfil;
+    openPerfil=function(){
+      const result=openPerfilBase.apply(this,arguments);
+      const clean=()=>{
+        const body=document.getElementById('perfil-body');
+        if(!body)return;
+        [...body.querySelectorAll('.alerta-firma.alerta-amarilla')].forEach(alerta=>{
+          if(/Falta cita de actualización de datos en AFORE/i.test(alerta.textContent||''))alerta.remove();
+        });
+      };
+      clean();
+      setTimeout(clean,0);
+      return result;
+    };
+  },25);
+})();
