@@ -242,7 +242,7 @@ window.CA_CLOUD_CONFIG = Object.freeze({
 (function loadProfileVisualPolish(){
   if(document.querySelector('script[data-cya-profile-polish]'))return;
   const script=document.createElement('script');
-  script.src='app-ui-profile-polish.js?v=20260911-1504-2';
+  script.src='app-ui-profile-polish.js?v=20260913-alertas-banco-afore';
   script.async=false;
   script.dataset.cyaProfilePolish='1';
   document.head.appendChild(script);
