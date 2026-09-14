@@ -63,7 +63,6 @@
     cambiarVista=function(value){
       if(currentPage==='colaboradores'&&contextualViewActive&&typeof window.cyaQuitarFiltroColaboradores==='function'){
         contextualViewActive=false;
-        // Clear the contextual filter first; the selected global view is applied immediately after.
         const clear=window.cyaQuitarFiltroColaboradores;
         const previous=vistaActual;
         try{
@@ -97,8 +96,18 @@
 (function loadCollaboratorPortalAccess(){
   if(document.querySelector('script[data-cya-collaborator-access]'))return;
   const script=document.createElement('script');
-  script.src='app-collaborator-access.js?v=20260914-1';
+  script.src='app-collaborator-access.js?v=20260914-2';
   script.async=false;
   script.dataset.cyaCollaboratorAccess='1';
+  document.head.appendChild(script);
+})();
+
+// Profile metadata is kept in the collaborator record and is shared with the portal.
+(function loadCollaboratorProfileMetadata(){
+  if(document.querySelector('script[data-cya-collaborator-profile]'))return;
+  const script=document.createElement('script');
+  script.src='app-collaborator-profile.js?v=20260914-1';
+  script.async=false;
+  script.dataset.cyaCollaboratorProfile='1';
   document.head.appendChild(script);
 })();
