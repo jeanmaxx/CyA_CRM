@@ -45,6 +45,23 @@
     }
   }
 
+  let remoteRefreshRunning=false;
+  async function refreshRemoteMetadata(){
+    if(remoteRefreshRunning)return;
+    remoteRefreshRunning=true;
+    try{
+      const data=await invokeManage({action:'list'});
+      for(const row of (data.collaborators||[])){
+        const col=(store.colaboradores||[]).find(c=>c.id===row.collaboratorId);if(!col)continue;
+        if(!col.email&&row.email)col.email=row.email;
+        if(!col.fechaNacimiento&&row.birthDate)col.fechaNacimiento=row.birthDate;
+      }
+      enhanceCards();
+    }catch(_){
+      // The collaborator list remains usable even if portal-account metadata cannot be refreshed.
+    }finally{remoteRefreshRunning=false;}
+  }
+
   let attempts=0;
   const timer=setInterval(()=>{
     attempts++;
@@ -60,6 +77,18 @@
       const email=document.getElementById('col-email'),birth=document.getElementById('col-fecha-nacimiento');
       if(email)email.value=col?.email||'';
       if(birth)birth.value=birthLabel(col?.fechaNacimiento);
+      if(id&&!col?.email){
+        invokeManage({action:'list'}).then(data=>{
+          const row=(data.collaborators||[]).find(x=>x.collaboratorId===id);if(!row)return;
+          const current=(store.colaboradores||[]).find(x=>x.id===id);
+          if(current&&!current.email&&row.email)current.email=row.email;
+          if(current&&!current.fechaNacimiento&&row.birthDate)current.fechaNacimiento=row.birthDate;
+          if(document.getElementById('modal-colaborador')?.classList.contains('open')){
+            if(email&&!email.value)email.value=row.email||'';
+            if(birth&&!birth.value)birth.value=birthLabel(row.birthDate);
+          }
+        }).catch(()=>{});
+      }
       return result;
     };
 
@@ -78,7 +107,7 @@
       const old=existingId?(store.colaboradores||[]).find(c=>c.id===existingId):null;
       if(old&&!isAdmin()&&old.asesorId!==sesionActiva?.id){showToast?.('No puedes modificar colaboradores de otro asesor','warn');return;}
       const result=saveBase.apply(this,arguments);
-      let saved=existingId?(store.colaboradores||[]).find(c=>c.id===existingId):(store.colaboradores||[]).find(c=>!beforeIds.has(c.id));
+      const saved=existingId?(store.colaboradores||[]).find(c=>c.id===existingId):(store.colaboradores||[]).find(c=>!beforeIds.has(c.id));
       if(!saved)return result;
       saved.email=email;saved.fechaNacimiento=birth;
       saveStore();
@@ -92,21 +121,18 @@
       const col=(store.colaboradores||[]).find(c=>c.id===id);if(!col)return;
       if(!isAdmin()&&col.asesorId!==sesionActiva?.id){showToast?.('No puedes eliminar colaboradores de otro asesor','warn');return;}
       if(!confirm('¿Eliminar este colaborador? Su acceso al portal también será eliminado y los prospectos/clientes vinculados quedarán sin colaborador.'))return;
-      try{
-        await invokeManage({action:'delete_account',collaboratorId:id});
-      }catch(error){showToast?.('No se eliminó el colaborador: '+error.message,'warn');return;}
+      try{await invokeManage({action:'delete_account',collaboratorId:id});}
+      catch(error){showToast?.('No se eliminó el colaborador: '+error.message,'warn');return;}
       store.colaboradores=(store.colaboradores||[]).filter(c=>c.id!==id);
       (store.clientes||[]).forEach(c=>{if(c.colaboradorId===id){c.colaboradorId=null;c.colPct=0;}});
       (store.leads||[]).forEach(l=>{if(l.colaboradorId===id)l.colaboradorId=null;});
       saveStore();
-      closeModal('modal-colaborador');
-      editingColaboradorId=null;
-      showToast?.('Colaborador y acceso al portal eliminados','info');
-      renderPage('colaboradores');
+      closeModal('modal-colaborador');editingColaboradorId=null;
+      showToast?.('Colaborador y acceso al portal eliminados','info');renderPage('colaboradores');
     };
 
     const renderBase=renderColaboradores;
-    renderColaboradores=function(){const html=renderBase.apply(this,arguments);setTimeout(enhanceCards,0);return html;};
+    renderColaboradores=function(){const html=renderBase.apply(this,arguments);setTimeout(()=>{enhanceCards();refreshRemoteMetadata();},0);return html;};
 
     if(!document.getElementById('cya-collab-profile-styles')){
       const style=document.createElement('style');style.id='cya-collab-profile-styles';style.textContent=`
