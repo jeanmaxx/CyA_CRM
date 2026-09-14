@@ -124,3 +124,30 @@
     document.head.appendChild(script);
   },25);
 })();
+
+/* The database intentionally rejects direct table writes. This final layer replaces
+   the request module's persistence actions with the CRM transactional sync path. */
+(function loadAdvisorRequestTransactionalFix(){
+  if(window.__cyaAdvisorRequestTransactionalFixLoaderStarted)return;
+  window.__cyaAdvisorRequestTransactionalFixLoaderStarted=true;
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    const ready=
+      window.__cyaClientAdvisorRequestsInstalled===true&&
+      typeof cyaEnviarSolicitudCambioAsesor==='function'&&
+      typeof cyaResolverSolicitudCambioAsesor==='function'&&
+      typeof cloudSyncNow==='function';
+    if(!ready){
+      if(attempts>500)clearInterval(timer);
+      return;
+    }
+    clearInterval(timer);
+    if(document.querySelector('script[data-cya-advisor-request-transactional-fix]'))return;
+    const script=document.createElement('script');
+    script.src='app-client-advisor-request-transactional-fix.js?v=20260914-2';
+    script.async=false;
+    script.dataset.cyaAdvisorRequestTransactionalFix='1';
+    document.head.appendChild(script);
+  },25);
+})();
