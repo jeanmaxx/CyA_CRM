@@ -37,3 +37,32 @@
     };
   },10);
 })();
+
+/* Load the CURP + client eligibility enhancement only after the final operational
+   wrappers are installed. This keeps the deployment additive and avoids changing
+   the numeric tab indexes used by the existing client workflow. */
+(function loadCurpClientEligibilitySafely(){
+  if(window.__cyaCurpClientEligibilityLoaderStarted)return;
+  window.__cyaCurpClientEligibilityLoaderStarted=true;
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    const workflowReady=
+      typeof openModalCliente==='function'&&
+      typeof editCliente==='function'&&
+      typeof openPerfil==='function'&&
+      typeof sincronizarCitaAfore==='function'&&
+      typeof renderElegContainer==='function';
+    if(!workflowReady){
+      if(attempts>500)clearInterval(timer);
+      return;
+    }
+    clearInterval(timer);
+    if(document.querySelector('script[data-cya-curp-client-eligibility]'))return;
+    const script=document.createElement('script');
+    script.src='app-curp-client-eligibility.js?v=20260914-1';
+    script.async=false;
+    script.dataset.cyaCurpClientEligibility='1';
+    document.head.appendChild(script);
+  },25);
+})();
