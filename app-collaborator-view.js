@@ -106,8 +106,18 @@
 (function loadCollaboratorProfileMetadata(){
   if(document.querySelector('script[data-cya-collaborator-profile]'))return;
   const script=document.createElement('script');
-  script.src='app-collaborator-profile.js?v=20260914-2';
+  script.src='app-collaborator-profile.js?v=20260914-3';
   script.async=false;
   script.dataset.cyaCollaboratorProfile='1';
+  document.head.appendChild(script);
+})();
+
+// Administration can maintain the educational content shown in Información / Guía.
+(function loadCollaboratorGuideAdmin(){
+  if(document.querySelector('script[data-cya-collaborator-guide-admin]'))return;
+  const script=document.createElement('script');
+  script.src='app-collaborator-guide-admin.js?v=20260914-1';
+  script.async=false;
+  script.dataset.cyaCollaboratorGuideAdmin='1';
   document.head.appendChild(script);
 })();
