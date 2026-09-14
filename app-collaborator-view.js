@@ -106,7 +106,7 @@
 (function loadCollaboratorProfileMetadata(){
   if(document.querySelector('script[data-cya-collaborator-profile]'))return;
   const script=document.createElement('script');
-  script.src='app-collaborator-profile.js?v=20260914-1';
+  script.src='app-collaborator-profile.js?v=20260914-2';
   script.async=false;
   script.dataset.cyaCollaboratorProfile='1';
   document.head.appendChild(script);
