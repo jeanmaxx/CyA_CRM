@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1320">
+  <title>Portal de Colaboradores · Casillas & Asociados</title>
+  <link rel="icon" href="../favicon.ico?v=20260903">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20260914-1">
+</head>
+<body>
+  <div id="login-view" class="login-shell">
+    <main class="login-card" aria-labelledby="login-title">
+      <div class="login-brand">
+        <div class="brand-mark">C&amp;A</div>
+        <div><strong>CASILLAS &amp; ASOCIADOS</strong><span>Portal de Colaboradores</span></div>
+      </div>
+      <div class="login-copy">
+        <p class="eyebrow">ACCESO PRIVADO</p>
+        <h1 id="login-title">Tu cartera, en un solo lugar.</h1>
+        <p>Registra prospectos, consulta su avance y mantén la información disponible desde campo.</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <label>Correo electrónico<input id="login-email" type="email" autocomplete="username" required placeholder="correo@ejemplo.com"></label>
+        <label>Contraseña<input id="login-password" type="password" autocomplete="current-password" required placeholder="••••••••"></label>
+        <button class="btn btn-primary btn-block" type="submit">Ingresar</button>
+        <div id="login-error" class="form-message" role="alert"></div>
+      </form>
+      <div class="login-foot">El acceso es habilitado por tu asesor o por la administración de Casillas &amp; Asociados.</div>
+    </main>
+  </div>
+
+  <div id="portal-view" class="portal-shell" hidden>
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="brand-mark small">C&amp;A</div><div><strong>CASILLAS &amp; ASOCIADOS</strong><span>Colaboradores</span></div></div>
+      <nav class="sidebar-nav" aria-label="Portal">
+        <button class="nav-item active" data-page="inicio" type="button"><span>⌂</span>Inicio</button>
+        <button class="nav-item" data-page="prospectos" type="button"><span>◎</span>Mis prospectos</button>
+        <button class="nav-item locked" data-page="clientes" type="button"><span>◉</span>Mis clientes <small>Próximamente</small></button>
+        <button class="nav-item locked" data-page="estadisticas" type="button"><span>▥</span>Estadísticas <small>Próximamente</small></button>
+        <button class="nav-item locked" data-page="finanzas" type="button"><span>◇</span>Finanzas <small>Próximamente</small></button>
+      </nav>
+      <div class="sidebar-user"><div class="user-avatar" id="sidebar-avatar">CA</div><div><strong id="sidebar-name">Colaborador</strong><span id="sidebar-advisor">Asesor asignado</span></div><button id="logout-btn" class="icon-button" type="button" title="Cerrar sesión">↩</button></div>
+    </aside>
+
+    <div class="portal-main">
+      <header class="topbar">
+        <div><span class="topbar-kicker">PORTAL DE COLABORADORES</span><h2 id="page-title">Inicio</h2></div>
+        <div class="topbar-actions"><span id="sync-label" class="sync-label">Actualizado</span><button id="new-prospect-top" class="btn btn-primary" type="button">+ Prospecto</button></div>
+      </header>
+      <main id="page-content" class="content"></main>
+    </div>
+
+    <nav class="mobile-nav" aria-label="Navegación móvil">
+      <button class="active" data-page="inicio" type="button"><span>⌂</span>Inicio</button>
+      <button data-page="prospectos" type="button"><span>◎</span>Prospectos</button>
+      <button class="locked" data-page="clientes" type="button"><span>◉</span>Clientes</button>
+      <button class="locked" data-page="finanzas" type="button"><span>◇</span>Finanzas</button>
+    </nav>
+  </div>
+
+  <div id="prospect-modal" class="modal-overlay" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="prospect-modal-title">
+      <div class="modal-head"><div><span class="eyebrow">MIS PROSPECTOS</span><h3 id="prospect-modal-title">Nuevo prospecto</h3></div><button id="close-prospect-modal" class="icon-button" type="button" aria-label="Cerrar">×</button></div>
+      <form id="prospect-form" class="prospect-form">
+        <input id="prospect-id" type="hidden">
+        <div class="required-note"><strong>Datos mínimos</strong><span>Solo nombre, teléfono y CURP son obligatorios. Puedes completar lo demás después.</span></div>
+        <div class="form-grid two">
+          <label>Nombre completo <b>*</b><input id="p-name" required autocomplete="off"></label>
+          <label>Teléfono <b>*</b><input id="p-phone" required inputmode="tel" autocomplete="off"></label>
+        </div>
+        <div class="form-grid two">
+          <label>CURP <b>*</b><input id="p-curp" required maxlength="18" autocomplete="off"><small id="curp-helper">Puedes guardar aunque el formato requiera revisión.</small></label>
+          <label>Servicio<select id="p-service"></select></label>
+        </div>
+        <div class="form-grid two">
+          <label>Honorarios manejados<input id="p-fees" type="number" min="0" step="100" inputmode="decimal" placeholder="Opcional"></label>
+          <label>Ciudad / localidad<input id="p-city" placeholder="Opcional"></label>
+        </div>
+        <div class="form-grid two">
+          <label>AFORE conocida<input id="p-afore" placeholder="Ej. COPPEL"></label>
+          <label>AFORE Móvil<select id="p-afore-mobile"><option value="">Sin dato</option><option value="si">Sí</option><option value="no">No</option><option value="no_sabe">No sabe</option></select></label>
+        </div>
+        <div class="form-grid two">
+          <label>Banco<input id="p-bank" placeholder="Opcional"></label>
+          <label>¿Cuenta Nivel 4?<select id="p-bank-level"><option value="">Sin dato</option><option value="si">Sí</option><option value="no">No</option><option value="no_sabe">No sabe</option></select></label>
+        </div>
+        <label>Notas<textarea id="p-notes" rows="4" placeholder="Cualquier información adicional que ya conozcas"></textarea></label>
+        <div class="modal-actions"><button id="cancel-prospect" class="btn" type="button">Cancelar</button><button id="save-prospect" class="btn btn-primary" type="submit">Guardar prospecto</button></div>
+        <div id="prospect-form-message" class="form-message" role="alert"></div>
+      </form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js?v=20260914-1"></script>
+</body>
+</html>
