@@ -66,3 +66,34 @@
     document.head.appendChild(script);
   },25);
 })();
+
+/* Load client ownership controls after the eligibility wrapper is active, so both
+   additive modules keep their behavior without replacing the core CRM files. */
+(function loadClientAdvisorOwnershipSafely(){
+  if(window.__cyaClientAdvisorOwnershipLoaderStarted)return;
+  window.__cyaClientAdvisorOwnershipLoaderStarted=true;
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    const ready=
+      window.__cyaCurpClientEligibilityInstalled===true&&
+      typeof openModalCliente==='function'&&
+      typeof editCliente==='function'&&
+      typeof guardarCliente==='function'&&
+      typeof openPerfil==='function'&&
+      typeof renderBuscadorProspectos==='function'&&
+      typeof irAProspecto==='function'&&
+      typeof filtrarClientes==='function';
+    if(!ready){
+      if(attempts>500)clearInterval(timer);
+      return;
+    }
+    clearInterval(timer);
+    if(document.querySelector('script[data-cya-client-advisor]'))return;
+    const script=document.createElement('script');
+    script.src='app-client-advisor.js?v=20260914-1';
+    script.async=false;
+    script.dataset.cyaClientAdvisor='1';
+    document.head.appendChild(script);
+  },25);
+})();
