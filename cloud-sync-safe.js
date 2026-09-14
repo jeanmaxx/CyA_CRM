@@ -27,7 +27,22 @@ function syncJournal(ops){if(!syncOwner)return;try{if(ops.length)localStorage.se
 function revisarVersionGuardada(){if(!confirm('Se descargará una copia de tus pendientes y se abrirán los datos guardados en la nube. Podrás revisar y volver a capturar los cambios de la copia.'))return;descargarPendientes();localStorage.removeItem(syncKey());cloudReady=false;location.reload();}
 function descargarPendientes(){const text=localStorage.getItem(syncKey());if(!text)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download='CRM-pendientes-'+fechaISOLocal(new Date())+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 const syncOriginalLoad=cloudLoadStore;
-cloudLoadStore=async function(){const result=await syncOriginalLoad();return result;};
+function syncIsJwtFutureError(error){return /JWT issued at future/i.test(String(error?.message||error||''));}
+cloudLoadStore=async function(){
+  const retryDelays=[0,1000,2000,4000];
+  let lastError=null;
+  for(let attempt=0;attempt<retryDelays.length;attempt++){
+    if(retryDelays[attempt]) await new Promise(resolve=>setTimeout(resolve,retryDelays[attempt]));
+    try{return await syncOriginalLoad();}
+    catch(error){
+      lastError=error;
+      if(!syncIsJwtFutureError(error)||attempt===retryDelays.length-1) throw error;
+      console.warn(`JWT recién emitido rechazado temporalmente por PostgREST; reintento ${attempt+1}/${retryDelays.length-1}.`,error);
+      if(typeof cloudSetLoginLoading==='function')cloudSetLoginLoading(true,'Sincronizando sesión...');
+    }
+  }
+  throw lastError;
+};
 function syncInitialize(userId){syncOwner=userId;syncBaseline={};for(const [t,rows] of Object.entries(syncRows()))syncBaseline[t]=Object.fromEntries(rows.map(r=>[r.id||CA_ORG_ID,cloudCleanObject(r)]));
   const slot=syncPrefix()+':tab';const previous=sessionStorage.getItem(slot);sessionStorage.setItem(slot,syncKey());
   syncPreviousKey=previous!==syncKey()?previous:null;
