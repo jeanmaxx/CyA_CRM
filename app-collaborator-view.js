@@ -92,3 +92,13 @@
     if(currentPage==='colaboradores')renderPage('colaboradores');
   },30);
 })();
+
+// Portal account controls are loaded after the view-scope wrapper so both features compose safely.
+(function loadCollaboratorPortalAccess(){
+  if(document.querySelector('script[data-cya-collaborator-access]'))return;
+  const script=document.createElement('script');
+  script.src='app-collaborator-access.js?v=20260914-1';
+  script.async=false;
+  script.dataset.cyaCollaboratorAccess='1';
+  document.head.appendChild(script);
+})();
