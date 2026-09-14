@@ -97,3 +97,30 @@
     document.head.appendChild(script);
   },25);
 })();
+
+/* Advisor transfer requests depend on the ownership module above. Advisors only
+   request; administrators remain the only users who can actually change ownership. */
+(function loadClientAdvisorRequestsSafely(){
+  if(window.__cyaClientAdvisorRequestsLoaderStarted)return;
+  window.__cyaClientAdvisorRequestsLoaderStarted=true;
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    const ready=
+      window.__cyaClientAdvisorOwnershipInstalled===true&&
+      typeof openPerfil==='function'&&
+      typeof renderDashboard==='function'&&
+      typeof cloudSyncNow==='function';
+    if(!ready){
+      if(attempts>500)clearInterval(timer);
+      return;
+    }
+    clearInterval(timer);
+    if(document.querySelector('script[data-cya-client-advisor-requests]'))return;
+    const script=document.createElement('script');
+    script.src='app-client-advisor-requests.js?v=20260914-1';
+    script.async=false;
+    script.dataset.cyaClientAdvisorRequests='1';
+    document.head.appendChild(script);
+  },25);
+})();
