@@ -44,6 +44,16 @@ function syncInitialize(userId){syncOwner=userId;syncBaseline={};for(const [t,ro
     if(!op.row&&!syncBaseline[op.table]?.[op.id]){syncBaseline[op.table]||={};syncBaseline[op.table][op.id]={id:op.id};}
     if(op.row&&op.expected===null)delete syncBaseline[op.table]?.[op.id];
   }
+  // Older collaborator-profile drafts could contain an empty/unknown advisor after the
+  // portal account was created in another request. Keep the authoritative cloud owner
+  // rather than replaying a broken ownership value into the durable outbox.
+  for(const col of (store.colaboradores||[])){
+    const ownerKnown=Boolean(col?.asesorId&&(store.asesores||[]).some(a=>a.id===col.asesorId));
+    if(ownerKnown)continue;
+    const server=syncBaseline.collaborators?.[col.id];
+    const owner=server?.advisor_id||server?.payload?.asesorId||null;
+    if(owner&&(store.asesores||[]).some(a=>a.id===owner))col.asesorId=owner;
+  }
   syncJournal(syncDiff());
   if(!syncDiff().length){syncBanner('');return;}
   syncBanner('Se recuperaron cambios pendientes de esta cuenta. Reintenta guardarlos; si hay un conflicto, descarga la copia para revisarla.');
