@@ -140,7 +140,7 @@
 (function loadCollaboratorViewScope(){
   if(document.querySelector('script[data-cya-collaborator-view]'))return;
   const script=document.createElement('script');
-  script.src='app-collaborator-view.js?v=20260911-2308';
+  script.src='app-collaborator-view.js?v=20260914-4';
   script.async=false;
   script.dataset.cyaCollaboratorView='1';
   document.head.appendChild(script);
