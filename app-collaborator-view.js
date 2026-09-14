@@ -112,6 +112,16 @@
   document.head.appendChild(script);
 })();
 
+// Apply the conflict-safe save only after the profile extension has installed its fields.
+(function loadCollaboratorProfileSafety(){
+  if(document.querySelector('script[data-cya-collaborator-profile-safety]'))return;
+  const script=document.createElement('script');
+  script.src='app-collaborator-profile-safety.js?v=20260914-1';
+  script.async=false;
+  script.dataset.cyaCollaboratorProfileSafety='1';
+  document.head.appendChild(script);
+})();
+
 // Administration can maintain the educational content shown in Información / Guía.
 (function loadCollaboratorGuideAdmin(){
   if(document.querySelector('script[data-cya-collaborator-guide-admin]'))return;
