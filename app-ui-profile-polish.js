@@ -1,3 +1,13 @@
+// Install the collaborator draft recovery as early as possible during the cloud bootstrap.
+(function loadCollaboratorDraftRecovery(){
+  if(document.querySelector('script[data-cya-sync-recovery]'))return;
+  const script=document.createElement('script');
+  script.src='app-sync-recovery.js?v=20260914-2';
+  script.async=false;
+  script.dataset.cyaSyncRecovery='1';
+  document.head.appendChild(script);
+})();
+
 /* Final visual refinements for Dashboard profile header and Mi cuenta. */
 (function installProfileVisualPolish(){
   if(window.__cyaProfileVisualPolishInstalled)return;
@@ -140,7 +150,7 @@
 (function loadCollaboratorViewScope(){
   if(document.querySelector('script[data-cya-collaborator-view]'))return;
   const script=document.createElement('script');
-  script.src='app-collaborator-view.js?v=20260914-5';
+  script.src='app-collaborator-view.js?v=20260914-6';
   script.async=false;
   script.dataset.cyaCollaboratorView='1';
   document.head.appendChild(script);
