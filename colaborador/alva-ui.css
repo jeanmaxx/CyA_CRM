@@ -375,3 +375,98 @@ html[data-theme="light"] .toast{border-left-color:#0f2744!important}
   .brand-logo-frame{width:62px;height:62px;flex-basis:62px;border-radius:16px}
   .login-brand .brand-copy strong{font-size:14px}
 }
+
+
+/* Branding final: C&A + firma ALVA tal como fueron proporcionados */
+.cya-brand{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+}
+.cya-logo{
+  display:block;
+  max-width:100%;
+  height:auto;
+  object-fit:contain;
+}
+.cya-logo-light{display:none}
+.login-brand.cya-brand{
+  justify-content:center!important;
+  min-height:102px;
+  padding:4px 0 22px!important;
+}
+.login-brand .cya-logo-dark{width:220px;max-height:118px}
+.sidebar-brand.cya-brand{
+  justify-content:center!important;
+  min-height:102px;
+  padding:4px 2px 16px!important;
+}
+.sidebar-brand .cya-logo-dark{width:174px;max-height:104px}
+
+html[data-theme="light"] .cya-logo-dark{display:none!important}
+html[data-theme="light"] .cya-logo-light{display:block!important}
+html[data-theme="light"] .login-brand .cya-logo-light{
+  width:240px;
+  max-height:112px;
+  object-fit:contain
+}
+html[data-theme="light"] .sidebar-brand .cya-logo-light{
+  width:184px;
+  max-height:96px;
+  object-fit:contain
+}
+
+/* ALVA se muestra como lockup horizontal completo; no se reconstruye con texto */
+.alva-credit{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+}
+.alva-credit .credit-label{
+  display:block!important;
+  width:100%;
+  color:var(--muted)!important;
+  font-size:7.5px!important;
+  text-align:center!important;
+  text-transform:none!important;
+  letter-spacing:.02em!important;
+}
+.alva-horizontal-logo{
+  display:block;
+  width:188px;
+  max-width:100%;
+  height:auto;
+  object-fit:contain;
+}
+.alva-credit-login{
+  margin-top:18px!important;
+  padding-top:15px!important;
+  border-top:1px solid var(--border)!important;
+}
+.alva-credit-login .alva-horizontal-logo{width:205px}
+.alva-credit-sidebar{
+  align-items:flex-start!important;
+  justify-content:flex-start!important;
+  margin-top:auto!important;
+  margin-bottom:13px!important;
+  padding:14px 8px 12px!important;
+  border-top:1px solid var(--border)!important;
+}
+.alva-credit-sidebar .credit-label{text-align:left!important}
+.alva-credit-sidebar .alva-horizontal-logo{width:184px}
+
+html[data-theme="light"] .alva-horizontal-logo{
+  filter:none!important
+}
+
+/* Retira estilos del lockup reconstruido anterior */
+.alva-lockup,.alva-mark,.alva-wordmark,.alva-product-name,
+.brand-logo-frame,.brand-copy{display:none!important}
+
+@media(max-width:780px){
+  .login-brand .cya-logo-dark{width:195px}
+  html[data-theme="light"] .login-brand .cya-logo-light{width:215px}
+  .alva-credit-login .alva-horizontal-logo{width:190px}
+}
