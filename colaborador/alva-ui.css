@@ -21,6 +21,9 @@
   --alva-yellow:#ffc107;
   --alva-graphite:#4a4a4a;
   --alva-deep:#171717;
+  --brand-navy:#0f2744;
+  --accent-contrast:#171717;
+  --alva-signature:#ffc107;
 }
 html[data-theme="light"]{
   --navy:#f4f5f6;
@@ -32,6 +35,10 @@ html[data-theme="light"]{
   --card:#ffffff;
   --card-2:#f7f8f9;
   --shadow:0 16px 38px rgba(20,24,28,.08);
+  --alva-yellow:#0f2744;
+  --gold:#0f2744;
+  --gold-2:#183b67;
+  --accent-contrast:#ffffff;
 }
 html,body{background:var(--navy);font-family:var(--font);letter-spacing:-.01em}
 body{background:
@@ -104,7 +111,7 @@ h1,h2,h3,h4,.brand-name,.topbar h2,.login-copy h1,.kpi-card strong,.phase3-kpis 
 }
 .btn:hover,.icon-button:hover{background:rgba(255,255,255,.075);transform:translateY(-1px)}
 .btn-primary{
-  background:var(--alva-yellow)!important;color:#171717!important;border-color:var(--alva-yellow)!important;
+  background:var(--alva-yellow)!important;color:var(--accent-contrast)!important;border-color:var(--alva-yellow)!important;
   box-shadow:0 8px 20px rgba(255,193,7,.13);font-weight:800
 }
 .btn-primary:hover{filter:brightness(1.04);box-shadow:0 10px 24px rgba(255,193,7,.20)}
@@ -189,7 +196,7 @@ h1,h2,h3,h4,.brand-name,.topbar h2,.login-copy h1,.kpi-card strong,.phase3-kpis 
 }
 .phase-head{background:rgba(255,255,255,.018)!important}
 .phase-num,.client-phase.is-current>span{
-  background:var(--alva-yellow)!important;color:#171717!important;border-color:var(--alva-yellow)!important
+  background:var(--alva-yellow)!important;color:var(--accent-contrast)!important;border-color:var(--alva-yellow)!important
 }
 .phase-head h3,.client-phase.is-current small{color:var(--alva-yellow)!important}
 .prospect-card{
@@ -249,4 +256,122 @@ html[data-theme="light"] .toast{background:#fff;color:#222}
 @media(max-width:430px){
   .topbar-actions .theme-toggle{display:none}
   .kpi-card{padding:13px}
+}
+
+
+/* BRANDING C&A + firma oficial ALVA */
+.login-shell::before{
+  content:''!important;
+  right:3vw!important;
+  bottom:1.5vh!important;
+  width:min(44vw,620px)!important;
+  height:min(18vw,180px)!important;
+  background:url("../assets/brand/alva-wordmark.svg") center/contain no-repeat!important;
+  opacity:.035!important;
+  pointer-events:none!important;
+}
+.brand-logo-frame{
+  width:72px;height:72px;flex:0 0 72px;
+  display:grid;place-items:center;overflow:hidden;
+  border-radius:18px;background:#fff;
+  border:1px solid rgba(255,193,7,.35);
+  box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+.brand-logo-frame.small{width:44px;height:44px;flex-basis:44px;border-radius:12px}
+.cya-brand-logo{display:block;width:100%;height:100%;object-fit:cover}
+.brand-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.login-brand .brand-copy strong,.sidebar-brand .brand-copy strong{
+  font-family:var(--font);font-weight:800;letter-spacing:-.025em;line-height:1.05
+}
+.login-brand .brand-copy strong{font-size:16px}
+.login-brand .brand-copy span,.sidebar-brand .brand-copy span{
+  color:var(--muted);font-size:9px;letter-spacing:.035em
+}
+.sidebar-brand .brand-copy strong{font-size:11px}
+.login-brand{display:flex;align-items:center;gap:14px}
+.sidebar-brand{display:flex;align-items:center;gap:10px}
+
+.login-product-credit,.sidebar-credit{
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  gap:10px!important
+}
+.login-product-credit .credit-label,.sidebar-credit .credit-label{
+  grid-column:auto!important;white-space:nowrap;
+  color:var(--muted);font-size:7.5px!important;
+  text-transform:none!important;letter-spacing:.02em!important
+}
+.alva-lockup{display:flex;align-items:center;gap:6px;min-width:0}
+.alva-mark{width:22px;height:22px;object-fit:contain}
+.alva-wordmark{width:64px;height:24px;object-fit:contain;filter:brightness(2.05)}
+.alva-product-name{
+  color:var(--alva-signature);font-size:7px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.06em;white-space:nowrap
+}
+.sidebar-credit .alva-mark{width:20px;height:20px}
+.sidebar-credit .alva-wordmark{width:58px}
+.sidebar-credit .alva-product-name{font-size:6.5px}
+
+html[data-theme="light"] .alva-wordmark{filter:none}
+html[data-theme="light"] .brand-logo-frame{
+  border-color:rgba(15,39,68,.16);
+  box-shadow:0 8px 22px rgba(15,39,68,.08)
+}
+html[data-theme="light"] .login-shell{
+  background:
+    linear-gradient(135deg,rgba(15,39,68,.055),transparent 30%),
+    radial-gradient(circle at 88% 12%,rgba(255,193,7,.06),transparent 22%),
+    var(--navy)
+}
+html[data-theme="light"] .login-shell::before{opacity:.025!important}
+html[data-theme="light"] .btn-primary{
+  background:#0f2744!important;border-color:#0f2744!important;color:#fff!important;
+  box-shadow:0 8px 20px rgba(15,39,68,.14)
+}
+html[data-theme="light"] .btn-primary:hover{background:#16395f!important;border-color:#16395f!important}
+html[data-theme="light"] .nav-item.active{
+  background:rgba(15,39,68,.08)!important;
+  box-shadow:inset 3px 0 0 #0f2744!important
+}
+html[data-theme="light"] .nav-item.active>span,
+html[data-theme="light"] .eyebrow,
+html[data-theme="light"] .topbar-kicker,
+html[data-theme="light"] .kpi-card.money strong,
+html[data-theme="light"] .phase3-card-head>strong,
+html[data-theme="light"] .finance-amount,
+html[data-theme="light"] .client-service,
+html[data-theme="light"] .client-modal-current strong,
+html[data-theme="light"] .guide-richtext h4,
+html[data-theme="light"] .guide-source,
+html[data-theme="light"] .guide-progress-pill,
+html[data-theme="light"] .phase-head h3,
+html[data-theme="light"] .client-phase.is-current small,
+html[data-theme="light"] .required-note strong,
+html[data-theme="light"] .mobile-nav button.active{
+  color:#0f2744!important
+}
+html[data-theme="light"] .quick-stage,
+html[data-theme="light"] .client-status{
+  color:#0f2744!important;border-color:rgba(15,39,68,.18)!important;background:rgba(15,39,68,.055)!important
+}
+html[data-theme="light"] .phase-num,
+html[data-theme="light"] .client-phase.is-current>span{
+  background:#0f2744!important;border-color:#0f2744!important;color:#fff!important
+}
+html[data-theme="light"] .client-process-guide span,
+html[data-theme="light"] .client-detail-title>span,
+html[data-theme="light"] .guide-card-icon,
+html[data-theme="light"] .guide-step-number{
+  background:rgba(15,39,68,.075)!important;color:#0f2744!important
+}
+html[data-theme="light"] .guide-progress i,
+html[data-theme="light"] .phase3-bar i{background:linear-gradient(90deg,#0f2744,#264c7a)!important}
+html[data-theme="light"] .required-note{
+  border-color:rgba(15,39,68,.14)!important;background:rgba(15,39,68,.035)!important
+}
+html[data-theme="light"] .toast{border-left-color:#0f2744!important}
+
+@media(max-width:780px){
+  .login-brand{align-items:flex-start}
+  .brand-logo-frame{width:62px;height:62px;flex-basis:62px;border-radius:16px}
+  .login-brand .brand-copy strong{font-size:14px}
 }
