@@ -5,7 +5,7 @@
 
   // Single shared source for the C&A mark used by the login and portal profile/brand areas.
   // Replacing this existing asset updates every portal placement automatically.
-  const SHARED_LOGO='../assets/icons/icon-192x192.png';
+  const SHARED_LOGO='../assets/icons/cya-official.png?v=20260917-proof1';
 
   function installSharedLogo(){
     if(!document.getElementById('ca-shared-logo-styles')){
@@ -14,8 +14,7 @@
       style.textContent=`
         :root{--ca-portal-shared-logo:url("${SHARED_LOGO}");}
         .login-brand .brand-mark,
-        .sidebar-brand .brand-mark,
-        .sidebar-user .user-avatar{
+        .sidebar-brand .brand-mark{
           background-image:var(--ca-portal-shared-logo)!important;
           background-position:center!important;
           background-repeat:no-repeat!important;
@@ -26,14 +25,10 @@
         }
         .login-brand .brand-mark{box-shadow:0 8px 22px rgba(0,0,0,.18);}
         .sidebar-brand .brand-mark{box-shadow:0 5px 14px rgba(0,0,0,.16);}
-        .sidebar-user .user-avatar{
-          border:1px solid rgba(201,169,110,.35);
-          box-shadow:0 4px 12px rgba(0,0,0,.18);
-        }
       `;
       document.head.appendChild(style);
     }
-    document.querySelectorAll('.login-brand .brand-mark,.sidebar-brand .brand-mark,.sidebar-user .user-avatar').forEach(el=>{
+    document.querySelectorAll('.login-brand .brand-mark,.sidebar-brand .brand-mark').forEach(el=>{
       el.setAttribute('role','img');
       el.setAttribute('aria-label','Logo de Casillas & Asociados');
       el.title='Casillas & Asociados';
