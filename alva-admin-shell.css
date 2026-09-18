@@ -46,9 +46,22 @@
 .btn-primary{background:var(--accent-blue);border-color:var(--accent-blue);color:#10151b;font-weight:800}
 .btn-primary:hover{background:var(--accent-blue-dim);border-color:var(--accent-blue-dim);color:#fff}
 .card,.modal{box-shadow:0 10px 30px rgba(0,0,0,.08)}
-.alva-product-credit{padding:8px 10px 10px;margin-bottom:6px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:2px 6px;color:var(--text-muted)}
-.alva-product-credit span{grid-column:1/-1;font-size:8px;text-transform:uppercase;letter-spacing:1.2px}
-.alva-product-credit strong{font-size:14px;letter-spacing:.04em;color:var(--accent-blue)}
-.alva-product-credit small{font-size:8px;white-space:nowrap}
+.brand-logo .cya-brand-image{width:100%;height:100%;object-fit:contain;display:block;border-radius:50%;background:#fff}
+.login-screen{padding-bottom:96px}
+.login-logo{width:min(210px,70vw);height:92px;border-radius:14px;background:transparent;overflow:visible;margin-bottom:14px}
+.login-logo .cya-login-brand-image{width:100%;height:100%;object-fit:contain;display:block}
+.alva-product-credit{padding:8px 10px 12px;margin-bottom:6px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;align-items:flex-start;gap:5px;color:var(--text-muted)}
+.alva-product-credit span{display:block;font-size:8px;letter-spacing:.45px;line-height:1}
+.alva-product-credit img{display:block;width:132px;max-width:100%;height:auto;object-fit:contain}
+.login-alva-credit{position:absolute;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:min(190px,62vw);color:var(--text-muted);pointer-events:none}
+.login-alva-credit span{font-size:8px;letter-spacing:.45px;line-height:1}
+.login-alva-credit img{display:block;width:150px;max-width:100%;height:auto;object-fit:contain}
 .sidebar.collapsed .alva-product-credit{display:none}
-@media(max-width:760px){.topbar{height:60px;padding:0 12px}.sidebar-brand{height:60px}}
+@media(max-width:760px){
+  .topbar{height:60px;padding:0 12px}
+  .sidebar-brand{height:60px}
+  .login-screen{padding-bottom:88px}
+  .login-logo{width:min(180px,68vw);height:78px}
+  .login-alva-credit{bottom:max(12px,env(safe-area-inset-bottom));width:min(170px,66vw)}
+  .login-alva-credit img{width:138px}
+}
