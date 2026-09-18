@@ -5,11 +5,11 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0a0822",
-  "theme_color": "#0a0822",
+  "background_color": "#171717",
+  "theme_color": "#171717",
   "icons": [
     {
-      "src": "assets/icons/cya-official.png",
+      "src": "assets/icons/cya-favicon-20260918.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any maskable"
