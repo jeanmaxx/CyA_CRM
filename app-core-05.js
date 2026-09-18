@@ -867,8 +867,8 @@ function actualizarLogoSidebar(){
   const loginLogo = document.getElementById('login-logo-wrap');
   const loginText = document.getElementById('login-logo-text');
   if(logo){
-    if(wrap){ wrap.innerHTML=`<img src="${logo}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm);">`; }
-    if(loginLogo){ loginLogo.innerHTML=`<img src="${logo}" style="width:100%;height:100%;object-fit:cover;">`; }
+    if(wrap){ wrap.innerHTML=`<img src="${logo}" alt="Casillas & Asociados" style="width:100%;height:100%;object-fit:contain;background:transparent;">`; }
+    if(loginLogo){ loginLogo.innerHTML=`<img src="${logo}" alt="Casillas & Asociados" style="width:100%;height:100%;object-fit:contain;background:transparent;">`; }
     // Actualizar preview en modal
     const prev=document.getElementById('logo-preview');
     if(prev) prev.innerHTML=`<img src="${logo}" style="width:100%;height:100%;object-fit:contain;">`;
