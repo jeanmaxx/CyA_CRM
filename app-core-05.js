@@ -861,21 +861,38 @@ function clientesVisibles(){
 let logoTempBase64 = '';
 
 function actualizarLogoSidebar(){
-  const logo = store.configuracion.logo_empresa;
+  const logo = String(store.configuracion.logo_empresa || '').trim();
   const wrap = document.getElementById('sidebar-logo-wrap');
-  const text = document.getElementById('sidebar-logo-text');
   const loginLogo = document.getElementById('login-logo-wrap');
-  const loginText = document.getElementById('login-logo-text');
-  if(logo){
-    if(wrap){ wrap.innerHTML=`<img src="${logo}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm);">`; }
-    if(loginLogo){ loginLogo.innerHTML=`<img src="${logo}" style="width:100%;height:100%;object-fit:cover;">`; }
-    // Actualizar preview en modal
-    const prev=document.getElementById('logo-preview');
-    if(prev) prev.innerHTML=`<img src="${logo}" style="width:100%;height:100%;object-fit:contain;">`;
-  } else {
-    if(wrap){ wrap.innerHTML=`<span id="sidebar-logo-text" style="font-family:var(--font-display);font-weight:700;font-size:14px;color:#fff;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">C&A</span>`; }
-    if(loginLogo){ loginLogo.innerHTML=`<span id="login-logo-text" style="font-family:var(--font-display);font-weight:700;font-size:18px;color:#fff;">C&A</span>`; }
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const fallbackLogo = isLight
+    ? 'assets/brand/cya-logo-light.jpg?v=20260918-brand4'
+    : 'assets/brand/cya-logo-dark.png?v=20260918-brand4';
+  const logoSrc = logo || fallbackLogo;
+
+  function colocarLogo(target, src, opts){
+    if(!target) return;
+    const img = document.createElement('img');
+    img.alt = 'Casillas & Asociados';
+    img.src = src;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'contain';
+    img.style.display = 'block';
+    if(opts && opts.rounded) img.style.borderRadius = '50%';
+    img.onerror = function(){
+      if(this.dataset.cyaFallback === '1') return;
+      this.dataset.cyaFallback = '1';
+      this.src = fallbackLogo;
+    };
+    target.replaceChildren(img);
   }
+
+  colocarLogo(wrap, logoSrc, {rounded:true});
+  colocarLogo(loginLogo, logoSrc);
+
+  const prev = document.getElementById('logo-preview');
+  if(prev) colocarLogo(prev, logoSrc);
 }
 
 function cargarLogo(input){
