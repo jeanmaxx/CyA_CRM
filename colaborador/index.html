@@ -10,14 +10,16 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20260914-2">
   <link rel="stylesheet" href="phase2.css?v=20260914-1">
   <link rel="stylesheet" href="phase3.css?v=20260914-1">
   <link rel="stylesheet" href="phase4.css?v=20260914-1">
+  <link rel="stylesheet" href="alva-ui.css?v=20260917-proof1">
 </head>
 <body>
   <div id="login-view" class="login-shell">
+    <button class="icon-button login-theme" type="button" data-theme-toggle aria-label="Cambiar modo claro u oscuro" title="Cambiar tema">☀</button>
     <main class="login-card" aria-labelledby="login-title">
       <div class="login-brand">
         <div class="brand-mark">C&amp;A</div>
@@ -35,6 +37,7 @@
         <div id="login-error" class="form-message" role="alert"></div>
       </form>
       <div class="login-foot">El acceso es habilitado por tu asesor o por la administración de Casillas &amp; Asociados.</div>
+      <div class="login-product-credit"><span>Una solución de</span><strong>ALVA</strong><small>Soluciones Digitales</small></div>
     </main>
   </div>
 
@@ -49,13 +52,14 @@
         <button class="nav-item" data-page="estadisticas" type="button"><span>▥</span>Estadísticas</button>
         <button class="nav-item" data-page="finanzas" type="button"><span>◇</span>Finanzas</button>
       </nav>
+      <div class="sidebar-credit"><span>Una solución de</span><strong>ALVA</strong><small>Soluciones Digitales</small></div>
       <div class="sidebar-user"><div class="user-avatar" id="sidebar-avatar">CA</div><div><strong id="sidebar-name">Colaborador</strong><span id="sidebar-advisor">Asesor asignado</span></div><button id="logout-btn" class="icon-button" type="button" title="Cerrar sesión">↩</button></div>
     </aside>
 
     <div class="portal-main">
       <header class="topbar">
         <div><span class="topbar-kicker">PORTAL DE COLABORADORES</span><h2 id="page-title">Inicio</h2></div>
-        <div class="topbar-actions"><span id="sync-label" class="sync-label">Actualizado</span><button id="new-prospect-top" class="btn btn-primary" type="button">+ Prospecto</button></div>
+        <div class="topbar-actions"><span id="sync-label" class="sync-label">Actualizado</span><button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="Cambiar modo claro u oscuro" title="Cambiar tema">☀</button><button id="new-prospect-top" class="btn btn-primary" type="button">+ Prospecto</button></div>
       </header>
       <main id="page-content" class="content"></main>
     </div>
@@ -114,6 +118,7 @@
   <script src="phase4.js?v=20260914-1"></script>
   <script src="phase5.js?v=20260914-1"></script>
   <script src="phase6.js?v=20260914-1"></script>
-  <script src="phase7.js?v=20260914-1"></script>
+  <script src="phase7.js?v=20260917-proof1"></script>
+  <script src="alva-ui.js?v=20260917-proof1"></script>
 </body>
 </html>
