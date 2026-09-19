@@ -2,8 +2,8 @@ const CFG=window.ALVA_PLATFORM_CONFIG;
 const sb=window.supabase.createClient(CFG.supabaseUrl,CFG.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const state={session:null,admin:null,tenants:[],plans:[],stats:{},leads:[],payments:[],backups:[],alerts:[],contractTemplates:[],financialReport:null,platformAdmins:[],view:'dashboard'};
-const viewTitles={dashboard:'Resumen',clientes:'Clientes',solicitudes:'Solicitudes',planes:'Planes y módulos',facturacion:'Facturación',reportes:'Reporte financiero',plantillas:'Plantillas contractuales',respaldos:'Respaldos',alertas:'Centro de alertas',equipo:'Equipo ALVA',actividad:'Actividad',configuracion:'Configuración'};
+const state={session:null,admin:null,tenants:[],plans:[],stats:{},leads:[],payments:[],backups:[],alerts:[],notifications:[],notificationDraft:null,contractTemplates:[],financialReport:null,platformAdmins:[],view:'dashboard'};
+const viewTitles={dashboard:'Resumen',clientes:'Clientes',solicitudes:'Solicitudes',planes:'Planes y módulos',facturacion:'Facturación',reportes:'Reporte financiero',plantillas:'Plantillas contractuales',respaldos:'Respaldos',alertas:'Centro de alertas',notificaciones:'Notificaciones',equipo:'Equipo ALVA',actividad:'Actividad',configuracion:'Configuración'};
 const statusLabels={active:'Activo',implementation:'Implementación',suspended:'Suspendido',cancelled:'Cancelado'};
 const moduleLabels={prospects:'Prospectos',clients:'Clientes',agenda:'Agenda',dashboard:'Dashboard',finance:'Finanzas',collaborators:'Colaboradores',documents:'Documentos',reports:'Reportes',multi_office:'Múltiples oficinas',custom_workflows:'Flujos personalizados'};
 const leadStatusLabels={new:'Nueva',contacted:'Contactada',demo:'Demo',qualified:'Calificada',won:'Ganada',lost:'Perdida'};
@@ -22,9 +22,9 @@ function showShell(){$('#auth-view')?.classList.add('hidden');$('#shell')?.class
 function applyRoleUI(){
   const role=state.admin?.role||'';
   $$('[data-role-view="owner"]').forEach(el=>el.hidden=role!=='owner');
-  $('[data-role-view="billing"]').forEach(el=>el.hidden=!['owner','admin','billing'].includes(role));
-  $('[data-role-view="reports"]').forEach(el=>el.hidden=!['owner','admin','billing'].includes(role));
-  $('[data-role-view="backups"]').forEach(el=>el.hidden=!['owner','admin','support'].includes(role));
+  $$('[data-role-view="billing"]').forEach(el=>el.hidden=!['owner','admin','billing'].includes(role));
+  $$('[data-role-view="reports"]').forEach(el=>el.hidden=!['owner','admin','billing'].includes(role));
+  $$('[data-role-view="backups"]').forEach(el=>el.hidden=!['owner','admin','support'].includes(role));
   $$('[data-role-view="templates"]').forEach(el=>el.hidden=!['owner','admin','support'].includes(role));
   if($('#new-client'))$('#new-client').hidden=!['owner','admin'].includes(role);
   if($('#upload-contract-template'))$('#upload-contract-template').hidden=!['owner','admin'].includes(role);
@@ -34,7 +34,7 @@ $('#login-form')?.addEventListener('submit',async e=>{e.preventDefault();const b
 $('#logout')?.addEventListener('click',async()=>{await sb.auth.signOut();location.reload()});
 $('#account-button')?.addEventListener('click',()=>$('#account-popover').classList.toggle('open'));
 document.addEventListener('click',e=>{if(!e.target.closest('.account-menu'))$('#account-popover')?.classList.remove('open')});
-function switchView(v){if(!$('#view-'+v))return;state.view=v;$$('.view').forEach(x=>x.classList.remove('active'));$$('.sidebar nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#view-'+v).classList.add('active');$('#view-title').textContent=viewTitles[v]||v;if(v==='actividad')loadActivity();if(v==='planes')renderPlans();if(v==='solicitudes')loadSalesLeads();if(v==='facturacion')loadBilling();if(v==='reportes')loadFinancialReport();if(v==='plantillas')loadContractTemplates();if(v==='respaldos')loadBackups();if(v==='alertas')loadAlerts();if(v==='equipo')loadPlatformAdmins()}
+function switchView(v){if(!$('#view-'+v))return;state.view=v;$$('.view').forEach(x=>x.classList.remove('active'));$$('.sidebar nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#view-'+v).classList.add('active');$('#view-title').textContent=viewTitles[v]||v;if(v==='actividad')loadActivity();if(v==='planes')renderPlans();if(v==='solicitudes')loadSalesLeads();if(v==='facturacion')loadBilling();if(v==='reportes')loadFinancialReport();if(v==='plantillas')loadContractTemplates();if(v==='respaldos')loadBackups();if(v==='alertas')loadAlerts();if(v==='notificaciones')loadNotifications();if(v==='equipo')loadPlatformAdmins()}
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
 
 async function loadDashboard(silent=false){if(!silent)toast('Actualizando datos…');try{const data=await api('dashboard');state.tenants=data.tenants||[];state.plans=data.plans||[];state.stats=data.stats||{};renderDashboard();renderClients();renderPlans();fillPlanOptions();fillPaymentOrganizations();fillTemplateOrganizations();if(!silent)toast('Datos actualizados')}catch(e){toast(e.message,true)}}
@@ -253,7 +253,8 @@ function renderAlerts(){
     const org=a.organization||{};
     const severity='<span class="alert-severity '+esc(a.severity)+'">'+esc(alertSeverityLabels[a.severity]||a.severity)+'</span>';
     const status=a.status==='dismissed'?'<span class="tag implementation">Descartada</span>':'<span class="tag active">Abierta</span>';
-    const action='<button class="table-action" data-alert-status="'+esc(a.id)+'" data-status="'+esc(a.status)+'">'+(a.status==='dismissed'?'Reabrir':'Descartar')+'</button>';
+    const notify=['billing','renewal'].includes(a.category)?'<button class="table-action" data-alert-notify="'+esc(a.id)+'">Preparar aviso</button>':'';
+    const action='<div class="table-actions">'+notify+'<button class="table-action" data-alert-status="'+esc(a.id)+'" data-status="'+esc(a.status)+'">'+(a.status==='dismissed'?'Reabrir':'Descartar')+'</button></div>';
     return '<tr><td>'+severity+'</td><td><strong>'+esc(org.name||'Plataforma')+'</strong><small>'+esc(org.slug||'')+'</small></td>'+
       '<td>'+esc(alertCategoryLabels[a.category]||a.category)+'</td>'+
       '<td><strong>'+esc(a.title)+'</strong><small class="alert-message">'+esc(a.message||'')+'</small></td>'+
@@ -261,7 +262,8 @@ function renderAlerts(){
       '<td>'+esc(timeAgo(a.last_detected_at))+'</td>'+
       '<td>'+status+'</td><td>'+action+'</td></tr>';
   }).join(''):'<tr><td colspan="8"><div class="empty">No hay alertas para este filtro.</div></td></tr>';
-  $('[data-alert-status]').forEach(btn=>btn.onclick=()=>setAlertStatus(btn.dataset.alertStatus,btn.dataset.status==='dismissed'?'open':'dismissed'));
+  $$('[data-alert-status]').forEach(btn=>btn.onclick=()=>setAlertStatus(btn.dataset.alertStatus,btn.dataset.status==='dismissed'?'open':'dismissed'));
+  $$('[data-alert-notify]').forEach(btn=>btn.onclick=()=>openNotificationDraft(btn.dataset.alertNotify));
 }
 async function setAlertStatus(alertId,status){
   try{
@@ -273,6 +275,94 @@ async function setAlertStatus(alertId,status){
 $('#reload-alerts')?.addEventListener('click',loadAlerts);
 $('#alert-category-filter')?.addEventListener('change',renderAlerts);
 $('#alert-status-filter')?.addEventListener('change',renderAlerts);
+
+const notificationStatusLabels={draft:'Borrador',queued:'En cola',sent:'Enviada',failed:'Fallida',cancelled:'Cancelada'};
+async function loadNotifications(){
+  const body=$('#notification-table');if(!body)return;
+  body.innerHTML='<tr><td colspan="8"><div class="empty">Cargando notificaciones…</div></td></tr>';
+  try{
+    const data=await api('notifications_overview');
+    state.notifications=data.notifications||[];
+    const counts=data.counts||{};
+    $('#notification-draft-count').textContent=counts.draft??0;
+    $('#notification-queued-count').textContent=counts.queued??0;
+    $('#notification-sent-count').textContent=counts.sent??0;
+    $('#notification-failed-count').textContent=counts.failed??0;
+    renderNotifications();
+  }catch(e){
+    body.innerHTML='<tr><td colspan="8"><div class="empty">'+esc(e.message)+'</div></td></tr>';
+  }
+}
+function renderNotifications(){
+  const body=$('#notification-table');if(!body)return;
+  body.innerHTML=state.notifications.length?state.notifications.map(n=>{
+    const org=n.organization||{};
+    const statusClass=n.status==='sent'?'active':n.status==='failed'?'cancelled':'implementation';
+    return '<tr><td><strong>'+esc(org.name||'Organización')+'</strong><small>'+esc(org.slug||'')+'</small></td>'+
+      '<td>'+esc(n.channel==='whatsapp'?'WhatsApp':'Correo')+'</td>'+
+      '<td>'+esc(n.recipient||'—')+'</td>'+
+      '<td>'+esc(n.subject||'—')+'</td>'+
+      '<td><span class="tag '+statusClass+'">'+esc(notificationStatusLabels[n.status]||n.status)+'</span></td>'+
+      '<td>'+esc(formatDate(n.created_at))+'</td>'+
+      '<td>'+esc(formatDate(n.sent_at))+'</td>'+
+      '<td><button class="table-action" data-notification-open="'+esc(n.id)+'">Ver</button></td></tr>';
+  }).join(''):'<tr><td colspan="8"><div class="empty">Todavía no hay borradores ni envíos registrados.</div></td></tr>';
+  $$('[data-notification-open]').forEach(btn=>btn.onclick=()=>showExistingNotification(btn.dataset.notificationOpen));
+}
+function showNotificationDraft(notification,alreadySent=false){
+  state.notificationDraft=notification;
+  $('#notification-id').value=notification.id||'';
+  $('#notification-alert-id').value=notification.alert_id||'';
+  $('#notification-channel').value=notification.channel||'email';
+  $('#notification-recipient').value=notification.recipient||'';
+  $('#notification-subject').value=notification.subject||'';
+  $('#notification-body').value=notification.body||'';
+  $('#notification-subject-wrap').hidden=notification.channel==='whatsapp';
+  const sent=alreadySent||notification.status==='sent';
+  const mark=$('#mark-notification-sent');
+  mark.disabled=sent;mark.textContent=sent?'Enviada':'Marcar como enviado';
+  $('#notification-dialog').showModal();
+}
+function showExistingNotification(id){
+  const n=state.notifications.find(x=>x.id===id);if(!n)return;
+  showNotificationDraft(n,n.status==='sent');
+}
+async function prepareNotification(alertId,channel='email'){
+  const data=await api('notification_prepare',{alert_id:alertId,channel});
+  showNotificationDraft(data.notification,data.already_sent===true);
+  return data;
+}
+async function openNotificationDraft(alertId){
+  try{await prepareNotification(alertId,'email')}
+  catch(emailError){
+    try{await prepareNotification(alertId,'whatsapp')}
+    catch(whatsappError){toast(whatsappError.message||emailError.message,true)}
+  }
+}
+$('#notification-channel')?.addEventListener('change',async e=>{
+  const alertId=$('#notification-alert-id').value;if(!alertId)return;
+  try{await prepareNotification(alertId,e.target.value)}
+  catch(err){toast(err.message,true)}
+});
+$('#copy-notification')?.addEventListener('click',async()=>{
+  const channel=$('#notification-channel').value;
+  const subject=$('#notification-subject').value,body=$('#notification-body').value;
+  const text=channel==='email'&&subject?('Asunto: '+subject+'\n\n'+body):body;
+  try{await navigator.clipboard.writeText(text);toast('Mensaje copiado')}
+  catch{toast('No se pudo copiar automáticamente',true)}
+});
+$('#mark-notification-sent')?.addEventListener('click',async()=>{
+  const id=$('#notification-id').value;if(!id)return;
+  const btn=$('#mark-notification-sent');btn.disabled=true;
+  try{
+    const data=await api('notification_mark_sent',{notification_id:id});
+    state.notificationDraft=data.notification;
+    btn.textContent='Enviada';
+    toast('Envío registrado');
+    await loadNotifications();
+  }catch(e){btn.disabled=false;toast(e.message,true)}
+});
+$('#reload-notifications')?.addEventListener('click',loadNotifications);
 
 function fillTemplateOrganizations(){
   const sel=$('#template-org');if(!sel)return;
@@ -323,9 +413,9 @@ function renderContractTemplates(){
       '<td>'+integrity+'</td>'+
       '<td><div class="table-actions">'+upload+download+toggle+'</div></td></tr>';
   }).join('');
-  $('[data-template-upload]').forEach(btn=>btn.onclick=()=>openContractTemplateDialog(btn.dataset.templateUpload));
-  $('[data-template-download]').forEach(btn=>btn.onclick=()=>downloadContractTemplate(btn.dataset.templateDownload));
-  $('[data-template-toggle]').forEach(btn=>btn.onclick=()=>toggleContractTemplate(btn.dataset.templateToggle,btn.dataset.active!=='1'));
+  $$('[data-template-upload]').forEach(btn=>btn.onclick=()=>openContractTemplateDialog(btn.dataset.templateUpload));
+  $$('[data-template-download]').forEach(btn=>btn.onclick=()=>downloadContractTemplate(btn.dataset.templateDownload));
+  $$('[data-template-toggle]').forEach(btn=>btn.onclick=()=>toggleContractTemplate(btn.dataset.templateToggle,btn.dataset.active!=='1'));
 }
 function applyTemplateDefaults(orgId){
   const form=$('#contract-template-form');if(!form)return;
@@ -448,8 +538,8 @@ function renderBackups(){
       '<td>'+(counts||'—')+'</td>'+
       '<td><div class="table-actions"><button class="table-action" data-backup-run="'+esc(r.organization_id)+'">Nuevo</button>'+download+'</div></td></tr>';
   }).join('');
-  $('[data-backup-run]').forEach(btn=>btn.onclick=()=>requestBackup(btn.dataset.backupRun));
-  $('[data-backup-download]').forEach(btn=>btn.onclick=()=>downloadBackup(btn.dataset.backupDownload));
+  $$('[data-backup-run]').forEach(btn=>btn.onclick=()=>requestBackup(btn.dataset.backupRun));
+  $$('[data-backup-download]').forEach(btn=>btn.onclick=()=>downloadBackup(btn.dataset.backupDownload));
 }
 async function requestBackup(orgId){
   const tenant=state.tenants.find(t=>t.id===orgId);
