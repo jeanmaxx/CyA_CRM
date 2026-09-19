@@ -13,6 +13,10 @@ const PHASES=[
 ];
 
 const state={page:'inicio',bootstrap:null,prospects:[],editingId:null,loading:false};
+function portalOrganizationName(){
+  return String(state.bootstrap?.organization?.name||window.ALVA_COLLABORATOR_BRAND?.companyName||'tu organización').trim()||'tu organización';
+}
+window.portalOrganizationName=portalOrganizationName;
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=value=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}).format(Number(value||0));
@@ -70,7 +74,7 @@ function fillServices(){
 function renderHome(){
   const data=state.bootstrap||{},d=data.dashboard||{},c=data.collaborator||{},a=data.advisor||{};
   const recent=[...state.prospects].sort((x,y)=>String(y.updatedAt||y.createdAt).localeCompare(String(x.updatedAt||x.createdAt))).slice(0,5);
-  return `<section class="hero"><div><span class="eyebrow">BIENVENIDO</span><h1>Hola, ${esc(String(c.name||'').split(/\s+/)[0]||'colaborador')}</h1><p>Registra oportunidades y consulta lo que ya compartiste con Casillas & Asociados.</p></div><div class="advisor-pill">Asesor asignado · ${esc(a.name||'—')}</div></section>
+  return `<section class="hero"><div><span class="eyebrow">BIENVENIDO</span><h1>Hola, ${esc(String(c.name||'').split(/\s+/)[0]||'colaborador')}</h1><p>Registra oportunidades y consulta lo que ya compartiste con ${esc(portalOrganizationName())}.</p></div><div class="advisor-pill">Asesor asignado · ${esc(a.name||'—')}</div></section>
   <section class="kpi-grid">
     <article class="kpi-card"><span>Prospectos enviados</span><strong>${Number(d.opportunities||0)}</strong><small>Oportunidades históricas</small></article>
     <article class="kpi-card"><span>Clientes convertidos</span><strong>${Number(d.converted||0)}</strong><small>Ya forman parte del proceso</small></article>
