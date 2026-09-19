@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
   <section class="auth-view" id="auth-view">
@@ -41,6 +41,7 @@
         <button data-view="reportes" data-role-view="reports"><i>▥</i><span>Reportes</span></button>
         <button data-view="plantillas" data-role-view="templates"><i>▤</i><span>Plantillas</span></button>
         <button data-view="respaldos" data-role-view="backups"><i>⇩</i><span>Respaldos</span></button>
+        <button data-view="alertas"><i>!</i><span>Alertas</span></button>
         <button data-view="equipo" data-role-view="owner"><i>◎</i><span>Equipo ALVA</span></button>
         <button data-view="actividad"><i>↗</i><span>Actividad</span></button>
         <button data-view="configuracion"><i>⚙</i><span>Configuración</span></button>
@@ -149,6 +150,21 @@
             <article><small>AUTOMÁTICO</small><strong>01:00</strong><span>Hora centro de México</span></article>
           </div>
           <section class="panel table-panel"><table><thead><tr><th>Organización</th><th>Tipo</th><th>Estado</th><th>Inicio</th><th>Tamaño</th><th>Registros</th><th></th></tr></thead><tbody id="backup-table"></tbody></table></section>
+        </section>
+
+        <section class="view" id="view-alertas">
+          <div class="page-intro billing-head"><div><span class="kicker">SEGUIMIENTO</span><h2>Centro de alertas</h2><p>Cobranza, renovaciones, respaldos y configuración pendiente de los clientes.</p></div><div class="page-actions"><button class="ghost" id="reload-alerts">Actualizar alertas</button></div></div>
+          <div class="billing-kpis">
+            <article><small>CRÍTICAS</small><strong id="alert-critical">—</strong><span>Atención inmediata</span></article>
+            <article><small>ADVERTENCIAS</small><strong id="alert-warning">—</strong><span>Seguimiento requerido</span></article>
+            <article><small>INFORMATIVAS</small><strong id="alert-info">—</strong><span>Próximos eventos</span></article>
+            <article><small>DESCARTADAS</small><strong id="alert-dismissed">—</strong><span>Ocultas temporalmente</span></article>
+          </div>
+          <div class="toolbar alert-toolbar">
+            <select id="alert-category-filter"><option value="">Todas las categorías</option><option value="billing">Cobranza</option><option value="renewal">Renovación</option><option value="backup">Respaldos</option><option value="template">Plantillas</option><option value="onboarding">Onboarding</option><option value="system">Sistema</option></select>
+            <select id="alert-status-filter"><option value="open">Abiertas</option><option value="">Abiertas + descartadas</option><option value="dismissed">Descartadas</option></select>
+          </div>
+          <section class="panel table-panel"><table><thead><tr><th>Prioridad</th><th>Organización</th><th>Categoría</th><th>Alerta</th><th>Fecha</th><th>Detectada</th><th>Estado</th><th></th></tr></thead><tbody id="alert-table"></tbody></table></section>
         </section>
 
         <section class="view" id="view-equipo">
@@ -274,7 +290,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=10"></script>
-  <script src="app.js?v=10"></script>
+  <script src="config.js?v=11"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>
