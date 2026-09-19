@@ -46,6 +46,7 @@ Implementada:
 - Respaldos diarios multiempresa en ZIP, historial global, respaldo manual por organización y descarga mediante URL firmada de 5 minutos.
 - Prueba manual de respaldo completada con ZIP válido en Supabase Storage.
 - Prueba transaccional de aislamiento: C&A no ve un tenant sandbox; suspendido ve 0 organizaciones; reactivado recupera solo su organización.
+- Reportes financieros mensuales: cobrado, comparación con mes anterior, MRR, clientes activos/nuevos/vencidos y exportación CSV.
 - Plantillas contractuales por tenant: carga/descarga de DOCX v3, activación, valores predeterminados, tamaño y SHA-256 desde Control Center.
 - Fallback seguro: si una organización no tiene plantilla Word privada activa, el CRM conserva el contrato estándar en lugar de fallar.
 - Plantilla v3 de C&A validada por firma ZIP/DOCX y metadatos de integridad sin modificar su contenido.
@@ -65,7 +66,7 @@ Los usuarios internos creados para nuevas organizaciones usan metadata `portal=i
 ## Pendiente recomendado
 1. Prueba manual de alta completa desde Control Center con una empresa sandbox y credenciales reales.
 2. Correos automatizados de bienvenida, renovación y cobranza.
-3. Reporte financiero mensual y exportación.
+3. Centro de alertas y notificaciones de renovación/cobranza.
 4. Dominio comercial definitivo y subdominio privado para Control Center.
 5. Integración con proveedor de pagos si se decide automatizar cobro.
 6. Segundo destino externo de respaldos (actualmente el ZIP principal queda seguro en Supabase Storage).
