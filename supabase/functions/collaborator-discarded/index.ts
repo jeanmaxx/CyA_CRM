@@ -22,6 +22,9 @@ Deno.serve(async(req:Request)=>{
     if(!account||account.active!==true)return respond(req,403,{error:'Tu acceso al Portal de Colaboradores no está activo'});
     const {data:tenant}=await admin.from('platform_tenants').select('status,suspension_reason').eq('organization_id',account.organization_id).maybeSingle();
     if(tenant&&['suspended','cancelled'].includes(String(tenant.status)))return respond(req,403,{error:tenant.status==='cancelled'?'El servicio de esta organización está cancelado':('El servicio de esta organización está suspendido'+(tenant.suspension_reason?': '+tenant.suspension_reason:''))});
+    const {data:moduleAllowed,error:moduleError}=await admin.rpc('organization_module_allowed',{target_org:account.organization_id,module_name:'collaborators'});
+    if(moduleError)throw moduleError;
+    if(moduleAllowed!==true)return respond(req,403,{error:'El Portal de Colaboradores no está incluido en el plan de esta organización'});
     const {data:collaborator,error:collabError}=await admin.from('collaborators').select('id,active').eq('organization_id',account.organization_id).eq('id',account.collaborator_id).maybeSingle();
     if(collabError)throw collabError;
     if(!collaborator||collaborator.active===false)return respond(req,403,{error:'El colaborador está inactivo'});
