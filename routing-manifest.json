@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "product": "ALVA CRM",
+  "canonical": {
+    "landing": {
+      "path": "/",
+      "entry": "index.html"
+    },
+    "demo": {
+      "path": "/demo/",
+      "entry": "demo/index.html",
+      "dataPolicy": "synthetic-only"
+    },
+    "admin": {
+      "path": "/admin/",
+      "entry": "admin/index.html"
+    },
+    "app": {
+      "path": "/app/",
+      "entry": "app/index.html",
+      "tenantAware": false
+    }
+  },
+  "legacy": {
+    "commercial": "/platform/site/",
+    "admin": "/platform/admin/",
+    "crmRoot": "legacy main root before phase B",
+    "collaborators": "/colaborador/"
+  },
+  "future": {
+    "tenantRuntime": "/app/<tenant>/",
+    "cyaAlias": "/C&ACRM/",
+    "collaboratorRuntime": "/app/<tenant>/colaboradores/",
+    "cyaCollaboratorsAlias": "/C&ACRM/Colaboradores/"
+  }
+}
