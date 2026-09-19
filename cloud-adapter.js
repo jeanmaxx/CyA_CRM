@@ -21,6 +21,62 @@ let cloudSyncTimer = null;
 let cloudSyncRunning = false;
 let cloudSyncPending = false;
 let cloudLegacyAdvisors = [];
+let cloudEntitlements = {plan_id:null,plan_name:'',seat_limit:null,modules:null,status:null};
+const cloudPageModules = Object.freeze({
+  dashboard:'dashboard',
+  leads:'prospects',
+  clientes:'clients',
+  pipeline:'clients',
+  contratos:'documents',
+  plantillas:'documents',
+  agenda:'agenda',
+  finanzas:'finance',
+  colaboradores:'collaborators',
+});
+const cloudTableModules = Object.freeze({
+  leads:'prospects',
+  clients:'clients',
+  agenda_events:'agenda',
+  collaborators:'collaborators',
+  message_templates:'documents',
+  contract_templates:'documents',
+});
+function cloudHasModule(moduleName){
+  if(!moduleName) return true;
+  if(!Array.isArray(cloudEntitlements.modules)) return true;
+  return cloudEntitlements.modules.includes(moduleName);
+}
+function cloudTableEnabled(table){
+  return cloudHasModule(cloudTableModules[table] || null);
+}
+function cloudPageEnabled(page){
+  return cloudHasModule(cloudPageModules[page] || null);
+}
+function cloudApplyModuleAccess(){
+  document.querySelectorAll('.nav-item[data-page]').forEach(item=>{
+    const page=item.getAttribute('data-page')||'';
+    item.classList.toggle('cloud-module-disabled',!cloudPageEnabled(page));
+    if(!cloudPageEnabled(page)) item.setAttribute('aria-disabled','true');
+    else item.removeAttribute('aria-disabled');
+  });
+  if(!document.getElementById('cloud-module-access-style')){
+    const style=document.createElement('style');
+    style.id='cloud-module-access-style';
+    style.textContent='.nav-item.cloud-module-disabled{display:none!important;}';
+    document.head.appendChild(style);
+  }
+}
+const cloudNavigateBase=navigate;
+navigate=function(page,el){
+  if(!cloudPageEnabled(page)){
+    showToast('Este módulo no está incluido en el plan de tu organización.','warn');
+    return;
+  }
+  return cloudNavigateBase.apply(this,arguments);
+};
+window.cloudHasModule=cloudHasModule;
+window.cloudPageEnabled=cloudPageEnabled;
+window.cloudApplyModuleAccess=cloudApplyModuleAccess;
 const cloudKnownIds = {
   services: new Set(),
   collaborators: new Set(),
@@ -247,11 +303,11 @@ async function cloudSyncNow(options={}){
     // después se ejecutan las eliminaciones. Así una conversión nunca elimina
     // el prospecto en la nube antes de haber guardado el nuevo cliente.
     const pendingDeletes=[];
-    pendingDeletes.push(await cloudUpsertCollection('collaborators',cloudCollaboratorRows()));
-    pendingDeletes.push(await cloudUpsertCollection('leads',cloudLeadRows()));
-    pendingDeletes.push(await cloudUpsertCollection('clients',cloudClientRows()));
-    pendingDeletes.push(await cloudUpsertCollection('agenda_events',cloudEventRows()));
-    pendingDeletes.push(await cloudUpsertCollection('message_templates',cloudTemplateRows()));
+    if(cloudTableEnabled('collaborators')) pendingDeletes.push(await cloudUpsertCollection('collaborators',cloudCollaboratorRows()));
+    if(cloudTableEnabled('leads')) pendingDeletes.push(await cloudUpsertCollection('leads',cloudLeadRows()));
+    if(cloudTableEnabled('clients')) pendingDeletes.push(await cloudUpsertCollection('clients',cloudClientRows()));
+    if(cloudTableEnabled('agenda_events')) pendingDeletes.push(await cloudUpsertCollection('agenda_events',cloudEventRows()));
+    if(cloudTableEnabled('message_templates')) pendingDeletes.push(await cloudUpsertCollection('message_templates',cloudTemplateRows()));
     if(isTechnicalAdmin()){
       pendingDeletes.push(await cloudUpsertCollection('services',cloudServiceRows()));
       const settingsPayload={...cloudCleanObject(store.configuracion || {}),__legacyAdvisors:cloudLegacyAdvisors};
@@ -385,6 +441,18 @@ async function cloudEnterSession(session){
       throw new Error(`El acceso de ${access.organization_name||'tu organización'} está ${label}.${reason?' Motivo: '+reason:''} Contacta a ALVA Soluciones Digitales.`);
     }
     if(access.organization_id) CA_ORG_ID=String(access.organization_id);
+    const {data:entitlementRows,error:entitlementError}=await supabaseClient.rpc('get_my_tenant_entitlements');
+    if(entitlementError) throw new Error('No se pudieron validar los módulos contratados');
+    const entitlement=Array.isArray(entitlementRows)?entitlementRows[0]:entitlementRows;
+    if(!entitlement) throw new Error('No se encontró la configuración del plan de esta organización');
+    cloudEntitlements={
+      plan_id:entitlement.plan_id||null,
+      plan_name:entitlement.plan_name||'',
+      seat_limit:entitlement.seat_limit??null,
+      modules:Array.isArray(entitlement.modules)?entitlement.modules:[],
+      status:entitlement.status||access.status||null,
+    };
+    window.CA_TENANT_ENTITLEMENTS=cloudEntitlements;
     const requestedTenant=String(window.CA_CLOUD_CONFIG?.tenantSlug||'').trim();
     if(requestedTenant){
       const {data:tenantOrg,error:tenantOrgError}=await supabaseClient.from('organizations').select('slug,name').eq('id',CA_ORG_ID).maybeSingle();
@@ -405,7 +473,7 @@ async function cloudEnterSession(session){
     const main=document.querySelector('.main'); if(main) main.style.display='flex';
     const sidebar=document.getElementById('main-sidebar'); if(sidebar) sidebar.style.display='flex';
     currentPage='dashboard';
-    actualizarSidebarSesion();updateRolUI();aplicarOrdenSidebar();procesarRecontactosLeads();
+    actualizarSidebarSesion();updateRolUI();aplicarOrdenSidebar();cloudApplyModuleAccess();procesarRecontactosLeads();
     navigate('dashboard',document.querySelector('[data-page="dashboard"]'));
     iniciarRecordatorioEventos();initSidebarState();
   }catch(error){
@@ -424,6 +492,8 @@ cerrarSesion=async function(){
   cloudReady=false;
   await supabaseClient.auth.signOut();
   CA_ORG_ID=window.CA_CLOUD_CONFIG.organizationId;
+  cloudEntitlements={plan_id:null,plan_name:'',seat_limit:null,modules:null,status:null};
+  window.CA_TENANT_ENTITLEMENTS=cloudEntitlements;
   sesionActiva=null;privateContractTemplate=null;wordContractCurrent=null;
   store={clientes:[],servicios:[],agenda:[],asesores:[],colaboradores:[],leads:[],configuracion:{...cloudDefaults.configuracion}};
   cloudPrepareLogin();
