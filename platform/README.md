@@ -39,8 +39,14 @@ Implementada:
 - Suspensión automática opcional por pago vencido.
 - Revisión diaria mediante `pg_cron` a las 13:15 UTC (07:15 centro de México).
 - Administración de accesos ALVA: owner, admin, support y billing.
+- Límite real de usuarios por tenant; la creación de asesores se bloquea al alcanzar `seat_limit`.
+- Datos corporativos del tenant (domicilio, representante y ciudad contractual) gestionables desde Control Center.
+- Enlaces de acceso por tenant con branding público: `/?tenant=slug`, sin cambiar el login normal de C&A.
+- Validación de contexto: una cuenta de otra organización no puede iniciar desde el enlace de un tenant diferente.
+- Respaldos diarios multiempresa en ZIP, historial global, respaldo manual por organización y descarga mediante URL firmada de 5 minutos.
+- Prueba manual de respaldo completada con ZIP válido en Supabase Storage.
 - Prueba transaccional de aislamiento: C&A no ve un tenant sandbox; suspendido ve 0 organizaciones; reactivado recupera solo su organización.
-- Pruebas CI para multiempresa, suspensión y Edge Functions.
+- Pruebas CI para multiempresa, suspensión, límites de usuarios, branding, respaldos y Edge Functions.
 
 ## Seguridad
 El CRM de cada organización conserva aislamiento por RLS. El Control Center utiliza una Edge Function protegida con JWT y valida además que el usuario esté activo en `platform_admins`.
@@ -53,12 +59,12 @@ Los usuarios internos creados para nuevas organizaciones usan metadata `portal=i
 
 ## Pendiente recomendado
 1. Prueba manual de alta completa desde Control Center con una empresa sandbox y credenciales reales.
-2. Configuración de datos corporativos/contratos de cada nuevo tenant durante onboarding.
+2. Carga/administración central de plantillas contractuales específicas por tenant.
 3. Correos automatizados de bienvenida, renovación y cobranza.
 4. Dominio comercial definitivo y subdominio privado para Control Center.
 5. Integración con proveedor de pagos si se decide automatizar cobro.
 6. Reporte financiero mensual y exportación.
-7. Backups multiempresa administrables desde Control Center.
+7. Segundo destino externo de respaldos (actualmente el ZIP principal queda seguro en Supabase Storage).
 
 ## Regla de arquitectura
 El CRM operativo permanece independiente en apariencia. Las capacidades SaaS se agregan alrededor del CRM y la organización se resuelve a partir del usuario autenticado, sin mezclar datos entre empresas.
