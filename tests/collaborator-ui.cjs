@@ -3,6 +3,7 @@ const fs=require('fs'),assert=require('node:assert/strict');
 const html=fs.readFileSync('colaborador/index.html','utf8');
 const css=fs.readFileSync('colaborador/alva-phase-d.css','utf8');
 const branding=fs.readFileSync('colaborador/phase-d-branding.js','utf8');
+const finalizer=fs.readFileSync('colaborador/phase-d-finalize.js','utf8');
 const app=fs.readFileSync('colaborador/app.js','utf8');
 
 assert.match(html,/alva-phase-d\.css\?v=phase-d1/);
@@ -24,6 +25,7 @@ assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length,'CSS br
 assert.match(branding,/ALVA_TENANT_ROUTE/);
 assert.match(branding,/platform-branding/);
 assert.match(branding,/ALVA_COLLABORATOR_BRAND/);
+assert.match(finalizer,/promotePhaseDStyles/);
 assert.match(app,/portalOrganizationName/);
 assert.match(app,/state\.bootstrap\?\.organization\?\.name/);
 
