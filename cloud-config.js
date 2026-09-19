@@ -24,19 +24,18 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 // remains authoritative and the actual organization is resolved from the profile.
 (function installSessionConsistencyFixes(){
   const cfg=window.CA_CLOUD_CONFIG;
-  const cyaBrandingUrl='https://crm-alvasd.pages.dev/assets/brand/cya-logo-dark.png?v=20260919-transparent1';
+  const cyaBrandingUrl='https://crm-alvasd.pages.dev/assets/brand/cya-logo-transparent.svg?v=20260919-brandfix2';
   const alvaFallback='https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/alva-sd-official-20260918.png';
 
   function currentPublicBrand(){
     if(!cfg.tenantSlug){
-      if(cfg.tenantRoute?.source==='app-root')return {companyName:'ALVA CRM',logoUrl:alvaFallback,isTenant:true};
-      return {companyName:'Casillas & Asociados',logoUrl:cyaBrandingUrl,isTenant:false};
+      return {companyName:'Casillas & Asociados',appName:'C&A CRM Suite',logoUrl:cyaBrandingUrl,isTenant:false};
     }
     return window.CA_TENANT_PUBLIC_BRAND||{companyName:'ALVA CRM',logoUrl:alvaFallback,isTenant:true};
   }
 
   function applyTenantLoginCopy(){
-    if(!cfg.tenantSlug)return;
+    if(!cfg.tenantSlug&&cfg.tenantRoute?.source!=='app-root')return;
     const brand=currentPublicBrand();
     const generalSub=document.querySelector('.login-sub');
     if(generalSub){
@@ -67,7 +66,14 @@ window.CA_TENANT_PUBLIC_BRAND=null;
       });
       const data=await response.json().catch(()=>({}));
       if(response.ok&&data?.brand){
-        window.CA_TENANT_PUBLIC_BRAND={...data.brand,isTenant:true};
+        const resolved={...data.brand,isTenant:true};
+        if(cfg.tenantSlug==='casillas-asociados'){
+          resolved.companyName='Casillas & Asociados';
+          resolved.appName='C&A CRM Suite';
+          resolved.logoUrl=cyaBrandingUrl;
+          resolved.isTenant=false;
+        }
+        window.CA_TENANT_PUBLIC_BRAND=resolved;
       }else{
         window.CA_TENANT_PUBLIC_BRAND={companyName:'ALVA CRM',appName:'ALVA CRM',logoUrl:alvaFallback,status:'unknown',isTenant:true};
       }
