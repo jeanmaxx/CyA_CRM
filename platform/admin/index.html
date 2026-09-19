@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
   <section class="auth-view" id="auth-view">
@@ -163,7 +163,7 @@
   </dialog>
 
   <dialog id="credentials-dialog" class="credentials-dialog">
-    <div class="credential-box"><span class="kicker" id="credential-kicker">ORGANIZACIÓN CREADA</span><h2 id="credential-title">Credenciales iniciales</h2><p id="credential-copy">Guarda y comparte estas credenciales por un canal seguro. La contraseña no volverá a mostrarse.</p><label>Correo<input id="credential-email" readonly></label><label>Contraseña temporal<div class="copy-row"><input id="credential-password" readonly><button id="copy-password" class="ghost" type="button">Copiar</button></div></label><button class="primary" type="button" data-close="credentials-dialog">Entendido</button></div>
+    <div class="credential-box"><span class="kicker" id="credential-kicker">ORGANIZACIÓN CREADA</span><h2 id="credential-title">Credenciales iniciales</h2><p id="credential-copy">Guarda y comparte estas credenciales por un canal seguro. La contraseña no volverá a mostrarse.</p><label>Correo<input id="credential-email" readonly></label><label>Contraseña temporal<div class="copy-row"><input id="credential-password" readonly><button id="copy-password" class="ghost" type="button">Copiar</button></div></label><label id="credential-url-wrap" hidden>Enlace de acceso<div class="copy-row"><input id="credential-url" readonly><button id="copy-url" class="ghost" type="button">Copiar</button></div></label><button class="primary" type="button" data-close="credentials-dialog">Entendido</button></div>
   </dialog>
 
   <dialog id="plan-dialog">
@@ -212,7 +212,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <script src="config.js?v=6"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
