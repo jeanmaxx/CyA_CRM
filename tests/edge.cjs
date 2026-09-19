@@ -29,7 +29,7 @@ const context={
 };
 vm.createContext(context);vm.runInContext(source,context);
 const caller={id:'founder',organization_id:'org',role:'admin',active:true};
-async function call(body,profiles=[caller],user='founder',tenants=[{organization_id:'org',status:'active',suspension_reason:null}]){
+async function call(body,profiles=[caller],user='founder',tenants=[{organization_id:'org',status:'active',suspension_reason:null,seat_limit:null}]){
   state={profiles,user,tenants,creations:0,createdAttrs:null};
   return handler(new Request('https://edge.invalid',{
     method:'POST',
@@ -54,10 +54,15 @@ async function call(body,profiles=[caller],user='founder',tenants=[{organization
   assert.equal((await call({action:'delete',id:'founder'},[{...caller,role:'tech_admin'}])).status,400);
   assert.equal((await call(body,[caller],null)).status,401);
 
-  const suspended=[{organization_id:'org',status:'suspended',suspension_reason:'Pago vencido'}];
+  const limitedTenant=[{organization_id:'org',status:'active',suspension_reason:null,seat_limit:1}];
+  const limitResponse=await call({action:'upsert',role:'advisor',fullName:'Excede Plan',email:'limit@example.invalid',password:'Example-1234'},[caller],'founder',limitedTenant);
+  assert.equal(limitResponse.status,409);assert.equal(state.creations,0);
+  const limitPayload=await limitResponse.json();assert.match(limitPayload.error,/límite de usuarios/i);
+
+  const suspended=[{organization_id:'org',status:'suspended',suspension_reason:'Pago vencido',seat_limit:5}];
   const suspendedResponse=await call({action:'upsert',role:'advisor',fullName:'Bloqueado',email:'blocked@example.invalid',password:'Example-1234'},[caller],'founder',suspended);
   assert.equal(suspendedResponse.status,403);assert.equal(state.creations,0);
   const suspendedPayload=await suspendedResponse.json();assert.match(suspendedPayload.error,/suspendido/i);
 
-  console.log('PASS: Edge bootstrap, organization isolation, internal-user bootstrap, suspended-tenant blocking, password and self-protection rules.');
+  console.log('PASS: Edge bootstrap, organization isolation, seat limits, internal-user bootstrap, suspended-tenant blocking, password and self-protection rules.');
 })().catch(e=>{console.error(e);process.exitCode=1});
