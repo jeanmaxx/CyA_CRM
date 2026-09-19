@@ -49,5 +49,9 @@
   "compatibility": {
     "queryTenant": "?tenant=<slug>",
     "collaboratorLegacy": "/colaborador/"
+  },
+  "cloudflare": {
+    "router": "_worker.js",
+    "fallbackRules": "_redirects"
   }
 }
