@@ -16,6 +16,7 @@ onContratoServicioChange=function(){invalidarContratoActual();return onContratoS
 renderContratos=function(){
   wordContractCurrent=null;
   let html=renderContratosAnterior();
+  if(!privateContractTemplate?.content_base64)return html;
   html=html.replace(/id="ct-fecha" type="date" value="[^"]*"/,'id="ct-fecha" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" oninput="mascaraFechaMX(this)" value="'+fechaISOaMX(fechaISOLocal(new Date()))+'"');
   html=html.replace('id="ct-pagare-fecha" type="date"','id="ct-pagare-fecha" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" oninput="mascaraFechaMX(this)"');
   html=html.replace('<button class="btn" onclick="imprimirContrato()"','<button class="btn" id="btn-word" onclick="descargarContratoWord()" style="display:none;">↓ Word</button><button class="btn" onclick="imprimirContrato()"');
@@ -26,6 +27,7 @@ renderContratos=function(){
 function contractTextField(id,label,value,wide=false){return `<div class="form-group ${wide?'wide':''}"><label class="form-label" for="${id}">${label}</label><input class="form-input" id="${id}" value="${esc(value)}"></div>`;}
 onContratoClienteChange=function(){
   onContratoClienteAnterior();
+  if(!privateContractTemplate?.content_base64)return;
   const redundantPreview=document.getElementById('ct-datos-preview');if(redundantPreview)redundantPreview.style.display='none';
   const c=store.clientes.find(c=>c.id===selectedClienteId);if(!c)return;
   const cfg={...(privateContractTemplate?.defaults||{}),...store.configuracion};
@@ -148,7 +150,7 @@ async function renderWordBytes(bytes,el){
   await docx.renderAsync(bytes,el,el,{className:'docx',inWrapper:true,breakPages:true,ignoreLastRenderedPageBreak:true,useBase64URL:true,renderHeaders:true,renderFooters:true,renderFootnotes:true});
 }
 generarContrato=async function(){
-  if(getVal('ct-servicio')!=='retiro_desempleo'){invalidarContratoActual();return generarContratoAnterior();}
+  if(getVal('ct-servicio')!=='retiro_desempleo'||!privateContractTemplate?.content_base64){return generarContratoAnterior();}
   if(wordGenerationBusy)return;
   const clienteId=selectedClienteId;const c=store.clientes.find(c=>c.id===clienteId);if(!c)return showToast('Selecciona un cliente','warn');
   wordGenerationBusy=true;
