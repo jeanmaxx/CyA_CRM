@@ -33,7 +33,7 @@ function routeTarget(pathname){
 
   if(String(parts[0]).toLowerCase()==='c&acrm'){
     return String(parts[1]||'').toLowerCase()==='colaboradores'
-      ? '/runtime/colaboradores.html'
+      ? '/runtime/colaboradores'
       : '/app/index.html';
   }
 
@@ -41,7 +41,7 @@ function routeTarget(pathname){
     const tenant=String(parts[1]||'');
     if(!VALID_SLUG.test(tenant))return null;
     return String(parts[2]||'').toLowerCase()==='colaboradores'
-      ? '/runtime/colaboradores.html'
+      ? '/runtime/colaboradores'
       : '/app/index.html';
   }
 
