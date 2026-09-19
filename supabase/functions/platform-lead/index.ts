@@ -1,7 +1,8 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 
 const allowedOrigins = new Set([
-  'https://crm.alvasd.pages.dev',
+  'https://crm-alvasd.pages.dev',
+  'https://alva-crm-platform.crm-alvasd.pages.dev',
   'https://jeanmaxx.github.io',
   'http://localhost:8000',
   'http://127.0.0.1:8000',
@@ -11,7 +12,7 @@ const allowedOrigins = new Set([
 function corsHeaders(req: Request) {
   const origin = req.headers.get('origin') || '';
   return {
-    'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : 'https://crm.alvasd.pages.dev',
+    'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : 'https://crm-alvasd.pages.dev',
     'Access-Control-Allow-Headers': 'apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json',
