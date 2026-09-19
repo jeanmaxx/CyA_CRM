@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
   <section class="auth-view" id="auth-view">
@@ -38,6 +38,7 @@
         <button data-view="solicitudes"><i>✦</i><span>Solicitudes</span></button>
         <button data-view="planes"><i>◇</i><span>Planes y módulos</span></button>
         <button data-view="facturacion" data-role-view="billing"><i>$</i><span>Facturación</span></button>
+        <button data-view="respaldos"><i>⇩</i><span>Respaldos</span></button>
         <button data-view="equipo" data-role-view="owner"><i>◎</i><span>Equipo ALVA</span></button>
         <button data-view="actividad"><i>↗</i><span>Actividad</span></button>
         <button data-view="configuracion"><i>⚙</i><span>Configuración</span></button>
@@ -105,6 +106,17 @@
           </div>
           <section class="panel table-panel"><table><thead><tr><th>Cliente</th><th>Precio</th><th>Ciclo</th><th>Próximo pago</th><th>Renovación</th><th>Estado</th><th>Alerta</th></tr></thead><tbody id="billing-table"></tbody></table></section>
           <section class="panel payments-panel"><div class="panel-head"><div><h3>Pagos recientes</h3><p>Historial global de cobros registrados.</p></div></div><div id="payments-list" class="payments-list"></div></section>
+        </section>
+
+        <section class="view" id="view-respaldos">
+          <div class="page-intro billing-head"><div><span class="kicker">PROTECCIÓN DE DATOS</span><h2>Respaldos</h2><p>ZIP independientes por organización con base de datos y archivos asociados.</p></div><div class="page-actions"><button class="ghost" id="reload-backups">Actualizar</button></div></div>
+          <div class="billing-kpis">
+            <article><small>ÚLTIMO RESPALDO</small><strong id="backup-latest">—</strong></article>
+            <article><small>CLIENTES CON RESPALDO</small><strong id="backup-covered">—</strong></article>
+            <article><small>FALLIDOS</small><strong id="backup-failed">—</strong></article>
+            <article><small>AUTOMÁTICO</small><strong>01:00</strong><span>Hora centro de México</span></article>
+          </div>
+          <section class="panel table-panel"><table><thead><tr><th>Organización</th><th>Tipo</th><th>Estado</th><th>Inicio</th><th>Tamaño</th><th>Registros</th><th></th></tr></thead><tbody id="backup-table"></tbody></table></section>
         </section>
 
         <section class="view" id="view-equipo">
@@ -212,7 +224,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="config.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
