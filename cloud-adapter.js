@@ -370,6 +370,15 @@ async function cloudLogin(){
 async function cloudEnterSession(session){
   cloudSetLoginLoading(true,'Cargando información...');
   try{
+    const {data:tenantAccess,error:tenantAccessError}=await supabaseClient.rpc('get_my_tenant_access');
+    if(tenantAccessError) throw new Error('No se pudo validar el estado de la cuenta');
+    const access=Array.isArray(tenantAccess)?tenantAccess[0]:tenantAccess;
+    if(!access) throw new Error('Tu cuenta no está vinculada a una organización activa');
+    if(access.allowed===false){
+      const reason=String(access.suspension_reason||'').trim();
+      const label=String(access.status||'suspendida')==='cancelled'?'cancelada':'suspendida';
+      throw new Error(`El acceso de ${access.organization_name||'tu organización'} está ${label}.${reason?' Motivo: '+reason:''} Contacta a ALVA Soluciones Digitales.`);
+    }
     const loadState=await cloudLoadStore();
     const profile=store.asesores.find(a=>a.id===session.user.id);
     if(!profile || profile.activo===false) throw new Error('El perfil no está activo');
