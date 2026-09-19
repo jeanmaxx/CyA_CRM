@@ -15,6 +15,9 @@ assert.match(admin,/platform_apply_billing_rules/);
 assert.match(admin,/billing_overview/);
 assert.match(admin,/create_platform_admin/);
 assert.match(admin,/defaultServices/);
+assert.match(admin,/company_address/);
+assert.match(admin,/empresa_representante/);
+assert.match(admin,/recovery_records/);
 assert.match(admin,/suspension_reason/);
 assert.match(admin,/agreed_price_cents/);
 
@@ -22,5 +25,7 @@ assert.doesNotThrow(()=>new Function(ui));
 assert.match(ui,/loadBilling/);
 assert.match(ui,/loadPlatformAdmins/);
 assert.match(ui,/auto_suspend_on_overdue/);
+assert.match(ui,/company_representative/);
+assert.match(ui,/loadPlatformAdmins/);
 
 console.log('PASS: multi-tenant organization binding, billing/suspension backend and Control Center syntax are protected.');
