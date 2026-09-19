@@ -37,3 +37,5 @@ dialog textarea{resize:vertical}
 .tenant-access-link>span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .tenant-access-link a{font-size:10px;color:var(--gold);word-break:break-all}
 .tenant-access-link button{justify-self:start}
+
+.table-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
