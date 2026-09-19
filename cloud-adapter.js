@@ -42,7 +42,7 @@ const cloudTableModules = Object.freeze({
   contract_templates:'documents',
 });
 function cloudHasModule(moduleName){
-  if(!moduleName) return true;
+  if(!moduleName || moduleName==='dashboard') return true;
   if(!Array.isArray(cloudEntitlements.modules)) return true;
   return cloudEntitlements.modules.includes(moduleName);
 }
@@ -200,7 +200,7 @@ async function cloudLoadStore(){
   cloudKnownIds.agenda_events=new Set(events.map(r=>r.id));
   cloudKnownIds.message_templates=new Set(templates.map(r=>r.id));
 
-  return {needsSeed:!services.length || !templates.length,normalizedProfileNames};
+  return {needsSeed:!services.length || (cloudHasModule('documents')&&!templates.length),normalizedProfileNames};
 }
 
 function cloudServiceRows(){
