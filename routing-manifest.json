@@ -23,7 +23,7 @@
     },
     "collaborators": {
       "path": "/app/<tenant>/colaboradores/",
-      "entry": "colaborador/index.html",
+      "entry": "runtime/colaboradores.html",
       "tenantAware": true
     }
   },
