@@ -46,7 +46,9 @@ Implementada:
 - Respaldos diarios multiempresa en ZIP, historial global, respaldo manual por organización y descarga mediante URL firmada de 5 minutos.
 - Prueba manual de respaldo completada con ZIP válido en Supabase Storage.
 - Prueba transaccional de aislamiento: C&A no ve un tenant sandbox; suspendido ve 0 organizaciones; reactivado recupera solo su organización.
-- Pruebas CI para multiempresa, suspensión, límites de usuarios, branding, respaldos y Edge Functions.
+- Conversión comercial Solicitud → cliente: precarga datos, crea organización, vincula el lead y lo marca como ganado.
+- Protección contra doble conversión y rollback del lead si el aprovisionamiento falla.
+- Pruebas CI para multiempresa, suspensión, límites de usuarios, branding, respaldos, conversión comercial y Edge Functions.
 
 ## Seguridad
 El CRM de cada organización conserva aislamiento por RLS. El Control Center utiliza una Edge Function protegida con JWT y valida además que el usuario esté activo en `platform_admins`.
