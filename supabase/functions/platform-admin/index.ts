@@ -509,6 +509,40 @@ Deno.serve(async (req: Request) => {
       return respond(req, 200, { ok: true });
     }
 
+    if (action === 'backups_overview') {
+      if (!['owner','admin','support'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar respaldos'});
+      const { data: runs, error } = await admin.from('backup_runs')
+        .select('id,organization_id,actor_id,kind,status,started_at,finished_at,path,bytes,sha256,counts,error')
+        .order('started_at',{ascending:false})
+        .limit(500);
+      if (error) throw error;
+      return respond(req,200,{ok:true,runs:runs||[]});
+    }
+
+    if (action === 'backup_download') {
+      if (!['owner','admin','support'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede descargar respaldos'});
+      const runId=String(body.run_id||'').trim();
+      if(!runId)return respond(req,400,{error:'Falta el respaldo'});
+      const { data: run, error: runError } = await admin.from('backup_runs')
+        .select('id,organization_id,path,status').eq('id',runId).maybeSingle();
+      if(runError)throw runError;
+      if(!run?.path)return respond(req,404,{error:'El archivo de respaldo no está disponible'});
+      const { data: signed, error: signedError }=await admin.storage.from('crm-backups').createSignedUrl(run.path,300);
+      if(signedError)throw signedError;
+      await logActivity(run.organization_id,'backup_downloaded','Enlace de respaldo generado',{run_id:run.id});
+      return respond(req,200,{ok:true,url:signed.signedUrl,expires_in:300});
+    }
+
+    if (action === 'run_backup') {
+      if (!['owner','admin','support'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede solicitar respaldos'});
+      const organizationId=String(body.organization_id||'').trim();
+      if(!organizationId)return respond(req,400,{error:'Falta la organización'});
+      const { data: requestId, error } = await admin.rpc('platform_trigger_backup',{target_org:organizationId});
+      if(error) throw error;
+      await logActivity(organizationId,'backup_requested','Respaldo manual solicitado',{request_id:requestId});
+      return respond(req,200,{ok:true,request_id:requestId});
+    }
+
     if (action === 'billing_overview') {
       if (!['owner','admin','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar facturación'});
       const tenants = await loadTenants();
