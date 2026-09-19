@@ -30,3 +30,5 @@ dialog textarea{resize:vertical}
 .tag.cancelled{color:var(--bad);border-color:rgba(255,107,117,.25);background:rgba(255,107,117,.06)}
 @media(max-width:900px){.billing-kpis{grid-template-columns:repeat(2,1fr)}.billing-head{align-items:flex-start;flex-direction:column}}
 @media(max-width:620px){.billing-kpis{grid-template-columns:1fr 1fr}.payment-row{grid-template-columns:1fr auto}.payment-row span{display:none}.page-actions{width:100%}.page-actions button{flex:1}}
+
+.section-label{font:800 9px Manrope!important;color:var(--gold)!important;letter-spacing:.12em;text-transform:uppercase;padding-top:8px;border-top:1px solid var(--line);margin-top:3px}
