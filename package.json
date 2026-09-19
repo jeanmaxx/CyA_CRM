@@ -6,7 +6,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node tests/sync.cjs && node tests/workflow.cjs && node tests/operations.cjs && node tests/dom.cjs && node tests/docx.cjs && node tests/edge.cjs"
+    "test": "node tests/sync.cjs && node tests/workflow.cjs && node tests/operations.cjs && node tests/dom.cjs && node tests/docx.cjs && node tests/edge.cjs && node tests/platform.cjs"
   },
   "devDependencies": {
     "jsdom": "26.1.0",
