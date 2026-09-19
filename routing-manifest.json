@@ -24,7 +24,8 @@
     "collaborators": {
       "path": "/app/<tenant>/colaboradores/",
       "entry": "runtime/colaboradores.html",
-      "tenantAware": true
+      "tenantAware": true,
+      "internalTarget": "/runtime/colaboradores"
     }
   },
   "legacy": {
