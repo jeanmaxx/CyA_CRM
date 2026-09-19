@@ -24,6 +24,9 @@ assert.match(admin,/recovery_records/);
 assert.match(admin,/backups_overview/);
 assert.match(admin,/backup_download/);
 assert.match(admin,/platform_trigger_backup/);
+assert.match(admin,/converted_organization_id/);
+assert.match(admin,/sales_lead_converted/);
+assert.match(admin,/crm_url/);
 assert.match(admin,/suspension_reason/);
 assert.match(admin,/agreed_price_cents/);
 
@@ -31,6 +34,8 @@ assert.doesNotThrow(()=>new Function(ui));
 assert.match(ui,/loadBilling/);
 assert.match(ui,/loadPlatformAdmins/);
 assert.match(ui,/loadBackups/);
+assert.match(ui,/convertLeadToClient/);
+assert.match(ui,/sales_lead_id/);
 assert.match(ui,/auto_suspend_on_overdue/);
 assert.match(ui,/company_representative/);
 assert.match(ui,/loadPlatformAdmins/);
