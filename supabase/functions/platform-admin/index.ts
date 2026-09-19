@@ -318,12 +318,29 @@ Deno.serve(async (req: Request) => {
             asesor: adminName,
             nombre_app: 'ALVA CRM',
             empresa_nombre: name,
+            empresa_domicilio: '',
+            empresa_representante: '',
+            ciudad_contrato: '',
             logo_empresa: '',
             oficinas: [],
             saludos_dashboard: {},
+            bloqueo_firma: true,
           },
         });
         if (settingsError) throw settingsError;
+
+        const defaultServices = [
+          {
+            id:'retiro_desempleo', name:'Retiro por desempleo', active:true,
+            payload:{id:'retiro_desempleo',nombre:'Retiro por desempleo',activo:true,descripcion:'Gestión y acompañamiento del retiro de fondos AFORE por motivo de desempleo.',esquema:'mixto',honorariosFijo:8000,comisionFija:3000,umbralFijo:35000,montoReferencia:35190,honorariosPct:25,comisionPct:40,docs:['ine','nss','curp','acta','comprobante','rfc']}
+          },
+          {id:'asesoria_pension',name:'Asesoría pensión',active:true,payload:{id:'asesoria_pension',nombre:'Asesoría pensión',activo:true,descripcion:'Orientación y gestión para trámites de pensión IMSS/ISSSTE.',esquema:'manual',docs:['ine','nss','curp','acta']}},
+          {id:'correccion_imss',name:'Corrección ante IMSS',active:true,payload:{id:'correccion_imss',nombre:'Corrección ante IMSS',activo:true,descripcion:'Acompañamiento para correcciones de datos y documentos ante el IMSS.',esquema:'manual',docs:['ine','nss','curp','acta','comprobante']}},
+          {id:'seguro_social',name:'Servicio de seguro social',active:true,payload:{id:'seguro_social',nombre:'Servicio de seguro social',activo:true,descripcion:'Gestión de trámites y servicios ante el IMSS.',esquema:'manual',docs:['ine','nss','curp']}},
+          {id:'ppr',name:'PPR (Plan Personal de Retiro)',active:true,payload:{id:'ppr',nombre:'PPR (Plan Personal de Retiro)',activo:true,descripcion:'Asesoría y contratación de Plan Personal de Retiro.',esquema:'manual',docs:['ine','nss','curp','acta','comprobante','rfc','estado_cuenta']}},
+        ].map((service:any)=>({organization_id:orgId,...service}));
+        const { error: servicesError } = await admin.from('services').insert(defaultServices);
+        if (servicesError) throw servicesError;
 
         const { data: userData, error: createUserError } = await admin.auth.admin.createUser({
           email: adminEmail,
