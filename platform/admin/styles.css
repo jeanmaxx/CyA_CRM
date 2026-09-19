@@ -32,3 +32,8 @@ dialog textarea{resize:vertical}
 @media(max-width:620px){.billing-kpis{grid-template-columns:1fr 1fr}.payment-row{grid-template-columns:1fr auto}.payment-row span{display:none}.page-actions{width:100%}.page-actions button{flex:1}}
 
 .section-label{font:800 9px Manrope!important;color:var(--gold)!important;letter-spacing:.12em;text-transform:uppercase;padding-top:8px;border-top:1px solid var(--line);margin-top:3px}
+
+.tenant-access-link{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:7px}
+.tenant-access-link>span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tenant-access-link a{font-size:10px;color:var(--gold);word-break:break-all}
+.tenant-access-link button{justify-self:start}
