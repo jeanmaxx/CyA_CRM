@@ -45,10 +45,10 @@ assert.equal(r.tenantSlug,'casillas-asociados');
 assert.equal(r.source,'alias');
 
 const redirects=fs.readFileSync('_redirects','utf8');
-assert.match(redirects,/\/C&ACRM\/Colaboradores\/ \s*\/colaborador\/index\.html 200/x);
-assert.match(redirects,/\/app\/\*\/colaboradores\/ \s*\/colaborador\/index\.html 200/x);
-assert.match(redirects,/\/C&ACRM\/ \s*\/app\/index\.html 200/x);
-assert.match(redirects,/\/app\/\* \s*\/app\/index\.html 200/x);
+assert.match(redirects,/\/C&ACRM\/Colaboradores\/\s+\/colaborador\/index\.html 200/);
+assert.match(redirects,/\/app\/\*\/colaboradores\/\s+\/colaborador\/index\.html 200/);
+assert.match(redirects,/\/C&ACRM\/\s+\/app\/index\.html 200/);
+assert.match(redirects,/\/app\/\*\s+\/app\/index\.html 200/);
 
 const admin=fs.readFileSync('admin/app.js','utf8');
 assert.match(admin,/function tenantAccessPath/);
