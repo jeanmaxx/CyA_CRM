@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=12">
 </head>
 <body>
   <section class="auth-view" id="auth-view">
@@ -42,6 +42,7 @@
         <button data-view="plantillas" data-role-view="templates"><i>▤</i><span>Plantillas</span></button>
         <button data-view="respaldos" data-role-view="backups"><i>⇩</i><span>Respaldos</span></button>
         <button data-view="alertas"><i>!</i><span>Alertas</span></button>
+        <button data-view="notificaciones"><i>✉</i><span>Notificaciones</span></button>
         <button data-view="equipo" data-role-view="owner"><i>◎</i><span>Equipo ALVA</span></button>
         <button data-view="actividad"><i>↗</i><span>Actividad</span></button>
         <button data-view="configuracion"><i>⚙</i><span>Configuración</span></button>
@@ -167,6 +168,17 @@
           <section class="panel table-panel"><table><thead><tr><th>Prioridad</th><th>Organización</th><th>Categoría</th><th>Alerta</th><th>Fecha</th><th>Detectada</th><th>Estado</th><th></th></tr></thead><tbody id="alert-table"></tbody></table></section>
         </section>
 
+        <section class="view" id="view-notificaciones">
+          <div class="page-intro billing-head"><div><span class="kicker">COMUNICACIÓN</span><h2>Bandeja de notificaciones</h2><p>Borradores preparados desde alertas y registro de envíos manuales. La integración automática con proveedor queda desacoplada.</p></div><div class="page-actions"><button class="ghost" id="reload-notifications">Actualizar</button></div></div>
+          <div class="billing-kpis">
+            <article><small>BORRADORES</small><strong id="notification-draft-count">—</strong><span>Pendientes de envío manual</span></article>
+            <article><small>EN COLA</small><strong id="notification-queued-count">—</strong><span>Reservado para proveedor</span></article>
+            <article><small>ENVIADAS</small><strong id="notification-sent-count">—</strong><span>Registro histórico</span></article>
+            <article><small>FALLIDAS</small><strong id="notification-failed-count">—</strong><span>Para integración futura</span></article>
+          </div>
+          <section class="panel table-panel"><table><thead><tr><th>Organización</th><th>Canal</th><th>Destinatario</th><th>Asunto</th><th>Estado</th><th>Preparada</th><th>Enviada</th><th></th></tr></thead><tbody id="notification-table"></tbody></table></section>
+        </section>
+
         <section class="view" id="view-equipo">
           <div class="page-intro billing-head"><div><span class="kicker">ALVA</span><h2>Equipo de plataforma</h2><p>Accesos administrativos independientes de las cuentas de clientes.</p></div><div class="page-actions"><button class="primary" id="new-platform-admin">+ Nuevo acceso</button></div></div>
           <section class="panel table-panel"><table><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Alta</th><th></th></tr></thead><tbody id="platform-admin-table"></tbody></table></section>
@@ -236,6 +248,22 @@
     </form>
   </dialog>
 
+  <dialog id="notification-dialog">
+    <div class="notification-box">
+      <div class="dialog-head"><div><span class="kicker">BORRADOR</span><h2>Notificación al cliente</h2></div><button type="button" data-close="notification-dialog">×</button></div>
+      <input type="hidden" id="notification-id">
+      <input type="hidden" id="notification-alert-id">
+      <div class="form-grid">
+        <label>Canal<select id="notification-channel"><option value="email">Correo</option><option value="whatsapp">WhatsApp</option></select></label>
+        <label>Destinatario<input id="notification-recipient" readonly></label>
+        <label class="full" id="notification-subject-wrap">Asunto<input id="notification-subject" readonly></label>
+        <label class="full">Mensaje<textarea id="notification-body" rows="10" readonly></textarea></label>
+      </div>
+      <div class="template-help">Este borrador no se envía automáticamente. Cópialo al canal correspondiente y, después de enviarlo, marca el registro como enviado.</div>
+      <div class="dialog-actions"><button type="button" class="ghost" data-close="notification-dialog">Cerrar</button><button type="button" class="ghost" id="copy-notification">Copiar mensaje</button><button type="button" class="primary" id="mark-notification-sent">Marcar como enviado</button></div>
+    </div>
+  </dialog>
+
   <dialog id="contract-template-dialog">
     <form id="contract-template-form">
       <div class="dialog-head"><div><span class="kicker">PLANTILLA DOCX</span><h2>Cargar plantilla contractual</h2></div><button type="button" data-close="contract-template-dialog">×</button></div>
@@ -290,7 +318,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=11"></script>
-  <script src="app.js?v=11"></script>
+  <script src="config.js?v=12"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>
