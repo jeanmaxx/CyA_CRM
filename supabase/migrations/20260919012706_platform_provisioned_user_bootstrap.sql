@@ -1,0 +1,26 @@
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+begin
+  if coalesce(new.raw_user_meta_data ->> 'portal','') in ('collaborator','platform') then
+    return new;
+  end if;
+
+  insert into public.profiles (id,organization_id,email,full_name,role,active)
+  values (
+    new.id,
+    'ca000000-0000-4000-8000-000000000001',
+    new.email,
+    coalesce(nullif(new.raw_user_meta_data ->> 'full_name',''),split_part(coalesce(new.email,'asesor'),'@',1)),
+    'advisor',
+    true
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$function$;
+
+create index if not exists platform_activity_admin_user_idx on public.platform_activity(admin_user_id);
