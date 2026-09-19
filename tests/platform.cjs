@@ -26,6 +26,8 @@ assert.match(admin,/backup_download/);
 assert.match(admin,/platform_trigger_backup/);
 assert.match(admin,/converted_organization_id/);
 assert.match(admin,/sales_lead_converted/);
+assert.match(admin,/sourceLeadStatus/);
+assert.match(admin,/Esta solicitud ya fue convertida en cliente/);
 assert.match(admin,/crm_url/);
 assert.match(admin,/suspension_reason/);
 assert.match(admin,/agreed_price_cents/);
