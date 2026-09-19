@@ -881,3 +881,95 @@ html[data-theme="light"] .cya-logo-shared{filter:none!important}
   .kpi-card,.phase3-kpis article,.finance-kpis article{padding:12px!important}
   .kpi-card strong,.phase3-kpis strong,.finance-kpis strong{font-size:20px!important}
 }
+
+
+/* ---------- Fase D · módulos dinámicos inyectados por JS ---------- */
+.eligible-column{
+  border-color:rgba(83,214,162,.24)!important;
+  background:var(--surface)!important;
+}
+.eligible-column .phase-head{
+  background:rgba(83,214,162,.035)!important;
+}
+.eligible-column .phase-num{
+  background:rgba(83,214,162,.12)!important;
+  border-color:rgba(83,214,162,.24)!important;
+  color:var(--good)!important;
+}
+.eligible-column .phase-head h3{color:var(--good)!important}
+.eligible-prospect-card{border-color:rgba(83,214,162,.22)!important}
+.eligibility-confirmed{
+  border-left-color:var(--good)!important;
+  background:rgba(83,214,162,.055)!important;
+  color:var(--good)!important;
+}
+.eligibility-note{color:var(--muted)!important}
+.guide-media{
+  border-color:var(--line)!important;
+  background:var(--surface-3)!important;
+  border-radius:13px!important;
+}
+.guide-media-label{
+  color:var(--gold)!important;
+  border-bottom-color:var(--line)!important;
+  background:rgba(255,194,14,.045)!important;
+}
+.guide-media figcaption{color:var(--muted)!important}
+
+.discarded-section{
+  margin-top:18px!important;
+  border:1px solid rgba(255,107,117,.20)!important;
+  background:var(--surface)!important;
+  border-radius:16px!important;
+  box-shadow:none!important;
+}
+.discarded-section-head{
+  padding:18px 19px!important;
+  border-bottom:1px solid var(--line)!important;
+}
+.discarded-section-head h2{
+  color:#fff!important;
+  font:700 15px var(--display)!important;
+}
+.discarded-section-head p{color:var(--muted)!important}
+.discarded-count{
+  background:rgba(255,107,117,.07)!important;
+  border-color:rgba(255,107,117,.22)!important;
+  color:#ff9fa7!important;
+}
+.discarded-grid{padding:12px!important;gap:10px!important}
+.discarded-card{
+  background:var(--surface-3)!important;
+  border-color:var(--line)!important;
+  box-shadow:none!important;
+}
+.discarded-chip{
+  color:#ff9fa7!important;
+  background:rgba(255,107,117,.07)!important;
+  border-color:rgba(255,107,117,.20)!important;
+}
+.discarded-data small,.discarded-reason small,.discarded-notes small{color:#718096!important}
+.discarded-data strong{color:#d7deea!important}
+.discarded-reason{
+  border-left-color:var(--danger)!important;
+  background:rgba(255,107,117,.055)!important;
+}
+.discarded-reason strong{color:#ffb7bd!important}
+.discarded-reason span,.discarded-notes p,.discarded-previous p{color:#aeb9c8!important}
+.discarded-previous{border-top-color:var(--line)!important}
+.discarded-previous summary,.discarded-loading,.discarded-empty{color:var(--muted)!important}
+.discarded-error{color:var(--danger)!important}
+
+html[data-theme="light"] .eligible-column{
+  border-color:rgba(20,116,81,.18)!important;
+  background:#fff!important;
+}
+html[data-theme="light"] .eligible-column .phase-num{
+  background:rgba(20,116,81,.08)!important;
+  border-color:rgba(20,116,81,.18)!important;
+  color:#147451!important;
+}
+html[data-theme="light"] .eligible-column .phase-head h3{color:#147451!important}
+html[data-theme="light"] .discarded-section{background:#fff!important}
+html[data-theme="light"] .discarded-section-head h2{color:#18202c!important}
+html[data-theme="light"] .discarded-card{background:#f8fafc!important}
