@@ -60,7 +60,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-curp-client-eligibility]'))return;
     const script=document.createElement('script');
-    script.src='app-curp-client-eligibility.js?v=20260914-1';
+    script.src='/app-curp-client-eligibility.js?v=20260919-routing1';
     script.async=false;
     script.dataset.cyaCurpClientEligibility='1';
     document.head.appendChild(script);
@@ -91,7 +91,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-client-advisor]'))return;
     const script=document.createElement('script');
-    script.src='app-client-advisor.js?v=20260914-1';
+    script.src='/app-client-advisor.js?v=20260919-routing1';
     script.async=false;
     script.dataset.cyaClientAdvisor='1';
     document.head.appendChild(script);
@@ -118,7 +118,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-client-advisor-requests]'))return;
     const script=document.createElement('script');
-    script.src='app-client-advisor-requests.js?v=20260914-1';
+    script.src='/app-client-advisor-requests.js?v=20260919-routing1';
     script.async=false;
     script.dataset.cyaClientAdvisorRequests='1';
     document.head.appendChild(script);
@@ -145,7 +145,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-advisor-request-transactional-fix]'))return;
     const script=document.createElement('script');
-    script.src='app-client-advisor-request-transactional-fix.js?v=20260914-2';
+    script.src='/app-client-advisor-request-transactional-fix.js?v=20260919-routing1';
     script.async=false;
     script.dataset.cyaAdvisorRequestTransactionalFix='1';
     document.head.appendChild(script);
