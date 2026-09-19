@@ -22,7 +22,7 @@
     const prospectCounts={};for(const p of ps){const k=Number(p.phase||1);prospectCounts[k]=(prospectCounts[k]||0)+1;}
     const clientCounts={};for(const c of cs){const k=Number(c?.progress?.current||6);clientCounts[k]=(clientCounts[k]||0)+1;}
     const concluded=cs.filter(c=>c.collected||c?.progress?.done?.['11']||c?.progress?.done?.[11]).length;
-    return `<div class="phase3-toolbar"><div><h1>Estadísticas</h1><p>Los mismos resultados que utiliza Casillas & Asociados para medir tus oportunidades y conversiones.</p></div></div>
+    return `<div class="phase3-toolbar"><div><h1>Estadísticas</h1><p>Los mismos resultados que utiliza ${portalOrganizationName()} para medir tus oportunidades y conversiones.</p></div></div>
       <section class="phase3-kpis">
         <article><span>Oportunidades enviadas</span><strong>${Number(d.opportunities||0)}</strong><small>Prospectos + clientes logrados</small></article>
         <article><span>Clientes logrados</span><strong>${Number(d.converted||0)}</strong><small>Convertidos por tu asesor</small></article>
@@ -63,7 +63,7 @@
   function isBirthday(iso){if(!iso)return false;const m=String(iso).match(/^\d{4}-(\d{2})-(\d{2})$/);if(!m)return false;const now=new Date();return Number(m[1])===now.getMonth()+1&&Number(m[2])===now.getDate();}
   if(typeof renderHome==='function'){
     const renderHomeBase=renderHome;
-    renderHome=function(){let html=renderHomeBase.apply(this,arguments);const c=state?.bootstrap?.collaborator;if(!isBirthday(c?.birthDate))return html;const first=String(c?.name||'').trim().split(/\s+/)[0]||'colaborador';return html.replace(/<span class="eyebrow">BIENVENIDO<\/span><h1>[\s\S]*?<\/h1><p>[\s\S]*?<\/p>/,`<span class="eyebrow">¡FELIZ CUMPLEAÑOS!</span><h1>¡Feliz cumpleaños, ${esc(first)}!</h1><p>Todo el equipo de Casillas &amp; Asociados te desea un excelente día.</p>`);};
+    renderHome=function(){let html=renderHomeBase.apply(this,arguments);const c=state?.bootstrap?.collaborator;if(!isBirthday(c?.birthDate))return html;const first=String(c?.name||'').trim().split(/\s+/)[0]||'colaborador';return html.replace(/<span class="eyebrow">BIENVENIDO<\/span><h1>[\s\S]*?<\/h1><p>[\s\S]*?<\/p>/,`<span class="eyebrow">¡FELIZ CUMPLEAÑOS!</span><h1>¡Feliz cumpleaños, ${esc(first)}!</h1><p>Todo el equipo de ${esc(portalOrganizationName())} te desea un excelente día.</p>`);};
   }
 
   const baseNavigate=window.navigate;

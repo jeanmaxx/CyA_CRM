@@ -20,6 +20,12 @@ Deno.serve(async(req:Request)=>{
     const {data:account,error:accountError}=await admin.from('collaborator_accounts').select('user_id,organization_id,collaborator_id,active').eq('user_id',authData.user.id).maybeSingle();
     if(accountError)throw accountError;
     if(!account||account.active!==true)return respond(req,403,{error:'Tu acceso al Portal de Colaboradores no está activo'});
+    const body=await req.json().catch(()=>({}));
+    const expectedTenantSlug=String(body.tenantSlug||'').trim().toLowerCase();
+    const {data:organization,error:organizationError}=await admin.from('organizations').select('id,slug').eq('id',account.organization_id).maybeSingle();
+    if(organizationError)throw organizationError;
+    if(!organization)return respond(req,403,{error:'La organización de esta cuenta ya no está disponible'});
+    if(expectedTenantSlug&&String(organization.slug||'').toLowerCase()!==expectedTenantSlug)return respond(req,403,{error:'Esta cuenta no corresponde a la organización de este enlace'});
     const {data:tenant}=await admin.from('platform_tenants').select('status,suspension_reason').eq('organization_id',account.organization_id).maybeSingle();
     if(tenant&&['suspended','cancelled'].includes(String(tenant.status)))return respond(req,403,{error:tenant.status==='cancelled'?'El servicio de esta organización está cancelado':('El servicio de esta organización está suspendido'+(tenant.suspension_reason?': '+tenant.suspension_reason:''))});
     const {data:moduleAllowed,error:moduleError}=await admin.rpc('organization_module_allowed',{target_org:account.organization_id,module_name:'collaborators'});

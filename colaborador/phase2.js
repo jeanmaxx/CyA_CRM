@@ -4,7 +4,7 @@
   window.__caCollaboratorClientsInstalled=true;
 
   const CLIENT_PHASES=[
-    {id:6,title:'Inicio de trámite',tip:'Casillas & Asociados inicia el proceso operativo del cliente.'},
+    {id:6,title:'Inicio de trámite',tip:'El equipo inicia el proceso operativo del cliente.'},
     {id:7,title:'Crear cita en AFORE',tip:'El asesor agenda la cita correspondiente y aquí podrás consultar los datos.'},
     {id:8,title:'Actualización de datos en AFORE',tip:'Seguimiento a la actualización o atención en la AFORE.'},
     {id:9,title:'Solicitud en aplicación',tip:'La solicitud de retiro se realiza cuando corresponde dentro del proceso.'},

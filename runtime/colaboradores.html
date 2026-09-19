@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <script>
+    if(/github\.io$/i.test(location.hostname)){
+      document.write('<script src="/CyA_CRM/github-pages-bridge.js?v=phase-e1"><\/script>');
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d1118">
+  <title>Portal de Colaboradores · Casillas & Asociados</title>
+<link rel="shortcut icon" type="image/png" href="/assets/icons/cya-favicon-20260918.png?v=20260918-brand8">
+<link rel="apple-touch-icon" href="/assets/icons/cya-favicon-20260918.png?v=20260918-brand8">
+<link rel="icon" type="image/png" sizes="128x128" href="/assets/icons/cya-favicon-20260918.png?v=20260918-brand8">
+  
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/colaborador/styles.css?v=20260914-2">
+  <link rel="stylesheet" href="/colaborador/phase2.css?v=20260914-1">
+  <link rel="stylesheet" href="/colaborador/phase3.css?v=20260914-1">
+  <link rel="stylesheet" href="/colaborador/phase4.css?v=20260914-1">
+  <link rel="stylesheet" href="/colaborador/alva-ui.css?v=20260918-brand8">
+  <link rel="stylesheet" href="/colaborador/alva-phase-d.css?v=phase-d2">
+</head>
+<body>
+  <div id="login-view" class="login-shell">
+    <button class="icon-button login-theme" type="button" data-theme-toggle aria-label="Cambiar modo claro u oscuro" title="Cambiar tema">☀</button>
+    <main class="login-card" aria-labelledby="login-title">
+      <div class="login-brand cya-brand">
+        <img class="cya-logo cya-logo-shared" src="https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/cya-official-20260918.png?v=20260918-brand8" alt="Casillas & Asociados Consultoría">
+      </div>
+      <div class="login-copy">
+        <p class="eyebrow">ACCESO PRIVADO</p>
+        <h1 id="login-title">Tu cartera, en un solo lugar.</h1>
+        <p>Registra prospectos, consulta su avance y mantén la información disponible desde campo.</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <label>Correo electrónico<input id="login-email" type="email" autocomplete="username" required placeholder="correo@ejemplo.com"></label>
+        <label>Contraseña<input id="login-password" type="password" autocomplete="current-password" required placeholder="••••••••"></label>
+        <button class="btn btn-primary btn-block" type="submit">Ingresar</button>
+        <div id="login-error" class="form-message" role="alert"></div>
+      </form>
+      <div class="login-foot">El acceso es habilitado por tu asesor o por la administración de Casillas &amp; Asociados.</div>
+      <div class="login-product-credit alva-credit alva-credit-login">
+        <span class="credit-label">Una solución de</span>
+        <img class="alva-logo-shared" src="https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/alva-sd-official-20260918.png?v=20260918-brand8" alt="ALVA Soluciones Digitales">
+      </div>
+    </main>
+  </div>
+
+  <div id="portal-view" class="portal-shell" hidden>
+    <aside class="sidebar">
+      <div class="sidebar-brand cya-brand">
+        <img class="cya-logo cya-logo-shared" src="https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/cya-official-20260918.png?v=20260918-brand8" alt="Casillas & Asociados Consultoría">
+      </div>
+      <nav class="sidebar-nav" aria-label="Portal">
+        <button class="nav-item active" data-page="inicio" type="button"><span>⌂</span>Inicio</button>
+        <button class="nav-item" data-page="prospectos" type="button"><span>◎</span>Mis prospectos</button>
+        <button class="nav-item" data-page="clientes" type="button"><span>◉</span>Mis clientes</button>
+        <button class="nav-item" data-page="guia" type="button"><span>▤</span>Información / Guía</button>
+        <button class="nav-item" data-page="estadisticas" type="button"><span>▥</span>Estadísticas</button>
+        <button class="nav-item" data-page="finanzas" type="button"><span>◇</span>Finanzas</button>
+      </nav>
+      <div class="sidebar-credit alva-credit alva-credit-sidebar">
+        <span class="credit-label">Una solución de</span>
+        <img class="alva-logo-shared" src="https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/alva-sd-official-20260918.png?v=20260918-brand8" alt="ALVA Soluciones Digitales">
+      </div>
+      <div class="sidebar-user"><div class="user-avatar" id="sidebar-avatar">CA</div><div><strong id="sidebar-name">Colaborador</strong><span id="sidebar-advisor">Asesor asignado</span></div><button id="logout-btn" class="icon-button" type="button" title="Cerrar sesión">↩</button></div>
+    </aside>
+
+    <div class="portal-main">
+      <header class="topbar">
+        <div><span class="topbar-kicker">PORTAL DE COLABORADORES</span><h2 id="page-title">Inicio</h2></div>
+        <div class="topbar-actions"><span id="sync-label" class="sync-label">Actualizado</span><button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="Cambiar modo claro u oscuro" title="Cambiar tema">☀</button><button id="new-prospect-top" class="btn btn-primary" type="button">+ Prospecto</button></div>
+      </header>
+      <main id="page-content" class="content"></main>
+    </div>
+
+    <nav class="mobile-nav" aria-label="Navegación móvil">
+      <button class="active" data-page="inicio" type="button"><span>⌂</span>Inicio</button>
+      <button data-page="prospectos" type="button"><span>◎</span>Prospectos</button>
+      <button data-page="clientes" type="button"><span>◉</span>Clientes</button>
+      <button data-page="guia" type="button"><span>▤</span>Guía</button>
+      <button data-page="estadisticas" type="button"><span>▥</span>Estad.</button>
+      <button data-page="finanzas" type="button"><span>◇</span>Finanzas</button>
+    </nav>
+  </div>
+
+  <div id="prospect-modal" class="modal-overlay" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="prospect-modal-title">
+      <div class="modal-head"><div><span class="eyebrow">MIS PROSPECTOS</span><h3 id="prospect-modal-title">Nuevo prospecto</h3></div><button id="close-prospect-modal" class="icon-button" type="button" aria-label="Cerrar">×</button></div>
+      <form id="prospect-form" class="prospect-form">
+        <input id="prospect-id" type="hidden">
+        <div class="required-note"><strong>Datos mínimos</strong><span>Solo nombre, teléfono y CURP son obligatorios. Puedes completar lo demás después.</span></div>
+        <div class="form-grid two">
+          <label>Nombre completo <b>*</b><input id="p-name" required autocomplete="off"></label>
+          <label>Teléfono <b>*</b><input id="p-phone" required inputmode="tel" autocomplete="off"></label>
+        </div>
+        <div class="form-grid two">
+          <label>CURP <b>*</b><input id="p-curp" required maxlength="18" autocomplete="off"><small id="curp-helper">Puedes guardar aunque el formato requiera revisión.</small></label>
+          <label>Servicio<select id="p-service"></select></label>
+        </div>
+        <div class="form-grid two">
+          <label>Honorarios manejados<input id="p-fees" type="number" min="0" step="100" inputmode="decimal" placeholder="Opcional"></label>
+          <label>Ciudad / localidad<input id="p-city" placeholder="Opcional"></label>
+        </div>
+        <div class="form-grid two">
+          <label>AFORE conocida<input id="p-afore" placeholder="Ej. COPPEL"></label>
+          <label>AFORE Móvil<select id="p-afore-mobile"><option value="">Sin dato</option><option value="si">Sí</option><option value="no">No</option><option value="no_sabe">No sabe</option></select></label>
+        </div>
+        <div class="form-grid two">
+          <label>Banco<input id="p-bank" placeholder="Opcional"></label>
+          <label>¿Cuenta Nivel 4?<select id="p-bank-level"><option value="">Sin dato</option><option value="si">Sí</option><option value="no">No</option><option value="no_sabe">No sabe</option></select></label>
+        </div>
+        <label>Notas<textarea id="p-notes" rows="4" placeholder="Cualquier información adicional que ya conozcas"></textarea></label>
+        <div class="modal-actions"><button id="cancel-prospect" class="btn" type="button">Cancelar</button><button id="save-prospect" class="btn btn-primary" type="submit">Guardar prospecto</button></div>
+        <div id="prospect-form-message" class="form-message" role="alert"></div>
+      </form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/tenant-routing.js?v=phase-c1"></script>
+  <script src="/colaborador/phase-d-branding.js?v=phase-d1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  <script src="/colaborador/app.js?v=phase-d1"></script>
+  <script src="/colaborador/phase2.js?v=phase-d1"></script>
+  <script src="/colaborador/phase3.js?v=phase-d1"></script>
+  <script src="/colaborador/phase4.js?v=phase-d1"></script>
+  <script src="/colaborador/phase5.js?v=20260914-1"></script>
+  <script src="/colaborador/phase6.js?v=phase-d1"></script>
+  <script src="/colaborador/phase7.js?v=20260918-brand8"></script>
+  <script src="/colaborador/alva-ui.js?v=20260918-brand8"></script>
+  <script src="/colaborador/phase-d-finalize.js?v=phase-d1"></script>
+</body>
+</html>

@@ -390,8 +390,9 @@ function cloudPrepareLogin(){
   if(generalSub){
     generalSub.style.display='block';
     const requestedTenant=String(window.CA_CLOUD_CONFIG?.tenantSlug||'').trim();
+    const route=window.CA_CLOUD_CONFIG?.tenantRoute||null;
     const publicBrand=window.CA_TENANT_PUBLIC_BRAND;
-    generalSub.textContent=requestedTenant?`${publicBrand?.companyName||'ALVA CRM'} — Acceso seguro`:'Casillas & Asociados — Acceso seguro';
+    generalSub.textContent=requestedTenant||route?.source==='app-root'?`${publicBrand?.companyName||'ALVA CRM'} — Acceso seguro`:'Casillas & Asociados — Acceso seguro';
   }
   const title=document.getElementById('login-pin-title'); if(title) title.textContent='Bienvenido';
   const sub=document.getElementById('login-pin-sub'); if(sub) sub.textContent='Ingresa tu correo y contraseña';
@@ -454,12 +455,16 @@ async function cloudEnterSession(session){
     };
     window.CA_TENANT_ENTITLEMENTS=cloudEntitlements;
     const requestedTenant=String(window.CA_CLOUD_CONFIG?.tenantSlug||'').trim();
-    if(requestedTenant){
-      const {data:tenantOrg,error:tenantOrgError}=await supabaseClient.from('organizations').select('slug,name').eq('id',CA_ORG_ID).maybeSingle();
-      if(tenantOrgError) throw new Error('No se pudo validar el enlace de acceso');
-      if(tenantOrg?.slug&&String(tenantOrg.slug)!==requestedTenant){
-        throw new Error('Estas credenciales no corresponden a la organización de este enlace. Verifica la liga de acceso o usa la dirección general del CRM.');
-      }
+    const tenantRoute=window.CA_CLOUD_CONFIG?.tenantRoute||null;
+    const {data:tenantOrg,error:tenantOrgError}=await supabaseClient.from('organizations').select('slug,name').eq('id',CA_ORG_ID).maybeSingle();
+    if(tenantOrgError) throw new Error('No se pudo validar el enlace de acceso');
+    const authenticatedSlug=String(tenantOrg?.slug||'').trim().toLowerCase();
+    if(requestedTenant&&authenticatedSlug&&authenticatedSlug!==requestedTenant){
+      throw new Error('Estas credenciales no corresponden a la organización de este enlace. Verifica la liga de acceso o usa la dirección general del CRM.');
+    }
+    if(authenticatedSlug&&tenantRoute&&['app-root','query'].includes(String(tenantRoute.source||''))){
+      const canonical='/app/'+authenticatedSlug+'/';
+      if(window.location.pathname!==canonical)window.history.replaceState({},'',canonical);
     }
     const loadState=await cloudLoadStore();
     const profile=store.asesores.find(a=>a.id===session.user.id);

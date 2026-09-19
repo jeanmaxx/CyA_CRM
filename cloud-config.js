@@ -1,4 +1,6 @@
+const requestedTenantRoute=window.ALVA_TENANT_ROUTE||null;
 const requestedTenantSlug=(()=>{
+  if(requestedTenantRoute?.tenantSlug)return requestedTenantRoute.tenantSlug;
   try{
     const value=new URLSearchParams(window.location.search).get('tenant')||'';
     return /^[a-z0-9][a-z0-9-]{1,59}$/i.test(value)?value.toLowerCase():'';
@@ -11,6 +13,7 @@ window.CA_CLOUD_CONFIG = Object.freeze({
   organizationId: 'ca000000-0000-4000-8000-000000000001',
   siteUrl: 'https://crm-alvasd.pages.dev/',
   tenantSlug: requestedTenantSlug,
+  tenantRoute: requestedTenantRoute,
   brandingEndpoint: 'https://ibhgisndtaclvwznqugu.supabase.co/functions/v1/platform-branding',
 });
 
@@ -25,7 +28,10 @@ window.CA_TENANT_PUBLIC_BRAND=null;
   const alvaFallback='https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/alva-sd-official-20260918.png';
 
   function currentPublicBrand(){
-    if(!cfg.tenantSlug)return {companyName:'Casillas & Asociados',logoUrl:cyaBrandingUrl,isTenant:false};
+    if(!cfg.tenantSlug){
+      if(cfg.tenantRoute?.source==='app-root')return {companyName:'ALVA CRM',logoUrl:alvaFallback,isTenant:true};
+      return {companyName:'Casillas & Asociados',logoUrl:cyaBrandingUrl,isTenant:false};
+    }
     return window.CA_TENANT_PUBLIC_BRAND||{companyName:'ALVA CRM',logoUrl:alvaFallback,isTenant:true};
   }
 
@@ -265,7 +271,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadOperationalBoard(){
   if(document.querySelector('script[data-cya-operational-board]'))return;
   const script=document.createElement('script');
-  script.src='app-operational-board.js?v=20260911-tablero-operativo-2';
+  script.src='/app-operational-board.js?v=20260911-tablero-operativo-2';
   script.async=false;
   script.dataset.cyaOperationalBoard='1';
   document.head.appendChild(script);
@@ -275,7 +281,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadRecoveredCRMRefinements(){
   if(document.querySelector('script[data-cya-pending-fixes]'))return;
   const script=document.createElement('script');
-  script.src='app-pending-fixes.js?v=20260911-pendientes-recuperados';
+  script.src='/app-pending-fixes.js?v=20260911-pendientes-recuperados';
   script.async=false;
   script.dataset.cyaPendingFixes='1';
   document.head.appendChild(script);
@@ -285,7 +291,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadFinanceSectionControls(){
   if(document.querySelector('script[data-cya-finance-ui]'))return;
   const script=document.createElement('script');
-  script.src='app-finance-ui.js?v=20260911-finanzas-cronologicas';
+  script.src='/app-finance-ui.js?v=20260911-finanzas-cronologicas';
   script.async=false;
   script.dataset.cyaFinanceUi='1';
   document.head.appendChild(script);
@@ -296,7 +302,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadProfileVisualPolish(){
   if(document.querySelector('script[data-cya-profile-polish]'))return;
   const script=document.createElement('script');
-  script.src='app-ui-profile-polish.js?v=20260913-alertas-banco-afore';
+  script.src='/app-ui-profile-polish.js?v=20260913-alertas-banco-afore';
   script.async=false;
   script.dataset.cyaProfilePolish='1';
   document.head.appendChild(script);

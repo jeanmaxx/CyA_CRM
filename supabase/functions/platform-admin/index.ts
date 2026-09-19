@@ -410,7 +410,12 @@ Deno.serve(async (req: Request) => {
           ok: true,
           organization_id: orgId,
           slug,
-          crm_url: 'https://crm-alvasd.pages.dev/?tenant=' + encodeURIComponent(slug),
+          crm_url: slug === 'casillas-asociados'
+            ? 'https://crm-alvasd.pages.dev/C&ACRM/'
+            : 'https://crm-alvasd.pages.dev/app/' + encodeURIComponent(slug) + '/',
+          collaborator_url: slug === 'casillas-asociados'
+            ? 'https://crm-alvasd.pages.dev/C&ACRM/Colaboradores/'
+            : 'https://crm-alvasd.pages.dev/app/' + encodeURIComponent(slug) + '/colaboradores/',
           admin: {
             user_id: authUserId,
             email: adminEmail,
