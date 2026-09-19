@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
   <section class="auth-view" id="auth-view">
@@ -38,6 +38,7 @@
         <button data-view="solicitudes"><i>✦</i><span>Solicitudes</span></button>
         <button data-view="planes"><i>◇</i><span>Planes y módulos</span></button>
         <button data-view="facturacion" data-role-view="billing"><i>$</i><span>Facturación</span></button>
+        <button data-view="plantillas" data-role-view="templates"><i>▤</i><span>Plantillas</span></button>
         <button data-view="respaldos" data-role-view="backups"><i>⇩</i><span>Respaldos</span></button>
         <button data-view="equipo" data-role-view="owner"><i>◎</i><span>Equipo ALVA</span></button>
         <button data-view="actividad"><i>↗</i><span>Actividad</span></button>
@@ -106,6 +107,20 @@
           </div>
           <section class="panel table-panel"><table><thead><tr><th>Cliente</th><th>Precio</th><th>Ciclo</th><th>Próximo pago</th><th>Renovación</th><th>Estado</th><th>Alerta</th></tr></thead><tbody id="billing-table"></tbody></table></section>
           <section class="panel payments-panel"><div class="panel-head"><div><h3>Pagos recientes</h3><p>Historial global de cobros registrados.</p></div></div><div id="payments-list" class="payments-list"></div></section>
+        </section>
+
+        <section class="view" id="view-plantillas">
+          <div class="page-intro billing-head">
+            <div><span class="kicker">DOCUMENTOS</span><h2>Plantillas contractuales</h2><p>DOCX privado por organización para Retiro por Desempleo. Si no hay plantilla activa, el CRM usa el contrato estándar como respaldo.</p></div>
+            <div class="page-actions"><button class="ghost" id="reload-templates">Actualizar</button><button class="primary" id="upload-contract-template">+ Cargar plantilla</button></div>
+          </div>
+          <div class="billing-kpis">
+            <article><small>ORGANIZACIONES</small><strong id="template-total">—</strong></article>
+            <article><small>CON PLANTILLA</small><strong id="template-covered">—</strong></article>
+            <article><small>ACTIVAS</small><strong id="template-active">—</strong></article>
+            <article><small>FALLBACK ESTÁNDAR</small><strong id="template-fallback">—</strong></article>
+          </div>
+          <section class="panel table-panel"><table><thead><tr><th>Organización</th><th>Plantilla</th><th>Tamaño</th><th>Estado</th><th>Actualizada</th><th>Integridad</th><th></th></tr></thead><tbody id="template-table"></tbody></table></section>
         </section>
 
         <section class="view" id="view-respaldos">
@@ -188,6 +203,23 @@
     </form>
   </dialog>
 
+  <dialog id="contract-template-dialog">
+    <form id="contract-template-form">
+      <div class="dialog-head"><div><span class="kicker">PLANTILLA DOCX</span><h2>Cargar plantilla contractual</h2></div><button type="button" data-close="contract-template-dialog">×</button></div>
+      <div class="form-grid">
+        <label class="full">Organización<select name="organization_id" id="template-org" required></select></label>
+        <label class="full">Archivo DOCX<input name="file" id="template-file" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required></label>
+        <label class="full section-label">Valores predeterminados del documento</label>
+        <label>Representante de la empresa<input name="empresa_representante" placeholder="Nombre completo"></label>
+        <label>Ciudad para contratos<input name="ciudad_contrato" placeholder="Municipio, Estado"></label>
+        <label class="full">Domicilio de la empresa<input name="empresa_domicilio" placeholder="Domicilio completo para encabezados y contrato"></label>
+        <label class="full checkbox-label"><input name="active" type="checkbox" checked> Usar esta plantilla en el CRM</label>
+      </div>
+      <div class="template-help">La plantilla debe conservar los marcadores compatibles del contrato Word actual. El archivo se guarda cifrado por la infraestructura de Supabase y solo se entrega al tenant correspondiente mediante RLS.</div>
+      <div class="dialog-actions"><button type="button" class="ghost" data-close="contract-template-dialog">Cancelar</button><button type="submit" class="primary">Guardar plantilla</button></div>
+    </form>
+  </dialog>
+
   <dialog id="payment-dialog">
     <form id="payment-form">
       <div class="dialog-head"><div><span class="kicker">COBRANZA</span><h2>Registrar pago</h2></div><button type="button" data-close="payment-dialog">×</button></div>
@@ -225,7 +257,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=8"></script>
-  <script src="app.js?v=8"></script>
+  <script src="config.js?v=9"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>
