@@ -548,6 +548,88 @@ Deno.serve(async (req: Request) => {
       return respond(req, 200, { ok: true });
     }
 
+    if (action === 'notifications_overview') {
+      if (!['owner','admin','support','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar notificaciones'});
+      const { data: rows, error }=await admin.from('platform_notification_outbox')
+        .select('id,alert_id,organization_id,channel,recipient,subject,body,status,provider,provider_message_id,attempt_count,last_error,scheduled_for,sent_at,prepared_by,created_at,updated_at')
+        .order('created_at',{ascending:false}).limit(500);
+      if(error)throw error;
+      const tenants=await loadTenants();
+      const orgMap=new Map(tenants.map((t:any)=>[t.id,{name:t.name,slug:t.slug}]));
+      const items=(rows||[]).map((r:any)=>({...r,organization:orgMap.get(r.organization_id)||null}));
+      return respond(req,200,{ok:true,notifications:items,counts:{
+        draft:items.filter((x:any)=>x.status==='draft').length,
+        queued:items.filter((x:any)=>x.status==='queued').length,
+        sent:items.filter((x:any)=>x.status==='sent').length,
+        failed:items.filter((x:any)=>x.status==='failed').length
+      }});
+    }
+
+    if (action === 'notification_prepare') {
+      if (!['owner','admin','support','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede preparar notificaciones'});
+      const alertId=String(body.alert_id||'').trim();
+      const channel=String(body.channel||'email');
+      if(!alertId||!['email','whatsapp'].includes(channel))return respond(req,400,{error:'Alerta o canal inválido'});
+      const { data: alert, error: alertError }=await admin.from('platform_alerts')
+        .select('id,organization_id,category,severity,status,title,message,due_on')
+        .eq('id',alertId).maybeSingle();
+      if(alertError)throw alertError;
+      if(!alert)return respond(req,404,{error:'Alerta no encontrada'});
+      if(!['billing','renewal'].includes(String(alert.category)))return respond(req,400,{error:'Esta alerta es operativa interna y no requiere aviso al cliente'});
+      const { data: tenant, error: tenantError }=await admin.from('platform_tenants')
+        .select('primary_contact_name,primary_contact_email,primary_contact_phone,billing_email')
+        .eq('organization_id',alert.organization_id).maybeSingle();
+      if(tenantError)throw tenantError;
+      const { data: org, error: orgError }=await admin.from('organizations').select('name').eq('id',alert.organization_id).maybeSingle();
+      if(orgError)throw orgError;
+      const recipient=channel==='email'
+        ?String(tenant?.billing_email||tenant?.primary_contact_email||'').trim().toLowerCase()
+        :String(tenant?.primary_contact_phone||'').trim();
+      if(!recipient)return respond(req,400,{error:channel==='email'?'No hay correo de contacto o facturación registrado':'No hay teléfono de contacto registrado'});
+      const contact=String(tenant?.primary_contact_name||'').trim()||('equipo de '+String(org?.name||'la organización'));
+      const company=String(org?.name||'tu organización');
+      const subject=channel==='email'?('ALVA CRM · '+String(alert.title||'Aviso')+' — '+company):null;
+      let bodyText='';
+      if(alert.category==='billing'){
+        bodyText=channel==='email'
+          ?`Hola ${contact}:\n\n${alert.message||'Tenemos una actualización relacionada con tu pago del servicio.'}\n\nSi ya realizaste el pago, por favor comparte tu comprobante para actualizar tu cuenta. Si necesitas apoyo, responde a este mensaje.\n\nAtentamente,\nALVA Soluciones Digitales`
+          :`Hola ${contact}. ${alert.message||'Tenemos una actualización relacionada con tu pago del servicio.'} Si ya realizaste el pago, compártenos tu comprobante para actualizar tu cuenta. — ALVA Soluciones Digitales`;
+      }else{
+        bodyText=channel==='email'
+          ?`Hola ${contact}:\n\n${alert.message||'Tu servicio se encuentra próximo a renovación.'}\n\nQueremos revisar contigo la continuidad del servicio y cualquier ajuste que necesites para el siguiente periodo.\n\nAtentamente,\nALVA Soluciones Digitales`
+          :`Hola ${contact}. ${alert.message||'Tu servicio se encuentra próximo a renovación.'} Queremos revisar contigo la continuidad del servicio y cualquier ajuste para el siguiente periodo. — ALVA Soluciones Digitales`;
+      }
+      const { data: existing }=await admin.from('platform_notification_outbox')
+        .select('*').eq('alert_id',alertId).eq('channel',channel).eq('recipient',recipient).maybeSingle();
+      if(existing?.status==='sent')return respond(req,200,{ok:true,notification:existing,already_sent:true});
+      const row={
+        alert_id:alertId,organization_id:alert.organization_id,channel,recipient,subject,body:bodyText,
+        status:'draft',provider:null,provider_message_id:null,last_error:null,prepared_by:authData.user.id,
+        updated_at:new Date().toISOString()
+      };
+      const { data: saved, error: saveError }=await admin.from('platform_notification_outbox')
+        .upsert(row,{onConflict:'alert_id,channel,recipient'}).select('*').single();
+      if(saveError)throw saveError;
+      await logActivity(alert.organization_id,'notification_prepared','Borrador de notificación preparado',{alert_id:alertId,channel,recipient});
+      return respond(req,200,{ok:true,notification:saved,already_sent:false});
+    }
+
+    if (action === 'notification_mark_sent') {
+      if (!['owner','admin','support','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede registrar notificaciones'});
+      const notificationId=String(body.notification_id||'').trim();
+      if(!notificationId)return respond(req,400,{error:'Falta la notificación'});
+      const { data: current, error: currentError }=await admin.from('platform_notification_outbox')
+        .select('id,organization_id,status,attempt_count,channel,recipient').eq('id',notificationId).maybeSingle();
+      if(currentError)throw currentError;
+      if(!current)return respond(req,404,{error:'Notificación no encontrada'});
+      const { data: saved, error }=await admin.from('platform_notification_outbox')
+        .update({status:'sent',provider:'manual',sent_at:new Date().toISOString(),attempt_count:Number(current.attempt_count||0)+1,last_error:null,updated_at:new Date().toISOString()})
+        .eq('id',notificationId).select('*').single();
+      if(error)throw error;
+      await logActivity(current.organization_id,'notification_sent_manual','Notificación marcada como enviada',{notification_id:notificationId,channel:current.channel,recipient:current.recipient});
+      return respond(req,200,{ok:true,notification:saved});
+    }
+
     if (action === 'alerts_overview') {
       if (!['owner','admin','support','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar alertas'});
       const { data: refreshResult, error: refreshError }=await admin.rpc('platform_refresh_alerts');
