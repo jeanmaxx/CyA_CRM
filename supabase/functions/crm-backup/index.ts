@@ -1,6 +1,6 @@
 import {createClient} from 'npm:@supabase/supabase-js@2.57.4';
 import JSZip from 'npm:jszip@3.10.1';
-const headers={'Access-Control-Allow-Origin':'https://jeanmaxx.github.io','Access-Control-Allow-Headers':'authorization,apikey,x-client-info,content-type','Access-Control-Allow-Methods':'POST,OPTIONS','Content-Type':'application/json'};
+const headers={'Access-Control-Allow-Origin':'https://crm-alvasd.pages.dev','Access-Control-Allow-Headers':'authorization,apikey,x-client-info,content-type','Access-Control-Allow-Methods':'POST,OPTIONS','Content-Type':'application/json'};
 const response=(status:number,body:unknown)=>new Response(JSON.stringify(body),{status,headers});
 Deno.serve(async(req:Request)=>{
  if(req.method==='OPTIONS')return response(200,{});if(req.method!=='POST')return response(405,{error:'Método no permitido'});
