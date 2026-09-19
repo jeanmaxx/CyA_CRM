@@ -1,4 +1,15 @@
-# Phase C · tenant-aware routes. Specific collaborator routes must precede generic app routes.
+# Fase E · compatibilidad. _worker.js es la fuente efectiva; estas reglas son respaldo.
+/platform/site / 301
+/platform/site/ / 301
+/platform/site/* / 301
+/platform/admin /admin/ 301
+/platform/admin/ /admin/ 301
+/platform/admin/* /admin/ 301
+/colaborador /C&ACRM/Colaboradores/ 301
+/colaborador/ /C&ACRM/Colaboradores/ 301
+/colaborador/* /C&ACRM/Colaboradores/ 301
+
+# Rutas canónicas multi-tenant: rewrites internos.
 /C&ACRM/Colaboradores /colaborador/index.html 200
 /C&ACRM/Colaboradores/ /colaborador/index.html 200
 /C&ACRM/Colaboradores/* /colaborador/index.html 200
