@@ -41,7 +41,7 @@ assert.equal(manifest.aliases.cyaCollaborators.path,'/C&ACRM/Colaboradores/');
 for(const path of [
   'site/styles.css','site/app.js','site/config.js',
   'admin/index.html','admin/styles.css','admin/app.js','admin/config.js',
-  'app/index.html','demo/index.html','demo/styles.css'
+  'app/index.html','runtime/colaboradores.html','demo/index.html','demo/styles.css'
 ]) assert.equal(fs.existsSync(path),true,path+' must exist');
 
 console.log('PASS: canonical ALVA CRM route surfaces are separated and demo is isolated from production data.');
