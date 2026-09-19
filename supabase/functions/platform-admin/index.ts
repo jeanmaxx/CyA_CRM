@@ -548,6 +548,90 @@ Deno.serve(async (req: Request) => {
       return respond(req, 200, { ok: true });
     }
 
+    if (action === 'contract_templates_overview') {
+      if (!['owner','admin','support'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar plantillas'});
+      const version='retiro-contrato-pagare-v3';
+      const [{ data: orgs, error: orgError }, { data: templates, error: templateError }] = await Promise.all([
+        admin.from('organizations').select('id,name,slug').order('name'),
+        admin.from('contract_templates')
+          .select('organization_id,version,defaults,active,filename,file_bytes,file_sha256,uploaded_by,created_at,updated_at')
+          .eq('version',version)
+      ]);
+      if(orgError)throw orgError;if(templateError)throw templateError;
+      const map=new Map((templates||[]).map((t:any)=>[t.organization_id,t]));
+      return respond(req,200,{ok:true,version,items:(orgs||[]).map((org:any)=>({
+        organization_id:org.id,organization_name:org.name,slug:org.slug,
+        template:map.get(org.id)||null
+      }))});
+    }
+
+    if (action === 'contract_template_get') {
+      if (!['owner','admin','support'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede descargar plantillas'});
+      const organizationId=String(body.organization_id||'').trim();
+      if(!organizationId)return respond(req,400,{error:'Falta la organización'});
+      const version='retiro-contrato-pagare-v3';
+      const { data: row, error }=await admin.from('contract_templates')
+        .select('organization_id,version,content_base64,defaults,active,filename,file_bytes,file_sha256,created_at,updated_at')
+        .eq('organization_id',organizationId).eq('version',version).maybeSingle();
+      if(error)throw error;
+      if(!row)return respond(req,404,{error:'Esta organización no tiene una plantilla Word privada'});
+      return respond(req,200,{ok:true,template:row});
+    }
+
+    if (action === 'contract_template_upsert') {
+      if (!['owner','admin'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede modificar plantillas'});
+      const organizationId=String(body.organization_id||'').trim();
+      const filename=String(body.filename||'plantilla-contrato.docx').trim().slice(0,180);
+      const content=String(body.content_base64||'').replace(/\s+/g,'');
+      const defaults=(body.defaults&&typeof body.defaults==='object'&&!Array.isArray(body.defaults))?body.defaults:{};
+      if(!organizationId||!content)return respond(req,400,{error:'Organización y archivo DOCX son obligatorios'});
+      if(content.length>15000000)return respond(req,413,{error:'La plantilla excede el tamaño máximo permitido'});
+      if(!content.startsWith('UEs'))return respond(req,400,{error:'El archivo no parece ser un DOCX válido'});
+      const { data: org }=await admin.from('organizations').select('id,name').eq('id',organizationId).maybeSingle();
+      if(!org)return respond(req,404,{error:'Organización no encontrada'});
+      let bytes:Uint8Array;
+      try{
+        const binary=atob(content);
+        bytes=new Uint8Array(binary.length);
+        for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+      }catch(_){return respond(req,400,{error:'El archivo DOCX no pudo decodificarse'})}
+      if(bytes.length<100)return respond(req,400,{error:'El archivo DOCX está vacío o incompleto'});
+      const digest=await crypto.subtle.digest('SHA-256',bytes);
+      const sha=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+      const version='retiro-contrato-pagare-v3';
+      const row={
+        organization_id:organizationId,version,content_base64:content,
+        defaults:{
+          empresa_representante:String((defaults as any).empresa_representante||'').trim(),
+          empresa_domicilio:String((defaults as any).empresa_domicilio||'').trim(),
+          ciudad_contrato:String((defaults as any).ciudad_contrato||'').trim(),
+        },
+        active:body.active!==false,filename:filename||'plantilla-contrato.docx',
+        file_bytes:bytes.length,file_sha256:sha,uploaded_by:authData.user.id,updated_at:new Date().toISOString()
+      };
+      const { error }=await admin.from('contract_templates').upsert(row,{onConflict:'organization_id,version'});
+      if(error)throw error;
+      await logActivity(organizationId,'contract_template_updated','Plantilla contractual actualizada',{
+        version,filename:row.filename,file_bytes:bytes.length,file_sha256:sha,active:row.active
+      });
+      return respond(req,200,{ok:true,version,file_bytes:bytes.length,file_sha256:sha});
+    }
+
+    if (action === 'contract_template_toggle') {
+      if (!['owner','admin'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede modificar plantillas'});
+      const organizationId=String(body.organization_id||'').trim();
+      if(!organizationId)return respond(req,400,{error:'Falta la organización'});
+      const version='retiro-contrato-pagare-v3';
+      const { data: row, error }=await admin.from('contract_templates')
+        .update({active:body.active===true,updated_at:new Date().toISOString(),uploaded_by:authData.user.id})
+        .eq('organization_id',organizationId).eq('version',version)
+        .select('organization_id,active').maybeSingle();
+      if(error)throw error;
+      if(!row)return respond(req,404,{error:'Esta organización no tiene una plantilla Word privada'});
+      await logActivity(organizationId,'contract_template_toggled',row.active?'Plantilla contractual activada':'Plantilla contractual desactivada',{version});
+      return respond(req,200,{ok:true,active:row.active});
+    }
+
     if (action === 'backups_overview') {
       if (!['owner','admin','support'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar respaldos'});
       const { data: runs, error } = await admin.from('backup_runs')
