@@ -2,8 +2,8 @@ const CFG=window.ALVA_PLATFORM_CONFIG;
 const sb=window.supabase.createClient(CFG.supabaseUrl,CFG.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const state={session:null,admin:null,tenants:[],plans:[],stats:{},leads:[],payments:[],platformAdmins:[],view:'dashboard'};
-const viewTitles={dashboard:'Resumen',clientes:'Clientes',solicitudes:'Solicitudes',planes:'Planes y módulos',facturacion:'Facturación',equipo:'Equipo ALVA',actividad:'Actividad',configuracion:'Configuración'};
+const state={session:null,admin:null,tenants:[],plans:[],stats:{},leads:[],payments:[],backups:[],platformAdmins:[],view:'dashboard'};
+const viewTitles={dashboard:'Resumen',clientes:'Clientes',solicitudes:'Solicitudes',planes:'Planes y módulos',facturacion:'Facturación',respaldos:'Respaldos',equipo:'Equipo ALVA',actividad:'Actividad',configuracion:'Configuración'};
 const statusLabels={active:'Activo',implementation:'Implementación',suspended:'Suspendido',cancelled:'Cancelado'};
 const moduleLabels={prospects:'Prospectos',clients:'Clientes',agenda:'Agenda',dashboard:'Dashboard',finance:'Finanzas',collaborators:'Colaboradores',documents:'Documentos',reports:'Reportes',multi_office:'Múltiples oficinas',custom_workflows:'Flujos personalizados'};
 const leadStatusLabels={new:'Nueva',contacted:'Contactada',demo:'Demo',qualified:'Calificada',won:'Ganada',lost:'Perdida'};
@@ -25,7 +25,7 @@ $('#login-form')?.addEventListener('submit',async e=>{e.preventDefault();const b
 $('#logout')?.addEventListener('click',async()=>{await sb.auth.signOut();location.reload()});
 $('#account-button')?.addEventListener('click',()=>$('#account-popover').classList.toggle('open'));
 document.addEventListener('click',e=>{if(!e.target.closest('.account-menu'))$('#account-popover')?.classList.remove('open')});
-function switchView(v){if(!$('#view-'+v))return;state.view=v;$$('.view').forEach(x=>x.classList.remove('active'));$$('.sidebar nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#view-'+v).classList.add('active');$('#view-title').textContent=viewTitles[v]||v;if(v==='actividad')loadActivity();if(v==='planes')renderPlans();if(v==='solicitudes')loadSalesLeads();if(v==='facturacion')loadBilling();if(v==='equipo')loadPlatformAdmins()}
+function switchView(v){if(!$('#view-'+v))return;state.view=v;$$('.view').forEach(x=>x.classList.remove('active'));$$('.sidebar nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#view-'+v).classList.add('active');$('#view-title').textContent=viewTitles[v]||v;if(v==='actividad')loadActivity();if(v==='planes')renderPlans();if(v==='solicitudes')loadSalesLeads();if(v==='facturacion')loadBilling();if(v==='respaldos')loadBackups();if(v==='equipo')loadPlatformAdmins()}
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
 
 async function loadDashboard(silent=false){if(!silent)toast('Actualizando datos…');try{const data=await api('dashboard');state.tenants=data.tenants||[];state.plans=data.plans||[];state.stats=data.stats||{};renderDashboard();renderClients();renderPlans();fillPlanOptions();fillPaymentOrganizations();if(!silent)toast('Datos actualizados')}catch(e){toast(e.message,true)}}
@@ -98,6 +98,73 @@ $('#new-payment')?.addEventListener('click',()=>{const f=$('#payment-form');f.re
 $('#payment-org')?.addEventListener('change',e=>{const t=state.tenants.find(x=>x.id===e.target.value),f=$('#payment-form');if(t?.agreed_price_cents)f.elements.amount.value=(t.agreed_price_cents/100).toFixed(2);if(t?.next_payment_on)f.elements.next_payment_on.value=t.billing_cycle==='annual'?plusMonths(t.next_payment_on,12):plusMonths(t.next_payment_on,1)});
 $('#payment-form')?.addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,btn=f.querySelector('button[type=submit]'),fd=new FormData(f),payload=Object.fromEntries(fd.entries());payload.amount_cents=Math.round(Number(payload.amount||0)*100);delete payload.amount;btn.disabled=true;try{await api('add_payment',payload);$('#payment-dialog').close();toast('Pago registrado');await loadDashboard(true);await loadBilling()}catch(err){toast(err.message,true)}finally{btn.disabled=false}});
 $('#run-billing-rules')?.addEventListener('click',async()=>{const btn=$('#run-billing-rules');btn.disabled=true;try{const data=await api('run_billing_rules');const n=Number(data.result?.suspended_count||0);toast(n?('Revisión completa: '+n+' organización(es) suspendida(s)'):'Revisión completa: no hubo suspensiones');await loadDashboard(true);await loadBilling()}catch(e){toast(e.message,true)}finally{btn.disabled=false}});
+
+
+function formatBytes(bytes){
+  const n=Number(bytes||0);
+  if(!n)return '—';
+  if(n<1024)return n+' B';
+  if(n<1048576)return (n/1024).toFixed(1)+' KB';
+  return (n/1048576).toFixed(n>10485760?0:1)+' MB';
+}
+async function loadBackups(){
+  const body=$('#backup-table');
+  if(!body)return;
+  body.innerHTML='<tr><td colspan="7"><div class="empty">Cargando respaldos…</div></td></tr>';
+  try{
+    const data=await api('backups_overview');
+    state.backups=data.runs||[];
+    renderBackups();
+  }catch(e){
+    body.innerHTML='<tr><td colspan="7"><div class="empty">'+esc(e.message)+'</div></td></tr>';
+  }
+}
+function renderBackups(){
+  const orgMap=new Map(state.tenants.map(t=>[t.id,t.name]));
+  const latestByOrg=new Map();
+  for(const run of state.backups)if(!latestByOrg.has(run.organization_id))latestByOrg.set(run.organization_id,run);
+  const covered=[...latestByOrg.values()].filter(r=>['complete','external_pending'].includes(r.status)).length;
+  const failed=state.backups.filter(r=>r.status==='failed').length;
+  const latest=state.backups[0];
+  $('#backup-latest').textContent=latest?formatDate(latest.started_at):'—';
+  $('#backup-covered').textContent=covered+'/'+state.tenants.length;
+  $('#backup-failed').textContent=failed;
+  if(!state.backups.length){
+    $('#backup-table').innerHTML='<tr><td colspan="7"><div class="empty">Aún no hay respaldos registrados.</div></td></tr>';
+    return;
+  }
+  $('#backup-table').innerHTML=state.backups.map(r=>{
+    const counts=r.counts&&typeof r.counts==='object'?Object.values(r.counts).reduce((sum,n)=>sum+Number(n||0),0):0;
+    const status=r.status==='complete'?'Completo':r.status==='external_pending'?'Supabase OK':r.status==='failed'?'Fallido':r.status;
+    const download=r.path?'<button class="table-action" data-backup-download="'+esc(r.id)+'">Descargar</button>':'';
+    return '<tr><td><strong>'+esc(orgMap.get(r.organization_id)||r.organization_id)+'</strong><small>'+esc(r.id)+'</small></td>'+
+      '<td>'+(r.kind==='daily'?'Automático':'Manual')+'</td>'+
+      '<td><span class="tag '+(r.status==='failed'?'cancelled':'active')+'">'+esc(status)+'</span></td>'+
+      '<td>'+esc(formatDate(r.started_at))+'</td>'+
+      '<td>'+esc(formatBytes(r.bytes))+'</td>'+
+      '<td>'+(counts||'—')+'</td>'+
+      '<td><div class="table-actions"><button class="table-action" data-backup-run="'+esc(r.organization_id)+'">Nuevo</button>'+download+'</div></td></tr>';
+  }).join('');
+  $('[data-backup-run]').forEach(btn=>btn.onclick=()=>requestBackup(btn.dataset.backupRun));
+  $('[data-backup-download]').forEach(btn=>btn.onclick=()=>downloadBackup(btn.dataset.backupDownload));
+}
+async function requestBackup(orgId){
+  const tenant=state.tenants.find(t=>t.id===orgId);
+  if(!confirm('¿Generar un respaldo manual de '+(tenant?.name||'esta organización')+'?'))return;
+  try{
+    await api('run_backup',{organization_id:orgId});
+    toast('Respaldo solicitado. Se procesará en unos segundos.');
+    setTimeout(loadBackups,4500);
+  }catch(e){toast(e.message,true)}
+}
+async function downloadBackup(runId){
+  try{
+    const data=await api('backup_download',{run_id:runId});
+    window.open(data.url,'_blank','noopener');
+    toast('Enlace seguro generado por 5 minutos');
+  }catch(e){toast(e.message,true)}
+}
+$('#reload-backups')?.addEventListener('click',loadBackups);
 
 async function loadPlatformAdmins(){const body=$('#platform-admin-table');if(!body)return;body.innerHTML='<tr><td colspan="6"><div class="empty">Cargando accesos…</div></td></tr>';try{const data=await api('platform_admins');state.platformAdmins=data.admins||[];renderPlatformAdmins()}catch(e){body.innerHTML='<tr><td colspan="6"><div class="empty">'+esc(e.message)+'</div></td></tr>'}}
 function renderPlatformAdmins(){$('#platform-admin-table').innerHTML=state.platformAdmins.length?state.platformAdmins.map(a=>`<tr><td><strong>${esc(a.display_name)}</strong></td><td>${esc(a.email||'—')}</td><td><select class="inline-select" data-admin-role="${esc(a.user_id)}" ${a.user_id===state.admin?.user_id?'disabled':''}><option value="owner" ${a.role==='owner'?'selected':''}>Propietario</option><option value="admin" ${a.role==='admin'?'selected':''}>Administrador</option><option value="support" ${a.role==='support'?'selected':''}>Soporte</option><option value="billing" ${a.role==='billing'?'selected':''}>Facturación</option></select></td><td><span class="tag ${a.active?'active':'cancelled'}">${a.active?'Activo':'Inactivo'}</span></td><td>${esc(formatDate(a.created_at))}</td><td><button class="table-action" data-admin-toggle="${esc(a.user_id)}" data-active="${a.active?'1':'0'}" ${a.user_id===state.admin?.user_id?'disabled':''}>${a.active?'Desactivar':'Activar'}</button></td></tr>`).join(''):'<tr><td colspan="6"><div class="empty">No hay accesos de plataforma.</div></td></tr>';$$('[data-admin-role]').forEach(sel=>sel.onchange=async()=>{try{await api('update_platform_admin',{user_id:sel.dataset.adminRole,role:sel.value});toast('Rol actualizado');await loadPlatformAdmins()}catch(e){toast(e.message,true)}});$$('[data-admin-toggle]').forEach(btn=>btn.onclick=async()=>{try{await api('update_platform_admin',{user_id:btn.dataset.adminToggle,active:btn.dataset.active!=='1'});toast('Acceso actualizado');await loadPlatformAdmins()}catch(e){toast(e.message,true)}})}
