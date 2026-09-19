@@ -1152,3 +1152,33 @@ select:focus{outline:none;border-color:var(--accent-blue);}
   .login-unified-card .login-app-name{font-size:27px;}
   .login-unified-brand-panel{min-height:92px;}
 }
+
+
+/* ===== Branding C&A post-migración ===== */
+#sidebar-logo-wrap.brand-logo{
+  width:44px!important;
+  height:44px!important;
+  background:transparent!important;
+  border-radius:0!important;
+  flex:0 0 44px!important;
+}
+#sidebar-logo-wrap.brand-logo img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  background:transparent!important;
+}
+.login-unified-card .login-logo{
+  width:188px!important;
+  height:104px!important;
+}
+.login-unified-card .login-logo img{
+  filter:none!important;
+  background:transparent!important;
+}
+.login-alva-credit img{
+  width:170px!important;
+  max-height:56px!important;
+  object-fit:contain!important;
+  display:block;
+}
