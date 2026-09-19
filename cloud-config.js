@@ -1,26 +1,80 @@
+const requestedTenantSlug=(()=>{
+  try{
+    const value=new URLSearchParams(window.location.search).get('tenant')||'';
+    return /^[a-z0-9][a-z0-9-]{1,59}$/i.test(value)?value.toLowerCase():'';
+  }catch(_){return '';}
+})();
+
 window.CA_CLOUD_CONFIG = Object.freeze({
   supabaseUrl: 'https://ibhgisndtaclvwznqugu.supabase.co',
   supabasePublishableKey: 'sb_publishable_grQYYOgYg0WR9gmn3QBHpg_UyieIrZ8',
   organizationId: 'ca000000-0000-4000-8000-000000000001',
-  siteUrl: 'https://jeanmaxx.github.io/CyA_CRM/',
+  siteUrl: 'https://crm-alvasd.pages.dev/',
+  tenantSlug: requestedTenantSlug,
+  brandingEndpoint: 'https://ibhgisndtaclvwznqugu.supabase.co/functions/v1/platform-branding',
 });
 
-// Branding is public, so the login screen can use the same company logo
-// before authentication and after logout. This avoids two different logos
-// depending on whether app settings have already been loaded in the session.
+window.CA_TENANT_PUBLIC_BRAND=null;
+
+// C&A keeps the exact current login when no tenant parameter is present.
+// Tenant-specific links only replace the public login branding; authentication
+// remains authoritative and the actual organization is resolved from the profile.
 (function installSessionConsistencyFixes(){
   const cfg=window.CA_CLOUD_CONFIG;
-  const brandingUrl=`${cfg.supabaseUrl}/storage/v1/object/public/crm-branding/${cfg.organizationId}/logo.png`;
+  const cyaBrandingUrl=`${cfg.supabaseUrl}/storage/v1/object/public/crm-branding/${cfg.organizationId}/logo.png`;
+  const alvaFallback='https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/alva-sd-official-20260918.png';
+
+  function currentPublicBrand(){
+    if(!cfg.tenantSlug)return {companyName:'Casillas & Asociados',logoUrl:cyaBrandingUrl,isTenant:false};
+    return window.CA_TENANT_PUBLIC_BRAND||{companyName:'ALVA CRM',logoUrl:alvaFallback,isTenant:true};
+  }
+
+  function applyTenantLoginCopy(){
+    if(!cfg.tenantSlug)return;
+    const brand=currentPublicBrand();
+    const generalSub=document.querySelector('.login-sub');
+    if(generalSub){
+      generalSub.style.display='block';
+      generalSub.textContent=`${brand.companyName||'ALVA CRM'} — Acceso seguro`;
+    }
+  }
 
   function setLoginBranding(){
     const el=document.getElementById('login-logo-wrap');
-    if(!el)return;
+    if(!el){applyTenantLoginCopy();return;}
+    const brand=currentPublicBrand();
+    const desired=String(brand.logoUrl||alvaFallback);
     const img=el.querySelector('img');
-    if(img&&img.src===brandingUrl)return;
-    el.innerHTML=`<img src="${brandingUrl}" alt="Casillas & Asociados" style="width:100%;height:100%;object-fit:contain;background:#fff;">`;
+    if(!img||img.dataset.publicBrandUrl!==desired){
+      el.innerHTML=`<img src="${desired}" data-public-brand-url="${desired}" alt="${String(brand.companyName||'ALVA CRM').replace(/"/g,'&quot;')}" style="width:100%;height:100%;object-fit:contain;background:${brand.isTenant?'transparent':'#fff'};">`;
+    }
+    applyTenantLoginCopy();
   }
+
+  async function resolveRequestedTenantBrand(){
+    if(!cfg.tenantSlug)return;
+    try{
+      const response=await fetch(cfg.brandingEndpoint,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':cfg.supabasePublishableKey},
+        body:JSON.stringify({slug:cfg.tenantSlug})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(response.ok&&data?.brand){
+        window.CA_TENANT_PUBLIC_BRAND={...data.brand,isTenant:true};
+      }else{
+        window.CA_TENANT_PUBLIC_BRAND={companyName:'ALVA CRM',appName:'ALVA CRM',logoUrl:alvaFallback,status:'unknown',isTenant:true};
+      }
+    }catch(_){
+      window.CA_TENANT_PUBLIC_BRAND={companyName:'ALVA CRM',appName:'ALVA CRM',logoUrl:alvaFallback,status:'unknown',isTenant:true};
+    }
+    setLoginBranding();
+  }
+
   window.cyaSetLoginBranding=setLoginBranding;
+  window.cyaApplyTenantLoginBranding=setLoginBranding;
   setLoginBranding();
+  resolveRequestedTenantBrand();
 
   let attempts=0;
   const installer=setInterval(()=>{
