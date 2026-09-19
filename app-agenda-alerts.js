@@ -186,7 +186,7 @@
 (function loadAccountWorkspace(){
   if(document.querySelector('script[data-cya-account-ui]'))return;
   const script=document.createElement('script');
-  script.src='app-account-ui.js?v=20260911-mi-cuenta';
+  script.src='/app-account-ui.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaAccountUi='1';
   document.head.appendChild(script);

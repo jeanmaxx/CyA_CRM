@@ -1000,3 +1000,155 @@ select:focus{outline:none;border-color:var(--accent-blue);}
 }
 /* Daily operation, account settings and document preview */
 [hidden]{display:none!important}.account-card{max-width:720px}.account-profile{display:flex;gap:20px;align-items:center;margin-bottom:20px}.account-profile p{margin:6px 0;color:var(--text-muted)}.account-photo{width:88px;height:88px;border-radius:50%;overflow:hidden;background:var(--bg-secondary);display:grid;place-items:center;font-size:26px}.account-photo img{width:100%;height:100%;object-fit:cover}.lead-order{border:0;background:transparent;color:inherit;cursor:pointer;padding:4px 7px;font-size:16px}.archive-toggle{border:0;background:transparent;color:var(--text-primary);width:100%;display:flex;justify-content:space-between;gap:8px;padding:12px;text-align:left;cursor:pointer;font:inherit;font-size:12px;font-weight:600}.initial-criteria{padding:12px;border:1px solid var(--border);border-radius:8px;margin-top:12px;color:var(--text-muted)}.criteria-ok{color:var(--success);border-color:var(--success)}.criteria-alert{padding:9px 10px;border-radius:6px;margin:6px 0;border-left:4px solid}.criteria-verde{color:var(--success);background:rgba(16,185,129,.08);border-color:var(--success)}.criteria-amarillo{color:var(--warning);background:rgba(245,158,11,.08);border-color:var(--warning)}.criteria-rojo{color:var(--danger);background:rgba(239,68,68,.08);border-color:var(--danger)}.optional-data{margin:12px 0}.optional-data summary{cursor:pointer;color:var(--text-muted);font-size:12px;padding:8px 0}.contract-word-host{overflow:auto;background:#e4e7ec;padding:12px;max-height:75vh}.contract-word-host .docx-wrapper{padding:0;background:transparent}.contract-word-host section.docx{margin:0 auto 18px;box-shadow:0 1px 5px #0002}.contract-word-actions{display:flex;gap:8px;flex-wrap:wrap}.contract-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.contract-fields .form-group{margin:0}.contract-fields .wide{grid-column:1/-1}.contract-subsection{grid-column:1/-1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);padding-top:8px;border-top:1px solid var(--border)}.contract-office-address{grid-column:1/-1;padding:10px;border-radius:6px;background:var(--bg-secondary);font-size:12px;color:var(--text-secondary)}@media(max-width:700px){.contract-fields{grid-template-columns:1fr}.account-profile{gap:12px}.contract-word-host{padding:4px}.account-photo{width:65px;height:65px;flex-shrink:0}}
+
+
+/* ===== Login unificado · Portal de Colaboradores / CRM ===== */
+.login-screen{
+  background:
+    radial-gradient(circle at 72% 18%,rgba(255,194,14,.08),transparent 31%),
+    linear-gradient(135deg,#0b1018,#111a28)!important;
+  padding:28px!important;
+}
+.login-unified-card{
+  width:min(460px,100%);
+  max-width:460px;
+  background:rgba(21,28,39,.97);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:24px;
+  padding:32px 34px 26px;
+  box-shadow:0 35px 100px rgba(0,0,0,.42);
+}
+.login-unified-brand-panel{
+  min-height:104px;
+  display:grid;
+  place-items:center;
+  padding:10px 16px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:18px;
+  background:rgba(255,255,255,.035);
+}
+.login-unified-card .login-logo{
+  width:176px!important;
+  height:92px!important;
+  margin:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+}
+.login-unified-card .login-logo img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  background:transparent!important;
+}
+.login-unified-copy{padding:28px 0 4px;text-align:left;}
+.login-eyebrow{
+  color:#ffc20e;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.15em;
+  margin-bottom:10px;
+}
+.login-unified-card .login-app-name{
+  font-family:var(--font-display);
+  font-size:32px;
+  line-height:1.08;
+  letter-spacing:-.02em;
+  margin:0 0 8px;
+  color:var(--text-primary);
+}
+.login-unified-card .login-sub{
+  margin:0 0 22px!important;
+  color:var(--text-muted);
+  font-size:13px;
+  line-height:1.55;
+}
+.login-unified-card .login-grid{margin:0!important;max-width:none!important;}
+.login-unified-card .login-pin-wrap{
+  width:100%!important;
+  max-width:none!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  text-align:left!important;
+}
+.login-unified-card .login-pin-title{
+  font-size:12px;
+  font-weight:700;
+  color:var(--text-primary);
+  margin-bottom:3px;
+}
+.login-unified-card .login-pin-sub{
+  font-size:11px;
+  color:var(--text-muted);
+  margin-bottom:14px;
+}
+.login-unified-card .form-input{
+  width:100%;
+  background:#eaf1ff!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  color:#111827!important;
+  border-radius:10px!important;
+  min-height:42px;
+}
+.login-unified-card .form-input::placeholder{color:#667085!important;}
+.login-fields{margin:0 0 14px!important;}
+.login-password-eye{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+  font-size:14px;
+  color:#64748b;
+}
+.login-unified-card .login-submit{
+  width:100%;
+  min-height:42px;
+  padding:11px 14px!important;
+  background:#ffc20e!important;
+  border-color:#ffc20e!important;
+  color:#111827!important;
+  font-size:14px!important;
+  font-weight:700;
+}
+.login-error{
+  color:var(--danger);
+  font-size:11px;
+  margin-top:8px;
+  min-height:16px;
+  text-align:left;
+}
+.login-unified-card .login-back{
+  margin-top:8px!important;
+  width:100%!important;
+  font-size:11px!important;
+}
+.login-unified-foot{
+  border-top:1px solid rgba(255,255,255,.09);
+  margin-top:18px;
+  padding-top:15px;
+  color:#6f7e92;
+  font-size:9px;
+  line-height:1.5;
+}
+.login-alva-credit{
+  margin-top:14px;
+  padding:12px 14px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  background:rgba(255,255,255,.025);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+}
+.login-alva-credit span{font-size:8px;color:#6f7e92;letter-spacing:.05em;}
+.login-alva-credit img{width:142px;max-height:42px;object-fit:contain;}
+@media(max-width:560px){
+  .login-screen{padding:14px!important;align-items:flex-start!important;overflow:auto;}
+  .login-unified-card{padding:22px 20px;border-radius:20px;margin:auto 0;}
+  .login-unified-card .login-app-name{font-size:27px;}
+  .login-unified-brand-panel{min-height:92px;}
+}

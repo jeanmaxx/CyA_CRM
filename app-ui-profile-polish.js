@@ -2,7 +2,7 @@
 (function loadCollaboratorDraftRecovery(){
   if(document.querySelector('script[data-cya-sync-recovery]'))return;
   const script=document.createElement('script');
-  script.src='app-sync-recovery.js?v=20260914-2';
+  script.src='/app-sync-recovery.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaSyncRecovery='1';
   document.head.appendChild(script);
@@ -113,7 +113,7 @@
 (function loadDashboardCustomization(){
   if(document.querySelector('script[data-cya-dashboard-customization]'))return;
   const script=document.createElement('script');
-  script.src='app-dashboard-customization.js?v=20260911-1504';
+  script.src='/app-dashboard-customization.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaDashboardCustomization='1';
   document.head.appendChild(script);
@@ -123,7 +123,7 @@
 (function loadTechnicalConfigWorkspace(){
   if(document.querySelector('script[data-cya-config-workspace]'))return;
   const script=document.createElement('script');
-  script.src='app-config-workspace.js?v=20260911-2042';
+  script.src='/app-config-workspace.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaConfigWorkspace='1';
   document.head.appendChild(script);
@@ -133,14 +133,14 @@
 (function loadPersonnelWorkspace(){
   if(!document.querySelector('script[data-cya-personnel-styles]')){
     const styles=document.createElement('script');
-    styles.src='app-personnel-styles.js?v=20260911-2115';
+    styles.src='/app-personnel-styles.js?v=20260919-routing1';
     styles.async=false;
     styles.dataset.cyaPersonnelStyles='1';
     document.head.appendChild(styles);
   }
   if(document.querySelector('script[data-cya-personnel-workspace]'))return;
   const script=document.createElement('script');
-  script.src='app-personnel-workspace.js?v=20260911-2115';
+  script.src='/app-personnel-workspace.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaPersonnelWorkspace='1';
   document.head.appendChild(script);
@@ -150,7 +150,7 @@
 (function loadCollaboratorViewScope(){
   if(document.querySelector('script[data-cya-collaborator-view]'))return;
   const script=document.createElement('script');
-  script.src='app-collaborator-view.js?v=20260914-6';
+  script.src='/app-collaborator-view.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaCollaboratorView='1';
   document.head.appendChild(script);

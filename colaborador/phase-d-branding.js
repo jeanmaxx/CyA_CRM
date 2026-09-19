@@ -2,7 +2,7 @@
   const SUPABASE_URL='https://ibhgisndtaclvwznqugu.supabase.co';
   const PUBLISHABLE_KEY='sb_publishable_grQYYOgYg0WR9gmn3QBHpg_UyieIrZ8';
   const BRANDING_ENDPOINT=SUPABASE_URL+'/functions/v1/platform-branding';
-  const FALLBACK_CYA='https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/cya-official-20260918.png?v=20260918-brand8';
+  const FALLBACK_CYA='https://crm-alvasd.pages.dev/assets/brand/cya-logo-dark.png?v=20260919-transparent1';
 
   const route=window.ALVA_TENANT_ROUTE||null;
   const slug=String(route?.tenantSlug||'').trim().toLowerCase();

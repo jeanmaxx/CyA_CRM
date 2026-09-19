@@ -96,7 +96,7 @@
 (function loadCollaboratorPortalAccess(){
   if(document.querySelector('script[data-cya-collaborator-access]'))return;
   const script=document.createElement('script');
-  script.src='app-collaborator-access.js?v=20260914-2';
+  script.src='/app-collaborator-access.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaCollaboratorAccess='1';
   document.head.appendChild(script);
@@ -106,7 +106,7 @@
 (function loadCollaboratorProfileMetadata(){
   if(document.querySelector('script[data-cya-collaborator-profile]'))return;
   const script=document.createElement('script');
-  script.src='app-collaborator-profile.js?v=20260914-3';
+  script.src='/app-collaborator-profile.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaCollaboratorProfile='1';
   document.head.appendChild(script);
@@ -116,7 +116,7 @@
 (function loadCollaboratorProfileSafety(){
   if(document.querySelector('script[data-cya-collaborator-profile-safety]'))return;
   const script=document.createElement('script');
-  script.src='app-collaborator-profile-safety.js?v=20260914-1';
+  script.src='/app-collaborator-profile-safety.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaCollaboratorProfileSafety='1';
   document.head.appendChild(script);
@@ -126,7 +126,7 @@
 (function loadCollaboratorGuideAdmin(){
   if(document.querySelector('script[data-cya-collaborator-guide-admin]'))return;
   const script=document.createElement('script');
-  script.src='app-collaborator-guide-admin.js?v=20260914-1';
+  script.src='/app-collaborator-guide-admin.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaCollaboratorGuideAdmin='1';
   document.head.appendChild(script);

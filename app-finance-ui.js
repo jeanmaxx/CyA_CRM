@@ -251,7 +251,7 @@
 (function loadSmartAgendaAlerts(){
   if(document.querySelector('script[data-cya-agenda-alerts]'))return;
   const script=document.createElement('script');
-  script.src='app-agenda-alerts.js?v=20260911-alertas-inteligentes';
+  script.src='/app-agenda-alerts.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaAgendaAlerts='1';
   document.head.appendChild(script);

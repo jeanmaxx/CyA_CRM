@@ -24,7 +24,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 // remains authoritative and the actual organization is resolved from the profile.
 (function installSessionConsistencyFixes(){
   const cfg=window.CA_CLOUD_CONFIG;
-  const cyaBrandingUrl=`${cfg.supabaseUrl}/storage/v1/object/public/crm-branding/${cfg.organizationId}/logo.png`;
+  const cyaBrandingUrl='https://crm-alvasd.pages.dev/assets/brand/cya-logo-dark.png?v=20260919-transparent1';
   const alvaFallback='https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/alva-sd-official-20260918.png';
 
   function currentPublicBrand(){
@@ -52,7 +52,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
     const desired=String(brand.logoUrl||alvaFallback);
     const img=el.querySelector('img');
     if(!img||img.dataset.publicBrandUrl!==desired){
-      el.innerHTML=`<img src="${desired}" data-public-brand-url="${desired}" alt="${String(brand.companyName||'ALVA CRM').replace(/"/g,'&quot;')}" style="width:100%;height:100%;object-fit:contain;background:${brand.isTenant?'transparent':'#fff'};">`;
+      el.innerHTML=`<img src="${desired}" data-public-brand-url="${desired}" alt="${String(brand.companyName||'ALVA CRM').replace(/"/g,'&quot;')}" style="width:100%;height:100%;object-fit:contain;background:transparent;">`;
     }
     applyTenantLoginCopy();
   }
@@ -291,7 +291,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadFinanceSectionControls(){
   if(document.querySelector('script[data-cya-finance-ui]'))return;
   const script=document.createElement('script');
-  script.src='/app-finance-ui.js?v=20260911-finanzas-cronologicas';
+  script.src='/app-finance-ui.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaFinanceUi='1';
   document.head.appendChild(script);
@@ -302,7 +302,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadProfileVisualPolish(){
   if(document.querySelector('script[data-cya-profile-polish]'))return;
   const script=document.createElement('script');
-  script.src='/app-ui-profile-polish.js?v=20260913-alertas-banco-afore';
+  script.src='/app-ui-profile-polish.js?v=20260919-routing1';
   script.async=false;
   script.dataset.cyaProfilePolish='1';
   document.head.appendChild(script);
