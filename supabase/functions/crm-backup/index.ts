@@ -8,8 +8,24 @@ Deno.serve(async(req:Request)=>{
  const admin=createClient(url,key,{auth:{persistSession:false}});
  let callerRole='';let actor:string|null=null,orgs:string[]=[],source=admin,kind='daily';
  try{
+  const requestBody=await req.json().catch(()=>({}));
   const token=req.headers.get('x-backup-token');
-  if(token){const {data,error}=await admin.rpc('crm_backup_cron_authorize',{provided_token:token});if(error||data!==true)return response(401,{error:'No autorizado'});const {data:organizations,error:oe}=await admin.from('organizations').select('id');if(oe)throw oe;orgs=(organizations||[]).map(o=>o.id);}
+  if(token){
+    const {data,error}=await admin.rpc('crm_backup_cron_authorize',{provided_token:token});
+    if(error||data!==true)return response(401,{error:'No autorizado'});
+    const targetOrg=String(requestBody?.target_org||'').trim();
+    if(targetOrg){
+      const {data:organization,error:oe}=await admin.from('organizations').select('id').eq('id',targetOrg).maybeSingle();
+      if(oe)throw oe;
+      if(!organization)return response(404,{error:'Organización no encontrada'});
+      orgs=[organization.id];
+      kind=requestBody?.requested_by==='platform'?'manual':'daily';
+    }else{
+      const {data:organizations,error:oe}=await admin.from('organizations').select('id');
+      if(oe)throw oe;
+      orgs=(organizations||[]).map(o=>o.id);
+    }
+  }
   else{const auth=req.headers.get('authorization');if(!auth)return response(401,{error:'Sesión requerida'});source=createClient(url,Deno.env.get('SUPABASE_ANON_KEY')!,{global:{headers:{Authorization:auth}},auth:{persistSession:false}});const {data,error}=await source.auth.getUser();if(error||!data.user)return response(401,{error:'Sesión inválida'});actor=data.user.id;const {data:p}=await source.from('profiles').select('organization_id,active,role').eq('id',actor).single();if(!p?.active)return response(403,{error:'Cuenta inactiva'});orgs=[p.organization_id];callerRole=p.role;kind='manual';}
   const results=[];
   for(const org of orgs){
