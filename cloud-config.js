@@ -271,7 +271,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadOperationalBoard(){
   if(document.querySelector('script[data-cya-operational-board]'))return;
   const script=document.createElement('script');
-  script.src='app-operational-board.js?v=20260911-tablero-operativo-2';
+  script.src='/app-operational-board.js?v=20260911-tablero-operativo-2';
   script.async=false;
   script.dataset.cyaOperationalBoard='1';
   document.head.appendChild(script);
@@ -281,7 +281,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadRecoveredCRMRefinements(){
   if(document.querySelector('script[data-cya-pending-fixes]'))return;
   const script=document.createElement('script');
-  script.src='app-pending-fixes.js?v=20260911-pendientes-recuperados';
+  script.src='/app-pending-fixes.js?v=20260911-pendientes-recuperados';
   script.async=false;
   script.dataset.cyaPendingFixes='1';
   document.head.appendChild(script);
@@ -291,7 +291,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadFinanceSectionControls(){
   if(document.querySelector('script[data-cya-finance-ui]'))return;
   const script=document.createElement('script');
-  script.src='app-finance-ui.js?v=20260911-finanzas-cronologicas';
+  script.src='/app-finance-ui.js?v=20260911-finanzas-cronologicas';
   script.async=false;
   script.dataset.cyaFinanceUi='1';
   document.head.appendChild(script);
@@ -302,7 +302,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadProfileVisualPolish(){
   if(document.querySelector('script[data-cya-profile-polish]'))return;
   const script=document.createElement('script');
-  script.src='app-ui-profile-polish.js?v=20260913-alertas-banco-afore';
+  script.src='/app-ui-profile-polish.js?v=20260913-alertas-banco-afore';
   script.async=false;
   script.dataset.cyaProfilePolish='1';
   document.head.appendChild(script);
