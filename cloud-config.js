@@ -24,7 +24,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 // remains authoritative and the actual organization is resolved from the profile.
 (function installSessionConsistencyFixes(){
   const cfg=window.CA_CLOUD_CONFIG;
-  const cyaBrandingUrl='https://crm-alvasd.pages.dev/assets/brand/cya-login-white.svg?v=20260919-loginwhite1';
+  const cyaBrandingUrl='https://crm-alvasd.pages.dev/assets/brand/cya-logo-dark.svg?v=20260919-brand-clean1';
   const alvaFallback='https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/alva-sd-official-20260918.png';
 
   function currentPublicBrand(){
