@@ -10,9 +10,9 @@ function legacyRedirectPath(url){
   const pathname=cleanPath(url.pathname);
   const lower=pathname.toLowerCase();
 
-  if(lower==='/platform/site'||lower==='/platform/site/'||lower.startsWith('/platform/site/'))return '/';
-  if(lower==='/platform/admin'||lower==='/platform/admin/'||lower.startsWith('/platform/admin/'))return '/admin/';
-  if(lower==='/colaborador'||lower==='/colaborador/'||lower.startsWith('/colaborador/'))return '/C&ACRM/Colaboradores/';
+  if(lower==='/platform/site'||lower==='/platform/site/'||lower==='/platform/site/index.html')return '/';
+  if(lower==='/platform/admin'||lower==='/platform/admin/'||lower==='/platform/admin/index.html')return '/admin/';
+  if(lower==='/colaborador'||lower==='/colaborador/'||lower==='/colaborador/index.html')return '/C&ACRM/Colaboradores/';
 
   if(pathname==='/'||pathname==='/index.html'){
     const tenant=String(url.searchParams.get('tenant')||'').trim().toLowerCase();
