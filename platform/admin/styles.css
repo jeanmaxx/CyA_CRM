@@ -52,3 +52,10 @@ dialog textarea{resize:vertical}
 .report-kpis .is-negative{color:var(--bad)}
 @media(max-width:900px){.report-kpis{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){.report-kpis{grid-template-columns:1fr}.report-controls input[type="month"]{width:100%}}
+
+.alert-toolbar{justify-content:flex-end}
+.alert-severity{display:inline-flex;align-items:center;border-radius:999px;padding:5px 8px;font-size:8px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line)}
+.alert-severity.critical{color:var(--bad);background:rgba(255,107,117,.07);border-color:rgba(255,107,117,.28)}
+.alert-severity.warning{color:var(--warning);background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.28)}
+.alert-severity.info{color:#93c5fd;background:rgba(59,130,246,.07);border-color:rgba(59,130,246,.25)}
+.alert-message{max-width:420px;white-space:normal;line-height:1.45}
