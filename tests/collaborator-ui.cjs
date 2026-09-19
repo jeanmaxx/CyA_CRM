@@ -1,6 +1,6 @@
 const fs=require('fs'),assert=require('node:assert/strict');
 
-const html=fs.readFileSync('colaborador/index.html','utf8');
+const html=fs.readFileSync('runtime/colaboradores.html','utf8');
 const css=fs.readFileSync('colaborador/alva-phase-d.css','utf8');
 const branding=fs.readFileSync('colaborador/phase-d-branding.js','utf8');
 const finalizer=fs.readFileSync('colaborador/phase-d-finalize.js','utf8');
