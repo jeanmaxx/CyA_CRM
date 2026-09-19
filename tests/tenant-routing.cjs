@@ -57,9 +57,9 @@ result=[
 ];`,workerSandbox);
 assert.deepEqual(Array.from(workerSandbox.result),[
   '/app/index.html',
-  '/colaborador/index.html',
+  '/runtime/colaboradores.html',
   '/app/index.html',
-  '/colaborador/index.html',
+  '/runtime/colaboradores.html',
   '/app/index.html'
 ]);
 
