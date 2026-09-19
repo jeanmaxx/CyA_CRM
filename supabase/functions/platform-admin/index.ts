@@ -548,6 +548,64 @@ Deno.serve(async (req: Request) => {
       return respond(req, 200, { ok: true });
     }
 
+    if (action === 'financial_report') {
+      if (!['owner','admin','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar reportes financieros'});
+      const requested=String(body.month||'').trim();
+      const now=new Date();
+      const defaultMonth=now.toISOString().slice(0,7);
+      const period=/^\d{4}-\d{2}$/.test(requested)?requested:defaultMonth;
+      const [year,month]=period.split('-').map(Number);
+      if(month<1||month>12||year<2020||year>2100)return respond(req,400,{error:'Periodo inválido'});
+      const start=`${period}-01`;
+      const nextDate=new Date(Date.UTC(year,month,1));
+      const next=`${nextDate.getUTCFullYear()}-${String(nextDate.getUTCMonth()+1).padStart(2,'0')}-01`;
+      const prevDate=new Date(Date.UTC(year,month-2,1));
+      const previousStart=`${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth()+1).padStart(2,'0')}-01`;
+      const previousMonth=previousStart.slice(0,7);
+
+      const tenants=await loadTenants();
+      const { data: payments, error: paymentError }=await admin.from('platform_payments')
+        .select('id,organization_id,amount_cents,currency,paid_on,method,reference')
+        .gte('paid_on',previousStart).lt('paid_on',next)
+        .order('paid_on',{ascending:false});
+      if(paymentError)throw paymentError;
+
+      const currentPayments=(payments||[]).filter((p:any)=>p.paid_on>=start&&p.paid_on<next);
+      const previousPayments=(payments||[]).filter((p:any)=>p.paid_on>=previousStart&&p.paid_on<start);
+      const collected=currentPayments.reduce((sum:number,p:any)=>sum+Number(p.amount_cents||0),0);
+      const previousCollected=previousPayments.reduce((sum:number,p:any)=>sum+Number(p.amount_cents||0),0);
+      const mrr=tenants.reduce((sum:number,t:any)=>{
+        if(t.status!=='active')return sum;
+        const cents=Number(t.agreed_price_cents||0);
+        return sum+(t.billing_cycle==='annual'?Math.round(cents/12):cents);
+      },0);
+      const today=new Date().toISOString().slice(0,10);
+      const byOrg=new Map<string,any[]>();
+      for(const p of currentPayments){if(!byOrg.has(p.organization_id))byOrg.set(p.organization_id,[]);byOrg.get(p.organization_id)!.push(p)}
+      const rows=tenants.map((t:any)=>{
+        const orgPayments=byOrg.get(t.id)||[];
+        return {
+          organization_id:t.id,name:t.name,slug:t.slug,plan_name:t.plan_name,status:t.status,
+          billing_cycle:t.billing_cycle,agreed_price_cents:Number(t.agreed_price_cents||0),
+          collected_cents:orgPayments.reduce((sum:number,p:any)=>sum+Number(p.amount_cents||0),0),
+          payment_count:orgPayments.length,
+          last_payment_on:orgPayments[0]?.paid_on||null,
+          next_payment_on:t.next_payment_on,renews_on:t.renews_on,
+          overdue:Boolean(t.status==='active'&&t.next_payment_on&&t.next_payment_on<today&&(!t.grace_until||t.grace_until<today))
+        };
+      }).sort((a:any,b:any)=>b.collected_cents-a.collected_cents||a.name.localeCompare(b.name));
+
+      const deltaPct=previousCollected>0?((collected-previousCollected)/previousCollected)*100:(collected>0?100:null);
+      const newClients=tenants.filter((t:any)=>String(t.created_at||'').slice(0,10)>=start&&String(t.created_at||'').slice(0,10)<next).length;
+      return respond(req,200,{ok:true,period,previous_month:previousMonth,summary:{
+        collected_cents:collected,previous_collected_cents:previousCollected,delta_pct:deltaPct,
+        payment_count:currentPayments.length,mrr_cents:mrr,
+        active_clients:tenants.filter((t:any)=>t.status==='active').length,
+        new_clients:newClients,overdue_clients:rows.filter((r:any)=>r.overdue).length,
+        suspended_clients:tenants.filter((t:any)=>t.status==='suspended').length
+      },rows});
+    }
+
     if (action === 'contract_templates_overview') {
       if (!['owner','admin','support'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar plantillas'});
       const version='retiro-contrato-pagare-v3';
