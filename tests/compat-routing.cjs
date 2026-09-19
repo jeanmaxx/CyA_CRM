@@ -53,6 +53,24 @@ assert.equal(runBridge('/CyA_CRM/unknown/'),'https://crm-alvasd.pages.dev/C&ACRM
 assert.equal(runBridge('/CyA_CRM/','','','crm-alvasd.pages.dev'),'');
 assert.match(fallback,/github-pages-bridge\.js\?v=phase-e1/);
 
+function runBridgeLoader(file,hostname){
+  const html=fs.readFileSync(file,'utf8');
+  const match=html.match(/<head>\s*<script>([\s\S]*?)<\/script>/);
+  assert.ok(match,file+' loader missing');
+  const writes=[];
+  vm.runInNewContext(match[1],{
+    location:{hostname},
+    document:{write:value=>writes.push(value)}
+  });
+  return writes.join('');
+}
+assert.equal(
+  runBridgeLoader('index.html','jeanmaxx.github.io'),
+  '<script src="/CyA_CRM/github-pages-bridge.js?v=phase-e1"></script>'
+);
+assert.equal(runBridgeLoader('index.html','crm-alvasd.pages.dev'),'');
+
+
 for(const file of [
   'index.html','admin/index.html','demo/index.html','app/index.html',
   'platform/site/index.html','platform/admin/index.html','colaborador/index.html'
