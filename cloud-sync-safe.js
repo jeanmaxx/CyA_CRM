@@ -11,7 +11,11 @@ cloudSelect=async function(table){
   return rows;
 };
 function syncRows(){
-  const rows=Object.fromEntries(Object.entries(syncTables).filter(([t])=>t!=='services'||isTechnicalAdmin()).map(([t,[,build]])=>[t,build()]));
+  const rows=Object.fromEntries(
+    Object.entries(syncTables)
+      .filter(([t])=>cloudTableEnabled(t)&&(t!=='services'||isTechnicalAdmin()))
+      .map(([t,[,build]])=>[t,build()])
+  );
   if(isTechnicalAdmin())rows.app_settings=[{organization_id:CA_ORG_ID,payload:{...cloudCleanObject(store.configuracion),__legacyAdvisors:cloudLegacyAdvisors}}];
   return rows;
 }
@@ -50,6 +54,7 @@ function syncInitialize(userId){syncOwner=userId;syncBaseline={};for(const [t,ro
   syncPreviousText=syncPreviousKey?localStorage.getItem(syncPreviousKey):null;
   let saved;try{saved=JSON.parse(localStorage.getItem(syncKey())||syncPreviousText||'null');}catch(e){syncBanner('Hay un borrador que no se pudo leer. Descarga los pendientes antes de continuar.');throw e;}if(!saved||saved.owner!==userId)return;
   for(const op of saved.ops||[]){if(!syncTables[op.table]&&op.table!=='app_settings')continue;
+    if(op.table!=='app_settings'&&!cloudTableEnabled(op.table))continue;
     if(op.table==='app_settings'){if(!isTechnicalAdmin())continue;store.configuracion={...op.row.payload};delete store.configuracion.__legacyAdvisors;}
     else{if(op.table==='services'&&!isTechnicalAdmin())continue;const key=syncTables[op.table][0];store[key]=store[key].filter(r=>r.id!==op.id);if(op.row)store[key].push({...op.row.payload,id:op.id});}
     if(op.row&&JSON.stringify(syncBaseline[op.table]?.[op.id])===JSON.stringify(op.row))continue;
