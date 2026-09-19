@@ -35,7 +35,11 @@ El Portal de Colaboradores envía también el slug esperado a sus Edge Functions
 
 ## Cloudflare Pages
 
-`_redirects` implementa rewrites internos. Las reglas específicas de colaboradores se evalúan antes que las rutas CRM genéricas.
+`_worker.js` es el router efectivo de Cloudflare Pages. Intercepta las rutas tenant-aware y sirve internamente `/app/index.html` o `/colaborador/index.html` sin cambiar la URL visible.
+
+`_redirects` se conserva como respaldo/documentación de intención, pero durante las pruebas HTTP reales del preview Cloudflare el fallback del proyecto devolvía la landing para rutas profundas; por eso el worker explícito se considera la fuente de routing.
+
+Las reglas específicas de colaboradores se resuelven antes que las rutas CRM genéricas.
 
 Los assets del CRM y del Portal utilizan rutas absolutas para que una ruta profunda no intente cargar CSS/JS debajo del slug del tenant.
 
