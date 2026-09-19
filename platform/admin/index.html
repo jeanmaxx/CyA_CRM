@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
   <section class="auth-view" id="auth-view">
@@ -142,6 +142,10 @@
         <label>Correo de contacto<input name="primary_contact_email" type="email" placeholder="contacto@empresa.com"></label>
         <label>Teléfono<input name="primary_contact_phone" placeholder="WhatsApp o teléfono"></label>
         <label>Correo de facturación<input name="billing_email" type="email" placeholder="facturacion@empresa.com"></label>
+        <label class="full section-label">Datos corporativos del CRM</label>
+        <label class="full">Domicilio de la empresa<input name="company_address" placeholder="Domicilio que aparecerá en documentos y contratos"></label>
+        <label>Representante legal<input name="company_representative" placeholder="Nombre completo"></label>
+        <label>Ciudad para contratos<input name="contract_city" placeholder="Ciudad, Estado"></label>
         <label>Administrador inicial<input name="admin_name" required placeholder="Nombre completo"></label>
         <label>Correo del administrador<input name="admin_email" type="email" required placeholder="admin@empresa.com"></label>
         <label>Inicio de contrato<input name="contract_started_on" type="date"></label>
@@ -208,7 +212,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script src="config.js?v=5"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
