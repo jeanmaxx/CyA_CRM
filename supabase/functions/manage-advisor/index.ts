@@ -1,6 +1,8 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 
 const allowedOrigins = new Set([
+  'https://crm-alvasd.pages.dev',
+  'https://alva-crm-platform.crm-alvasd.pages.dev',
   'https://jeanmaxx.github.io',
   'http://localhost:8000',
   'http://127.0.0.1:8000',
@@ -8,8 +10,9 @@ const allowedOrigins = new Set([
 
 function corsHeaders(req: Request) {
   const origin = req.headers.get('origin') || '';
+  const pagesPreview = /^https:\/\/[a-z0-9-]+\.crm-alvasd\.pages\.dev$/i.test(origin);
   return {
-    'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : 'https://jeanmaxx.github.io',
+    'Access-Control-Allow-Origin': (allowedOrigins.has(origin) || pagesPreview) ? origin : 'https://crm-alvasd.pages.dev',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json',
@@ -56,6 +59,10 @@ Deno.serve(async (req: Request) => {
       .select('id,organization_id,role,active')
       .eq('id', authData.user.id).single();
     if (!caller || caller.active !== true) return respond(req, 403, { error: 'Cuenta inactiva' });
+    const { data: tenant } = await admin.from('platform_tenants').select('status,suspension_reason').eq('organization_id', caller.organization_id).maybeSingle();
+    if (tenant && ['suspended','cancelled'].includes(String(tenant.status))) {
+      return respond(req, 403, { error: tenant.status === 'cancelled' ? 'El servicio de esta organización está cancelado' : ('El servicio de esta organización está suspendido' + (tenant.suspension_reason ? ': ' + tenant.suspension_reason : '')) });
+    }
     const body = await req.json();
     const action = String(body.action || 'upsert');
     if (caller.role !== 'tech_admin' && !(caller.role === 'admin' && action === 'upsert')) {
