@@ -12,7 +12,7 @@ function legacyRedirectPath(url){
 
   if(lower==='/platform/site'||lower==='/platform/site/'||lower==='/platform/site/index.html')return '/';
   if(lower==='/platform/admin'||lower==='/platform/admin/'||lower==='/platform/admin/index.html')return '/admin/';
-  if(lower==='/colaborador'||lower==='/colaborador/'||lower==='/colaborador/index.html')return '/C&ACRM/Colaboradores/';
+  if(lower==='/colaborador'||lower==='/colaborador/')return '/C&ACRM/Colaboradores/';
 
   if(pathname==='/'||pathname==='/index.html'){
     const tenant=String(url.searchParams.get('tenant')||'').trim().toLowerCase();
