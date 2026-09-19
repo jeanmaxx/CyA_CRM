@@ -372,14 +372,35 @@ Deno.serve(async (req: Request) => {
         });
         if (profileError) throw profileError;
 
+        const salesLeadId=String(body.sales_lead_id||'').trim();
+        if(salesLeadId){
+          const { data: convertedLead, error: convertLeadError } = await admin.from('platform_sales_leads')
+            .update({
+              status:'won',
+              converted_organization_id:orgId,
+              converted_at:new Date().toISOString(),
+              updated_at:new Date().toISOString(),
+            })
+            .eq('id',salesLeadId)
+            .select('id,company')
+            .maybeSingle();
+          if(convertLeadError) throw convertLeadError;
+          if(!convertedLead) throw new Error('La solicitud comercial seleccionada ya no existe');
+          await logActivity(orgId,'sales_lead_converted','Solicitud comercial convertida en cliente',{
+            lead_id:convertedLead.id,company:convertedLead.company,
+          });
+        }
+
         await logActivity(orgId, 'tenant_created', 'Organización creada', {
           name, slug, plan_id: planId, status, initial_admin: adminEmail,
+          sales_lead_id: salesLeadId || null,
         });
 
         return respond(req, 200, {
           ok: true,
           organization_id: orgId,
           slug,
+          crm_url: 'https://crm-alvasd.pages.dev/?tenant=' + encodeURIComponent(slug),
           admin: {
             user_id: authUserId,
             email: adminEmail,
@@ -643,7 +664,7 @@ Deno.serve(async (req: Request) => {
     if (action === 'sales_leads') {
       const limit = Math.min(Math.max(Number(body.limit || 100), 1), 300);
       const { data, error } = await admin.from('platform_sales_leads')
-        .select('id,name,company,contact,need,status,source,notes,assigned_to,metadata,created_at,updated_at')
+        .select('id,name,company,contact,need,status,source,notes,assigned_to,converted_organization_id,converted_at,metadata,created_at,updated_at')
         .order('created_at', { ascending: false })
         .limit(limit);
       if (error) throw error;
