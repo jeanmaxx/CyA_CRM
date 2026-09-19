@@ -6,6 +6,7 @@ const ui=fs.readFileSync('platform/admin/app.js','utf8');
 const config=fs.readFileSync('cloud-config.js','utf8');
 const branding=fs.readFileSync('supabase/functions/platform-branding/index.ts','utf8');
 const backup=fs.readFileSync('supabase/functions/crm-backup/index.ts','utf8');
+const contractWord=fs.readFileSync('app-contract-word.js','utf8');
 
 assert.match(adapter,/let\s+CA_ORG_ID\s*=\s*window\.CA_CLOUD_CONFIG\.organizationId/);
 assert.doesNotMatch(adapter,/const\s+CA_ORG_ID\s*=/);
@@ -24,6 +25,11 @@ assert.match(admin,/recovery_records/);
 assert.match(admin,/backups_overview/);
 assert.match(admin,/backup_download/);
 assert.match(admin,/platform_trigger_backup/);
+assert.match(admin,/contract_templates_overview/);
+assert.match(admin,/contract_template_upsert/);
+assert.match(admin,/contract_template_get/);
+assert.match(admin,/contract_template_toggle/);
+assert.match(admin,/file_sha256/);
 assert.match(admin,/converted_organization_id/);
 assert.match(admin,/sales_lead_converted/);
 assert.match(admin,/sourceLeadStatus/);
@@ -36,6 +42,8 @@ assert.doesNotThrow(()=>new Function(ui));
 assert.match(ui,/loadBilling/);
 assert.match(ui,/loadPlatformAdmins/);
 assert.match(ui,/loadBackups/);
+assert.match(ui,/loadContractTemplates/);
+assert.match(ui,/contract_template_upsert/);
 assert.match(ui,/convertLeadToClient/);
 assert.match(ui,/sales_lead_id/);
 assert.match(ui,/auto_suspend_on_overdue/);
@@ -52,3 +60,7 @@ assert.match(backup,/target_org/);
 assert.match(backup,/requested_by/);
 
 console.log('PASS: multi-tenant organization binding, billing/suspension backend and Control Center syntax are protected.');
+
+assert.match(contractWord,/if\(!privateContractTemplate\?\.content_base64\)return html/);
+assert.match(contractWord,/!privateContractTemplate\?\.content_base64\)\{return generarContratoAnterior\(\)/);
+assert.match(contractWord,/CONTRACT_TEMPLATE_VERSION='retiro-contrato-pagare-v3'/);
