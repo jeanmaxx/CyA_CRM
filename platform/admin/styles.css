@@ -59,3 +59,7 @@ dialog textarea{resize:vertical}
 .alert-severity.warning{color:var(--warning);background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.28)}
 .alert-severity.info{color:#93c5fd;background:rgba(59,130,246,.07);border-color:rgba(59,130,246,.25)}
 .alert-message{max-width:420px;white-space:normal;line-height:1.45}
+
+.notification-box{min-width:min(680px,90vw);padding:22px}
+.notification-box textarea{min-height:190px;resize:vertical}
+.notification-box input[readonly],.notification-box textarea[readonly]{background:#0b111b;color:#d8e0ec}
