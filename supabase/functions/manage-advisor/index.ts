@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
       .select('id,organization_id,role,active')
       .eq('id', authData.user.id).single();
     if (!caller || caller.active !== true) return respond(req, 403, { error: 'Cuenta inactiva' });
-    const { data: tenant } = await admin.from('platform_tenants').select('status,suspension_reason').eq('organization_id', caller.organization_id).maybeSingle();
+    const { data: tenant } = await admin.from('platform_tenants').select('status,suspension_reason,seat_limit').eq('organization_id', caller.organization_id).maybeSingle();
     if (tenant && ['suspended','cancelled'].includes(String(tenant.status))) {
       return respond(req, 403, { error: tenant.status === 'cancelled' ? 'El servicio de esta organización está cancelado' : ('El servicio de esta organización está suspendido' + (tenant.suspension_reason ? ': ' + tenant.suspension_reason : '')) });
     }
@@ -112,6 +112,16 @@ Deno.serve(async (req: Request) => {
     }
 
     let userId = requestedId;
+    if (!userId && tenant?.seat_limit) {
+      const { data: activeProfiles, error: activeProfilesError } = await admin.from('profiles')
+        .select('id')
+        .eq('organization_id', caller.organization_id)
+        .eq('active', true);
+      if (activeProfilesError) throw activeProfilesError;
+      if ((activeProfiles || []).length >= Number(tenant.seat_limit)) {
+        return respond(req, 409, { error: 'La organización alcanzó su límite de usuarios activos. Amplía el plan o desactiva una cuenta antes de crear otra.' });
+      }
+    }
     if (!userId) {
       const { data, error } = await admin.auth.admin.createUser({
         email,
