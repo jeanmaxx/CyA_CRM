@@ -1,5 +1,5 @@
 /* C&A CRM Suite — adaptador Supabase. La interfaz y reglas permanecen en index.html. */
-const CA_ORG_ID = window.CA_CLOUD_CONFIG.organizationId;
+let CA_ORG_ID = window.CA_CLOUD_CONFIG.organizationId;
 const supabaseClient = window.supabase.createClient(
   window.CA_CLOUD_CONFIG.supabaseUrl,
   window.CA_CLOUD_CONFIG.supabasePublishableKey,
@@ -379,6 +379,7 @@ async function cloudEnterSession(session){
       const label=String(access.status||'suspendida')==='cancelled'?'cancelada':'suspendida';
       throw new Error(`El acceso de ${access.organization_name||'tu organización'} está ${label}.${reason?' Motivo: '+reason:''} Contacta a ALVA Soluciones Digitales.`);
     }
+    if(access.organization_id) CA_ORG_ID=String(access.organization_id);
     const loadState=await cloudLoadStore();
     const profile=store.asesores.find(a=>a.id===session.user.id);
     if(!profile || profile.activo===false) throw new Error('El perfil no está activo');
@@ -409,6 +410,7 @@ volverLoginGrid=cloudPrepareLogin;
 cerrarSesion=async function(){
   cloudReady=false;
   await supabaseClient.auth.signOut();
+  CA_ORG_ID=window.CA_CLOUD_CONFIG.organizationId;
   sesionActiva=null;privateContractTemplate=null;wordContractCurrent=null;
   store={clientes:[],servicios:[],agenda:[],asesores:[],colaboradores:[],leads:[],configuracion:{...cloudDefaults.configuracion}};
   cloudPrepareLogin();
