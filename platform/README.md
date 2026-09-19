@@ -73,3 +73,18 @@ Los usuarios internos creados para nuevas organizaciones usan metadata `portal=i
 
 ## Regla de arquitectura
 El CRM operativo permanece independiente en apariencia. Las capacidades SaaS se agregan alrededor del CRM y la organización se resuelve a partir del usuario autenticado, sin mezclar datos entre empresas.
+
+
+## Entitlements por plan
+
+El CRM aplica los módulos comerciales del tenant en más de una capa:
+
+- El login consulta `get_my_tenant_entitlements` y oculta/bloquea navegación hacia módulos no contratados.
+- RLS exige módulos para Prospectos, Clientes, Agenda, Colaboradores y Documentos.
+- Documentos incluye plantillas privadas, plantillas de mensajes y el bucket privado `crm-contracts`.
+- Las Edge Functions `manage-collaborator`, `collaborator-portal` y `collaborator-discarded` validan `organization_module_allowed(...,'collaborators')` antes de usar service_role.
+- La sincronización normal y la outbox transaccional omiten tablas pertenecientes a módulos deshabilitados.
+- Dashboard se mantiene como capacidad base aunque un override de módulos esté incompleto.
+- C&A permanece en el plan Profesional y conserva todos sus módulos actuales.
+- Finanzas se controla por navegación/función porque actualmente sus datos viven dentro del registro de Cliente; un enforcement por columna requeriría normalizar esos datos a una tabla financiera separada.
+
