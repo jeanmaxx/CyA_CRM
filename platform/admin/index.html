@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
   <section class="auth-view" id="auth-view">
@@ -144,6 +144,7 @@
 
   <dialog id="client-dialog">
     <form id="client-form">
+      <input type="hidden" name="sales_lead_id" id="org-sales-lead-id">
       <div class="dialog-head"><div><span class="kicker">NUEVA ORGANIZACIÓN</span><h2>Registrar cliente</h2></div><button type="button" data-close="client-dialog">×</button></div>
       <div class="form-grid">
         <label>Empresa<input name="name" id="org-name" required placeholder="Nombre comercial"></label>
@@ -224,7 +225,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=7"></script>
-  <script src="app.js?v=7"></script>
+  <script src="config.js?v=8"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>
