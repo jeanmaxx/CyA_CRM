@@ -7,13 +7,25 @@ const config=fs.readFileSync('cloud-config.js','utf8');
 const branding=fs.readFileSync('supabase/functions/platform-branding/index.ts','utf8');
 const backup=fs.readFileSync('supabase/functions/crm-backup/index.ts','utf8');
 const contractWord=fs.readFileSync('app-contract-word.js','utf8');
+const manageCollaborator=fs.readFileSync('supabase/functions/manage-collaborator/index.ts','utf8');
+const collaboratorPortal=fs.readFileSync('supabase/functions/collaborator-portal/index.ts','utf8');
+const collaboratorDiscarded=fs.readFileSync('supabase/functions/collaborator-discarded/index.ts','utf8');
+const entitlementMigration=fs.readFileSync('supabase/migrations/20260919043106_enforce_plan_module_entitlements.sql','utf8');
+const serviceRoleEntitlementMigration=fs.readFileSync('supabase/migrations/20260919043339_service_role_module_entitlements.sql','utf8');
 
 assert.match(adapter,/let\s+CA_ORG_ID\s*=\s*window\.CA_CLOUD_CONFIG\.organizationId/);
 assert.doesNotMatch(adapter,/const\s+CA_ORG_ID\s*=/);
 assert.match(adapter,/rpc\('get_my_tenant_access'\)/);
+assert.match(adapter,/rpc\('get_my_tenant_entitlements'\)/);
+assert.match(adapter,/cloudHasModule/);
+assert.match(adapter,/cloudPageEnabled/);
+assert.match(adapter,/cloudTableEnabled/);
+assert.match(adapter,/cloudApplyModuleAccess/);
 assert.match(adapter,/CA_ORG_ID=String\(access\.organization_id\)/);
 assert.match(adapter,/organization_id:CA_ORG_ID/);
 assert.match(sync,/syncPrefix\(\).*CA_ORG_ID/);
+assert.match(sync,/cloudTableEnabled\(t\)/);
+assert.match(sync,/!cloudTableEnabled\(op\.table\)/);
 
 assert.match(admin,/platform_apply_billing_rules/);
 assert.match(admin,/billing_overview/);
@@ -81,3 +93,18 @@ console.log('PASS: multi-tenant organization binding, billing/suspension backend
 assert.match(contractWord,/if\(!privateContractTemplate\?\.content_base64\)return html/);
 assert.match(contractWord,/!privateContractTemplate\?\.content_base64\)\{return generarContratoAnterior\(\)/);
 assert.match(contractWord,/CONTRACT_TEMPLATE_VERSION='retiro-contrato-pagare-v3'/);
+
+assert.match(entitlementMigration,/current_effective_modules/);
+assert.match(entitlementMigration,/current_module_allowed/);
+assert.match(entitlementMigration,/get_my_tenant_entitlements/);
+assert.match(entitlementMigration,/current_module_allowed\('prospects'\)/);
+assert.match(entitlementMigration,/current_module_allowed\('clients'\)/);
+assert.match(entitlementMigration,/current_module_allowed\('agenda'\)/);
+assert.match(entitlementMigration,/current_module_allowed\('collaborators'\)/);
+assert.match(entitlementMigration,/current_module_allowed\('documents'\)/);
+assert.match(serviceRoleEntitlementMigration,/organization_module_allowed/);
+for(const source of [manageCollaborator,collaboratorPortal,collaboratorDiscarded]){
+  assert.match(source,/organization_module_allowed/);
+  assert.match(source,/module_name:'collaborators'/);
+  assert.match(source,/no está incluido en el plan/i);
+}
