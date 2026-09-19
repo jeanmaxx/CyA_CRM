@@ -45,3 +45,10 @@ dialog textarea{resize:vertical}
 .muted-cell{color:var(--muted);font-size:10px}
 #contract-template-form input[type="file"]{padding:9px;background:#0e1520}
 #contract-template-form input[type="file"]::file-selector-button{margin-right:10px;border:1px solid var(--line);border-radius:7px;padding:7px 10px;background:#151e2b;color:#fff;cursor:pointer}
+
+.report-controls input[type="month"]{background:#0e1520;border:1px solid var(--line);color:#fff;border-radius:9px;padding:9px 11px;font:inherit;color-scheme:dark}
+.report-kpis{grid-template-columns:repeat(3,1fr)}
+.report-kpis .is-positive{color:var(--success)}
+.report-kpis .is-negative{color:var(--bad)}
+@media(max-width:900px){.report-kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.report-kpis{grid-template-columns:1fr}.report-controls input[type="month"]{width:100%}}
