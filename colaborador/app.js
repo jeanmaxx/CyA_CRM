@@ -1,6 +1,8 @@
 const SUPABASE_URL='https://ibhgisndtaclvwznqugu.supabase.co';
 const SUPABASE_KEY='sb_publishable_grQYYOgYg0WR9gmn3QBHpg_UyieIrZ8';
 const portalClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'ca-collaborator-portal-auth'}});
+const PORTAL_ROUTE=window.ALVA_TENANT_ROUTE||null;
+const PORTAL_TENANT_SLUG=String(PORTAL_ROUTE?.tenantSlug||'').trim().toLowerCase();
 
 const PHASES=[
   {id:1,title:'Revisión de elegibilidad (CURP)',tip:'Enviamos la CURP para revisar si el prospecto cumple los criterios necesarios para continuar.'},
@@ -25,7 +27,8 @@ function setSync(message){const el=$('sync-label');if(el)el.textContent=message|
 function setBusy(busy,message='Guardando…'){state.loading=busy;setSync(busy?message:'Actualizado');document.body.style.cursor=busy?'progress':'';}
 
 async function portalAction(body){
-  const {data,error}=await portalClient.functions.invoke('collaborator-portal',{body});
+  const requestBody={...body,tenantSlug:PORTAL_TENANT_SLUG||undefined};
+  const {data,error}=await portalClient.functions.invoke('collaborator-portal',{body:requestBody});
   if(error){
     let message=error.message||'No se pudo completar la operación';
     try{if(error.context){const payload=await error.context.json();message=payload?.error||message;}}catch(_){ }
@@ -46,6 +49,9 @@ async function bootstrap(){
   try{
     setBusy(true,'Sincronizando…');
     const data=await portalAction({action:'bootstrap'});
+    if(PORTAL_TENANT_SLUG&&data?.organization?.slug&&String(data.organization.slug).toLowerCase()!==PORTAL_TENANT_SLUG){
+      throw new Error('Este enlace pertenece a otra organización. Verifica la dirección de acceso.');
+    }
     state.bootstrap=data;state.prospects=data.prospects||[];
     const c=data.collaborator||{},a=data.advisor||{};
     $('sidebar-name').textContent=c.name||'Colaborador';$('sidebar-avatar').textContent=initials(c.name);$('sidebar-advisor').textContent=`Asesor: ${a.name||'Asignado'}`;
