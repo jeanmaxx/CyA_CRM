@@ -57,15 +57,15 @@ result=[
 ];`,workerSandbox);
 assert.deepEqual(Array.from(workerSandbox.result),[
   '/app/index.html',
-  '/runtime/colaboradores.html',
+  '/runtime/colaboradores',
   '/app/index.html',
-  '/runtime/colaboradores.html',
+  '/runtime/colaboradores',
   '/app/index.html'
 ]);
 
 const redirects=fs.readFileSync('_redirects','utf8');
-assert.match(redirects,/\/C&ACRM\/Colaboradores\/\s+\/runtime\/colaboradores\.html 200/);
-assert.match(redirects,/\/app\/:tenant\/colaboradores\/\s+\/runtime\/colaboradores\.html 200/);
+assert.match(redirects,/\/C&ACRM\/Colaboradores\/\s+\/runtime\/colaboradores 200/);
+assert.match(redirects,/\/app\/:tenant\/colaboradores\/\s+\/runtime\/colaboradores 200/);
 assert.match(redirects,/\/C&ACRM\/\s+\/app\/index\.html 200/);
 assert.match(redirects,/\/app\/:tenant\s+\/app\/index\.html 200/);
 
