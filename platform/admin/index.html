@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
   <section class="auth-view" id="auth-view">
@@ -35,6 +35,7 @@
       <nav>
         <button class="active" data-view="dashboard"><i>⌂</i><span>Resumen</span></button>
         <button data-view="clientes"><i>▦</i><span>Clientes</span></button>
+        <button data-view="solicitudes"><i>✦</i><span>Solicitudes</span></button>
         <button data-view="planes"><i>◇</i><span>Planes y módulos</span></button>
         <button data-view="actividad"><i>↗</i><span>Actividad</span></button>
         <button data-view="configuracion"><i>⚙</i><span>Configuración</span></button>
@@ -74,6 +75,11 @@
         <section class="view" id="view-clientes">
           <div class="toolbar"><div class="search"><span>⌕</span><input id="client-search" placeholder="Buscar cliente, slug o plan"></div><select id="status-filter"><option value="">Todos los estados</option><option value="active">Activo</option><option value="implementation">Implementación</option><option value="suspended">Suspendido</option><option value="cancelled">Cancelado</option></select></div>
           <section class="panel table-panel"><table><thead><tr><th>Organización</th><th>Plan</th><th>Estado</th><th>Usuarios</th><th>Prospectos</th><th>Clientes</th><th>Última actividad</th><th></th></tr></thead><tbody id="client-table"></tbody></table></section>
+        </section>
+
+        <section class="view" id="view-solicitudes">
+          <div class="toolbar"><div class="search"><span>⌕</span><input id="lead-search" placeholder="Buscar empresa, contacto o necesidad"></div><select id="lead-status-filter"><option value="">Todos los estados</option><option value="new">Nueva</option><option value="contacted">Contactada</option><option value="demo">Demo</option><option value="qualified">Calificada</option><option value="won">Ganada</option><option value="lost">Perdida</option></select></div>
+          <section class="panel table-panel"><table><thead><tr><th>Empresa</th><th>Contacto</th><th>Necesidad</th><th>Estado</th><th>Recibida</th><th></th></tr></thead><tbody id="lead-table"></tbody></table></section>
         </section>
 
         <section class="view" id="view-planes">
@@ -134,11 +140,12 @@
     </form>
   </dialog>
 
+  <aside class="drawer" id="lead-drawer" aria-hidden="true"><div class="drawer-head"><div><span class="kicker">SOLICITUD COMERCIAL</span><h2 id="lead-drawer-name">Solicitud</h2></div><button id="close-lead-drawer">×</button></div><div id="lead-drawer-content"></div></aside>
   <aside class="drawer" id="client-drawer" aria-hidden="true"><div class="drawer-head"><div><span class="kicker">ORGANIZACIÓN</span><h2 id="drawer-name">Cliente</h2></div><button id="close-drawer">×</button></div><div id="drawer-content"></div></aside>
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=2"></script>
-  <script src="app.js?v=2"></script>
+  <script src="config.js?v=3"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
