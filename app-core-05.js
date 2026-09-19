@@ -865,12 +865,12 @@ function actualizarLogoSidebar(){
   const wrap = document.getElementById('sidebar-logo-wrap');
   const text = document.getElementById('sidebar-logo-text');
   if(logo){
-    if(wrap){ wrap.innerHTML=`<img src="${logo}" alt="Casillas & Asociados" onerror="this.onerror=null;this.src='/assets/icons/cya-official.png?v=20260918-brand8';" style="width:100%;height:100%;object-fit:contain;background:transparent;">`; }
+    if(wrap){ wrap.innerHTML=`<img src="${logo}" alt="Casillas & Asociados" onerror="this.onerror=null;this.src='/assets/brand/cya-logo-light.jpg?v=20260919-brand-clean1';" style="width:100%;height:100%;object-fit:contain;background:transparent;">`; }
     // Actualizar preview en modal
     const prev=document.getElementById('logo-preview');
     if(prev) prev.innerHTML=`<img src="${logo}" style="width:100%;height:100%;object-fit:contain;">`;
   } else {
-    if(wrap){ wrap.innerHTML=`<img src="/assets/icons/cya-official.png?v=20260918-brand8" alt="Casillas & Asociados" style="width:100%;height:100%;object-fit:contain;background:#fff;">`; }
+    if(wrap){ wrap.innerHTML=`<img src="/assets/brand/cya-logo-light.jpg?v=20260919-brand-clean1" alt="Casillas & Asociados" style="width:100%;height:100%;object-fit:contain;background:#fff;">`; }
   }
 }
 

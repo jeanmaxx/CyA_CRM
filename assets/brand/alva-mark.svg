@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-labelledby="title desc">
-  <title id="title">ALVA Soluciones Digitales</title>
-  <desc id="desc">Isotipo temporal grafito y ámbar inspirado en el monograma maestro de ALVA.</desc>
-  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M48 38 L160 205 L272 38" stroke="#FFC107" stroke-width="34"/>
-    <path d="M52 202 L160 42 L268 202" stroke="#4A4A4A" stroke-width="34"/>
-  </g>
-  <rect x="132" y="112" width="56" height="20" rx="10" fill="#4A4A4A"/>
-</svg>

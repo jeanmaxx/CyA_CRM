@@ -72,8 +72,7 @@ assert.equal(runBridgeLoader('index.html','crm-alvasd.pages.dev'),'');
 
 
 for(const file of [
-  'index.html','admin/index.html','demo/index.html','app/index.html',
-  'platform/site/index.html','platform/admin/index.html','colaborador/index.html'
+  'index.html','admin/index.html','demo/index.html','app/index.html'
 ]){
   assert.match(fs.readFileSync(file,'utf8'),/github-pages-bridge\.js\?v=phase-e1/,file);
 }
@@ -85,9 +84,11 @@ result=[
   legacyRedirectPath(new URL('https://crm-alvasd.pages.dev/platform/site/')),
   legacyRedirectPath(new URL('https://crm-alvasd.pages.dev/platform/admin/')),
   legacyRedirectPath(new URL('https://crm-alvasd.pages.dev/colaborador/')),
+  legacyRedirectPath(new URL('https://crm-alvasd.pages.dev/colaborador/index.html')),
   legacyRedirectPath(new URL('https://crm-alvasd.pages.dev/?tenant=casillas-asociados')),
   legacyRedirectPath(new URL('https://crm-alvasd.pages.dev/?tenant=empresa-demo')),
   legacyRedirectPath(new URL('https://crm-alvasd.pages.dev/colaborador/styles.css')),
+  legacyRedirectPath(new URL('https://crm-alvasd.pages.dev/platform/site/styles.css')),
   legacyRedirectPath(new URL('https://crm-alvasd.pages.dev/platform/admin/styles.css'))
 ];`,sandbox);
 
@@ -95,10 +96,12 @@ assert.deepEqual(Array.from(sandbox.result),[
   '/',
   '/admin/',
   '/C&ACRM/Colaboradores/',
+  '/C&ACRM/Colaboradores/',
   '/C&ACRM/',
   '/app/empresa-demo/',
   '',
-  ''
+  '/',
+  '/admin/'
 ]);
 
 console.log('PASS: legacy Cloudflare and GitHub Pages routes migrate to canonical ALVA CRM URLs without intercepting assets.');

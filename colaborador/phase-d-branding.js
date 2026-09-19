@@ -2,10 +2,10 @@
   const SUPABASE_URL='https://ibhgisndtaclvwznqugu.supabase.co';
   const PUBLISHABLE_KEY='sb_publishable_grQYYOgYg0WR9gmn3QBHpg_UyieIrZ8';
   const BRANDING_ENDPOINT=SUPABASE_URL+'/functions/v1/platform-branding';
-  const LOGIN_CYA='https://crm-alvasd.pages.dev/assets/brand/cya-login-white.svg?v=20260919-loginwhite1';
-  const FALLBACK_CYA='https://crm-alvasd.pages.dev/assets/icons/cya-official.png?v=20260918-brand8';
+  const LOGIN_CYA='https://crm-alvasd.pages.dev/assets/brand/cya-logo-dark.svg?v=20260919-brand-clean1';
+  const FALLBACK_CYA='https://crm-alvasd.pages.dev/assets/brand/cya-logo-light.jpg?v=20260919-brand-clean1';
   const DARK_SIDEBAR_CYA=LOGIN_CYA;
-  const LIGHT_SIDEBAR_CYA='https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/logo.png';
+  const LIGHT_SIDEBAR_CYA=FALLBACK_CYA;
 
   const route=window.ALVA_TENANT_ROUTE||null;
   const slug=String(route?.tenantSlug||'').trim().toLowerCase();
