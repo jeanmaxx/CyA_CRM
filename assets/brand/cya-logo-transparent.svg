@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Casillas &amp; Asociados">
+  <defs>
+    <filter id="removeWhite" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+      <feColorMatrix in="SourceGraphic" result="whiteMask" type="matrix"
+        values="0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0 0
+               -1 -1 -1 0 3"/>
+      <feComponentTransfer in="whiteMask" result="threshold">
+        <feFuncA type="discrete" tableValues="0 0 1 1 1 1 1 1 1 1"/>
+      </feComponentTransfer>
+      <feComposite in="SourceGraphic" in2="threshold" operator="in"/>
+    </filter>
+  </defs>
+  <image href="../icons/cya-official.png?v=20260918-brand8"
+         x="0" y="0" width="128" height="128"
+         preserveAspectRatio="xMidYMid meet"
+         filter="url(#removeWhite)"/>
+</svg>
