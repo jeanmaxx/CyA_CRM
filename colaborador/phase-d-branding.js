@@ -2,7 +2,8 @@
   const SUPABASE_URL='https://ibhgisndtaclvwznqugu.supabase.co';
   const PUBLISHABLE_KEY='sb_publishable_grQYYOgYg0WR9gmn3QBHpg_UyieIrZ8';
   const BRANDING_ENDPOINT=SUPABASE_URL+'/functions/v1/platform-branding';
-  const FALLBACK_CYA='https://crm-alvasd.pages.dev/assets/brand/cya-logo-transparent.svg?v=20260919-brandfix2';
+  const LOGIN_CYA='https://crm-alvasd.pages.dev/assets/brand/cya-login-white.svg?v=20260919-loginwhite1';
+  const FALLBACK_CYA='https://crm-alvasd.pages.dev/assets/icons/cya-official.png?v=20260918-brand8';
 
   const route=window.ALVA_TENANT_ROUTE||null;
   const slug=String(route?.tenantSlug||'').trim().toLowerCase();
@@ -13,12 +14,18 @@
 
   function applyBrand(brand){
     const company=String(brand?.companyName||defaultBrand.companyName||'ALVA CRM').trim();
-    const logo=slug==='casillas-asociados'?FALLBACK_CYA:String(brand?.logoUrl||defaultBrand.logoUrl||'').trim();
+    const logo=String(brand?.logoUrl||defaultBrand.logoUrl||FALLBACK_CYA).trim();
 
     document.title='Portal de Colaboradores · '+company;
 
-    document.querySelectorAll('.cya-logo-shared').forEach(img=>{
-      if(logo)img.src=logo;
+    document.querySelectorAll('.login-brand .cya-logo-shared').forEach(img=>{
+      img.onerror=null;
+      img.src=LOGIN_CYA;
+      img.alt=company;
+    });
+    document.querySelectorAll('.sidebar-brand .cya-logo-shared').forEach(img=>{
+      img.onerror=()=>{img.onerror=null;img.src=FALLBACK_CYA;};
+      img.src=logo||FALLBACK_CYA;
       img.alt=company;
     });
 
