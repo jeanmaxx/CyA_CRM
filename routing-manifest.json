@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "product": "ALVA CRM",
   "canonical": {
     "landing": {
@@ -47,8 +47,16 @@
     }
   },
   "compatibility": {
-    "queryTenant": "?tenant=<slug>",
-    "collaboratorLegacy": "/colaborador/"
+    "queryTenant": "redirect-to-canonical",
+    "collaboratorLegacy": "/colaborador/ -> /C&ACRM/Colaboradores/",
+    "platformSite": "/platform/site/ -> /",
+    "platformAdmin": "/platform/admin/ -> /admin/",
+    "githubPages": {
+      "origin": "https://jeanmaxx.github.io/CyA_CRM/",
+      "bridge": "github-pages-bridge.js",
+      "fallback": "404.html",
+      "defaultOperationalTarget": "https://crm-alvasd.pages.dev/C&ACRM/"
+    }
   },
   "cloudflare": {
     "router": "_worker.js",
