@@ -32,8 +32,11 @@ assert.equal(manifest.canonical.landing.path,'/');
 assert.equal(manifest.canonical.demo.path,'/demo/');
 assert.equal(manifest.canonical.admin.path,'/admin/');
 assert.equal(manifest.canonical.app.path,'/app/');
-assert.equal(manifest.future.tenantRuntime,'/app/<tenant>/');
-assert.equal(manifest.future.cyaAlias,'/C&ACRM/');
+assert.equal(manifest.canonical.app.tenantAware,true);
+assert.equal(manifest.canonical.app.tenantPattern,'/app/<tenant>/');
+assert.equal(manifest.canonical.collaborators.path,'/app/<tenant>/colaboradores/');
+assert.equal(manifest.aliases.cyaCrm.path,'/C&ACRM/');
+assert.equal(manifest.aliases.cyaCollaborators.path,'/C&ACRM/Colaboradores/');
 
 for(const path of [
   'site/styles.css','site/app.js','site/config.js',
