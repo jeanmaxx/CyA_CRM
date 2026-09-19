@@ -415,6 +415,45 @@ Deno.serve(async (req: Request) => {
       return respond(req, 200, { ok: true });
     }
 
+    if (action === 'sales_leads') {
+      const limit = Math.min(Math.max(Number(body.limit || 100), 1), 300);
+      const { data, error } = await admin.from('platform_sales_leads')
+        .select('id,name,company,contact,need,status,source,notes,assigned_to,metadata,created_at,updated_at')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return respond(req, 200, { ok: true, leads: data || [] });
+    }
+
+    if (action === 'update_sales_lead') {
+      if (!['owner','admin','support'].includes(platformAdmin.role)) {
+        return respond(req, 403, { error: 'Tu rol no puede actualizar solicitudes comerciales' });
+      }
+      const id = String(body.id || '').trim();
+      if (!id) return respond(req, 400, { error: 'Falta la solicitud' });
+
+      const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (Object.prototype.hasOwnProperty.call(body, 'status')) {
+        const status = String(body.status || '');
+        if (!['new','contacted','demo','qualified','won','lost'].includes(status)) {
+          return respond(req, 400, { error: 'Estado comercial inválido' });
+        }
+        patch.status = status;
+      }
+      if (Object.prototype.hasOwnProperty.call(body, 'notes')) patch.notes = String(body.notes || '').trim() || null;
+      if (Object.prototype.hasOwnProperty.call(body, 'assigned_to')) patch.assigned_to = body.assigned_to || null;
+
+      const { data: lead, error: leadError } = await admin.from('platform_sales_leads')
+        .update(patch).eq('id', id).select('id,company,status').maybeSingle();
+      if (leadError) throw leadError;
+      if (!lead) return respond(req, 404, { error: 'Solicitud no encontrada' });
+
+      await logActivity(null, 'sales_lead_updated', 'Solicitud comercial actualizada', {
+        lead_id: lead.id, company: lead.company, status: lead.status,
+      });
+      return respond(req, 200, { ok: true });
+    }
+
     return respond(req, 400, { error: 'Acción inválida' });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error inesperado';
