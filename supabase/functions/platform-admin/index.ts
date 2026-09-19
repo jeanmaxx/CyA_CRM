@@ -282,6 +282,17 @@ Deno.serve(async (req: Request) => {
       const { data: existingOrg } = await admin.from('organizations').select('id').eq('slug', slug).maybeSingle();
       if (existingOrg) return respond(req, 409, { error: 'Ya existe una organización con ese identificador' });
 
+      const salesLeadId=String(body.sales_lead_id||'').trim();
+      let sourceLeadStatus:string|null=null;
+      if(salesLeadId){
+        const { data: sourceLead, error: sourceLeadError }=await admin.from('platform_sales_leads')
+          .select('id,status,converted_organization_id').eq('id',salesLeadId).maybeSingle();
+        if(sourceLeadError)throw sourceLeadError;
+        if(!sourceLead)return respond(req,404,{error:'La solicitud comercial seleccionada ya no existe'});
+        if(sourceLead.converted_organization_id)return respond(req,409,{error:'Esta solicitud ya fue convertida en cliente'});
+        sourceLeadStatus=String(sourceLead.status||'new');
+      }
+
       const { data: plan, error: planCheckError } = await admin.from('crm_plans')
         .select('id,user_limit,modules').eq('id', planId).eq('active', true).maybeSingle();
       if (planCheckError) throw planCheckError;
@@ -372,7 +383,6 @@ Deno.serve(async (req: Request) => {
         });
         if (profileError) throw profileError;
 
-        const salesLeadId=String(body.sales_lead_id||'').trim();
         if(salesLeadId){
           const { data: convertedLead, error: convertLeadError } = await admin.from('platform_sales_leads')
             .update({
@@ -408,6 +418,14 @@ Deno.serve(async (req: Request) => {
           },
         });
       } catch (error) {
+        if(salesLeadId&&sourceLeadStatus!==null){
+          await admin.from('platform_sales_leads').update({
+            status:sourceLeadStatus,
+            converted_organization_id:null,
+            converted_at:null,
+            updated_at:new Date().toISOString(),
+          }).eq('id',salesLeadId).eq('converted_organization_id',orgId).catch(()=>undefined);
+        }
         if (authUserId) await admin.auth.admin.deleteUser(authUserId).catch(() => undefined);
         await admin.from('services').delete().eq('organization_id', orgId).catch(() => undefined);
         await admin.from('recovery_records').delete().eq('organization_id', orgId).catch(() => undefined);
