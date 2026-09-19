@@ -1,30 +1,76 @@
 # ALVA CRM · Arquitectura de rutas canónicas
 
-Esta estructura se introduce en la Fase B de la migración del producto ALVA CRM.
+Esta estructura se inició en Fase B y queda tenant-aware en Fase C.
 
-## Superficies canónicas
+## Superficies del producto
 
 | Ruta | Responsabilidad | Fuente |
 | --- | --- | --- |
 | `/` | Landing comercial de ALVA CRM | `index.html` + `site/` |
 | `/demo/` | Demostración aislada, sin datos reales | `demo/` |
 | `/admin/` | ALVA CRM Control Center | `admin/` |
-| `/app/` | Runtime compartido multiempresa | `app/` |
+| `/app/<tenant>/` | Runtime CRM compartido por organización | `app/index.html` vía rewrite |
+| `/app/<tenant>/colaboradores/` | Portal de Colaboradores compartido | `colaborador/index.html` vía rewrite |
 
-## Reglas
+## Alias de Casillas & Asociados
 
-1. La raíz del producto nunca vuelve a ser el CRM operativo de un cliente.
-2. `/admin/` administra únicamente ALVA CRM; no sustituye `alva-sd.pages.dev/admin/`.
-3. `/app/` contiene el shell operativo compartido. Los tenants y alias se resolverán en Fase C.
-4. `/demo/` no puede utilizar credenciales, tablas ni información de producción.
-5. `platform/site/`, `platform/admin/` y `colaborador/` se conservan temporalmente como fuentes históricas/compatibilidad. Las redirecciones se resolverán en Fase E.
-6. La lógica CRM (app-core, cloud adapter, workflows, contratos y vendor) sigue siendo única en la raíz del repositorio; `app/index.html` la consume con URLs absolutas para evitar duplicación.
-7. Ninguna modificación de esta fase requiere migración de datos en Supabase.
+- `/C&ACRM/` → tenant `casillas-asociados`, superficie CRM.
+- `/C&ACRM/Colaboradores/` → tenant `casillas-asociados`, Portal de Colaboradores.
+
+Los alias son rewrites internos: la URL amigable permanece visible y no crea una copia del producto.
+
+## Resolución de tenant
+
+`tenant-routing.js` es la capa común de URL. Reconoce:
+
+1. `/app/<tenant>/`.
+2. `/app/<tenant>/colaboradores/`.
+3. Alias `/C&ACRM/` y `/C&ACRM/Colaboradores/`.
+4. Acceso histórico `?tenant=<slug>` como compatibilidad temporal.
+5. El prefijo `/CyA_CRM/` cuando el host es GitHub Pages.
+
+El CRM usa el slug resuelto para branding previo al login y vuelve a comprobarlo contra la organización del usuario autenticado. Una cuenta de otra organización no puede entrar a través de un enlace tenant distinto.
+
+El Portal de Colaboradores envía también el slug esperado a sus Edge Functions. `collaborator-portal` y `collaborator-discarded` verifican que la cuenta pertenezca a esa organización antes de usar service_role.
+
+## Cloudflare Pages
+
+`_redirects` implementa rewrites internos. Las reglas específicas de colaboradores se evalúan antes que las rutas CRM genéricas.
+
+Los assets del CRM y del Portal utilizan rutas absolutas para que una ruta profunda no intente cargar CSS/JS debajo del slug del tenant.
+
+## Generación de enlaces
+
+Control Center Preview genera:
+
+- C&A CRM: `/C&ACRM/`.
+- C&A Colaboradores: `/C&ACRM/Colaboradores/`.
+- Otros tenants: `/app/<slug>/`.
+- Otros Portales: `/app/<slug>/colaboradores/`.
+
+La versión futura de `platform-admin` en esta rama ya está preparada para devolver esas URLs. Ese cambio no se desplegará en producción hasta el corte, porque `main` aún no publica las rutas nuevas.
+
+## Compatibilidad temporal
+
+- `platform/site/` permanece disponible en la rama.
+- `platform/admin/` permanece disponible en la rama.
+- `colaborador/` sigue siendo el acceso histórico del Portal C&A.
+- `?tenant=<slug>` continúa interpretándose.
+- No se han eliminado accesos GitHub Pages.
+
+La limpieza y redirecciones definitivas corresponden a Fase E.
+
+## Principios de seguridad
+
+1. La URL selecciona contexto, pero la identidad autenticada es la autoridad.
+2. El tenant solicitado debe coincidir con la organización de la cuenta.
+3. RLS y entitlements continúan siendo la capa de aislamiento de datos.
+4. Las funciones service_role validan tenant y módulo antes de operar.
+5. Ninguna ruta nueva implica copiar datos, tablas o repositorios.
 
 ## Fases siguientes
 
-- Fase C: resolver tenant por URL y crear alias `/C&ACRM/`.
-- Fase D: migrar Portal de Colaboradores a diseño Navy/Dorado y ruta tenant-aware.
-- Fase E: compatibilidad/redirecciones históricas.
+- Fase D: nuevo diseño Navy/Dorado del Portal de Colaboradores.
+- Fase E: compatibilidad y redirecciones históricas.
 - Fase F: registrar URLs finales dentro de ALVA Core.
-- Fase G: QA y corte de producción.
+- Fase G: QA completo y corte de producción.
