@@ -412,13 +412,19 @@ html[data-theme="light"] .toast{border-left-color:#0f2744!important}
   max-height:120px!important;
 }
 
-/* Mantiene el arte original visible sobre fondos oscuros sin alterar sus colores. */
-html[data-theme="dark"] .cya-logo-shared,
-html[data-theme="dark"] .alva-logo-shared{
-  filter:drop-shadow(0 0 1px rgba(255,255,255,.72)) drop-shadow(0 2px 8px rgba(0,0,0,.22))!important;
+/* Contraste adicional exclusivamente para modo oscuro. */
+html[data-theme="dark"] .login-brand.cya-brand,
+html[data-theme="dark"] .sidebar-brand.cya-brand{
+  background:rgba(255,255,255,.07)!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  border-radius:18px!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.22)!important;
+  padding:10px 12px!important;
 }
-html[data-theme="light"] .cya-logo-shared,
-html[data-theme="light"] .alva-logo-shared{
+html[data-theme="dark"] .cya-logo-shared{
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))!important;
+}
+html[data-theme="light"] .cya-logo-shared{
   filter:none!important;
 }
 
@@ -455,8 +461,8 @@ html[data-theme="light"] .alva-logo-shared{
 }
 .alva-credit-login .credit-label{text-align:center!important}
 .alva-credit-login .alva-logo-shared{
-  width:200px!important;
-  max-height:62px!important;
+  width:140px!important;
+  max-height:44px!important;
 }
 .alva-credit-sidebar{
   align-items:flex-start!important;
@@ -468,8 +474,29 @@ html[data-theme="light"] .alva-logo-shared{
 }
 .alva-credit-sidebar .credit-label{text-align:left!important}
 .alva-credit-sidebar .alva-logo-shared{
-  width:176px!important;
-  max-height:52px!important;
+  width:123px!important;
+  max-height:36px!important;
+}
+
+/* Fondo suave para la firma ALVA en modo oscuro. */
+html[data-theme="dark"] .alva-credit-login,
+html[data-theme="dark"] .alva-credit-sidebar{
+  background:rgba(255,255,255,.05)!important;
+  border:1px solid rgba(255,255,255,.08)!important;
+  border-radius:14px!important;
+  box-shadow:0 8px 20px rgba(0,0,0,.18)!important;
+}
+html[data-theme="dark"] .alva-credit-login{
+  padding:12px 14px 10px!important;
+}
+html[data-theme="dark"] .alva-credit-sidebar{
+  padding:10px 10px 8px!important;
+}
+html[data-theme="dark"] .alva-logo-shared{
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))!important;
+}
+html[data-theme="light"] .alva-logo-shared{
+  filter:none!important;
 }
 
 /* Recursos antiguos quedan desactivados por compatibilidad. */
@@ -481,6 +508,6 @@ html[data-theme="light"] .alva-logo-shared{
   .login-brand.cya-brand{min-height:112px!important;padding-bottom:12px!important}
   .login-brand .cya-logo-shared{width:174px!important;max-height:118px!important}
   .sidebar-brand .cya-logo-shared{width:158px!important;max-height:110px!important}
-  .alva-credit-login .alva-logo-shared{width:184px!important;max-height:58px!important}
-  .alva-credit-sidebar .alva-logo-shared{width:160px!important;max-height:48px!important}
+  .alva-credit-login .alva-logo-shared{width:128px!important;max-height:40px!important}
+  .alva-credit-sidebar .alva-logo-shared{width:112px!important;max-height:33px!important}
 }
