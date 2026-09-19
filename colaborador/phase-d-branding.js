@@ -1,0 +1,46 @@
+(function(){
+  const SUPABASE_URL='https://ibhgisndtaclvwznqugu.supabase.co';
+  const PUBLISHABLE_KEY='sb_publishable_grQYYOgYg0WR9gmn3QBHpg_UyieIrZ8';
+  const BRANDING_ENDPOINT=SUPABASE_URL+'/functions/v1/platform-branding';
+  const FALLBACK_CYA='https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/cya-official-20260918.png?v=20260918-brand8';
+
+  const route=window.ALVA_TENANT_ROUTE||null;
+  const slug=String(route?.tenantSlug||'').trim().toLowerCase();
+  const defaultBrand={
+    companyName:slug==='casillas-asociados'?'Casillas & Asociados':'ALVA CRM',
+    logoUrl:slug==='casillas-asociados'?FALLBACK_CYA:'',
+  };
+
+  function applyBrand(brand){
+    const company=String(brand?.companyName||defaultBrand.companyName||'ALVA CRM').trim();
+    const logo=String(brand?.logoUrl||defaultBrand.logoUrl||'').trim();
+
+    document.title='Portal de Colaboradores · '+company;
+
+    document.querySelectorAll('.cya-logo-shared').forEach(img=>{
+      if(logo)img.src=logo;
+      img.alt=company;
+    });
+
+    const foot=document.querySelector('.login-foot');
+    if(foot)foot.textContent='El acceso es habilitado por tu asesor o por la administración de '+company+'.';
+
+    document.documentElement.dataset.tenantSlug=slug||'unknown';
+    document.documentElement.dataset.tenantName=company;
+    window.ALVA_COLLABORATOR_BRAND=Object.freeze({companyName:company,logoUrl:logo,slug});
+  }
+
+  window.alvaApplyCollaboratorBrand=applyBrand;
+  applyBrand(defaultBrand);
+
+  if(!slug)return;
+
+  fetch(BRANDING_ENDPOINT,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':PUBLISHABLE_KEY},
+    body:JSON.stringify({slug})
+  }).then(async response=>{
+    const data=await response.json().catch(()=>({}));
+    if(response.ok&&data?.brand)applyBrand(data.brand);
+  }).catch(()=>{});
+})();
