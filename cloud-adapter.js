@@ -331,7 +331,12 @@ function cloudPrepareLogin(){
   const grid=document.getElementById('login-user-grid'); if(grid) grid.style.display='none';
   const wrap=document.getElementById('login-pin-wrap'); if(wrap) wrap.style.display='block';
   const generalSub=document.querySelector('.login-sub');
-  if(generalSub){ generalSub.style.display='block'; generalSub.textContent='Casillas & Asociados — Acceso seguro'; }
+  if(generalSub){
+    generalSub.style.display='block';
+    const requestedTenant=String(window.CA_CLOUD_CONFIG?.tenantSlug||'').trim();
+    const publicBrand=window.CA_TENANT_PUBLIC_BRAND;
+    generalSub.textContent=requestedTenant?`${publicBrand?.companyName||'ALVA CRM'} — Acceso seguro`:'Casillas & Asociados — Acceso seguro';
+  }
   const title=document.getElementById('login-pin-title'); if(title) title.textContent='Bienvenido';
   const sub=document.getElementById('login-pin-sub'); if(sub) sub.textContent='Ingresa tu correo y contraseña';
   const req=document.getElementById('pwd-requisitos'); if(req) req.style.display='none';
@@ -380,6 +385,14 @@ async function cloudEnterSession(session){
       throw new Error(`El acceso de ${access.organization_name||'tu organización'} está ${label}.${reason?' Motivo: '+reason:''} Contacta a ALVA Soluciones Digitales.`);
     }
     if(access.organization_id) CA_ORG_ID=String(access.organization_id);
+    const requestedTenant=String(window.CA_CLOUD_CONFIG?.tenantSlug||'').trim();
+    if(requestedTenant){
+      const {data:tenantOrg,error:tenantOrgError}=await supabaseClient.from('organizations').select('slug,name').eq('id',CA_ORG_ID).maybeSingle();
+      if(tenantOrgError) throw new Error('No se pudo validar el enlace de acceso');
+      if(tenantOrg?.slug&&String(tenantOrg.slug)!==requestedTenant){
+        throw new Error('Estas credenciales no corresponden a la organización de este enlace. Verifica la liga de acceso o usa la dirección general del CRM.');
+      }
+    }
     const loadState=await cloudLoadStore();
     const profile=store.asesores.find(a=>a.id===session.user.id);
     if(!profile || profile.activo===false) throw new Error('El perfil no está activo');
