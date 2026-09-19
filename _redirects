@@ -7,12 +7,12 @@
 /platform/admin/index.html /admin/ 301
 
 # Rutas canónicas multi-tenant: rewrites internos.
-/C&ACRM/Colaboradores /colaborador/index.html 200
-/C&ACRM/Colaboradores/ /colaborador/index.html 200
-/C&ACRM/Colaboradores/* /colaborador/index.html 200
-/app/:tenant/colaboradores /colaborador/index.html 200
-/app/:tenant/colaboradores/ /colaborador/index.html 200
-/app/:tenant/colaboradores/* /colaborador/index.html 200
+/C&ACRM/Colaboradores /runtime/colaboradores.html 200
+/C&ACRM/Colaboradores/ /runtime/colaboradores.html 200
+/C&ACRM/Colaboradores/* /runtime/colaboradores.html 200
+/app/:tenant/colaboradores /runtime/colaboradores.html 200
+/app/:tenant/colaboradores/ /runtime/colaboradores.html 200
+/app/:tenant/colaboradores/* /runtime/colaboradores.html 200
 
 /C&ACRM /app/index.html 200
 /C&ACRM/ /app/index.html 200
