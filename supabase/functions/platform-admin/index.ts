@@ -548,6 +548,50 @@ Deno.serve(async (req: Request) => {
       return respond(req, 200, { ok: true });
     }
 
+    if (action === 'alerts_overview') {
+      if (!['owner','admin','support','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar alertas'});
+      const { data: refreshResult, error: refreshError }=await admin.rpc('platform_refresh_alerts');
+      if(refreshError)throw refreshError;
+      const { data: alerts, error }=await admin.from('platform_alerts')
+        .select('id,alert_key,organization_id,category,severity,status,title,message,due_on,metadata,first_detected_at,last_detected_at,dismissed_at,resolved_at,created_at,updated_at')
+        .neq('status','resolved')
+        .order('last_detected_at',{ascending:false})
+        .limit(500);
+      if(error)throw error;
+      const tenants=await loadTenants();
+      const orgMap=new Map(tenants.map((t:any)=>[t.id,{name:t.name,slug:t.slug,status:t.status}]));
+      const items=(alerts||[]).map((a:any)=>({...a,organization:orgMap.get(a.organization_id)||null}));
+      const counts={
+        open:items.filter((a:any)=>a.status==='open').length,
+        critical:items.filter((a:any)=>a.status==='open'&&a.severity==='critical').length,
+        warning:items.filter((a:any)=>a.status==='open'&&a.severity==='warning').length,
+        info:items.filter((a:any)=>a.status==='open'&&a.severity==='info').length,
+        dismissed:items.filter((a:any)=>a.status==='dismissed').length
+      };
+      return respond(req,200,{ok:true,counts,alerts:items,refresh:refreshResult||{}});
+    }
+
+    if (action === 'alert_status') {
+      if (!['owner','admin','support','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede modificar alertas'});
+      const alertId=String(body.alert_id||'').trim();
+      const status=String(body.status||'');
+      if(!alertId||!['open','dismissed'].includes(status))return respond(req,400,{error:'Alerta o estado inválido'});
+      const patch:Record<string,unknown>={status,updated_at:new Date().toISOString()};
+      if(status==='dismissed'){
+        patch.dismissed_by=authData.user.id;patch.dismissed_at=new Date().toISOString();
+      }else{
+        patch.dismissed_by=null;patch.dismissed_at=null;
+      }
+      const { data: row, error }=await admin.from('platform_alerts')
+        .update(patch).eq('id',alertId)
+        .select('id,organization_id,title,status').maybeSingle();
+      if(error)throw error;
+      if(!row)return respond(req,404,{error:'Alerta no encontrada'});
+      await logActivity(row.organization_id,status==='dismissed'?'alert_dismissed':'alert_reopened',
+        status==='dismissed'?'Alerta descartada':'Alerta reabierta',{alert_id:row.id,title:row.title});
+      return respond(req,200,{ok:true,status});
+    }
+
     if (action === 'financial_report') {
       if (!['owner','admin','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar reportes financieros'});
       const requested=String(body.month||'').trim();
