@@ -45,6 +45,9 @@ body{
 button,input,select,textarea{font-family:var(--font)}
 ::selection{background:rgba(255,194,14,.28);color:#fff}
 
+/* Hidden state must win over phase-D display overrides. */
+#login-view[hidden],#portal-view[hidden]{display:none!important;}
+
 /* ---------- Login ---------- */
 .login-shell{
   min-height:100vh!important;
