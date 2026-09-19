@@ -3,6 +3,8 @@ const adapter=fs.readFileSync('cloud-adapter.js','utf8');
 const sync=fs.readFileSync('cloud-sync-safe.js','utf8');
 const admin=fs.readFileSync('supabase/functions/platform-admin/index.ts','utf8');
 const ui=fs.readFileSync('platform/admin/app.js','utf8');
+const config=fs.readFileSync('cloud-config.js','utf8');
+const branding=fs.readFileSync('supabase/functions/platform-branding/index.ts','utf8');
 
 assert.match(adapter,/let\s+CA_ORG_ID\s*=\s*window\.CA_CLOUD_CONFIG\.organizationId/);
 assert.doesNotMatch(adapter,/const\s+CA_ORG_ID\s*=/);
@@ -27,5 +29,12 @@ assert.match(ui,/loadPlatformAdmins/);
 assert.match(ui,/auto_suspend_on_overdue/);
 assert.match(ui,/company_representative/);
 assert.match(ui,/loadPlatformAdmins/);
+assert.match(ui,/\?tenant=/);
+
+assert.match(config,/tenantSlug/);
+assert.match(config,/platform-branding/);
+assert.match(config,/crm-alvasd\.pages\.dev/);
+assert.match(branding,/organizations/);
+assert.match(branding,/companyName:String\(org\.name/);
 
 console.log('PASS: multi-tenant organization binding, billing/suspension backend and Control Center syntax are protected.');
