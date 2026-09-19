@@ -44,6 +44,25 @@ r=resolve('/CyA_CRM/C&ACRM/','','jeanmaxx.github.io');
 assert.equal(r.tenantSlug,'casillas-asociados');
 assert.equal(r.source,'alias');
 
+const workerSource=fs.readFileSync('_worker.js','utf8');
+const workerPrelude=workerSource.slice(0,workerSource.indexOf('export default'));
+const workerSandbox={decodeURIComponent,result:null};
+vm.runInNewContext(workerPrelude+`
+result=[
+  routeTarget('/app/casillas-asociados/'),
+  routeTarget('/app/casillas-asociados/colaboradores/'),
+  routeTarget('/C&ACRM/'),
+  routeTarget('/C&ACRM/Colaboradores/'),
+  routeTarget('/app/empresa-demo/')
+];`,workerSandbox);
+assert.deepEqual(Array.from(workerSandbox.result),[
+  '/app/index.html',
+  '/colaborador/index.html',
+  '/app/index.html',
+  '/colaborador/index.html',
+  '/app/index.html'
+]);
+
 const redirects=fs.readFileSync('_redirects','utf8');
 assert.match(redirects,/\/C&ACRM\/Colaboradores\/\s+\/colaborador\/index\.html 200/);
 assert.match(redirects,/\/app\/:tenant\/colaboradores\/\s+\/colaborador\/index\.html 200/);
