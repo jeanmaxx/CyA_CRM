@@ -117,7 +117,7 @@ Deno.serve(async (req: Request) => {
         email,
         password,
         email_confirm: true,
-        user_metadata: { full_name: fullName },
+        user_metadata: { full_name: fullName, portal: 'internal' },
       });
       if (error) throw error;
       userId = data.user.id;
