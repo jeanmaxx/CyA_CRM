@@ -9,7 +9,7 @@
     {id:3,title:'Descarga de AFORE Móvil',text:'Ayudamos al cliente a instalar AFORE Móvil y a identificar en qué AFORE se encuentra registrado.'},
     {id:4,title:'Revisar cuenta bancaria Nivel 4',text:'Confirmamos que el cliente tenga una cuenta a su nombre adecuada para recibir el depósito. Si no conoce el nivel, se deja pendiente para revisión.'},
     {id:5,title:'Firma de contrato',text:'Explicamos honorarios, obligaciones y alcance del servicio antes de la firma del contrato y documentos asociados.'},
-    {id:6,title:'Inicio de trámite',text:'Casillas & Asociados inicia el seguimiento operativo del expediente conforme a los requisitos aplicables al caso.'},
+    {id:6,title:'Inicio de trámite',text:'${portalOrganizationName()} inicia el seguimiento operativo del expediente conforme a los requisitos aplicables al caso.'},
     {id:7,title:'Crear cita en AFORE',text:'Se genera y agenda la cita correspondiente cuando el expediente requiere actualización o atención presencial en la AFORE.'},
     {id:8,title:'Actualización de datos en AFORE',text:'El cliente acude a su AFORE con identificación, comprobante y los documentos que correspondan para actualizar su expediente.'},
     {id:9,title:'Solicitud en aplicación',text:'La solicitud se realiza cuando ya se cumplen los requisitos legales; para retiro por desempleo deben existir al menos 46 días naturales de desempleo.'},
