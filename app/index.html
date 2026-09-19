@@ -136,7 +136,7 @@
         <button class="btn" id="perfil-edit-btn">✎ Editar</button>
         <button class="btn btn-primary" id="perfil-save-btn" onclick="guardarCambiosPerfil()">Guardar cambios</button>
         <button class="btn" id="perfil-regresar-prospecto-btn" style="font-size:12px;color:var(--warning);" onclick="abrirRegresoProspecto(perfilClienteActivo)">↩ Regresar a prospectos</button>
-        <button class="btn" id="perfil-descartar-btn" style="color:var(--text-muted);font-size:12px;" onclick="abrirDescarte(perfilClienteActivo)">Descartar</button>
+        <button class="btn" id="perfil-descartar-btn" style="color:var(--danger);border-color:var(--danger);font-size:12px;" onclick="abrirDescarte(perfilClienteActivo)">Descartar cliente</button>
         <button class="btn btn-icon profile-close" onclick="closeModal('modal-perfil')" aria-label="Cerrar expediente">✕</button>
       </div>
     </div>
@@ -544,46 +544,61 @@
 
 <!-- ===== PANTALLA DE LOGIN ===== -->
 <div id="login-screen" class="login-screen">
-  <div id="login-logo-wrap" class="login-logo">
-    <img src="/assets/icons/cya-official.png?v=20260917-exact2" alt="Casillas & Asociados" style="width:100%;height:100%;object-fit:contain;background:#fff;">
-  </div>
-  <div class="login-app-name" id="login-app-name">C&A CRM Suite</div>
-  <div class="login-sub">Casillas &amp; Asociados — Selecciona tu perfil</div>
-  <!-- Grid de usuarios -->
-  <div class="login-grid" id="login-user-grid"></div>
-  <!-- PIN pad -->
-  <div class="login-pin-wrap" id="login-pin-wrap" style="display:none;">
-    <div class="login-pin-title" id="login-pin-title">Bienvenido</div>
-    <div class="login-pin-sub" id="login-pin-sub">Ingresa tu contraseña</div>
-    <div style="margin:16px 0;">
-      <div style="position:relative;">
-        <input id="login-password-input" type="password" class="form-input"
-          placeholder="Contraseña"
-          style="font-size:15px;padding:12px 40px 12px 14px;"
-          oninput="loginPasswordCurrent=this.value;validarRequisitosPassword(this.value)"
-          onkeydown="if(event.key==='Enter')verificarLoginPin()">
-        <span onclick="togglePasswordVisibility()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:14px;color:var(--text-muted);" id="pwd-eye">👁</span>
-      </div>
-      <div id="pwd-requisitos" style="display:none;margin-top:10px;text-align:left;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">La contraseña debe tener:</div>
-        <div id="req-len"  style="font-size:11px;">⭕ Mínimo 8 caracteres</div>
-        <div id="req-upper" style="font-size:11px;">⭕ Una mayúscula</div>
-        <div id="req-lower" style="font-size:11px;">⭕ Una minúscula</div>
-        <div id="req-num"  style="font-size:11px;">⭕ Un número</div>
-        <div id="req-sym"  style="font-size:11px;">⭕ Un símbolo (!@#$%...)</div>
-        <div style="margin-top:8px;">
-          <label style="font-size:11px;color:var(--text-muted);">Confirmar contraseña</label>
-          <input id="login-password-confirm" type="password" class="form-input"
-            style="margin-top:4px;"
-            placeholder="Repetir contraseña"
-            oninput="loginPasswordConfirm=this.value">
-        </div>
+  <main class="login-unified-card" aria-labelledby="login-app-name">
+    <div class="login-unified-brand-panel">
+      <div id="login-logo-wrap" class="login-logo">
+        <img src="/assets/brand/cya-logo-dark.png?v=20260919-transparent1" alt="Casillas & Asociados">
       </div>
     </div>
-    <button class="btn btn-primary" onclick="verificarLoginPin()" style="width:100%;font-size:14px;padding:12px;">Ingresar</button>
-    <div id="pin-login-error" style="color:var(--danger);font-size:12px;margin-top:8px;min-height:18px;text-align:center;"></div>
-    <button class="btn" onclick="volverLoginGrid()" style="margin-top:10px;font-size:12px;width:100%;">← Volver</button>
-  </div>
+
+    <div class="login-unified-copy">
+      <div class="login-eyebrow">ACCESO PRIVADO</div>
+      <div class="login-app-name" id="login-app-name">C&A CRM Suite</div>
+      <div class="login-sub">Casillas &amp; Asociados — Acceso seguro</div>
+    </div>
+
+    <!-- Grid histórico; Cloud Auth lo mantiene oculto -->
+    <div class="login-grid" id="login-user-grid"></div>
+
+    <div class="login-pin-wrap" id="login-pin-wrap" style="display:none;">
+      <div class="login-pin-title" id="login-pin-title">Bienvenido</div>
+      <div class="login-pin-sub" id="login-pin-sub">Ingresa tu correo y contraseña</div>
+      <div class="login-fields">
+        <div style="position:relative;">
+          <input id="login-password-input" type="password" class="form-input"
+            placeholder="Contraseña"
+            style="font-size:15px;padding:12px 40px 12px 14px;"
+            oninput="loginPasswordCurrent=this.value;validarRequisitosPassword(this.value)"
+            onkeydown="if(event.key==='Enter')verificarLoginPin()">
+          <span onclick="togglePasswordVisibility()" class="login-password-eye" id="pwd-eye">👁</span>
+        </div>
+        <div id="pwd-requisitos" style="display:none;margin-top:10px;text-align:left;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">La contraseña debe tener:</div>
+          <div id="req-len"  style="font-size:11px;">⭕ Mínimo 8 caracteres</div>
+          <div id="req-upper" style="font-size:11px;">⭕ Una mayúscula</div>
+          <div id="req-lower" style="font-size:11px;">⭕ Una minúscula</div>
+          <div id="req-num"  style="font-size:11px;">⭕ Un número</div>
+          <div id="req-sym"  style="font-size:11px;">⭕ Un símbolo (!@#$%...)</div>
+          <div style="margin-top:8px;">
+            <label style="font-size:11px;color:var(--text-muted);">Confirmar contraseña</label>
+            <input id="login-password-confirm" type="password" class="form-input"
+              style="margin-top:4px;"
+              placeholder="Repetir contraseña"
+              oninput="loginPasswordConfirm=this.value">
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary login-submit" onclick="verificarLoginPin()">Ingresar</button>
+      <div id="pin-login-error" class="login-error"></div>
+      <button class="btn login-back" onclick="volverLoginGrid()">← Volver</button>
+    </div>
+
+    <div class="login-unified-foot">Acceso exclusivo para personal autorizado de Casillas &amp; Asociados.</div>
+    <div class="login-alva-credit">
+      <span>Una solución de</span>
+      <img src="/assets/brand/alva-horizontal.png?v=20260919-login1" alt="ALVA Soluciones Digitales">
+    </div>
+  </main>
 </div>
 
 <!-- MODAL ASESOR -->
@@ -1010,7 +1025,7 @@
 <script src="/app-core-07.js?v=20260910-flujo-elegibilidad"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/tenant-routing.js?v=phase-c1"></script>
-<script src="/cloud-config.js?v=phase-c1"></script>
+<script src="/cloud-config.js?v=20260919-postmigration1"></script>
 <script src="/cloud-adapter.js?v=20260919-entitlements"></script>
 <script src="/vendor/jszip-3.10.1.min.js"></script>
 <script src="/vendor/docx-preview-0.3.6.min.js"></script>
