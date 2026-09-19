@@ -39,3 +39,9 @@ dialog textarea{resize:vertical}
 .tenant-access-link button{justify-self:start}
 
 .table-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+
+.template-help{margin:4px 0 16px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.025);color:var(--muted);font-size:10px;line-height:1.55}
+.hash-fragment{font-size:9px;color:var(--muted);background:#0d1420;border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+.muted-cell{color:var(--muted);font-size:10px}
+#contract-template-form input[type="file"]{padding:9px;background:#0e1520}
+#contract-template-form input[type="file"]::file-selector-button{margin-right:10px;border:1px solid var(--line);border-radius:7px;padding:7px 10px;background:#151e2b;color:#fff;cursor:pointer}
