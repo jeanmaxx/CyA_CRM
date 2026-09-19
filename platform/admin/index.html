@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
   <section class="auth-view" id="auth-view">
@@ -38,6 +38,7 @@
         <button data-view="solicitudes"><i>✦</i><span>Solicitudes</span></button>
         <button data-view="planes"><i>◇</i><span>Planes y módulos</span></button>
         <button data-view="facturacion" data-role-view="billing"><i>$</i><span>Facturación</span></button>
+        <button data-view="reportes" data-role-view="reports"><i>▥</i><span>Reportes</span></button>
         <button data-view="plantillas" data-role-view="templates"><i>▤</i><span>Plantillas</span></button>
         <button data-view="respaldos" data-role-view="backups"><i>⇩</i><span>Respaldos</span></button>
         <button data-view="equipo" data-role-view="owner"><i>◎</i><span>Equipo ALVA</span></button>
@@ -107,6 +108,22 @@
           </div>
           <section class="panel table-panel"><table><thead><tr><th>Cliente</th><th>Precio</th><th>Ciclo</th><th>Próximo pago</th><th>Renovación</th><th>Estado</th><th>Alerta</th></tr></thead><tbody id="billing-table"></tbody></table></section>
           <section class="panel payments-panel"><div class="panel-head"><div><h3>Pagos recientes</h3><p>Historial global de cobros registrados.</p></div></div><div id="payments-list" class="payments-list"></div></section>
+        </section>
+
+        <section class="view" id="view-reportes">
+          <div class="page-intro billing-head">
+            <div><span class="kicker">ANÁLISIS FINANCIERO</span><h2>Reporte mensual</h2><p>Ingresos cobrados, MRR contratado, clientes nuevos y situación de cobranza por organización.</p></div>
+            <div class="page-actions report-controls"><input id="report-month" type="month" aria-label="Mes del reporte"><button class="ghost" id="reload-report">Actualizar</button><button class="primary" id="export-report">Exportar CSV</button></div>
+          </div>
+          <div class="billing-kpis report-kpis">
+            <article class="money"><small>COBRADO EN EL MES</small><strong id="report-collected">—</strong><span id="report-payments">— pagos</span></article>
+            <article><small>VS. MES ANTERIOR</small><strong id="report-delta">—</strong><span id="report-previous">—</span></article>
+            <article class="money"><small>MRR CONTRATADO</small><strong id="report-mrr">—</strong><span>Clientes activos</span></article>
+            <article><small>CLIENTES ACTIVOS</small><strong id="report-active">—</strong><span id="report-suspended">— suspendidos</span></article>
+            <article><small>CLIENTES NUEVOS</small><strong id="report-new">—</strong><span>Altas en el periodo</span></article>
+            <article><small>VENCIDOS ACTUALES</small><strong id="report-overdue">—</strong><span>Requieren seguimiento</span></article>
+          </div>
+          <section class="panel table-panel"><table><thead><tr><th>Organización</th><th>Plan</th><th>Contratado</th><th>Cobrado</th><th>Pagos</th><th>Último pago</th><th>Próximo pago</th><th>Estado</th></tr></thead><tbody id="report-table"></tbody></table></section>
         </section>
 
         <section class="view" id="view-plantillas">
@@ -257,7 +274,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=9"></script>
-  <script src="app.js?v=9"></script>
+  <script src="config.js?v=10"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
