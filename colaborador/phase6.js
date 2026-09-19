@@ -11,7 +11,7 @@
   function serviceName(id){return state?.bootstrap?.services?.find(s=>s.id===id)?.name||id||'Servicio';}
 
   async function loadDiscarded(){
-    const {data,error}=await portalClient.functions.invoke('collaborator-discarded',{body:{action:'list'}});
+    const {data,error}=await portalClient.functions.invoke('collaborator-discarded',{body:{action:'list',tenantSlug:window.ALVA_TENANT_ROUTE?.tenantSlug||undefined}});
     if(error){
       let message=error.message||'No se pudieron consultar los descartados';
       try{if(error.context){const payload=await error.context.json();message=payload?.error||message;}}catch(_){ }
