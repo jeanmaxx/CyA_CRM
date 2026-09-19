@@ -2,8 +2,8 @@ const CFG=window.ALVA_PLATFORM_CONFIG;
 const sb=window.supabase.createClient(CFG.supabaseUrl,CFG.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const state={session:null,admin:null,tenants:[],plans:[],stats:{},leads:[],payments:[],backups:[],platformAdmins:[],view:'dashboard'};
-const viewTitles={dashboard:'Resumen',clientes:'Clientes',solicitudes:'Solicitudes',planes:'Planes y módulos',facturacion:'Facturación',respaldos:'Respaldos',equipo:'Equipo ALVA',actividad:'Actividad',configuracion:'Configuración'};
+const state={session:null,admin:null,tenants:[],plans:[],stats:{},leads:[],payments:[],backups:[],contractTemplates:[],platformAdmins:[],view:'dashboard'};
+const viewTitles={dashboard:'Resumen',clientes:'Clientes',solicitudes:'Solicitudes',planes:'Planes y módulos',facturacion:'Facturación',plantillas:'Plantillas contractuales',respaldos:'Respaldos',equipo:'Equipo ALVA',actividad:'Actividad',configuracion:'Configuración'};
 const statusLabels={active:'Activo',implementation:'Implementación',suspended:'Suspendido',cancelled:'Cancelado'};
 const moduleLabels={prospects:'Prospectos',clients:'Clientes',agenda:'Agenda',dashboard:'Dashboard',finance:'Finanzas',collaborators:'Colaboradores',documents:'Documentos',reports:'Reportes',multi_office:'Múltiples oficinas',custom_workflows:'Flujos personalizados'};
 const leadStatusLabels={new:'Nueva',contacted:'Contactada',demo:'Demo',qualified:'Calificada',won:'Ganada',lost:'Perdida'};
@@ -19,16 +19,24 @@ function plusMonths(dateString,n){if(!dateString)return '';const d=new Date(date
 async function api(action,payload={}){const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Tu sesión terminó. Ingresa nuevamente.');const res=await fetch(CFG.functionUrl,{method:'POST',headers:{'Content-Type':'application/json','apikey':CFG.publishableKey,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({action,...payload})});let data={};try{data=await res.json()}catch{}if(!res.ok||data.ok===false)throw new Error(data.error||'No se pudo completar la operación');return data}
 function showAuth(){state.session=null;$('#shell')?.classList.add('hidden');$('#auth-view')?.classList.remove('hidden')}
 function showShell(){$('#auth-view')?.classList.add('hidden');$('#shell')?.classList.remove('hidden')}
-function applyRoleUI(){const role=state.admin?.role||'';$('[data-role-view="owner"]').forEach(el=>el.hidden=role!=='owner');$('[data-role-view="billing"]').forEach(el=>el.hidden=!['owner','admin','billing'].includes(role));$('[data-role-view="backups"]').forEach(el=>el.hidden=!['owner','admin','support'].includes(role));if($('#new-client'))$('#new-client').hidden=!['owner','admin'].includes(role)}
+function applyRoleUI(){
+  const role=state.admin?.role||'';
+  $$('[data-role-view="owner"]').forEach(el=>el.hidden=role!=='owner');
+  $$('[data-role-view="billing"]').forEach(el=>el.hidden=!['owner','admin','billing'].includes(role));
+  $$('[data-role-view="backups"]').forEach(el=>el.hidden=!['owner','admin','support'].includes(role));
+  $$('[data-role-view="templates"]').forEach(el=>el.hidden=!['owner','admin','support'].includes(role));
+  if($('#new-client'))$('#new-client').hidden=!['owner','admin'].includes(role);
+  if($('#upload-contract-template'))$('#upload-contract-template').hidden=!['owner','admin'].includes(role);
+}
 async function boot(){const {data:{session}}=await sb.auth.getSession();if(!session)return showAuth();state.session=session;try{const info=await api('session');state.admin=info.admin;$('#admin-name').textContent=info.admin.display_name||'Administrador';$('#admin-role').textContent=roleLabels[info.admin.role]||String(info.admin.role||'admin').toUpperCase();$('#admin-email').textContent=info.admin.email||'';$('#avatar').textContent=(info.admin.display_name||'A').trim().slice(0,1).toUpperCase();applyRoleUI();showShell();await loadDashboard(true)}catch(e){await sb.auth.signOut();showAuth();$('#login-status').textContent=e.message}}
 $('#login-form')?.addEventListener('submit',async e=>{e.preventDefault();const btn=e.currentTarget.querySelector('button');const status=$('#login-status');status.textContent='';btn.disabled=true;btn.textContent='Ingresando…';const email=$('#login-email').value.trim(),password=$('#login-password').value;const {error}=await sb.auth.signInWithPassword({email,password});btn.disabled=false;btn.textContent='Ingresar';if(error){status.textContent='No se pudo iniciar sesión. Verifica tus credenciales.';return}await boot()});
 $('#logout')?.addEventListener('click',async()=>{await sb.auth.signOut();location.reload()});
 $('#account-button')?.addEventListener('click',()=>$('#account-popover').classList.toggle('open'));
 document.addEventListener('click',e=>{if(!e.target.closest('.account-menu'))$('#account-popover')?.classList.remove('open')});
-function switchView(v){if(!$('#view-'+v))return;state.view=v;$$('.view').forEach(x=>x.classList.remove('active'));$$('.sidebar nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#view-'+v).classList.add('active');$('#view-title').textContent=viewTitles[v]||v;if(v==='actividad')loadActivity();if(v==='planes')renderPlans();if(v==='solicitudes')loadSalesLeads();if(v==='facturacion')loadBilling();if(v==='respaldos')loadBackups();if(v==='equipo')loadPlatformAdmins()}
+function switchView(v){if(!$('#view-'+v))return;state.view=v;$$('.view').forEach(x=>x.classList.remove('active'));$$('.sidebar nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#view-'+v).classList.add('active');$('#view-title').textContent=viewTitles[v]||v;if(v==='actividad')loadActivity();if(v==='planes')renderPlans();if(v==='solicitudes')loadSalesLeads();if(v==='facturacion')loadBilling();if(v==='plantillas')loadContractTemplates();if(v==='respaldos')loadBackups();if(v==='equipo')loadPlatformAdmins()}
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
 
-async function loadDashboard(silent=false){if(!silent)toast('Actualizando datos…');try{const data=await api('dashboard');state.tenants=data.tenants||[];state.plans=data.plans||[];state.stats=data.stats||{};renderDashboard();renderClients();renderPlans();fillPlanOptions();fillPaymentOrganizations();if(!silent)toast('Datos actualizados')}catch(e){toast(e.message,true)}}
+async function loadDashboard(silent=false){if(!silent)toast('Actualizando datos…');try{const data=await api('dashboard');state.tenants=data.tenants||[];state.plans=data.plans||[];state.stats=data.stats||{};renderDashboard();renderClients();renderPlans();fillPlanOptions();fillPaymentOrganizations();fillTemplateOrganizations();if(!silent)toast('Datos actualizados')}catch(e){toast(e.message,true)}}
 $('#refresh-data')?.addEventListener('click',()=>loadDashboard());
 function renderDashboard(){const s=state.stats;$('#kpi-clients').textContent=s.total??0;$('#kpi-active').textContent=s.active??0;$('#kpi-implementation').textContent=s.implementation??0;$('#kpi-users').textContent=s.users??0;$('#kpi-mrr').textContent=money(s.mrr_cents||0);$('#kpi-overdue').textContent=s.overdue??0;$('#kpi-renewals').textContent=s.renewals_30d??0;const recent=$('#recent-clients');recent.innerHTML=state.tenants.length?state.tenants.slice(0,5).map(c=>`<div class="client-row" data-client="${esc(c.id)}"><div><strong>${esc(c.name)}</strong><small>${esc(c.slug)} · ${c.user_count||0} usuarios</small></div><span>${esc(c.plan_name)}</span><span class="tag ${esc(c.status)}">${esc(statusLabels[c.status]||c.status)}</span></div>`).join(''):'<div class="empty">Todavía no hay organizaciones registradas.</div>';bindClientRows()}
 function filteredTenants(){const q=($('#client-search')?.value||'').toLowerCase(),st=$('#status-filter')?.value||'';return state.tenants.filter(c=>(!q||[c.name,c.slug,c.plan_name].join(' ').toLowerCase().includes(q))&&(!st||c.status===st))}
@@ -134,6 +142,136 @@ $('#payment-org')?.addEventListener('change',e=>{const t=state.tenants.find(x=>x
 $('#payment-form')?.addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,btn=f.querySelector('button[type=submit]'),fd=new FormData(f),payload=Object.fromEntries(fd.entries());payload.amount_cents=Math.round(Number(payload.amount||0)*100);delete payload.amount;btn.disabled=true;try{await api('add_payment',payload);$('#payment-dialog').close();toast('Pago registrado');await loadDashboard(true);await loadBilling()}catch(err){toast(err.message,true)}finally{btn.disabled=false}});
 $('#run-billing-rules')?.addEventListener('click',async()=>{const btn=$('#run-billing-rules');btn.disabled=true;try{const data=await api('run_billing_rules');const n=Number(data.result?.suspended_count||0);toast(n?('Revisión completa: '+n+' organización(es) suspendida(s)'):'Revisión completa: no hubo suspensiones');await loadDashboard(true);await loadBilling()}catch(e){toast(e.message,true)}finally{btn.disabled=false}});
 
+
+
+function fillTemplateOrganizations(){
+  const sel=$('#template-org');if(!sel)return;
+  const current=sel.value;
+  sel.innerHTML=state.tenants.map(t=>'<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>').join('');
+  if(current&&state.tenants.some(t=>t.id===current))sel.value=current;
+}
+function templateItem(orgId){return state.contractTemplates.find(x=>x.organization_id===orgId)||null}
+function canEditTemplates(){return ['owner','admin'].includes(state.admin?.role||'')}
+async function loadContractTemplates(){
+  const body=$('#template-table');if(!body)return;
+  body.innerHTML='<tr><td colspan="7"><div class="empty">Cargando plantillas…</div></td></tr>';
+  try{
+    const data=await api('contract_templates_overview');
+    state.contractTemplates=(data.items||[]).map(x=>({...x,...(x.template||{})}));
+    renderContractTemplates();
+    fillTemplateOrganizations();
+  }catch(e){
+    body.innerHTML='<tr><td colspan="7"><div class="empty">'+esc(e.message)+'</div></td></tr>';
+  }
+}
+function renderContractTemplates(){
+  const rows=state.contractTemplates,total=rows.length;
+  const covered=rows.filter(r=>r.version).length;
+  const active=rows.filter(r=>r.version&&r.active===true).length;
+  $('#template-total').textContent=total;
+  $('#template-covered').textContent=covered;
+  $('#template-active').textContent=active;
+  $('#template-fallback').textContent=total-active;
+  const editable=canEditTemplates();
+  const body=$('#template-table');
+  if(!rows.length){
+    body.innerHTML='<tr><td colspan="7"><div class="empty">No hay organizaciones registradas.</div></td></tr>';
+    return;
+  }
+  body.innerHTML=rows.map(r=>{
+    const has=Boolean(r.version);
+    const status=has?(r.active?'<span class="tag active">Activa</span>':'<span class="tag implementation">Inactiva</span>'):'<span class="tag implementation">Contrato estándar</span>';
+    const integrity=has&&r.file_sha256?'<code class="hash-fragment">'+esc(String(r.file_sha256).slice(0,12))+'…</code>':'—';
+    const upload=editable?'<button class="table-action" data-template-upload="'+esc(r.organization_id)+'">'+(has?'Reemplazar':'Cargar')+'</button>':'';
+    const toggle=editable&&has?'<button class="table-action" data-template-toggle="'+esc(r.organization_id)+'" data-active="'+(r.active?'1':'0')+'">'+(r.active?'Desactivar':'Activar')+'</button>':'';
+    const download=has?'<button class="table-action" data-template-download="'+esc(r.organization_id)+'">Descargar</button>':'';
+    return '<tr><td><strong>'+esc(r.organization_name)+'</strong><small>'+esc(r.slug||'')+'</small></td>'+
+      '<td>'+(has?('<strong>'+esc(r.filename||'plantilla-contrato.docx')+'</strong><small>'+esc(r.version)+'</small>'):'<span class="muted-cell">Sin DOCX privado</span>')+'</td>'+
+      '<td>'+esc(has?formatBytes(r.file_bytes):'—')+'</td>'+
+      '<td>'+status+'</td>'+
+      '<td>'+esc(has?formatDate(r.updated_at):'—')+'</td>'+
+      '<td>'+integrity+'</td>'+
+      '<td><div class="table-actions">'+upload+download+toggle+'</div></td></tr>';
+  }).join('');
+  $('[data-template-upload]').forEach(btn=>btn.onclick=()=>openContractTemplateDialog(btn.dataset.templateUpload));
+  $('[data-template-download]').forEach(btn=>btn.onclick=()=>downloadContractTemplate(btn.dataset.templateDownload));
+  $('[data-template-toggle]').forEach(btn=>btn.onclick=()=>toggleContractTemplate(btn.dataset.templateToggle,btn.dataset.active!=='1'));
+}
+function applyTemplateDefaults(orgId){
+  const form=$('#contract-template-form');if(!form)return;
+  const row=templateItem(orgId),tenant=state.tenants.find(t=>t.id===orgId);
+  const defaults=row?.defaults||{};
+  form.elements.empresa_representante.value=defaults.empresa_representante||tenant?.company_representative||'';
+  form.elements.empresa_domicilio.value=defaults.empresa_domicilio||tenant?.company_address||'';
+  form.elements.ciudad_contrato.value=defaults.ciudad_contrato||tenant?.contract_city||'';
+  form.elements.active.checked=row?.version?row.active!==false:true;
+}
+function openContractTemplateDialog(orgId=''){
+  if(!canEditTemplates())return toast('Tu rol es de consulta para plantillas',true);
+  const form=$('#contract-template-form');form.reset();fillTemplateOrganizations();
+  if(orgId&&state.tenants.some(t=>t.id===orgId))form.elements.organization_id.value=orgId;
+  applyTemplateDefaults(form.elements.organization_id.value);
+  $('#contract-template-dialog').showModal();
+}
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('No se pudo leer el archivo'));
+    reader.onload=()=>{
+      const text=String(reader.result||''),comma=text.indexOf(',');
+      if(comma<0)return reject(new Error('El archivo no pudo codificarse'));
+      resolve(text.slice(comma+1));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+async function downloadContractTemplate(orgId){
+  try{
+    const data=await api('contract_template_get',{organization_id:orgId});
+    const t=data.template||{},binary=atob(t.content_base64||'');
+    const bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+    const url=URL.createObjectURL(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}));
+    const a=document.createElement('a');a.href=url;a.download=t.filename||'plantilla-contrato.docx';a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }catch(e){toast(e.message,true)}
+}
+async function toggleContractTemplate(orgId,active){
+  try{
+    await api('contract_template_toggle',{organization_id:orgId,active});
+    toast(active?'Plantilla activada':'Plantilla desactivada');
+    await loadContractTemplates();
+  }catch(e){toast(e.message,true)}
+}
+$('#reload-templates')?.addEventListener('click',loadContractTemplates);
+$('#upload-contract-template')?.addEventListener('click',()=>openContractTemplateDialog());
+$('#template-org')?.addEventListener('change',e=>applyTemplateDefaults(e.target.value));
+$('#contract-template-form')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const form=e.currentTarget,btn=form.querySelector('button[type=submit]'),file=form.elements.file.files?.[0];
+  if(!file)return toast('Selecciona un archivo DOCX',true);
+  if(!/\.docx$/i.test(file.name))return toast('La plantilla debe ser un archivo .docx',true);
+  if(file.size>11000000)return toast('El DOCX excede el tamaño permitido',true);
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    const content_base64=await fileToBase64(file);
+    await api('contract_template_upsert',{
+      organization_id:form.elements.organization_id.value,
+      filename:file.name,
+      content_base64,
+      active:form.elements.active.checked,
+      defaults:{
+        empresa_representante:form.elements.empresa_representante.value.trim(),
+        empresa_domicilio:form.elements.empresa_domicilio.value.trim(),
+        ciudad_contrato:form.elements.ciudad_contrato.value.trim()
+      }
+    });
+    $('#contract-template-dialog').close();
+    toast('Plantilla contractual guardada');
+    await loadContractTemplates();
+  }catch(err){toast(err.message,true)}
+  finally{btn.disabled=false;btn.textContent='Guardar plantilla'}
+});
 
 function formatBytes(bytes){
   const n=Number(bytes||0);
