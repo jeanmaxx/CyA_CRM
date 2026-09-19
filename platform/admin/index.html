@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
   <section class="auth-view" id="auth-view">
@@ -37,6 +37,8 @@
         <button data-view="clientes"><i>▦</i><span>Clientes</span></button>
         <button data-view="solicitudes"><i>✦</i><span>Solicitudes</span></button>
         <button data-view="planes"><i>◇</i><span>Planes y módulos</span></button>
+        <button data-view="facturacion" data-role-view="billing"><i>$</i><span>Facturación</span></button>
+        <button data-view="equipo" data-role-view="owner"><i>◎</i><span>Equipo ALVA</span></button>
         <button data-view="actividad"><i>↗</i><span>Actividad</span></button>
         <button data-view="configuracion"><i>⚙</i><span>Configuración</span></button>
       </nav>
@@ -65,10 +67,13 @@
             <article><small>ACTIVOS</small><strong id="kpi-active">—</strong><span>Con servicio activo</span></article>
             <article><small>IMPLEMENTACIÓN</small><strong id="kpi-implementation">—</strong><span>En configuración inicial</span></article>
             <article><small>USUARIOS ACTIVOS</small><strong id="kpi-users">—</strong><span>Entre todas las organizaciones</span></article>
+            <article class="money"><small>MRR ESTIMADO</small><strong id="kpi-mrr">—</strong><span>Equivalente mensual contratado</span></article>
+            <article><small>PAGOS VENCIDOS</small><strong id="kpi-overdue">—</strong><span>Clientes activos con pago vencido</span></article>
+            <article><small>RENOVACIONES 30 DÍAS</small><strong id="kpi-renewals">—</strong><span>Contratos próximos a renovar</span></article>
           </div>
           <div class="grid-two">
             <section class="panel"><div class="panel-head"><div><h3>Clientes recientes</h3><p>Estado general de las organizaciones.</p></div><button data-jump="clientes">Ver todos</button></div><div id="recent-clients" class="client-list"></div></section>
-            <section class="panel"><div class="panel-head"><div><h3>Estado de plataforma</h3><p>Controles de la Fase 2.</p></div></div><div class="status-list"><div><span>Separación por organización</span><b class="ok">Activa</b></div><div><span>API administrativa global</span><b class="ok">Activa</b></div><div><span>Aprovisionamiento de clientes</span><b class="ok">Activo</b></div><div><span>Facturación automática</span><b class="pending">Pendiente</b></div></div></section>
+            <section class="panel"><div class="panel-head"><div><h3>Estado de plataforma</h3><p>Controles de la Fase 2.</p></div></div><div class="status-list"><div><span>Separación por organización</span><b class="ok">Activa</b></div><div><span>Suspensión efectiva por RLS</span><b class="ok">Activa</b></div><div><span>Aprovisionamiento de clientes</span><b class="ok">Activo</b></div><div><span>Revisión diaria de cobranza</span><b class="ok">Activa</b></div></div></section>
           </div>
         </section>
 
@@ -87,6 +92,26 @@
           <div class="plans" id="plans-grid"></div>
         </section>
 
+        <section class="view" id="view-facturacion">
+          <div class="page-intro billing-head">
+            <div><span class="kicker">COBRANZA</span><h2>Facturación y renovaciones</h2><p>Control de precio contratado, próximos pagos, vencimientos y renovaciones.</p></div>
+            <div class="page-actions"><button class="ghost" id="run-billing-rules">Revisar vencimientos</button><button class="primary" id="new-payment">+ Registrar pago</button></div>
+          </div>
+          <div class="billing-kpis">
+            <article><small>MRR</small><strong id="billing-mrr">—</strong></article>
+            <article><small>VENCIDOS</small><strong id="billing-overdue">—</strong></article>
+            <article><small>EN GRACIA</small><strong id="billing-grace">—</strong></article>
+            <article><small>RENOVACIONES 30 DÍAS</small><strong id="billing-renewals">—</strong></article>
+          </div>
+          <section class="panel table-panel"><table><thead><tr><th>Cliente</th><th>Precio</th><th>Ciclo</th><th>Próximo pago</th><th>Renovación</th><th>Estado</th><th>Alerta</th></tr></thead><tbody id="billing-table"></tbody></table></section>
+          <section class="panel payments-panel"><div class="panel-head"><div><h3>Pagos recientes</h3><p>Historial global de cobros registrados.</p></div></div><div id="payments-list" class="payments-list"></div></section>
+        </section>
+
+        <section class="view" id="view-equipo">
+          <div class="page-intro billing-head"><div><span class="kicker">ALVA</span><h2>Equipo de plataforma</h2><p>Accesos administrativos independientes de las cuentas de clientes.</p></div><div class="page-actions"><button class="primary" id="new-platform-admin">+ Nuevo acceso</button></div></div>
+          <section class="panel table-panel"><table><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Alta</th><th></th></tr></thead><tbody id="platform-admin-table"></tbody></table></section>
+        </section>
+
         <section class="view" id="view-actividad">
           <section class="panel"><div class="panel-head"><div><h3>Actividad de plataforma</h3><p>Altas y cambios realizados desde Control Center.</p></div><button id="reload-activity">Actualizar</button></div><div id="activity-list" class="activity-list"></div></section>
         </section>
@@ -97,7 +122,8 @@
             <div class="setting-row"><div><strong>Proyecto Supabase</strong><span>CyA CRM · ibhgisndtaclvwznqugu</span></div><span class="tag active">Conectado</span></div>
             <div class="setting-row"><div><strong>Autenticación Control Center</strong><span>Solo usuarios registrados en platform_admins.</span></div><span class="tag active">Protegida</span></div>
             <div class="setting-row"><div><strong>Aislamiento de tenants</strong><span>Los clientes mantienen sus políticas RLS existentes.</span></div><span class="tag active">Activo</span></div>
-            <div class="setting-row"><div><strong>Facturación y cobranza</strong><span>Se incorporará después de definir precios y periodicidad.</span></div><span class="tag implementation">Fase 3</span></div>
+            <div class="setting-row"><div><strong>Facturación y cobranza</strong><span>Control de pagos, renovaciones y suspensión automática opcional.</span></div><span class="tag active">Activa</span></div>
+            <div class="setting-row"><div><strong>Revisión automática</strong><span>Todos los días a las 07:15 hora del centro de México.</span></div><span class="tag active">Programada</span></div>
           </section>
         </section>
       </main>
@@ -120,6 +146,11 @@
         <label>Correo del administrador<input name="admin_email" type="email" required placeholder="admin@empresa.com"></label>
         <label>Inicio de contrato<input name="contract_started_on" type="date"></label>
         <label>Renovación<input name="renews_on" type="date"></label>
+        <label>Ciclo de cobro<select name="billing_cycle"><option value="monthly" selected>Mensual</option><option value="annual">Anual</option><option value="custom">Personalizado</option></select></label>
+        <label>Precio contratado MXN<input name="agreed_price" type="number" min="0" step="0.01" placeholder="0.00"></label>
+        <label>Próximo pago<input name="next_payment_on" type="date"></label>
+        <label>Periodo de gracia hasta<input name="grace_until" type="date"></label>
+        <label class="full checkbox-label"><input name="auto_suspend_on_overdue" type="checkbox"> Suspender automáticamente cuando venza el periodo de gracia</label>
         <label class="full">Notas<textarea name="notes" rows="3" placeholder="Condiciones, personalización, pendientes..."></textarea></label>
       </div>
       <div class="dialog-actions"><button type="button" class="ghost" data-close="client-dialog">Cancelar</button><button type="submit" class="primary" id="save-client">Crear organización</button></div>
@@ -128,7 +159,7 @@
   </dialog>
 
   <dialog id="credentials-dialog" class="credentials-dialog">
-    <div class="credential-box"><span class="kicker">ORGANIZACIÓN CREADA</span><h2>Credenciales iniciales</h2><p>Guarda y comparte estas credenciales por un canal seguro. La contraseña no volverá a mostrarse.</p><label>Correo<input id="credential-email" readonly></label><label>Contraseña temporal<div class="copy-row"><input id="credential-password" readonly><button id="copy-password" class="ghost" type="button">Copiar</button></div></label><button class="primary" type="button" data-close="credentials-dialog">Entendido</button></div>
+    <div class="credential-box"><span class="kicker" id="credential-kicker">ORGANIZACIÓN CREADA</span><h2 id="credential-title">Credenciales iniciales</h2><p id="credential-copy">Guarda y comparte estas credenciales por un canal seguro. La contraseña no volverá a mostrarse.</p><label>Correo<input id="credential-email" readonly></label><label>Contraseña temporal<div class="copy-row"><input id="credential-password" readonly><button id="copy-password" class="ghost" type="button">Copiar</button></div></label><button class="primary" type="button" data-close="credentials-dialog">Entendido</button></div>
   </dialog>
 
   <dialog id="plan-dialog">
@@ -140,12 +171,44 @@
     </form>
   </dialog>
 
+  <dialog id="payment-dialog">
+    <form id="payment-form">
+      <div class="dialog-head"><div><span class="kicker">COBRANZA</span><h2>Registrar pago</h2></div><button type="button" data-close="payment-dialog">×</button></div>
+      <div class="form-grid">
+        <label class="full">Organización<select name="organization_id" id="payment-org" required></select></label>
+        <label>Importe MXN<input name="amount" type="number" min="0.01" step="0.01" required></label>
+        <label>Fecha de pago<input name="paid_on" type="date" required></label>
+        <label>Método<input name="method" placeholder="Transferencia, efectivo..."></label>
+        <label>Referencia<input name="reference" placeholder="Folio / referencia"></label>
+        <label>Periodo inicio<input name="period_start" type="date"></label>
+        <label>Periodo fin<input name="period_end" type="date"></label>
+        <label>Próximo pago<input name="next_payment_on" type="date"></label>
+        <label>Gracia hasta<input name="grace_until" type="date"></label>
+        <label class="full">Notas<textarea name="notes" rows="3"></textarea></label>
+      </div>
+      <div class="dialog-actions"><button type="button" class="ghost" data-close="payment-dialog">Cancelar</button><button type="submit" class="primary">Registrar pago</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="platform-admin-dialog">
+    <form id="platform-admin-form">
+      <div class="dialog-head"><div><span class="kicker">EQUIPO ALVA</span><h2>Crear acceso administrativo</h2></div><button type="button" data-close="platform-admin-dialog">×</button></div>
+      <div class="form-grid">
+        <label>Nombre completo<input name="display_name" required></label>
+        <label>Correo electrónico<input name="email" type="email" required></label>
+        <label>Rol<select name="role"><option value="admin">Administrador</option><option value="support">Soporte</option><option value="billing">Facturación</option></select></label>
+      </div>
+      <div class="dialog-actions"><button type="button" class="ghost" data-close="platform-admin-dialog">Cancelar</button><button type="submit" class="primary">Crear acceso</button></div>
+      <small>La contraseña temporal se mostrará una sola vez después de crear la cuenta.</small>
+    </form>
+  </dialog>
+
   <aside class="drawer" id="lead-drawer" aria-hidden="true"><div class="drawer-head"><div><span class="kicker">SOLICITUD COMERCIAL</span><h2 id="lead-drawer-name">Solicitud</h2></div><button id="close-lead-drawer">×</button></div><div id="lead-drawer-content"></div></aside>
   <aside class="drawer" id="client-drawer" aria-hidden="true"><div class="drawer-head"><div><span class="kicker">ORGANIZACIÓN</span><h2 id="drawer-name">Cliente</h2></div><button id="close-drawer">×</button></div><div id="drawer-content"></div></aside>
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=3"></script>
-  <script src="app.js?v=3"></script>
+  <script src="config.js?v=4"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
