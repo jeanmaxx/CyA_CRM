@@ -1,13 +1,13 @@
 # Fase E · compatibilidad. _worker.js es la fuente efectiva; estas reglas son respaldo.
 /platform/site / 301
 /platform/site/ / 301
-/platform/site/* / 301
+/platform/site/index.html / 301
 /platform/admin /admin/ 301
 /platform/admin/ /admin/ 301
-/platform/admin/* /admin/ 301
+/platform/admin/index.html /admin/ 301
 /colaborador /C&ACRM/Colaboradores/ 301
 /colaborador/ /C&ACRM/Colaboradores/ 301
-/colaborador/* /C&ACRM/Colaboradores/ 301
+/colaborador/index.html /C&ACRM/Colaboradores/ 301
 
 # Rutas canónicas multi-tenant: rewrites internos.
 /C&ACRM/Colaboradores /colaborador/index.html 200
