@@ -128,6 +128,10 @@ Deno.serve(async (req: Request) => {
         .from('profiles').select('organization_id,id,active,role');
       if (profilesError) throw profilesError;
 
+      const { data: settingsRows, error: settingsRowsError } = await admin
+        .from('app_settings').select('organization_id,payload');
+      if (settingsRowsError) throw settingsRowsError;
+
       const { data: leads, error: leadsError } = await admin
         .from('leads').select('organization_id,id');
       if (leadsError) throw leadsError;
@@ -142,6 +146,7 @@ Deno.serve(async (req: Request) => {
 
       const tenantMap = new Map((tenantRows || []).map((row: any) => [row.organization_id, row]));
       const planMap = new Map((plans || []).map((row: any) => [row.id, row]));
+      const settingsMap = new Map((settingsRows || []).map((row: any) => [row.organization_id, row.payload || {}]));
 
       const countByOrg = (rows: any[]) => {
         const map = new Map<string, number>();
@@ -161,6 +166,7 @@ Deno.serve(async (req: Request) => {
         const plan: any = planMap.get(tenant.plan_id) || null;
         const modulesOverride = tenant.modules_override || {};
         const enabledOverride = Array.isArray(modulesOverride.enabled) ? modulesOverride.enabled : null;
+        const settings: any = settingsMap.get(org.id) || {};
         return {
           id: org.id,
           name: org.name,
@@ -189,6 +195,11 @@ Deno.serve(async (req: Request) => {
           suspended_at: tenant.suspended_at,
           suspension_reason: tenant.suspension_reason || '',
           notes: tenant.notes || '',
+          company_address: String(settings.empresa_domicilio || ''),
+          company_representative: String(settings.empresa_representante || ''),
+          contract_city: String(settings.ciudad_contrato || ''),
+          app_name: String(settings.nombre_app || 'ALVA CRM'),
+          company_logo_url: String(settings.logo_empresa || ''),
           user_count: userCount.get(org.id) || 0,
           lead_count: leadCount.get(org.id) || 0,
           client_count: clientCount.get(org.id) || 0,
@@ -318,9 +329,9 @@ Deno.serve(async (req: Request) => {
             asesor: adminName,
             nombre_app: 'ALVA CRM',
             empresa_nombre: name,
-            empresa_domicilio: '',
-            empresa_representante: '',
-            ciudad_contrato: '',
+            empresa_domicilio: String(body.company_address || '').trim(),
+            empresa_representante: String(body.company_representative || '').trim(),
+            ciudad_contrato: String(body.contract_city || '').trim(),
             logo_empresa: '',
             oficinas: [],
             saludos_dashboard: {},
@@ -377,7 +388,12 @@ Deno.serve(async (req: Request) => {
         });
       } catch (error) {
         if (authUserId) await admin.auth.admin.deleteUser(authUserId).catch(() => undefined);
-        await admin.from('organizations').delete().eq('id', orgId);
+        await admin.from('services').delete().eq('organization_id', orgId).catch(() => undefined);
+        await admin.from('recovery_records').delete().eq('organization_id', orgId).catch(() => undefined);
+        await admin.from('app_settings').delete().eq('organization_id', orgId).catch(() => undefined);
+        await admin.from('platform_tenants').delete().eq('organization_id', orgId).catch(() => undefined);
+        await admin.from('platform_activity').delete().eq('organization_id', orgId).catch(() => undefined);
+        await admin.from('organizations').delete().eq('id', orgId).catch(() => undefined);
         throw error;
       }
     }
@@ -436,6 +452,24 @@ Deno.serve(async (req: Request) => {
       const { error: updateError } = await admin.from('platform_tenants')
         .update(patch).eq('organization_id', organizationId);
       if (updateError) throw updateError;
+
+      const settingsFields = ['company_address','company_representative','contract_city','app_name'];
+      if (settingsFields.some((field) => Object.prototype.hasOwnProperty.call(body, field))) {
+        const { data: currentSettings, error: settingsReadError } = await admin.from('app_settings')
+          .select('payload').eq('organization_id', organizationId).maybeSingle();
+        if (settingsReadError) throw settingsReadError;
+        const settingsPayload: Record<string, unknown> = { ...(currentSettings?.payload || {}) };
+        if (Object.prototype.hasOwnProperty.call(body,'company_address')) settingsPayload.empresa_domicilio = String(body.company_address || '').trim();
+        if (Object.prototype.hasOwnProperty.call(body,'company_representative')) settingsPayload.empresa_representante = String(body.company_representative || '').trim();
+        if (Object.prototype.hasOwnProperty.call(body,'contract_city')) settingsPayload.ciudad_contrato = String(body.contract_city || '').trim();
+        if (Object.prototype.hasOwnProperty.call(body,'app_name')) settingsPayload.nombre_app = String(body.app_name || 'ALVA CRM').trim() || 'ALVA CRM';
+        const { error: settingsUpdateError } = await admin.from('app_settings').upsert({
+          organization_id: organizationId,
+          payload: settingsPayload,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'organization_id' });
+        if (settingsUpdateError) throw settingsUpdateError;
+      }
 
       await logActivity(organizationId, 'tenant_updated', 'Organización actualizada', {
         fields: Object.keys(patch).filter((key) => key !== 'updated_at'),
