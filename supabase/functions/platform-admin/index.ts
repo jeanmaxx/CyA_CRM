@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
 
       const { data: tenantRows, error: tenantError } = await admin
         .from('platform_tenants')
-        .select('organization_id,plan_id,status,onboarding_stage,primary_contact_name,primary_contact_email,primary_contact_phone,billing_email,seat_limit,modules_override,contract_started_on,renews_on,trial_ends_on,notes,metadata,created_at,updated_at');
+        .select('organization_id,plan_id,status,onboarding_stage,primary_contact_name,primary_contact_email,primary_contact_phone,billing_email,seat_limit,modules_override,contract_started_on,renews_on,trial_ends_on,billing_cycle,agreed_price_cents,next_payment_on,grace_until,auto_suspend_on_overdue,renewal_notice_days,suspended_at,suspension_reason,notes,metadata,created_at,updated_at');
       if (tenantError) throw tenantError;
 
       const { data: plans, error: planError } = await admin
@@ -180,6 +180,14 @@ Deno.serve(async (req: Request) => {
           contract_started_on: tenant.contract_started_on,
           renews_on: tenant.renews_on,
           trial_ends_on: tenant.trial_ends_on,
+          billing_cycle: tenant.billing_cycle || 'monthly',
+          agreed_price_cents: tenant.agreed_price_cents ?? plan?.monthly_price_cents ?? null,
+          next_payment_on: tenant.next_payment_on,
+          grace_until: tenant.grace_until,
+          auto_suspend_on_overdue: tenant.auto_suspend_on_overdue === true,
+          renewal_notice_days: tenant.renewal_notice_days ?? 15,
+          suspended_at: tenant.suspended_at,
+          suspension_reason: tenant.suspension_reason || '',
           notes: tenant.notes || '',
           user_count: userCount.get(org.id) || 0,
           lead_count: leadCount.get(org.id) || 0,
@@ -209,12 +217,22 @@ Deno.serve(async (req: Request) => {
     if (action === 'dashboard' || action === 'list_tenants') {
       const tenants = await loadTenants();
       const plans = await loadPlans();
+      const today = new Date().toISOString().slice(0,10);
+      const renewalCutoff = new Date(Date.now() + 30*86400000).toISOString().slice(0,10);
+      const monthlyEquivalent = (x: any) => {
+        const cents = Number(x.agreed_price_cents || 0);
+        if (!cents || x.status !== 'active') return 0;
+        return x.billing_cycle === 'annual' ? Math.round(cents / 12) : cents;
+      };
       const stats = {
         total: tenants.length,
         active: tenants.filter((x: any) => x.status === 'active').length,
         implementation: tenants.filter((x: any) => x.status === 'implementation').length,
         suspended: tenants.filter((x: any) => x.status === 'suspended').length,
         users: tenants.reduce((sum: number, x: any) => sum + Number(x.user_count || 0), 0),
+        mrr_cents: tenants.reduce((sum: number, x: any) => sum + monthlyEquivalent(x), 0),
+        overdue: tenants.filter((x: any) => x.status === 'active' && x.next_payment_on && x.next_payment_on < today).length,
+        renewals_30d: tenants.filter((x: any) => x.renews_on && x.renews_on >= today && x.renews_on <= renewalCutoff).length,
       };
       return respond(req, 200, { ok: true, tenants, plans, stats });
     }
@@ -282,6 +300,11 @@ Deno.serve(async (req: Request) => {
           seat_limit: Number(body.seat_limit || plan.user_limit || 0) || null,
           contract_started_on: normalizeDate(body.contract_started_on),
           renews_on: normalizeDate(body.renews_on),
+          billing_cycle: ['monthly','annual','custom'].includes(String(body.billing_cycle||'')) ? String(body.billing_cycle) : 'monthly',
+          agreed_price_cents: Number(body.agreed_price_cents || 0) || null,
+          next_payment_on: normalizeDate(body.next_payment_on),
+          grace_until: normalizeDate(body.grace_until),
+          auto_suspend_on_overdue: body.auto_suspend_on_overdue === true,
           notes: String(body.notes || '').trim() || null,
           metadata: { created_from: 'control_center' },
         });
@@ -362,6 +385,13 @@ Deno.serve(async (req: Request) => {
           return respond(req, 400, { error: 'Estado inválido' });
         }
         patch.status = status;
+        if (status === 'suspended' || status === 'cancelled') {
+          patch.suspended_at = new Date().toISOString();
+          patch.suspension_reason = String(body.suspension_reason || current.suspension_reason || '').trim() || null;
+        } else if (status === 'active' || status === 'implementation') {
+          patch.suspended_at = null;
+          patch.suspension_reason = null;
+        }
       }
       if (Object.prototype.hasOwnProperty.call(body, 'onboarding_stage')) patch.onboarding_stage = String(body.onboarding_stage || 'setup');
       if (Object.prototype.hasOwnProperty.call(body, 'primary_contact_name')) patch.primary_contact_name = String(body.primary_contact_name || '').trim() || null;
@@ -372,6 +402,17 @@ Deno.serve(async (req: Request) => {
       if (Object.prototype.hasOwnProperty.call(body, 'contract_started_on')) patch.contract_started_on = normalizeDate(body.contract_started_on);
       if (Object.prototype.hasOwnProperty.call(body, 'renews_on')) patch.renews_on = normalizeDate(body.renews_on);
       if (Object.prototype.hasOwnProperty.call(body, 'trial_ends_on')) patch.trial_ends_on = normalizeDate(body.trial_ends_on);
+      if (Object.prototype.hasOwnProperty.call(body, 'billing_cycle')) {
+        const cycle = String(body.billing_cycle || '');
+        if (!['monthly','annual','custom'].includes(cycle)) return respond(req,400,{error:'Ciclo de cobro inválido'});
+        patch.billing_cycle = cycle;
+      }
+      if (Object.prototype.hasOwnProperty.call(body, 'agreed_price_cents')) patch.agreed_price_cents = Number(body.agreed_price_cents || 0) || null;
+      if (Object.prototype.hasOwnProperty.call(body, 'next_payment_on')) patch.next_payment_on = normalizeDate(body.next_payment_on);
+      if (Object.prototype.hasOwnProperty.call(body, 'grace_until')) patch.grace_until = normalizeDate(body.grace_until);
+      if (Object.prototype.hasOwnProperty.call(body, 'auto_suspend_on_overdue')) patch.auto_suspend_on_overdue = body.auto_suspend_on_overdue === true;
+      if (Object.prototype.hasOwnProperty.call(body, 'renewal_notice_days')) patch.renewal_notice_days = Math.max(1,Math.min(90,Number(body.renewal_notice_days||15)));
+      if (Object.prototype.hasOwnProperty.call(body, 'suspension_reason') && !['active','implementation'].includes(String(patch.status || current.status))) patch.suspension_reason = String(body.suspension_reason || '').trim() || null;
       if (Object.prototype.hasOwnProperty.call(body, 'notes')) patch.notes = String(body.notes || '').trim() || null;
       if (Object.prototype.hasOwnProperty.call(body, 'modules_override')) patch.modules_override = body.modules_override || {};
 
@@ -415,6 +456,103 @@ Deno.serve(async (req: Request) => {
       if (error) throw error;
       await logActivity(null, 'plan_updated', 'Plan actualizado', { plan_id: id, fields: Object.keys(patch) });
       return respond(req, 200, { ok: true });
+    }
+
+    if (action === 'billing_overview') {
+      if (!['owner','admin','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede consultar facturación'});
+      const tenants = await loadTenants();
+      const { data: payments, error: paymentError } = await admin.from('platform_payments')
+        .select('id,organization_id,amount_cents,currency,paid_on,period_start,period_end,method,reference,notes,created_at')
+        .order('paid_on',{ascending:false}).limit(500);
+      if (paymentError) throw paymentError;
+      const today = new Date().toISOString().slice(0,10);
+      const items = tenants.map((t:any)=>({
+        ...t,
+        overdue: Boolean(t.status==='active' && t.next_payment_on && t.next_payment_on < today && (!t.grace_until || t.grace_until < today)),
+        in_grace: Boolean(t.status==='active' && t.next_payment_on && t.next_payment_on < today && t.grace_until && t.grace_until >= today),
+      }));
+      return respond(req,200,{ok:true,tenants:items,payments:payments||[]});
+    }
+
+    if (action === 'run_billing_rules') {
+      if (!['owner','admin','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede ejecutar revisión de cobranza'});
+      const { data, error } = await admin.rpc('platform_apply_billing_rules');
+      if (error) throw error;
+      await logActivity(null,'billing_rules_run','Revisión de cobranza ejecutada',{result:data||{}});
+      return respond(req,200,{ok:true,result:data||{}});
+    }
+
+    if (action === 'add_payment') {
+      if (!['owner','admin','billing'].includes(platformAdmin.role)) return respond(req,403,{error:'Tu rol no puede registrar pagos'});
+      const organizationId=String(body.organization_id||'');
+      const amountCents=Math.round(Number(body.amount_cents||0));
+      if(!organizationId||amountCents<=0)return respond(req,400,{error:'Organización e importe son obligatorios'});
+      const { data: tenant }=await admin.from('platform_tenants').select('organization_id').eq('organization_id',organizationId).maybeSingle();
+      if(!tenant)return respond(req,404,{error:'Organización no encontrada'});
+      const record={
+        organization_id:organizationId,
+        amount_cents:amountCents,
+        currency:String(body.currency||'MXN').trim().toUpperCase().slice(0,3),
+        paid_on:normalizeDate(body.paid_on)||new Date().toISOString().slice(0,10),
+        period_start:normalizeDate(body.period_start),
+        period_end:normalizeDate(body.period_end),
+        method:String(body.method||'').trim()||null,
+        reference:String(body.reference||'').trim()||null,
+        notes:String(body.notes||'').trim()||null,
+        created_by:authData.user.id,
+      };
+      const { data: payment, error: paymentError }=await admin.from('platform_payments').insert(record).select('*').single();
+      if(paymentError)throw paymentError;
+      const tenantPatch:Record<string,unknown>={updated_at:new Date().toISOString()};
+      if(Object.prototype.hasOwnProperty.call(body,'next_payment_on'))tenantPatch.next_payment_on=normalizeDate(body.next_payment_on);
+      if(Object.prototype.hasOwnProperty.call(body,'grace_until'))tenantPatch.grace_until=normalizeDate(body.grace_until);
+      if(Object.keys(tenantPatch).length>1)await admin.from('platform_tenants').update(tenantPatch).eq('organization_id',organizationId);
+      await logActivity(organizationId,'payment_recorded','Pago registrado',{payment_id:payment.id,amount_cents:amountCents,currency:record.currency,paid_on:record.paid_on});
+      return respond(req,200,{ok:true,payment});
+    }
+
+    if (action === 'platform_admins') {
+      if (platformAdmin.role !== 'owner') return respond(req,403,{error:'Solo el propietario puede administrar accesos ALVA'});
+      const { data: rows, error }=await admin.from('platform_admins').select('user_id,display_name,role,active,permissions,created_at,updated_at').order('created_at');
+      if(error)throw error;
+      const { data: usersData }=await admin.auth.admin.listUsers({page:1,perPage:1000});
+      const emailMap=new Map((usersData?.users||[]).map((u:any)=>[u.id,u.email||'']));
+      return respond(req,200,{ok:true,admins:(rows||[]).map((r:any)=>({...r,email:emailMap.get(r.user_id)||''}))});
+    }
+
+    if (action === 'create_platform_admin') {
+      if (platformAdmin.role !== 'owner') return respond(req,403,{error:'Solo el propietario puede crear administradores ALVA'});
+      const displayName=String(body.display_name||'').trim();
+      const email=String(body.email||'').trim().toLowerCase();
+      const role=['admin','support','billing'].includes(String(body.role||''))?String(body.role):'support';
+      if(!displayName||!validEmail(email))return respond(req,400,{error:'Nombre y correo son obligatorios'});
+      const temporaryPassword=generatePassword();
+      const { data:userData,error:userError }=await admin.auth.admin.createUser({email,password:temporaryPassword,email_confirm:true,user_metadata:{full_name:displayName,portal:'platform'}});
+      if(userError||!userData.user)throw userError||new Error('No se pudo crear la cuenta');
+      const { error:rowError }=await admin.from('platform_admins').insert({user_id:userData.user.id,display_name:displayName,role,active:true});
+      if(rowError){await admin.auth.admin.deleteUser(userData.user.id);throw rowError}
+      await logActivity(null,'platform_admin_created','Administrador ALVA creado',{user_id:userData.user.id,email,role});
+      return respond(req,200,{ok:true,admin:{user_id:userData.user.id,email,display_name:displayName,role,temporary_password:temporaryPassword}});
+    }
+
+    if (action === 'update_platform_admin') {
+      if (platformAdmin.role !== 'owner') return respond(req,403,{error:'Solo el propietario puede modificar administradores ALVA'});
+      const userId=String(body.user_id||'');
+      if(!userId)return respond(req,400,{error:'Falta el usuario'});
+      if(userId===authData.user.id && body.active===false)return respond(req,400,{error:'No puedes desactivar tu propio acceso'});
+      const patch:Record<string,unknown>={updated_at:new Date().toISOString()};
+      if(Object.prototype.hasOwnProperty.call(body,'display_name'))patch.display_name=String(body.display_name||'').trim();
+      if(Object.prototype.hasOwnProperty.call(body,'role')){
+        const role=String(body.role||'');
+        if(!['owner','admin','support','billing'].includes(role))return respond(req,400,{error:'Rol inválido'});
+        if(userId===authData.user.id && role!=='owner')return respond(req,400,{error:'No puedes quitarte el rol de propietario'});
+        patch.role=role;
+      }
+      if(Object.prototype.hasOwnProperty.call(body,'active'))patch.active=body.active!==false;
+      const { error }=await admin.from('platform_admins').update(patch).eq('user_id',userId);
+      if(error)throw error;
+      await logActivity(null,'platform_admin_updated','Acceso ALVA actualizado',{user_id:userId,fields:Object.keys(patch)});
+      return respond(req,200,{ok:true});
     }
 
     if (action === 'sales_leads') {
