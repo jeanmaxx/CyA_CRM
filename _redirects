@@ -1,12 +1,14 @@
-# Phase C · tenant-aware routes. Specific collaborator routes must precede generic app aliases.
+# Phase C · tenant-aware routes. Specific collaborator routes must precede generic app routes.
 /C&ACRM/Colaboradores /colaborador/index.html 200
 /C&ACRM/Colaboradores/ /colaborador/index.html 200
 /C&ACRM/Colaboradores/* /colaborador/index.html 200
-/app/*/colaboradores /colaborador/index.html 200
-/app/*/colaboradores/ /colaborador/index.html 200
-/app/*/colaboradores/* /colaborador/index.html 200
+/app/:tenant/colaboradores /colaborador/index.html 200
+/app/:tenant/colaboradores/ /colaborador/index.html 200
+/app/:tenant/colaboradores/* /colaborador/index.html 200
 
 /C&ACRM /app/index.html 200
 /C&ACRM/ /app/index.html 200
 /C&ACRM/* /app/index.html 200
-/app/* /app/index.html 200
+/app/:tenant /app/index.html 200
+/app/:tenant/ /app/index.html 200
+/app/:tenant/* /app/index.html 200
