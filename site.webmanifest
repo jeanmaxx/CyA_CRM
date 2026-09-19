@@ -9,7 +9,7 @@
   "theme_color": "#171717",
   "icons": [
     {
-      "src": "assets/icons/cya-favicon-20260918.png",
+      "src": "assets/brand/cya-favicon.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any maskable"
