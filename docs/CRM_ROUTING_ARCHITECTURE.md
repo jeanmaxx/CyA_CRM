@@ -10,7 +10,7 @@ Esta estructura se inició en Fase B y queda tenant-aware en Fase C.
 | `/demo/` | Demostración aislada, sin datos reales | `demo/` |
 | `/admin/` | ALVA CRM Control Center | `admin/` |
 | `/app/<tenant>/` | Runtime CRM compartido por organización | `app/index.html` vía rewrite |
-| `/app/<tenant>/colaboradores/` | Portal de Colaboradores compartido | `colaborador/index.html` vía rewrite |
+| `/app/<tenant>/colaboradores/` | Portal de Colaboradores compartido | `runtime/colaboradores.html` vía rewrite |
 
 ## Alias de Casillas & Asociados
 
@@ -35,7 +35,7 @@ El Portal de Colaboradores envía también el slug esperado a sus Edge Functions
 
 ## Cloudflare Pages
 
-`_worker.js` es el router efectivo de Cloudflare Pages. Intercepta las rutas tenant-aware y sirve internamente `/app/index.html` o `/colaborador/index.html` sin cambiar la URL visible.
+`_worker.js` es el router efectivo de Cloudflare Pages. Intercepta las rutas tenant-aware y sirve internamente `/app/index.html` o `/runtime/colaboradores.html` sin cambiar la URL visible.
 
 `_redirects` se conserva como respaldo/documentación de intención, pero durante las pruebas HTTP reales del preview Cloudflare el fallback del proyecto devolvía la landing para rutas profundas; por eso el worker explícito se considera la fuente de routing.
 
@@ -78,3 +78,7 @@ La limpieza y redirecciones definitivas corresponden a Fase E.
 - Fase E: compatibilidad y redirecciones históricas.
 - Fase F: registrar URLs finales dentro de ALVA Core.
 - Fase G: QA completo y corte de producción.
+
+## Ruta histórica de Colaboradores
+
+`/colaborador/` ya no es el runtime del Portal. Se conserva únicamente como puente de compatibilidad hacia `/C&ACRM/Colaboradores/`. El runtime funcional vive en `runtime/colaboradores.html` y solo es servido internamente por el router de Cloudflare.
