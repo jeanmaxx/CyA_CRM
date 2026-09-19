@@ -6,7 +6,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node tests/sync.cjs && node tests/workflow.cjs && node tests/operations.cjs && node tests/dom.cjs && node tests/docx.cjs && node tests/edge.cjs && node tests/platform.cjs && node tests/routing.cjs && node tests/tenant-routing.cjs && node tests/collaborator-ui.cjs"
+    "test": "node tests/sync.cjs && node tests/workflow.cjs && node tests/operations.cjs && node tests/dom.cjs && node tests/docx.cjs && node tests/edge.cjs && node tests/platform.cjs && node tests/routing.cjs && node tests/tenant-routing.cjs && node tests/collaborator-ui.cjs && node tests/compat-routing.cjs"
   },
   "devDependencies": {
     "jsdom": "26.1.0",
