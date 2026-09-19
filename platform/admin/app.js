@@ -63,6 +63,10 @@ function openClient(id){const c=state.tenants.find(x=>x.id===id);if(!c)return;$(
 <label>Correo de contacto<input name="primary_contact_email" type="email" value="${esc(c.primary_contact_email||'')}"></label>
 <label>Teléfono<input name="primary_contact_phone" value="${esc(c.primary_contact_phone||'')}"></label>
 <label>Correo de facturación<input name="billing_email" type="email" value="${esc(c.billing_email||'')}"></label>
+<h4>Datos corporativos del CRM</h4>
+<label>Domicilio de la empresa<input name="company_address" value="${esc(c.company_address||'')}" placeholder="Domicilio para documentos y contratos"></label>
+<div class="row"><label>Representante legal<input name="company_representative" value="${esc(c.company_representative||'')}"></label><label>Ciudad para contratos<input name="contract_city" value="${esc(c.contract_city||'')}"></label></div>
+<label>Nombre de la aplicación<input name="app_name" value="${esc(c.app_name||'ALVA CRM')}"></label>
 <h4>Contrato y cobranza</h4>
 <div class="row"><label>Inicio de contrato<input name="contract_started_on" type="date" value="${esc(c.contract_started_on||'')}"></label><label>Renovación<input name="renews_on" type="date" value="${esc(c.renews_on||'')}"></label></div>
 <div class="row"><label>Ciclo<select name="billing_cycle"><option value="monthly" ${c.billing_cycle==='monthly'?'selected':''}>Mensual</option><option value="annual" ${c.billing_cycle==='annual'?'selected':''}>Anual</option><option value="custom" ${c.billing_cycle==='custom'?'selected':''}>Personalizado</option></select></label><label>Precio contratado MXN<input name="agreed_price" type="number" min="0" step=".01" value="${c.agreed_price_cents?esc((c.agreed_price_cents/100).toFixed(2)):''}"></label></div>
