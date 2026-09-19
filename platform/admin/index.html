@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ALVA Control Center · CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><img src="https://ibhgisndtaclvwznqugu.supabase.co/storage/v1/object/public/crm-branding/ca000000-0000-4000-8000-000000000001/alva-sd-official-20260918.png" alt="ALVA"><div><strong>Control Center</strong><span>CRM Platform</span></div></div>
+    <nav>
+      <button class="active" data-view="dashboard"><i>⌂</i>Resumen</button>
+      <button data-view="clientes"><i>▦</i>Clientes</button>
+      <button data-view="planes"><i>◇</i>Planes y módulos</button>
+      <button data-view="actividad"><i>↗</i>Actividad</button>
+      <button data-view="configuracion"><i>⚙</i>Configuración</button>
+    </nav>
+    <div class="sidebar-foot"><span>Plataforma ALVA</span><small>Administración global</small></div>
+  </aside>
+  <div class="app">
+    <header>
+      <div><span class="kicker">ALVA CRM · ADMINISTRACIÓN</span><h1 id="view-title">Resumen</h1></div>
+      <div class="header-actions"><button class="ghost">Exportar</button><button class="primary" id="new-client">+ Nuevo cliente</button><div class="avatar">EA</div></div>
+    </header>
+    <main>
+      <section class="view active" id="view-dashboard">
+        <div class="hero-card"><div><span class="kicker">PLATAFORMA</span><h2>Control de clientes desde un solo lugar.</h2><p>Supervisa organizaciones, planes, accesos y estado de implementación sin entrar a cada CRM.</p></div><div class="hero-badge"><span>Estado</span><strong>Operación estable</strong></div></div>
+        <div class="kpi-grid">
+          <article><small>CLIENTES CRM</small><strong id="kpi-clients">1</strong><span>Organizaciones registradas</span></article>
+          <article><small>ACTIVOS</small><strong>1</strong><span>Con acceso habilitado</span></article>
+          <article><small>IMPLEMENTACIÓN</small><strong>0</strong><span>En configuración inicial</span></article>
+          <article class="money"><small>MRR ESTIMADO</small><strong>—</strong><span>Se habilitará con planes</span></article>
+        </div>
+        <div class="grid-two">
+          <section class="panel"><div class="panel-head"><div><h3>Clientes recientes</h3><p>Estado general de las organizaciones.</p></div><button data-jump="clientes">Ver todos</button></div><div id="recent-clients" class="client-list"></div></section>
+          <section class="panel"><div class="panel-head"><div><h3>Próximas acciones</h3><p>Tareas de administración de plataforma.</p></div></div><div class="tasks"><label><input type="checkbox"> Definir catálogo final de planes</label><label><input type="checkbox"> Configurar alta automatizada de organizaciones</label><label><input type="checkbox"> Preparar correo de bienvenida</label><label><input type="checkbox"> Definir proceso de soporte y renovación</label></div></section>
+        </div>
+      </section>
+
+      <section class="view" id="view-clientes">
+        <div class="toolbar"><div class="search"><span>⌕</span><input id="client-search" placeholder="Buscar cliente, dominio o plan"></div><select id="status-filter"><option value="">Todos los estados</option><option>Activo</option><option>Implementación</option><option>Suspendido</option></select></div>
+        <section class="panel table-panel"><table><thead><tr><th>Organización</th><th>Plan</th><th>Estado</th><th>Usuarios</th><th>Módulos</th><th>Última actividad</th><th></th></tr></thead><tbody id="client-table"></tbody></table></section>
+      </section>
+
+      <section class="view" id="view-planes">
+        <div class="page-intro"><div><span class="kicker">CATÁLOGO</span><h2>Planes y capacidades</h2><p>Base inicial para controlar qué funciones tiene habilitadas cada cliente.</p></div></div>
+        <div class="plans">
+          <article><span>ESENCIAL</span><h3>Operación base</h3><ul><li>Prospectos</li><li>Clientes</li><li>Agenda</li><li>Dashboard</li></ul><button>Editar plan</button></article>
+          <article class="featured"><span>PROFESIONAL</span><h3>Operación completa</h3><ul><li>Todo Esencial</li><li>Finanzas</li><li>Colaboradores</li><li>Documentos</li></ul><button>Editar plan</button></article>
+          <article><span>EMPRESA</span><h3>Configuración avanzada</h3><ul><li>Todo Profesional</li><li>Múltiples oficinas</li><li>Flujos personalizados</li><li>Acompañamiento</li></ul><button>Editar plan</button></article>
+        </div>
+      </section>
+
+      <section class="view" id="view-actividad"><section class="panel"><div class="panel-head"><div><h3>Actividad de plataforma</h3><p>La bitácora global se conectará en la fase de backend.</p></div></div><div class="empty">Aquí aparecerán altas, suspensiones, cambios de plan, accesos administrativos y eventos de soporte.</div></section></section>
+      <section class="view" id="view-configuracion"><section class="panel settings"><h3>Configuración global</h3><div class="setting-row"><div><strong>Nombre comercial</strong><span>Marca mostrada en comunicaciones y panel.</span></div><input value="ALVA CRM"></div><div class="setting-row"><div><strong>Moneda</strong><span>Base para planes y reportes.</span></div><select><option>MXN</option><option>USD</option></select></div><div class="setting-row"><div><strong>Alta automática</strong><span>Crear estructura de cliente desde este panel.</span></div><span class="tag pending">Fase 2</span></div></section></section>
+    </main>
+  </div>
+
+  <dialog id="client-dialog">
+    <form method="dialog" id="client-form">
+      <div class="dialog-head"><div><span class="kicker">NUEVA ORGANIZACIÓN</span><h2>Registrar cliente</h2></div><button value="cancel">×</button></div>
+      <div class="form-grid"><label>Empresa<input name="name" required placeholder="Nombre comercial"></label><label>Slug / identificador<input name="slug" required placeholder="mi-empresa"></label><label>Plan<select name="plan"><option>Esencial</option><option selected>Profesional</option><option>Empresa</option></select></label><label>Estado<select name="status"><option selected>Implementación</option><option>Activo</option><option>Suspendido</option></select></label><label class="full">Contacto principal<input name="contact" placeholder="Nombre o correo"></label></div>
+      <div class="dialog-actions"><button value="cancel" class="ghost">Cancelar</button><button type="submit" class="primary">Guardar cliente</button></div>
+      <small>Fase 1: el registro se conserva en el navegador de esta vista de prueba. La fase 2 lo conectará a Supabase.</small>
+    </form>
+  </dialog>
+
+  <aside class="drawer" id="client-drawer" aria-hidden="true"><div class="drawer-head"><div><span class="kicker">ORGANIZACIÓN</span><h2 id="drawer-name">Cliente</h2></div><button id="close-drawer">×</button></div><div id="drawer-content"></div></aside>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
