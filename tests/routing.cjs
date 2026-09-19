@@ -14,8 +14,8 @@ assert.match(root,/src="\/site\/app\.js\?v=phase-b1"/);
 assert.match(root,/href="\/demo\/"/);
 
 assert.match(admin,/<title>ALVA Control Center · CRM Platform<\/title>/);
-assert.match(admin,/src="config\.js\?v=12"/);
-assert.match(admin,/src="app\.js\?v=12"/);
+assert.match(admin,/src="config\.js\?v=phase-c1"/);
+assert.match(admin,/src="app\.js\?v=phase-c1"/);
 assert.match(adminConfig,/platform-admin/);
 
 assert.match(app,/<title>ALVA CRM · Aplicación<\/title>/);
