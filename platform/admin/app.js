@@ -2,8 +2,8 @@ const CFG=window.ALVA_PLATFORM_CONFIG;
 const sb=window.supabase.createClient(CFG.supabaseUrl,CFG.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const state={session:null,admin:null,tenants:[],plans:[],stats:{},leads:[],payments:[],backups:[],contractTemplates:[],platformAdmins:[],view:'dashboard'};
-const viewTitles={dashboard:'Resumen',clientes:'Clientes',solicitudes:'Solicitudes',planes:'Planes y módulos',facturacion:'Facturación',plantillas:'Plantillas contractuales',respaldos:'Respaldos',equipo:'Equipo ALVA',actividad:'Actividad',configuracion:'Configuración'};
+const state={session:null,admin:null,tenants:[],plans:[],stats:{},leads:[],payments:[],backups:[],contractTemplates:[],financialReport:null,platformAdmins:[],view:'dashboard'};
+const viewTitles={dashboard:'Resumen',clientes:'Clientes',solicitudes:'Solicitudes',planes:'Planes y módulos',facturacion:'Facturación',reportes:'Reporte financiero',plantillas:'Plantillas contractuales',respaldos:'Respaldos',equipo:'Equipo ALVA',actividad:'Actividad',configuracion:'Configuración'};
 const statusLabels={active:'Activo',implementation:'Implementación',suspended:'Suspendido',cancelled:'Cancelado'};
 const moduleLabels={prospects:'Prospectos',clients:'Clientes',agenda:'Agenda',dashboard:'Dashboard',finance:'Finanzas',collaborators:'Colaboradores',documents:'Documentos',reports:'Reportes',multi_office:'Múltiples oficinas',custom_workflows:'Flujos personalizados'};
 const leadStatusLabels={new:'Nueva',contacted:'Contactada',demo:'Demo',qualified:'Calificada',won:'Ganada',lost:'Perdida'};
@@ -22,8 +22,9 @@ function showShell(){$('#auth-view')?.classList.add('hidden');$('#shell')?.class
 function applyRoleUI(){
   const role=state.admin?.role||'';
   $$('[data-role-view="owner"]').forEach(el=>el.hidden=role!=='owner');
-  $$('[data-role-view="billing"]').forEach(el=>el.hidden=!['owner','admin','billing'].includes(role));
-  $$('[data-role-view="backups"]').forEach(el=>el.hidden=!['owner','admin','support'].includes(role));
+  $('[data-role-view="billing"]').forEach(el=>el.hidden=!['owner','admin','billing'].includes(role));
+  $('[data-role-view="reports"]').forEach(el=>el.hidden=!['owner','admin','billing'].includes(role));
+  $('[data-role-view="backups"]').forEach(el=>el.hidden=!['owner','admin','support'].includes(role));
   $$('[data-role-view="templates"]').forEach(el=>el.hidden=!['owner','admin','support'].includes(role));
   if($('#new-client'))$('#new-client').hidden=!['owner','admin'].includes(role);
   if($('#upload-contract-template'))$('#upload-contract-template').hidden=!['owner','admin'].includes(role);
@@ -33,7 +34,7 @@ $('#login-form')?.addEventListener('submit',async e=>{e.preventDefault();const b
 $('#logout')?.addEventListener('click',async()=>{await sb.auth.signOut();location.reload()});
 $('#account-button')?.addEventListener('click',()=>$('#account-popover').classList.toggle('open'));
 document.addEventListener('click',e=>{if(!e.target.closest('.account-menu'))$('#account-popover')?.classList.remove('open')});
-function switchView(v){if(!$('#view-'+v))return;state.view=v;$$('.view').forEach(x=>x.classList.remove('active'));$$('.sidebar nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#view-'+v).classList.add('active');$('#view-title').textContent=viewTitles[v]||v;if(v==='actividad')loadActivity();if(v==='planes')renderPlans();if(v==='solicitudes')loadSalesLeads();if(v==='facturacion')loadBilling();if(v==='plantillas')loadContractTemplates();if(v==='respaldos')loadBackups();if(v==='equipo')loadPlatformAdmins()}
+function switchView(v){if(!$('#view-'+v))return;state.view=v;$$('.view').forEach(x=>x.classList.remove('active'));$$('.sidebar nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#view-'+v).classList.add('active');$('#view-title').textContent=viewTitles[v]||v;if(v==='actividad')loadActivity();if(v==='planes')renderPlans();if(v==='solicitudes')loadSalesLeads();if(v==='facturacion')loadBilling();if(v==='reportes')loadFinancialReport();if(v==='plantillas')loadContractTemplates();if(v==='respaldos')loadBackups();if(v==='equipo')loadPlatformAdmins()}
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
 
 async function loadDashboard(silent=false){if(!silent)toast('Actualizando datos…');try{const data=await api('dashboard');state.tenants=data.tenants||[];state.plans=data.plans||[];state.stats=data.stats||{};renderDashboard();renderClients();renderPlans();fillPlanOptions();fillPaymentOrganizations();fillTemplateOrganizations();if(!silent)toast('Datos actualizados')}catch(e){toast(e.message,true)}}
@@ -143,6 +144,82 @@ $('#payment-form')?.addEventListener('submit',async e=>{e.preventDefault();const
 $('#run-billing-rules')?.addEventListener('click',async()=>{const btn=$('#run-billing-rules');btn.disabled=true;try{const data=await api('run_billing_rules');const n=Number(data.result?.suspended_count||0);toast(n?('Revisión completa: '+n+' organización(es) suspendida(s)'):'Revisión completa: no hubo suspensiones');await loadDashboard(true);await loadBilling()}catch(e){toast(e.message,true)}finally{btn.disabled=false}});
 
 
+
+
+function localMonth(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function ensureReportMonth(){
+  const el=$('#report-month');
+  if(el&&!el.value)el.value=localMonth();
+}
+async function loadFinancialReport(){
+  const body=$('#report-table');if(!body)return;
+  ensureReportMonth();
+  body.innerHTML='<tr><td colspan="8"><div class="empty">Cargando reporte…</div></td></tr>';
+  try{
+    const data=await api('financial_report',{month:$('#report-month').value});
+    state.financialReport=data;
+    renderFinancialReport();
+  }catch(e){
+    body.innerHTML='<tr><td colspan="8"><div class="empty">'+esc(e.message)+'</div></td></tr>';
+  }
+}
+function renderFinancialReport(){
+  const data=state.financialReport;if(!data)return;
+  const s=data.summary||{},rows=data.rows||[];
+  $('#report-collected').textContent=money(s.collected_cents||0);
+  $('#report-payments').textContent=(s.payment_count||0)+' pago'+(Number(s.payment_count||0)===1?'':'s');
+  const delta=s.delta_pct;
+  $('#report-delta').textContent=delta===null||delta===undefined?'—':((delta>=0?'+':'')+Number(delta).toFixed(1)+'%');
+  $('#report-delta').classList.toggle('is-positive',Number(delta)>0);
+  $('#report-delta').classList.toggle('is-negative',Number(delta)<0);
+  $('#report-previous').textContent=money(s.previous_collected_cents||0)+' en '+String(data.previous_month||'');
+  $('#report-mrr').textContent=money(s.mrr_cents||0);
+  $('#report-active').textContent=s.active_clients??0;
+  $('#report-suspended').textContent=(s.suspended_clients??0)+' suspendido'+(Number(s.suspended_clients||0)===1?'':'s');
+  $('#report-new').textContent=s.new_clients??0;
+  $('#report-overdue').textContent=s.overdue_clients??0;
+  $('#report-table').innerHTML=rows.length?rows.map(r=>{
+    const contracted=r.agreed_price_cents?money(r.agreed_price_cents):'—';
+    const status='<span class="tag '+esc(r.status)+'">'+esc(statusLabels[r.status]||r.status)+'</span>'+(r.overdue?' <span class="tag cancelled">Vencido</span>':'');
+    return '<tr><td><strong>'+esc(r.name)+'</strong><small>'+esc(r.slug||'')+'</small></td>'+
+      '<td>'+esc(r.plan_name||'—')+'</td>'+
+      '<td>'+esc(contracted)+'</td>'+
+      '<td><strong>'+esc(money(r.collected_cents||0))+'</strong></td>'+
+      '<td>'+Number(r.payment_count||0)+'</td>'+
+      '<td>'+esc(formatDate(r.last_payment_on))+'</td>'+
+      '<td>'+esc(formatDate(r.next_payment_on))+'</td>'+
+      '<td>'+status+'</td></tr>';
+  }).join(''):'<tr><td colspan="8"><div class="empty">No hay organizaciones para este reporte.</div></td></tr>';
+}
+function csvCell(value){
+  const text=String(value??'');
+  return '"'+text.replace(/"/g,'""')+'"';
+}
+function exportFinancialReport(){
+  const data=state.financialReport;
+  if(!data?.rows?.length)return toast('No hay datos para exportar',true);
+  const headers=['Organización','Slug','Plan','Estado','Ciclo','Precio contratado MXN','Cobrado en periodo MXN','Número de pagos','Último pago','Próximo pago','Renovación','Vencido'];
+  const lines=[headers.map(csvCell).join(',')];
+  for(const r of data.rows){
+    lines.push([
+      r.name,r.slug,r.plan_name,statusLabels[r.status]||r.status,r.billing_cycle,
+      (Number(r.agreed_price_cents||0)/100).toFixed(2),
+      (Number(r.collected_cents||0)/100).toFixed(2),
+      r.payment_count||0,r.last_payment_on||'',r.next_payment_on||'',r.renews_on||'',r.overdue?'Sí':'No'
+    ].map(csvCell).join(','));
+  }
+  const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='ALVA-reporte-financiero-'+String(data.period||localMonth())+'.csv';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1200);
+  toast('Reporte CSV generado');
+}
+$('#reload-report')?.addEventListener('click',loadFinancialReport);
+$('#report-month')?.addEventListener('change',loadFinancialReport);
+$('#export-report')?.addEventListener('click',exportFinancialReport);
 
 function fillTemplateOrganizations(){
   const sel=$('#template-org');if(!sel)return;
