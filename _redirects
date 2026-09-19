@@ -7,7 +7,6 @@
 /platform/admin/index.html /admin/ 301
 /colaborador /C&ACRM/Colaboradores/ 301
 /colaborador/ /C&ACRM/Colaboradores/ 301
-/colaborador/index.html /C&ACRM/Colaboradores/ 301
 
 # Rutas canónicas multi-tenant: rewrites internos.
 /C&ACRM/Colaboradores /colaborador/index.html 200
