@@ -1,4 +1,10 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');const {JSDOM}=require('jsdom');
+const avatarAdapter=fs.readFileSync('cloud-adapter.js','utf8');
+assert.match(avatarAdapter,/CLOUD_AVATAR_SIGNED_URL_TTL_SECONDS=86400/);
+assert.match(avatarAdapter,/__cyaCloudAvatarRefreshInstalled/);
+assert.match(avatarAdapter,/cloudRefreshAdvisorAvatar/);
+assert.match(avatarAdapter,/document\.addEventListener\('error'/);
+
 const dom=new JSDOM('<div class="main"></div>',{url:'https://example.invalid',runScripts:'outside-only'});const ctx=dom.getInternalVMContext();const run=s=>vm.runInContext(s,ctx);let requests=[],fail=false,release;
 Object.assign(dom.window,{structuredClone,console});
 run(`const CA_ORG_ID='org';let store={clientes:[],leads:[],agenda:[],colaboradores:[],plantillas:[],servicios:[],configuracion:{}};let cloudReady=true,cloudSyncTimer=null,cloudLegacyAdvisors=[];let cloudSelect=async()=>[],cloudLoadStore=async()=>{},cloudSyncNow,cloudQueueSync,saveStore,cerrarSesion=async()=>{};const isTechnicalAdmin=()=>false;const cloudCleanObject=v=>JSON.parse(JSON.stringify(v));const escapeHTMLBasico=v=>v;const fechaISOLocal=()=> '2026-09-09';const showToast=()=>{};function rows(key){return store[key].map(r=>({id:r.id,organization_id:'org',payload:r}));}const cloudCollaboratorRows=()=>rows('colaboradores'),cloudLeadRows=()=>rows('leads'),cloudClientRows=()=>rows('clientes'),cloudEventRows=()=>rows('agenda'),cloudTemplateRows=()=>rows('plantillas'),cloudServiceRows=()=>rows('servicios');`);
