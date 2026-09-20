@@ -34,7 +34,7 @@ function routeTarget(pathname){
   if(String(parts[0]).toLowerCase()==='c&acrm'){
     return String(parts[1]||'').toLowerCase()==='colaboradores'
       ? '/runtime/colaboradores'
-      : '/app/index.html';
+      : '/app/';
   }
 
   if(String(parts[0]).toLowerCase()==='app'){
@@ -42,7 +42,7 @@ function routeTarget(pathname){
     if(!VALID_SLUG.test(tenant))return null;
     return String(parts[2]||'').toLowerCase()==='colaboradores'
       ? '/runtime/colaboradores'
-      : '/app/index.html';
+      : '/app/';
   }
 
   return null;
@@ -68,6 +68,8 @@ export default {
     const target=routeTarget(url.pathname);
     if(!target)return env.ASSETS.fetch(request);
 
+    // Pages redirects /app/index.html to /app/. Fetch the clean asset URL
+    // internally so the browser keeps its tenant path and query parameters.
     const assetUrl=new URL(request.url);
     assetUrl.pathname=target;
     assetUrl.search='';

@@ -14,9 +14,9 @@
 /app/:tenant/colaboradores/ /runtime/colaboradores 200
 /app/:tenant/colaboradores/* /runtime/colaboradores 200
 
-/C&ACRM /app/index.html 200
-/C&ACRM/ /app/index.html 200
-/C&ACRM/* /app/index.html 200
-/app/:tenant /app/index.html 200
-/app/:tenant/ /app/index.html 200
-/app/:tenant/* /app/index.html 200
+/C&ACRM /app/ 200
+/C&ACRM/ /app/ 200
+/C&ACRM/* /app/ 200
+/app/:tenant /app/ 200
+/app/:tenant/ /app/ 200
+/app/:tenant/* /app/ 200

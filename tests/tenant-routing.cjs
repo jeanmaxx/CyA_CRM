@@ -56,18 +56,18 @@ result=[
   routeTarget('/app/empresa-demo/')
 ];`,workerSandbox);
 assert.deepEqual(Array.from(workerSandbox.result),[
-  '/app/index.html',
+  '/app/',
   '/runtime/colaboradores',
-  '/app/index.html',
+  '/app/',
   '/runtime/colaboradores',
-  '/app/index.html'
+  '/app/'
 ]);
 
 const redirects=fs.readFileSync('_redirects','utf8');
 assert.match(redirects,/\/C&ACRM\/Colaboradores\/\s+\/runtime\/colaboradores 200/);
 assert.match(redirects,/\/app\/:tenant\/colaboradores\/\s+\/runtime\/colaboradores 200/);
-assert.match(redirects,/\/C&ACRM\/\s+\/app\/index\.html 200/);
-assert.match(redirects,/\/app\/:tenant\s+\/app\/index\.html 200/);
+assert.match(redirects,/\/C&ACRM\/\s+\/app\/ 200/);
+assert.match(redirects,/\/app\/:tenant\s+\/app\/ 200/);
 
 const admin=fs.readFileSync('admin/app.js','utf8');
 assert.match(admin,/function tenantAccessPath/);
@@ -88,3 +88,36 @@ for(const edge of [portalEdge,discardedEdge]){
 assert.match(portalEdge,/organization:\{id:organization\.id,name:organization\.name,slug:organization\.slug\}/);
 
 console.log('PASS: tenant routing, C&A aliases and collaborator tenant guards are wired.');
+
+// Model the Pages clean-URL behavior that previously leaked a 308 to browsers.
+// Checking routeTarget alone cannot detect a redirect returned by ASSETS.fetch.
+(async()=>{
+  const {default:worker}=await import('data:text/javascript;base64,'+Buffer.from(workerSource).toString('base64'));
+  const env={ASSETS:{async fetch(request){
+    const url=new URL(request.url);
+    if(url.pathname==='/app/index.html')return Response.redirect(new URL('/app/',url),308);
+    const file=url.pathname==='/app/'?'app/index.html':url.pathname==='/runtime/colaboradores'?'runtime/colaboradores.html':null;
+    if(!file)return new Response('Not found',{status:404});
+    return new Response(request.method==='HEAD'?null:fs.readFileSync(file,'utf8'),{
+      headers:{'Content-Type':'text/html; charset=utf-8'}
+    });
+  }}};
+  for(const path of ['/C&ACRM/','/C%26ACRM/','/app/casillas-asociados/','/app/empresa-demo/','/C&ACRM/Colaboradores/','/app/empresa-demo/colaboradores/']){
+    for(const method of ['GET','HEAD']){
+      const request=new Request('https://crm.example.invalid'+path+'?utm_source=regression',{method});
+      const response=await worker.fetch(request,env);
+      assert.equal(response.status,200,method+' '+path+' must stay an internal rewrite');
+      assert.equal(response.headers.get('Location'),null,path+' must retain tenant URL');
+      assert.equal(new URL(request.url).search,'?utm_source=regression');
+      assert.ok(resolve(new URL(request.url).pathname).tenantSlug,path+' must retain tenant context');
+      if(method==='GET')assert.match(await response.text(),/<html/);
+    }
+  }
+  const legacy=await worker.fetch(new Request('https://crm.example.invalid/?tenant=empresa-demo&utm_source=legacy'),env);
+  assert.equal(legacy.status,308);
+  assert.equal(legacy.headers.get('Location'),'https://crm.example.invalid/app/empresa-demo/?utm_source=legacy');
+  const destination=await worker.fetch(new Request(legacy.headers.get('Location')),env);
+  assert.equal(destination.status,200);
+  assert.equal(destination.headers.get('Location'),null);
+  console.log('PASS: Pages asset normalization does not redirect tenant GET/HEAD requests or legacy destinations.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

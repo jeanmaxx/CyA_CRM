@@ -1,6 +1,6 @@
 const fs=require('fs'),assert=require('node:assert/strict'),vm=require('vm');
 const {JSDOM,VirtualConsole}=require('jsdom');const vc=new VirtualConsole();const errors=[];vc.on('jsdomError',e=>errors.push(e.message));
-const html=fs.readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
+const html=fs.readFileSync('app/index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
 const dom=new JSDOM(html,{url:'https://crm.example.invalid/',runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc});const w=dom.window,d=w.document;const run=s=>vm.runInContext(s,dom.getInternalVMContext());
 w.matchMedia=()=>({matches:false,addEventListener(){},addListener(){}});w.HTMLElement.prototype.scrollIntoView=function(){};w.HTMLElement.prototype.scrollTo=function(){};w.scrollTo=()=>{};w.Chart=function(){this.destroy=()=>{}};w.Uint8Array=Uint8Array;w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;
 for(const f of ['app-core-01.js','app-core-02a.js','app-core-02b.js','app-core-03.js','app-core-04.js','app-core-05.js','app-core-06.js','app-core-07.js'])run(fs.readFileSync(f,'utf8').replace('\ninitResponsiveShell();','\n'));

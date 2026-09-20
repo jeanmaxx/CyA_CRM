@@ -1,13 +1,17 @@
 const fs=require('fs'),assert=require('node:assert/strict');
 const {JSDOM,VirtualConsole}=require('jsdom');
 const errors=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));
-const html=fs.readFileSync('index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
+const html=fs.readFileSync('app/index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
 const dom=new JSDOM(html,{url:'https://crm.example.invalid/',runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc});
 const w=dom.window,d=w.document;w.matchMedia=()=>({matches:false,addEventListener(){},addListener(){}});w.confirm=()=>true;w.alert=()=>{};w.HTMLElement.prototype.scrollIntoView=function(){};w.HTMLElement.prototype.scrollTo=function(){};w.scrollTo=()=>{};w.Chart=function(){this.destroy=()=>{}};
 for(const f of ['app-core-01.js','app-core-02a.js','app-core-02b.js','app-core-03.js','app-core-04.js','app-core-05.js','app-core-06.js','app-core-07.js'])require('vm').runInContext(fs.readFileSync(f,'utf8').replace('\ninitResponsiveShell();','\n'),dom.getInternalVMContext());
 const run=s=>require('vm').runInContext(s,dom.getInternalVMContext()),value=(id,v)=>{const el=d.getElementById(id);assert(el,'Missing field '+id);el.value=v;};
 run(fs.readFileSync('tests/fixtures.js','utf8').replace('__ROLE__','admin').replace("actualizarSidebarSesion();updateRolUI();navigate('clientes');",''));
 for(const f of ['app-workflow.js','app-prospect-workflow.js','app-contract-word.js','app-operations.js'])run(fs.readFileSync(f,'utf8'));
+run("store.configuracion.logo_empresa='';actualizarLogoSidebar()");
+const fallbackLogo=d.querySelector('#login-logo-wrap img');
+assert.equal(fallbackLogo.getAttribute('src').split('?')[0],'/assets/brand/cya-logo-dark.svg');
+assert(fs.existsSync('.'+fallbackLogo.getAttribute('src').split('?')[0]));
 run("actualizarSidebarSesion();navigate('clientes')");
 assert(!d.getElementById('nav-admin-section').hidden);
 run("navigate('asesores')");assert(d.body.textContent.includes('Comparativa de rendimiento'));run("navigate('clientes')");
@@ -24,7 +28,7 @@ run("navigate('clientes');editCliente('test-client')");assert.equal(d.getElement
  await run('guardarCliente()');assert.equal(run('store.clientes[0].fechaAltaAfore'),'2026-08-20');assert.equal(run("store.agenda.find(e=>e.regla==='solicitud_45').fecha"),'2026-10-04');
  const stageBefore=run('store.clientes[0].etapa');let advance=run("avanzarEtapa('test-client')");assert(d.getElementById('modal-confirmar-firma'));run('resolverConfirmacionFirma(false)');await advance;assert.equal(run('store.clientes[0].etapa'),stageBefore);
  advance=run("avanzarEtapa('test-client')");value('confirmacion-firma-fecha','05/09/2026');run('resolverConfirmacionFirma(true,true)');await advance;assert.equal(run('store.clientes[0].etapa'),'contrato_firmado');assert.equal(run('store.clientes[0].fechaFirmaContrato'),'2026-09-05');assert.equal(run('store.clientes[0].firmaConfirmadaPorId'),'test-owner');
- run("privateContractTemplate={defaults:{empresa_representante:'REPRESENTANTE DE PRUEBA',empresa_domicilio:'DOMICILIO EMPRESARIAL DE PRUEBA',ciudad_contrato:'CIUDAD DE PRUEBA'}}");run("navigate('contratos');selectedClienteId='test-client';onContratoClienteChange()");assert.equal(d.getElementById('ct-honorarios').value,'8000');assert.equal(d.getElementById('ct-pagare-monto').value,'13000');assert.equal(d.getElementById('ct-fecha').type,'text');
+ run("privateContractTemplate={defaults:{empresa_representante:'REPRESENTANTE DE PRUEBA',empresa_domicilio:'DOMICILIO EMPRESARIAL DE PRUEBA',ciudad_contrato:'CIUDAD DE PRUEBA'}}");run('privateContractTemplate.content_base64='+JSON.stringify((await require('./contract-fixture.cjs')()).toString('base64')));run("navigate('contratos');selectedClienteId='test-client';onContratoClienteChange()");assert.equal(d.getElementById('ct-honorarios').value,'8000');assert.equal(d.getElementById('ct-pagare-monto').value,'13000');assert.equal(d.getElementById('ct-fecha').type,'text');
  assert.equal(run('datosContratoWord().CLIENTE_NOMBRE'),'CLIENTE DE PRUEBA');
  run("sesionActiva.rol='tech_admin';actualizarSidebarSesion();navigate('configuracion')");assert(d.getElementById('cfg-nombre'));assert(!d.getElementById('nav-admin-section').hidden);
  run("sesionActiva.rol='asesor';actualizarSidebarSesion();navigate('cuenta')");assert(!d.body.textContent.includes('Crear cuenta técnica'));assert(d.getElementById('account-photo-file'));
