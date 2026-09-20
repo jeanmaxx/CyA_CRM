@@ -112,10 +112,73 @@ async function cloudSelect(table){
   return data || [];
 }
 
+const CLOUD_AVATAR_SIGNED_URL_TTL_SECONDS=86400;
+const cloudAvatarRefreshInFlight=new Map();
+
 async function cloudSignedAvatar(path){
   if(!path) return '';
-  const {data,error}=await supabaseClient.storage.from('crm-avatars').createSignedUrl(path, 3600);
+  const {data,error}=await supabaseClient.storage.from('crm-avatars').createSignedUrl(path,CLOUD_AVATAR_SIGNED_URL_TTL_SECONDS);
   return error ? '' : (data?.signedUrl || '');
+}
+
+function cloudAvatarNormalizedUrl(value){
+  try{return new URL(String(value||''),window.location.href).href;}catch(_){return String(value||'');}
+}
+
+function cloudAvatarFallback(img,advisor){
+  if(!img)return;
+  const parent=img.parentElement;
+  if(!parent)return;
+  const name=String(advisor?.nombre||img.getAttribute('alt')||'').replace(/^Foto de(?: perfil de)?\s*/i,'').trim();
+  parent.textContent=typeof initials==='function'?initials(name||'?'):(name.slice(0,2).toUpperCase()||'?');
+  parent.style.display='flex';
+  parent.style.alignItems='center';
+  parent.style.justifyContent='center';
+}
+
+async function cloudRefreshAdvisorAvatar(img,advisor){
+  if(!img||!advisor?.fotoPath)return cloudAvatarFallback(img,advisor);
+  if(img.dataset.cloudAvatarRefreshing==='1')return;
+  const previousUrl=cloudAvatarNormalizedUrl(advisor.foto);
+  const lastAttempt=Number(img.dataset.cloudAvatarRefreshAt||0);
+  if(lastAttempt&&Date.now()-lastAttempt<5000)return cloudAvatarFallback(img,advisor);
+  img.dataset.cloudAvatarRefreshing='1';
+  img.dataset.cloudAvatarRefreshAt=String(Date.now());
+  try{
+    let request=cloudAvatarRefreshInFlight.get(advisor.fotoPath);
+    if(!request){
+      request=cloudSignedAvatar(advisor.fotoPath).finally(()=>cloudAvatarRefreshInFlight.delete(advisor.fotoPath));
+      cloudAvatarRefreshInFlight.set(advisor.fotoPath,request);
+    }
+    const signedUrl=await request;
+    if(!signedUrl)throw new Error('No se pudo renovar la URL firmada del avatar');
+    advisor.foto=signedUrl;
+    if(sesionActiva&&String(sesionActiva.id)===String(advisor.id))sesionActiva.foto=signedUrl;
+    document.querySelectorAll('img').forEach(node=>{
+      const nodeUrl=cloudAvatarNormalizedUrl(node.currentSrc||node.getAttribute('src')||node.src);
+      if(nodeUrl===previousUrl){
+        node.dataset.cloudAvatarRefreshing='0';
+        node.dataset.cloudAvatarRefreshAt=String(Date.now());
+        node.src=signedUrl;
+      }
+    });
+  }catch(error){
+    console.warn('No se pudo renovar el avatar',advisor?.id,error);
+    cloudAvatarFallback(img,advisor);
+  }finally{
+    if(img?.dataset)img.dataset.cloudAvatarRefreshing='0';
+  }
+}
+
+if(!window.__cyaCloudAvatarRefreshInstalled){
+  window.__cyaCloudAvatarRefreshInstalled=true;
+  document.addEventListener('error',event=>{
+    const img=event.target;
+    if(!(img instanceof HTMLImageElement))return;
+    const failedUrl=cloudAvatarNormalizedUrl(img.currentSrc||img.getAttribute('src')||img.src);
+    const advisor=(store.asesores||[]).find(item=>item?.foto&&cloudAvatarNormalizedUrl(item.foto)===failedUrl);
+    if(advisor?.fotoPath)void cloudRefreshAdvisorAvatar(img,advisor);
+  },true);
 }
 
 async function cloudLoadStore(){
