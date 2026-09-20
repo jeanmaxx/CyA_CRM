@@ -3,6 +3,12 @@ const fs=require('fs'),vm=require('node:vm'),assert=require('node:assert/strict'
 const bridge=fs.readFileSync('github-pages-bridge.js','utf8');
 const worker=fs.readFileSync('_worker.js','utf8');
 const fallback=fs.readFileSync('404.html','utf8');
+const pluralPortal=fs.readFileSync('colaboradores/index.html','utf8');
+assert.match(pluralPortal,/https:\/\/crm-alvasd\.pages\.dev\/C&ACRM\/Colaboradores\//);
+assert.doesNotMatch(pluralPortal,/assets\/icons\//);
+for(const match of pluralPortal.matchAll(/href="([^"?]+)/g)){
+  assert(fs.existsSync('.'+new URL(match[1],'https://example.invalid/colaboradores/').pathname),'Legacy redirect must reference an existing favicon');
+}
 
 function runBridge(pathname,search='',hash='',hostname='jeanmaxx.github.io'){
   const calls=[];

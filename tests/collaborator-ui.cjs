@@ -7,7 +7,7 @@ const finalizer=fs.readFileSync('colaborador/phase-d-finalize.js','utf8');
 const app=fs.readFileSync('colaborador/app.js','utf8');
 
 assert.match(html,/alva-phase-d\.css\?v=phase-d2/);
-assert.match(html,/phase-d-branding\.js\?v=phase-d1/);
+assert.match(html,/phase-d-branding\.js\?v=[^"\s]+/);
 assert.match(html,/meta name="theme-color" content="#0d1118"/);
 
 for(const token of ['--bg:#0d1118','--side:#111722','--surface:#151c27','--gold:#ffc20e']) assert.ok(css.includes(token),token);

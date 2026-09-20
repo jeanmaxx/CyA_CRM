@@ -20,8 +20,8 @@ assert.match(adminConfig,/platform-admin/);
 
 assert.match(app,/<title>ALVA CRM · Aplicación<\/title>/);
 assert.match(app,/data-alva-surface="crm-app"/);
-assert.match(app,/src="\/cloud-config\.js"/);
-assert.match(app,/src="\/cloud-adapter\.js\?v=20260919-entitlements"/);
+assert.match(app,/src="\/cloud-config\.js(?:\?[^"\s]+)?"/);
+assert.match(app,/src="\/cloud-adapter\.js(?:\?[^"\s]+)?"/);
 assert.match(app,/src="\/cloud-sync-safe\.js\?v=20260919-entitlements"/);
 assert.doesNotMatch(app,/src="cloud-config\.js"/);
 

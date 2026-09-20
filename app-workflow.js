@@ -67,7 +67,7 @@ openModalAsesor=function(id){
   technicalBootstrapMode=false;originalOpenAsesor(id);document.getElementById('as-rol').disabled=false;document.getElementById('as-activo').disabled=false;document.getElementById('asesor-foto-preview').parentElement.hidden=false;
 };
 const originalActualizarLogo=actualizarLogoSidebar;
-actualizarLogoSidebar=function(){originalActualizarLogo();if(!store.configuracion.logo_empresa){const el=document.getElementById('login-logo-wrap');if(el) el.innerHTML='<img src="assets/icons/icon-512x512.png" alt="Casillas & Asociados" style="width:100%;height:100%;object-fit:contain;background:#fff;">';}};
+actualizarLogoSidebar=function(){originalActualizarLogo();if(!store.configuracion.logo_empresa){const el=document.getElementById('login-logo-wrap');if(el) el.innerHTML='<img src="/assets/brand/cya-logo-dark.svg?v=20260919-brand-clean1" alt="Casillas & Asociados" style="width:100%;height:100%;object-fit:contain;background:transparent;">';}};
 function inputFecha(id,value,label,required=false){return `<div class="form-group"><label class="form-label" for="${id}">${label}</label><input class="form-input input-fecha-mx" id="${id}" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" value="${esc(fechaISOaMX(value||''))}" oninput="mascaraFechaMX(this)" onblur="validarVisualFechaMX(this)" ${required?'required':''}></div>`;}
 function fechaRegistroISO(value){const d=parseFechaFlexible(value);return d?fechaISOLocal(d):'';}
 function prepararFechasCliente(c){
