@@ -976,3 +976,216 @@ html[data-theme="light"] .eligible-column .phase-head h3{color:#147451!important
 html[data-theme="light"] .discarded-section{background:#fff!important}
 html[data-theme="light"] .discarded-section-head h2{color:#18202c!important}
 html[data-theme="light"] .discarded-card{background:#f8fafc!important}
+
+/* ---------- Curved navigation and user-controlled sidebar ---------- */
+#portal-view{
+  --sidebar-width:238px;
+  --nav-ink:#b8c4d3;
+  --nav-active:var(--gold);
+  --nav-hover:rgba(255,255,255,.045);
+  background:var(--side)!important;
+  padding:12px 0;
+}
+html[data-theme="light"] #portal-view{
+  --nav-ink:#6e7a8b;
+  --nav-active:#0f2744;
+  --nav-hover:rgba(15,39,68,.05);
+}
+#portal-view[data-sidebar="collapsed"]{--sidebar-width:78px}
+#portal-view .sidebar{
+  display:flex!important;
+  flex-direction:column;
+  width:var(--sidebar-width)!important;
+  padding:16px 0 18px 12px!important;
+  border:0!important;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:var(--line) var(--side);
+  transition:width .2s ease;
+}
+#portal-view .sidebar-toggle{
+  display:grid;
+  place-items:center;
+  flex:0 0 36px;
+  width:36px;
+  height:36px;
+  margin:0 16px 12px auto;
+  cursor:pointer;
+  color:var(--nav-ink)!important;
+}
+#portal-view .sidebar-toggle svg,
+#sidebar-mobile-toggle svg,
+#portal-view .nav-icon{
+  width:20px;
+  height:20px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  flex-shrink:0;
+}
+#portal-view .sidebar-brand.cya-brand{
+  flex-shrink:0;
+  min-height:94px!important;
+  margin:0 16px 4px 0!important;
+  padding:0 8px 18px!important;
+  justify-content:center;
+}
+#portal-view .sidebar-brand .cya-logo-shared{width:142px!important;max-height:72px!important}
+#portal-view .sidebar-nav{
+  flex-shrink:0;
+  gap:8px!important;
+  padding:20px 0!important;
+}
+#portal-view .sidebar-nav .nav-item{
+  position:relative;
+  display:flex!important;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  min-height:48px!important;
+  padding:12px 16px!important;
+  border-radius:18px 0 0 18px!important;
+  font-size:12px!important;
+  color:var(--nav-ink)!important;
+  cursor:pointer;
+  isolation:isolate;
+}
+#portal-view .sidebar-nav .nav-label{
+  width:auto!important;
+  color:inherit!important;
+  font-size:inherit!important;
+  white-space:nowrap;
+}
+#portal-view .sidebar-nav .nav-item:hover{background:var(--nav-hover)!important;color:var(--text)!important}
+#portal-view .sidebar-nav .nav-item.active{
+  background:var(--bg)!important;
+  color:var(--nav-active)!important;
+  box-shadow:none!important;
+  font-weight:800!important;
+}
+#portal-view .sidebar-nav .nav-item.active::before,
+#portal-view .sidebar-nav .nav-item.active::after{
+  content:"";
+  position:absolute;
+  right:0;
+  width:16px;
+  height:16px;
+  pointer-events:none;
+}
+#portal-view .sidebar-nav .nav-item.active::before{
+  top:-16px;
+  background:radial-gradient(circle at 0 0,transparent 16px,var(--bg) 16.5px);
+}
+#portal-view .sidebar-nav .nav-item.active::after{
+  bottom:-16px;
+  background:radial-gradient(circle at 0 100%,transparent 16px,var(--bg) 16.5px);
+}
+#portal-view .sidebar-nav .nav-item:focus-visible,
+#portal-view .sidebar-toggle:focus-visible,
+#sidebar-mobile-toggle:focus-visible{
+  outline:2px solid var(--nav-active);
+  outline-offset:-4px;
+}
+#portal-view .alva-credit-sidebar{
+  display:flex!important;
+  margin: auto 16px 12px 0!important;
+  flex-shrink:0;
+}
+#portal-view .sidebar-user{
+  grid-template-columns:36px minmax(0,1fr) 30px!important;
+  justify-items:stretch!important;
+  margin-right:16px;
+  padding:12px 0 0!important;
+  flex-shrink:0;
+}
+#portal-view .sidebar-user>div:not(.user-avatar){display:block!important;min-width:0}
+#portal-view .sidebar-user strong{color:var(--text)!important;overflow-wrap:anywhere}
+#portal-view[data-sidebar="collapsed"] .sidebar-toggle{margin-right:16px}
+#portal-view[data-sidebar="collapsed"] .sidebar-toggle svg{transform:rotate(180deg)}
+#portal-view[data-sidebar="collapsed"] .sidebar-brand.cya-brand{min-height:68px!important;padding:0 0 16px!important}
+#portal-view[data-sidebar="collapsed"] .sidebar-brand .cya-logo-shared{width:50px!important;max-height:48px!important}
+#portal-view[data-sidebar="collapsed"] .sidebar-nav .nav-label,
+#portal-view[data-sidebar="collapsed"] .alva-credit-sidebar,
+#portal-view[data-sidebar="collapsed"] .sidebar-user>div:not(.user-avatar){display:none!important}
+#portal-view[data-sidebar="collapsed"] .sidebar-user{
+  grid-template-columns:1fr!important;
+  justify-items:center!important;
+  margin-top:auto;
+}
+#portal-view .portal-main{
+  margin-left:var(--sidebar-width)!important;
+  min-height:calc(100vh - 24px)!important;
+  background:var(--bg)!important;
+  border-radius:28px 0 0 28px;
+  transition:margin-left .2s ease;
+}
+#portal-view .topbar{border-top-left-radius:28px}
+.topbar-heading{display:flex;align-items:center;gap:10px;min-width:0}
+#sidebar-mobile-toggle{display:none}
+.sidebar-tooltip{
+  position:fixed;
+  z-index:90;
+  padding:9px 12px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--surface);
+  color:var(--text);
+  box-shadow:var(--shadow);
+  font-size:12px;
+  pointer-events:none;
+}
+.sidebar-backdrop{display:none}
+
+@media(max-width:780px){
+  #portal-view{padding:0}
+  #portal-view .sidebar,
+  #portal-view[data-sidebar="collapsed"] .sidebar{
+    width:min(280px,calc(100vw - 48px))!important;
+    z-index:80!important;
+    visibility:hidden;
+    transform:translateX(-100%);
+    transition:transform .2s ease,visibility .2s;
+    padding-top:max(16px,env(safe-area-inset-top))!important;
+    padding-bottom:max(18px,env(safe-area-inset-bottom))!important;
+    background:var(--side)!important;
+  }
+  #portal-view.sidebar-open .sidebar{visibility:visible;transform:translateX(0)}
+  #portal-view .sidebar-backdrop:not([hidden]){
+    display:block;
+    position:fixed;
+    inset:0;
+    z-index:70;
+    background:rgba(0,0,0,.55);
+    border:0;
+    padding:0;
+  }
+  body.portal-menu-open{overflow:hidden}
+  #portal-view[data-sidebar] .sidebar-brand.cya-brand{min-height:94px!important;padding:0 8px 18px!important}
+  #portal-view[data-sidebar] .sidebar-brand .cya-logo-shared{width:142px!important;max-height:72px!important}
+  #portal-view[data-sidebar] .sidebar-nav .nav-label,
+  #portal-view[data-sidebar] .sidebar-user>div:not(.user-avatar){display:block!important}
+  #portal-view[data-sidebar] .alva-credit-sidebar{display:flex!important}
+  #portal-view[data-sidebar] .sidebar-user{grid-template-columns:36px minmax(0,1fr) 30px!important;justify-items:stretch!important;margin-top:0}
+  #portal-view[data-sidebar] .sidebar-toggle svg{transform:none}
+  #portal-view .sidebar-nav .nav-item.active{border-radius:18px 0 0 18px!important}
+  #portal-view .portal-main{margin-left:0!important;min-height:100vh!important;border-radius:0}
+  #portal-view .topbar{border-radius:0;gap:8px}
+  #sidebar-mobile-toggle{display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;cursor:pointer;color:var(--nav-ink)!important}
+  #portal-view .theme-toggle{display:grid!important;place-items:center;width:36px;height:36px}
+  #portal-view .mobile-nav{bottom:max(10px,env(safe-area-inset-bottom))!important}
+}
+@media(max-width:390px){
+  #portal-view .topbar{padding:0 10px!important}
+  #portal-view .topbar-heading{gap:6px}
+  #portal-view .topbar-kicker{font-size:6px!important;letter-spacing:.05em!important}
+  #portal-view .topbar h2{font-size:17px!important}
+  #portal-view .topbar-actions{gap:4px!important}
+  #portal-view #new-prospect-top{padding:8px!important;font-size:9px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #portal-view .sidebar,#portal-view .portal-main,#portal-view .nav-item{transition:none!important}
+}
