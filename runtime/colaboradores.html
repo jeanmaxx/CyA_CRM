@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="/colaborador/phase3.css?v=20260914-1">
   <link rel="stylesheet" href="/colaborador/phase4.css?v=20260914-1">
   <link rel="stylesheet" href="/colaborador/alva-ui.css?v=20260918-brand8">
-  <link rel="stylesheet" href="/colaborador/alva-phase-d.css?v=phase-d2">
+  <link rel="stylesheet" href="/colaborador/alva-phase-d.css?v=phase-d2-sidebar1">
 </head>
 <body>
   <div id="login-view" class="login-shell">
@@ -52,17 +52,18 @@
   </div>
 
   <div id="portal-view" class="portal-shell" hidden>
-    <aside class="sidebar">
+    <aside class="sidebar" id="portal-sidebar" aria-label="Menú del portal">
+      <button id="sidebar-toggle" class="icon-button sidebar-toggle" type="button" aria-controls="portal-navigation" aria-expanded="true" aria-label="Contraer menú" title="Contraer menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
       <div class="sidebar-brand cya-brand">
         <img class="cya-logo cya-logo-shared" src="/assets/brand/cya-logo-light.jpg?v=20260919-brand-clean1" alt="Casillas & Asociados Consultoría">
       </div>
-      <nav class="sidebar-nav" aria-label="Portal">
-        <button class="nav-item active" data-page="inicio" type="button"><span>⌂</span>Inicio</button>
-        <button class="nav-item" data-page="prospectos" type="button"><span>◎</span>Mis prospectos</button>
-        <button class="nav-item" data-page="clientes" type="button"><span>◉</span>Mis clientes</button>
-        <button class="nav-item" data-page="guia" type="button"><span>▤</span>Información / Guía</button>
-        <button class="nav-item" data-page="estadisticas" type="button"><span>▥</span>Estadísticas</button>
-        <button class="nav-item" data-page="finanzas" type="button"><span>◇</span>Finanzas</button>
+      <nav class="sidebar-nav" id="portal-navigation" aria-label="Portal">
+        <button class="nav-item active" data-page="inicio" type="button" aria-label="Inicio" aria-current="page"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-7h6v7"/></svg><span class="nav-label">Inicio</span></button>
+        <button class="nav-item" data-page="prospectos" type="button" aria-label="Mis prospectos"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21v-2a7 7 0 0 1 14 0v2m3-14v6m-3-3h6"/></svg><span class="nav-label">Mis prospectos</span></button>
+        <button class="nav-item" data-page="clientes" type="button" aria-label="Mis clientes"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="4"/><path d="M1 21v-2a7 7 0 0 1 14 0v2m1-17a4 4 0 0 1 0 8m2 3a6 6 0 0 1 5 6"/></svg><span class="nav-label">Mis clientes</span></button>
+        <button class="nav-item" data-page="guia" type="button" aria-label="Información / Guía"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16v18H4Zm4 5h8m-8 4h8m-8 4h5"/></svg><span class="nav-label">Información / Guía</span></button>
+        <button class="nav-item" data-page="estadisticas" type="button" aria-label="Estadísticas"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v18h17M9 17v-5m5 5V7m5 10V4"/></svg><span class="nav-label">Estadísticas</span></button>
+        <button class="nav-item" data-page="finanzas" type="button" aria-label="Finanzas"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 9h18m-6 5h3"/></svg><span class="nav-label">Finanzas</span></button>
       </nav>
       <div class="sidebar-credit alva-credit alva-credit-sidebar">
         <span class="credit-label">Una solución de</span>
@@ -71,9 +72,10 @@
       <div class="sidebar-user"><div class="user-avatar" id="sidebar-avatar">CA</div><div><strong id="sidebar-name">Colaborador</strong><span id="sidebar-advisor">Asesor asignado</span></div><button id="logout-btn" class="icon-button" type="button" title="Cerrar sesión">↩</button></div>
     </aside>
 
+    <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Cerrar menú" tabindex="-1" hidden></button>
     <div class="portal-main">
       <header class="topbar">
-        <div><span class="topbar-kicker">PORTAL DE COLABORADORES</span><h2 id="page-title">Inicio</h2></div>
+        <div class="topbar-heading"><button id="sidebar-mobile-toggle" class="icon-button" type="button" aria-controls="portal-sidebar" aria-expanded="false" aria-label="Abrir menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><span class="topbar-kicker">PORTAL DE COLABORADORES</span><h2 id="page-title">Inicio</h2></div></div>
         <div class="topbar-actions"><span id="sync-label" class="sync-label">Actualizado</span><button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="Cambiar modo claro u oscuro" title="Cambiar tema">☀</button><button id="new-prospect-top" class="btn btn-primary" type="button">+ Prospecto</button></div>
       </header>
       <main id="page-content" class="content"></main>
@@ -138,5 +140,6 @@
   <script src="/colaborador/phase7.js?v=20260918-brand8"></script>
   <script src="/colaborador/alva-ui.js?v=20260918-brand8"></script>
   <script src="/colaborador/phase-d-finalize.js?v=phase-d1"></script>
+  <script src="/colaborador/sidebar.js?v=20260921-1"></script>
 </body>
 </html>
