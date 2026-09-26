@@ -815,7 +815,8 @@ function comisionEfectiva(cliente){
 }
 
 function comisionEstaCobrada(cliente){
-  return String(cliente?.estadoPago||'').trim().toLocaleLowerCase('es-MX')==='cobrado';
+  const estado=String(cliente?.estadoPago||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es-MX');
+  return ['cobrado','pago recibido','pagado','recibido'].includes(estado);
 }
 
 function comisionEstaPendiente(cliente){

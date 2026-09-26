@@ -164,14 +164,15 @@ function addExtraDocPerfil(cid){
   showToast('Documento agregado','success');
 }
 
-function guardarFinanzas(id){
+async function guardarFinanzas(id){
   const c=store.clientes.find(x=>x.id===id);
   if(!c) return;
   const montoRetiro=(document.getElementById('fin-monto-'+id)?.value||'').trim();
   const comisionManual=(document.getElementById('fin-com-'+id)?.value||'').trim();
   const honorariosManual=(document.getElementById('fin-hon-'+id)?.value||'').trim();
   const estadoPago=document.getElementById('fin-estado-'+id)?.value;
-  const fechaEst=(document.getElementById('fin-fecha-'+id)?.value||'').trim();
+  const fechaEst=leerFechaMX('fin-fecha-'+id);
+  if(fechaEst===null)return;
   c.montoRetiro=montoRetiro===''?'':Number(montoRetiro);
   c.montoAfore=c.montoRetiro;
   c.honorarios=honorariosManual===''?'':Number(honorariosManual);
@@ -188,6 +189,8 @@ function guardarFinanzas(id){
   c.finanzasConfiguradas=true;
   addHist(c,'finanzas',`Financiero actualizado. Comisión: $${Number(c.comision||0).toLocaleString('es-MX')} · Estado: ${estadoPago||'—'}`);
   saveStore();
+  try{await cloudSyncNow({throwOnError:true});}
+  catch(e){openPerfil(id);showToast('Los datos quedaron guardados localmente, pero falta confirmar la sincronización: '+e.message,'warn');return;}
   showToast('Datos financieros guardados','success');
   openPerfil(id);
 }
@@ -604,12 +607,12 @@ function renderConfiguracion(){
 }
 
 function renderFinanzas(){
-  const cl=(clientesVistaActual()||[]).filter(c=>!c.descartado&&!c.archivado);
-  // Cobradas
+  const cl=(clientesVistaActual()||[]).filter(c=>!c.descartado);
+  // Las comisiones cobradas se conservan en el concentrado al cerrar/archivar el expediente.
   const cobradas=cl.filter(c=>comisionEfectiva(c)>0&&comisionEstaCobrada(c));
   const totalCobrado=redondearMoneda(cobradas.reduce((s,c)=>s+comisionEfectiva(c),0));
   // Próximas (calculadas, no cobradas)
-  const proximas=cl.filter(c=>comisionEstaPendiente(c)&&c.fechaRetiroEstimada);
+  const proximas=cl.filter(c=>!c.archivado&&comisionEstaPendiente(c)&&c.fechaRetiroEstimada);
   const totalProximo=redondearMoneda(proximas.reduce((s,c)=>s+comisionEfectiva(c),0));
 
   // Comisiones de colaboradores

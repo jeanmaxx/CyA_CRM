@@ -45,8 +45,15 @@ function sincronizarCitaAfore(c){
 const syncDatesPrevious=sincronizarFechasCliente;
 sincronizarFechasCliente=function(c,anterior){syncDatesPrevious(c,anterior);sincronizarCitaAfore(c);sincronizarFlujoInicialCliente(c);if(!c.fechaAltaAfore){store.agenda.filter(e=>e.clienteId===c.id&&e.regla==='solicitud_45'&&!e.completado).forEach(e=>e.cancelarRecordatorio=true);}};
 verificarAlertasAFOREDiarias=function(){for(const c of store.clientes||[])sincronizarCitaAfore(c);saveStore();};
-fechaSolicitudCliente=function(c){return c.servicio==='retiro_desempleo'&&c.fechaAltaAfore?sumarDiasISO(c.fechaAltaAfore,45):'';};
-function etiquetaSolicitudCliente(c){return c.servicio!=='retiro_desempleo'?'—':c.fechaAltaAfore?fmtDate(fechaSolicitudCliente(c)):'Confirmar fecha de alta';}
+fechaSolicitudCliente=function(c){
+  if(c?.servicio!=='retiro_desempleo')return '';
+  return c.fechaRetiroEstimada||c.fechaSolicitudRealizada||c.fechaSolicitudManual||(c.fechaAltaAfore?sumarDiasISO(c.fechaAltaAfore,45):'');
+};
+function etiquetaSolicitudCliente(c){
+  if(c?.servicio!=='retiro_desempleo')return '—';
+  const fecha=fechaSolicitudCliente(c);
+  return fecha?fmtDate(fecha):'Confirmar fecha de alta';
+}
 
 const siguienteAccionPrevious=obtenerSiguienteAccion;
 obtenerSiguienteAccion=function(cliente,referencia=new Date()){

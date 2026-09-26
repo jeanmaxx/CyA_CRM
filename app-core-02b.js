@@ -266,7 +266,7 @@ function openPerfil(id){
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">${colaboradorFinanzas?'Comisión total a repartir':'Comisión'} <span style="color:var(--text-muted);font-weight:400">(editable)</span></label><input class="form-input" id="fin-com-${c.id}" value="${finComisionValor}" type="number" style="font-size:12px;"></div>
-        <div class="form-group"><label class="form-label">Fecha retiro estimada <span style="color:var(--text-muted);font-weight:400">(editable)</span></label><input class="form-input" id="fin-fecha-${c.id}" value="${c.fechaRetiroEstimada||''}" type="date" style="font-size:12px;"></div>
+        <div class="form-group"><label class="form-label">Fecha retiro estimada <span style="color:var(--text-muted);font-weight:400">(editable)</span></label><input class="form-input input-fecha-mx" id="fin-fecha-${c.id}" value="${fechaISOaMX(c.fechaRetiroEstimada||'')}" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" oninput="mascaraFechaMX(this)" onblur="validarVisualFechaMX(this)" style="font-size:12px;"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Estado de pago</label>

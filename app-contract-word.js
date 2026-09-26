@@ -200,6 +200,19 @@ imprimirContrato=async function(){
     const frame=document.createElement('iframe');frame.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(frame);
     const d=frame.contentDocument;d.open();d.write('<!doctype html><html><head><meta charset="utf-8"><title>Contrato y pagaré</title></head><body></body></html>');d.close();
     await docx.renderAsync(wordContractCurrent.bytes,d.body,d.head,{className:'docx',inWrapper:true,breakPages:true,useBase64URL:true,renderHeaders:true,renderFooters:true,ignoreLastRenderedPageBreak:true});
+    const wrapper=d.querySelector('body>.docx-wrapper');
+    if(wrapper){
+      const pages=[...wrapper.querySelectorAll(':scope > section.docx')];
+      while(pages.length>1){
+        const last=pages[pages.length-1];
+        const bodyContent=last.cloneNode(true);
+        bodyContent.querySelectorAll('header,footer,[class*=header],[class*=footer]').forEach(el=>el.remove());
+        const meaningfulText=(bodyContent.textContent||'').replace(/\s+/g,'').length>0;
+        const meaningfulContent=bodyContent.querySelector('img,table,svg,canvas,video,iframe,object,embed');
+        if(meaningfulText||meaningfulContent)break;
+        last.remove();pages.pop();
+      }
+    }
     const printStyle=d.createElement('style');printStyle.id='crm-contract-print-fix';printStyle.textContent='@page{size:letter;margin:0}html,body{margin:0!important;padding:0!important;background:#fff!important}body>.docx-wrapper{padding:0!important;background:#fff!important}body>.docx-wrapper>section.docx{box-sizing:border-box!important;margin:0!important;box-shadow:none!important;break-before:auto!important;page-break-before:auto!important;break-after:auto!important;page-break-after:auto!important}body>.docx-wrapper>section.docx:not(:last-child){break-after:page!important;page-break-after:always!important}';d.head.appendChild(printStyle);
     await d.fonts.ready;await Promise.all([...d.images].map(im=>im.complete?Promise.resolve():new Promise(resolve=>{im.onload=resolve;im.onerror=resolve;})));
     frame.contentWindow.focus();frame.contentWindow.print();setTimeout(()=>frame.remove(),60000);
