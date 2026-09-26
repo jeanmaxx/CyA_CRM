@@ -450,9 +450,11 @@ function initCharts(){
 
 // ---- CLIENTES ----
 function renderClientes(){
-  const cl=clientesVisibles();  // clientes del asesor en sesión
-  const descartados=cl.filter(c=>c.descartado);
-  const activos=cl.filter(c=>!c.descartado);
+  const base=clientesVisibles();  // clientes del asesor o vista seleccionada
+  const descartados=base.filter(c=>c.descartado);
+  const activos=base.filter(c=>!c.descartado&&!c.archivado);
+  const atendidos=base.filter(c=>!c.descartado&&c.archivado);
+  const cl=activos;
   const alertas=alertasSeguimiento(activos);
   const misColabs=colaboradoresVistaActual().filter(c=>c.activo!==false);
   return `
@@ -524,7 +526,19 @@ function renderClientes(){
         </div>`:''}
     </div>
     <div class="clients-mobile-list" id="clientes-mobile-list">${renderClientesCards(aplicarOrden(cl))}</div>
-  </div>`;
+  </div>
+  ${atendidos.length?`<details class="archivados-section clients-attended-section" style="margin-top:16px;" open>
+    <summary class="archivados-header" style="cursor:pointer;">CLIENTES ATENDIDOS (${atendidos.length})</summary>
+    <div style="padding:0 14px 14px;">
+      <div class="card clients-list-card" style="overflow:hidden;">
+        <div class="table-wrap clients-table-wrap"><table>
+          <thead><tr><th>Registro</th><th>Nombre</th><th>Servicio</th><th>Etapa actual</th><th>Proceso pendiente</th><th>Fecha de solicitud</th><th>Documentos</th><th></th></tr></thead>
+          <tbody>${renderClientesRows(aplicarOrden(atendidos))}</tbody>
+        </table></div>
+        <div class="clients-mobile-list">${renderClientesCards(aplicarOrden(atendidos))}</div>
+      </div>
+    </div>
+  </details>`:''}`;
 }
 
 function renderClientesRows(cl){
