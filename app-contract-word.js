@@ -205,8 +205,10 @@ imprimirContrato=async function(){
       const pages=[...wrapper.querySelectorAll(':scope > section.docx')];
       while(pages.length>1){
         const last=pages[pages.length-1];
-        const meaningfulText=(last.textContent||'').replace(/\s+/g,'').length>0;
-        const meaningfulContent=last.querySelector('img,table,svg,canvas,video,iframe,object,embed');
+        const bodyContent=last.cloneNode(true);
+        bodyContent.querySelectorAll('header,footer,[class*=header],[class*=footer]').forEach(el=>el.remove());
+        const meaningfulText=(bodyContent.textContent||'').replace(/\s+/g,'').length>0;
+        const meaningfulContent=bodyContent.querySelector('img,table,svg,canvas,video,iframe,object,embed');
         if(meaningfulText||meaningfulContent)break;
         last.remove();pages.pop();
       }
