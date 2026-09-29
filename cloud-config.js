@@ -277,7 +277,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadOperationalBoard(){
   if(document.querySelector('script[data-cya-operational-board]'))return;
   const script=document.createElement('script');
-  script.src='/app-operational-board.js?v=20260911-tablero-operativo-2';
+  script.src='/app-operational-board.js?v=20260929-cumpleanos-1';
   script.async=false;
   script.dataset.cyaOperationalBoard='1';
   document.head.appendChild(script);

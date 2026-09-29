@@ -132,6 +132,55 @@
     </section>`;
   }
 
+  let birthdaysOpen=true;
+
+  // Read only: include archived clients and every advisor the session may access.
+  // This card deliberately does not narrow an administrator's list by view selector.
+  function weeklyBirthdays(reference=new Date()){
+    const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Mexico_City',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(reference);
+    const part=type=>Number(parts.find(p=>p.type===type).value);
+    const monday=new Date(Date.UTC(part('year'),part('month')-1,part('day')));
+    monday.setUTCDate(monday.getUTCDate()-(monday.getUTCDay()+6)%7);
+    const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10);});
+    const clients=!sesionActiva?[]:(store.clientes||[]).filter(c=>isAdmin()||c.asesorId===sesionActiva.id);
+    const entries=[];
+    for(const client of clients){
+      const curp=String(client.curp||'').trim().toUpperCase();
+      if(!/^[A-ZÑ]{4}\d{6}[HM][A-ZÑ]{5}[A-Z0-9]\d$/.test(curp))continue;
+      const birth=extraerFechaCurp(curp);
+      const parsed=new Date(birth+'T00:00:00Z');
+      if(!Number.isFinite(parsed.getTime())||parsed.toISOString().slice(0,10)!==birth)continue;
+      const date=dates.find(d=>d.slice(5)===birth.slice(5)&&d>=birth);
+      if(date)entries.push({client,date});
+    }
+    entries.sort((a,b)=>a.date.localeCompare(b.date)||String(a.client.nombre||'').localeCompare(String(b.client.nombre||''),'es'));
+    return {start:dates[0],end:dates[6],entries};
+  }
+  window.cumpleanosSemanales=weeklyBirthdays;
+  window.toggleOperationalBirthdays=function(){
+    birthdaysOpen=!birthdaysOpen;
+    renderPage('operativo');
+  };
+
+  function renderWeeklyBirthdays(){
+    const {start,end,entries}=weeklyBirthdays();
+    const groups=new Map();
+    for(const item of entries){if(!groups.has(item.date))groups.set(item.date,[]);groups.get(item.date).push(item.client);}
+    return `<section class="card dashboard-priority-card operational-birthdays-card">
+      <div class="card-header dashboard-priority-header" role="button" tabindex="0" aria-expanded="${birthdaysOpen}" onclick="toggleOperationalBirthdays()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleOperationalBirthdays();}">
+        <div class="dashboard-priority-title"><span class="dashboard-collapse-icon">${birthdaysOpen?'▾':'▸'}</span>
+          <div><div class="card-title">Cumpleaños semanales</div><div class="dashboard-priority-sub">${fmtDate(start)} al ${fmtDate(end)} · Clientes activos y archivados</div></div>
+        </div><span class="operational-group-count">${entries.length}</span>
+      </div>
+      ${birthdaysOpen?`<div class="card-body dashboard-priority-body">
+        ${entries.length?[...groups].map(([date,clients])=>`<div class="operational-birthday-day">
+          <div class="operational-birthday-heading">${new Intl.DateTimeFormat('es-MX',{weekday:'long',timeZone:'UTC'}).format(new Date(date+'T00:00:00Z'))} · ${fmtDate(date)}</div>
+          ${clients.map(c=>`<div class="operational-birthday-row"><span>${escapeHTMLBasico(c.nombre||'Sin nombre')}</span><span>${escapeHTMLBasico(c.telefono||'Sin teléfono registrado')}</span></div>`).join('')}
+        </div>`).join(''):'<div class="dashboard-priority-empty">No hay cumpleaños registrados para esta semana.</div>'}
+      </div>`:''}
+    </section>`;
+  }
+
   function renderOperationalBoard(){
     const events=typeof agendaPrioritariaDashboard==='function'?agendaPrioritariaDashboard():[];
     const all=operationalActions();
@@ -160,6 +209,7 @@
       </div>
       <div class="dashboard-priority-stack operational-priority-stack">
         ${renderDashboardAgendaPrioritaria()}
+        ${renderWeeklyBirthdays()}
         ${renderOperationalNextActions()}
       </div>
     </div>`;
@@ -236,6 +286,11 @@
     style.textContent=`
       .dashboard-priority-stack:empty{display:none!important;}
       .operational-board{display:block;}
+      .operational-birthday-heading{font-weight:600;color:var(--text-muted);text-transform:capitalize;padding:10px 0;}
+      .operational-birthday-day+.operational-birthday-day{border-top:1px solid var(--border);margin-top:10px;}
+      .operational-birthday-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 20px;padding:9px 0;overflow-wrap:anywhere;}
+      .operational-birthday-row>span:first-child{font-weight:600;}
+
       .operational-hero{margin-bottom:14px;align-items:center;}
       .operational-hero-copy{min-width:230px;}
       .operational-hero-tools{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:9px;min-width:0;}
