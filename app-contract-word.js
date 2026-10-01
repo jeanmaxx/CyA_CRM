@@ -193,6 +193,25 @@ verVersionContrato=async function(clienteId,id){
     document.getElementById('modal-visor').classList.add('open');await renderWordBytes(await data.arrayBuffer(),document.getElementById('history-word-preview'));
   }catch(e){showToast('No se pudo abrir la versión: '+e.message,'warn');}
 };
+// DOCX sections use min-height, so text + signatures + bottom padding can
+// exceed Letter and spill a visually empty fragment onto another physical page.
+function prepararEstilosImpresionContrato(d){
+  const style=d.createElement('style');style.id='crm-contract-print-fix';
+  style.textContent='@page{size:letter;margin:0}html,body{margin:0!important;padding:0!important;background:#fff!important}body>.docx-wrapper{display:block!important;padding:0!important;background:#fff!important}body>.docx-wrapper>section.docx{box-sizing:border-box!important;margin:0 auto!important;box-shadow:none!important;overflow:visible!important;break-before:auto!important;page-break-before:auto!important;break-after:auto!important;page-break-after:auto!important}body>.docx-wrapper>section.docx+section.docx{break-before:page!important;page-break-before:always!important}';
+  d.head.appendChild(style);
+}
+function ajustarPaginasImpresionContrato(d){
+  const letterHeight=11*96,letterWidth=8.5*96;
+  for(const page of d.querySelectorAll('body>.docx-wrapper>section.docx')){
+    // Measure only after fonts and images finish loading. Scale the whole page
+    // together, preserving headers, signatures, tables and every line of text.
+    const height=Math.max(page.getBoundingClientRect().height,page.scrollHeight);
+    const width=Math.max(page.getBoundingClientRect().width,page.scrollWidth);
+    const scale=Math.min(1,(letterHeight-1)/height,letterWidth/width);
+    page.style.zoom=String(scale);
+  }
+}
+
 imprimirContrato=async function(){
   if(!wordContractCurrent)return imprimirContratoAnterior();
   try{
@@ -213,8 +232,9 @@ imprimirContrato=async function(){
         last.remove();pages.pop();
       }
     }
-    const printStyle=d.createElement('style');printStyle.id='crm-contract-print-fix';printStyle.textContent='@page{size:letter;margin:0}html,body{margin:0!important;padding:0!important;background:#fff!important}body>.docx-wrapper{padding:0!important;background:#fff!important}body>.docx-wrapper>section.docx{box-sizing:border-box!important;margin:0!important;box-shadow:none!important;break-before:auto!important;page-break-before:auto!important;break-after:auto!important;page-break-after:auto!important}body>.docx-wrapper>section.docx:not(:last-child){break-after:page!important;page-break-after:always!important}';d.head.appendChild(printStyle);
+    prepararEstilosImpresionContrato(d);
     await d.fonts.ready;await Promise.all([...d.images].map(im=>im.complete?Promise.resolve():new Promise(resolve=>{im.onload=resolve;im.onerror=resolve;})));
+    ajustarPaginasImpresionContrato(d);
     frame.contentWindow.focus();frame.contentWindow.print();setTimeout(()=>frame.remove(),60000);
   }catch(e){showToast('No se pudo preparar la impresión: '+e.message,'warn');}
 };
