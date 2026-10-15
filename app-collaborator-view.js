@@ -131,3 +131,13 @@
   script.dataset.cyaCollaboratorGuideAdmin='1';
   document.head.appendChild(script);
 })();
+
+// Workflow continuity and configurable commission defaults are additive and load last.
+(function loadWorkflowContinuity(){
+  if(document.querySelector('script[data-cya-workflow-continuity]'))return;
+  const script=document.createElement('script');
+  script.src='/app-workflow-continuity.js?v=20261015-commission1';
+  script.async=false;
+  script.dataset.cyaWorkflowContinuity='1';
+  document.head.appendChild(script);
+})();
