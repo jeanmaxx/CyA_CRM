@@ -96,7 +96,7 @@
 (function loadCollaboratorPortalAccess(){
   if(document.querySelector('script[data-cya-collaborator-access]'))return;
   const script=document.createElement('script');
-  script.src='/app-collaborator-access.js?v=20260919-routing1';
+  script.src='/app-collaborator-access.js?v=20261015-unified1';
   script.async=false;
   script.dataset.cyaCollaboratorAccess='1';
   document.head.appendChild(script);
