@@ -10,7 +10,6 @@
     const n=Number(value);
     return Number.isFinite(n)&&n>=0?n:null;
   };
-  const safe=value=>typeof escapeHTMLBasico==='function'?escapeHTMLBasico(String(value??'')):String(value??'');
 
   let attempts=0;
   const installer=setInterval(()=>{
@@ -19,7 +18,7 @@
       typeof openModalCliente==='function'&&typeof editCliente==='function'&&typeof guardarCliente==='function'&&typeof openPerfil==='function'&&
       typeof openModalAsesor==='function'&&typeof guardarAsesor==='function'&&
       typeof openModalColaborador==='function'&&typeof guardarColaborador==='function'&&
-      typeof comisionDefaultParaAsesor==='function'&&typeof comisionDelColaborador==='function'&&
+      typeof comisionDefaultParaAsesor==='function'&&typeof comisionDelColaborador==='function'&&typeof comisionEfectiva==='function'&&
       typeof saveStore==='function'&&typeof cloudSyncNow==='function'&&
       window.__cyaClientAdvisorOwnershipInstalled&&window.__cyaCollaboratorProfileSafetyInstalled;
     if(!ready){if(attempts>600)clearInterval(installer);return;}
@@ -176,15 +175,25 @@
       const collaboratorId=String(document.getElementById('fc-colaborador')?.value||'');
 
       await guardarCliente();
-      if(modal?.classList.contains('open'))return; // validación o sincronización falló; mantener formulario visible
+      if(modal?.classList.contains('open'))return;
 
       let client=editingBefore?(store.clientes||[]).find(c=>String(c.id)===String(editingBefore)):null;
       if(!client)client=(store.clientes||[]).find(c=>!beforeIds.has(String(c.id)))||null;
       if(!client&&typeof editingId!=='undefined'&&editingId)client=(store.clientes||[]).find(c=>String(c.id)===String(editingId))||null;
       if(!client)return;
 
-      if(collaboratorId&&commission!==null)client.colComision=Math.round(commission);
-      else if(!collaboratorId&&Object.prototype.hasOwnProperty.call(client,'colComision'))delete client.colComision;
+      if(collaboratorId&&commission!==null){
+        client.colComision=Math.round(commission);
+        const advisorCommission=money(comisionEfectiva(client));
+        if(advisorCommission&&advisorCommission>0){
+          // Keep the legacy percentage equivalent synchronized so the collaborator portal
+          // and older reports calculate the same fixed peso amount without a backend migration.
+          client.colPct=Math.max(0,Math.min(100,(client.colComision/advisorCommission)*100));
+        }
+      }else if(!collaboratorId){
+        if(Object.prototype.hasOwnProperty.call(client,'colComision'))delete client.colComision;
+        client.colPct=0;
+      }
 
       try{
         saveStore();
@@ -193,7 +202,6 @@
         showToast?.('El cliente se guardó, pero la comisión del colaborador quedó pendiente de sincronizar.','warn');
       }
 
-      // Continuidad: después de guardar regresamos al expediente en vez de dejar al usuario sin ventana.
       openPerfil(client.id);
       showToast?.('Cambios guardados. Puedes continuar en el expediente.','success');
     };
