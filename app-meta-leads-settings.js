@@ -8,7 +8,7 @@
   const safe=v=>typeof escapeHTMLBasico==='function'?escapeHTMLBasico(String(v??'')):String(v??'');
 
   async function invoke(body){
-    if(!window.supabaseClient)throw new Error('Supabase no está disponible');
+    if(typeof supabaseClient==='undefined'||!supabaseClient)throw new Error('Supabase no está disponible');
     const {data,error}=await supabaseClient.functions.invoke('manage-lead-integration',{body});
     if(error){let msg=error.message||'No se pudo gestionar la integración';try{if(error.context){const detail=await error.context.json();msg=detail?.error||msg;}}catch(_){}throw new Error(msg);}
     if(data?.error)throw new Error(data.error);
