@@ -80,3 +80,14 @@
   new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;if(document.querySelector('.account-sections')){renderCard();refreshStatus();}})}).observe(document.documentElement,{childList:true,subtree:true});
   if(document.querySelector('.account-sections')){renderCard();refreshStatus();}
 })();
+
+/* Load Meta outcome/report enhancements from the same feature-only chain. */
+(function loadMetaLeadOutcomesFromSettings(){
+  if(window.__cyaMetaLeadOutcomesLoaderStarted)return;
+  window.__cyaMetaLeadOutcomesLoaderStarted=true;
+  const script=document.createElement('script');
+  script.src='/app-meta-lead-outcomes.js?v=20261026-meta2';
+  script.async=false;
+  script.dataset.cyaMetaLeadOutcomes='1';
+  document.head.appendChild(script);
+})();
