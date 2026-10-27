@@ -2,6 +2,12 @@
 
 Estado: **preparado, no activado en producción**.
 
+## Fecha oficial de inicio
+
+**27/10/2026**
+
+Solo se importarán automáticamente leads cuya fecha de creación sea igual o posterior al 27/10/2026. Los históricos anteriores quedan fuera de la sincronización automática y podrán conciliarse posteriormente de forma manual si se desea.
+
 ## Objetivo
 
 Activar la integración de Google Sheets / Meta Leads con el CRM sin importar históricos por accidente y con una ruta clara de reversión.
@@ -21,13 +27,14 @@ Activar la integración de Google Sheets / Meta Leads con el CRM sin importar hi
    - `CRM_ENDPOINT`
    - `CRM_INTEGRATION_TOKEN`
    - `CRM_SHEET_NAME=Hoja 1`
-   - `CRM_START_DATE=<fecha de corte elegida>`
+   - `CRM_START_DATE=2026-10-27`
 9. Ejecutar primero la función de diagnóstico incluida en la plantilla. No crear disparadores hasta que confirme:
    - encabezado canónico en fila 2;
    - columnas Meta A:T;
    - ID Meta obtenido desde columna A;
-   - nombre, teléfono, correo y CURP correctamente mapeados.
-10. Ejecutar una sincronización manual con **un solo lead posterior a la fecha de corte**.
+   - nombre, teléfono, correo y CURP correctamente mapeados;
+   - fecha de corte 27/10/2026.
+10. Ejecutar una sincronización manual con **un solo lead del 27/10/2026 o posterior**.
 11. Confirmar en CRM:
    - aparece en `Nuevos Meta Ads`;
    - queda asignado al asesor correcto;
@@ -54,6 +61,8 @@ La integración puede detenerse sin borrar datos:
 - `meta-lead-ingest` no confía en datos enviados por el navegador ni en `advisor_id` recibido: el asesor y la organización se resuelven desde la integración asociada al token.
 - `manage-lead-integration` exige una sesión Supabase válida y valida que el perfil y la organización sigan activos.
 - Las funciones aceptan las claves nuevas (`SUPABASE_PUBLISHABLE_KEYS` / `SUPABASE_SECRET_KEYS`) con fallback temporal a las legacy para compatibilidad.
+- El Apps Script tiene además una fecha de corte segura por defecto (`2026-10-27`) para evitar importar históricos si se omite accidentalmente `CRM_START_DATE`.
+- Si una fila no tiene una fecha interpretable, el script no la importa automáticamente.
 
 ## Hoja real verificada
 
@@ -69,12 +78,11 @@ Archivo: `LEADS DE META ADS`
 
 - Pegar el Apps Script en la hoja.
 - Autorizar Google Apps Script la primera vez.
-- Elegir/confirmar la fecha exacta de corte para comenzar a importar leads nuevos.
 - Confirmar el primer lead de prueba antes de activar el disparador periódico.
 
 ## Lo que NO debe hacerse antes de la prueba
 
 - No fusionar el PR a `main`.
 - No activar un disparador periódico.
-- No importar filas históricas.
+- No importar filas históricas anteriores al 27/10/2026.
 - No compartir el token de integración por chat, correo o dentro de la hoja.
