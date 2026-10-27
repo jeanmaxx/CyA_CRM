@@ -1,0 +1,5 @@
+[functions.manage-lead-integration]
+verify_jwt = true
+
+[functions.meta-lead-ingest]
+verify_jwt = false
