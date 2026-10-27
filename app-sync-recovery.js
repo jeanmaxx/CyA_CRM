@@ -29,8 +29,6 @@
             repaired=true;
           }
         }
-        // Rebuild the durable draft after repairing only invalid/missing collaborator ownership.
-        // If Supabase already contains the same profile data, syncDiff becomes empty and the stale draft disappears.
         if(repaired)syncJournal(syncDiff());
       }catch(error){console.warn('Collaborator draft recovery skipped',error);}
       return result;
@@ -148,6 +146,34 @@
     script.src='/app-client-advisor-request-transactional-fix.js?v=20260919-routing1';
     script.async=false;
     script.dataset.cyaAdvisorRequestTransactionalFix='1';
+    document.head.appendChild(script);
+  },25);
+})();
+
+/* Feature branch only: Meta/Google Sheets lead intake UX. The module is isolated so
+   production remains unchanged until the complete import path has been validated. */
+(function loadMetaLeadsWorkflowSafely(){
+  if(window.__cyaMetaLeadsWorkflowLoaderStarted)return;
+  window.__cyaMetaLeadsWorkflowLoaderStarted=true;
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    const ready=
+      window.__cyaCurpClientEligibilityInstalled===true&&
+      typeof openModalLead==='function'&&
+      typeof guardarLead==='function'&&
+      typeof cloudSyncNow==='function'&&
+      typeof renderPage==='function';
+    if(!ready){
+      if(attempts>500)clearInterval(timer);
+      return;
+    }
+    clearInterval(timer);
+    if(document.querySelector('script[data-cya-meta-leads-workflow]'))return;
+    const script=document.createElement('script');
+    script.src='/app-meta-leads-workflow.js?v=20261026-meta1';
+    script.async=false;
+    script.dataset.cyaMetaLeadsWorkflow='1';
     document.head.appendChild(script);
   },25);
 })();
