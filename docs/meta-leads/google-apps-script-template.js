@@ -170,8 +170,6 @@ function syncMetaLeadRow_(sheet, rowNumber, headerRow, action) {
   const row = rowToObject_(headers, values);
   const payload = buildLeadPayload_(row, action || 'auto');
   if (!payload.external_id && !payload.phone && !payload.curp && !payload.email) throw new Error('La fila no contiene identificadores suficientes.');
-
-  // Importar / Reactivar ignoran la fecha de corte, pero conservan created_time original.
   if (!action && !isAfterCutoff_(payload)) return { skipped: true, reason: 'before_cutoff' };
   return sendLeadToCrm_(payload);
 }
@@ -182,6 +180,27 @@ function formatResult_(result, requestedAction) {
   if (result?.duplicate) return result?.possible_duplicate ? 'DUPLICADO · YA EXISTE' : 'DUPLICADO';
   if (requestedAction === 'import') return 'IMPORTADO';
   return 'OK · IMPORTADO';
+}
+
+function processRowAndWriteStatus_(sheet, rowNumber, headerRow, requestedAction) {
+  try {
+    const result = syncMetaLeadRow_(sheet, rowNumber, headerRow, requestedAction);
+    if (result?.skipped) {
+      if (result.reason === 'before_cutoff') {
+        const currentState = String(sheet.getRange(rowNumber, CRM_STATUS_COL_).getValue() || '').trim();
+        if (!currentState) sheet.getRange(rowNumber, CRM_STATUS_COL_).setValue('HISTÓRICO · DISPONIBLE');
+      }
+      return result;
+    }
+    sheet.getRange(rowNumber, CRM_STATUS_COL_).setValue(formatResult_(result, requestedAction));
+    sheet.getRange(rowNumber, CRM_DATE_COL_).setValue(new Date());
+    if (requestedAction) sheet.getRange(rowNumber, CRM_ACTION_COL_).clearContent();
+    return result;
+  } catch (error) {
+    sheet.getRange(rowNumber, CRM_STATUS_COL_).setValue('ERROR · ' + String(error && error.message || error).slice(0, 160));
+    sheet.getRange(rowNumber, CRM_DATE_COL_).setValue(new Date());
+    throw error;
+  }
 }
 
 function syncPendingMetaLeads() {
@@ -198,28 +217,29 @@ function syncPendingMetaLeads() {
   for (let rowNumber = headerRow + 1; rowNumber <= lastRow; rowNumber++) {
     const requestedAction = normalizeAction_(sheet.getRange(rowNumber, CRM_ACTION_COL_).getValue());
     const currentState = String(sheet.getRange(rowNumber, CRM_STATUS_COL_).getValue() || '').trim().toUpperCase();
-
-    // Un usuario puede volver a elegir Importar/Reactivar aunque la fila ya tenga estado.
-    // Si no hay acción manual, las filas finalizadas se omiten.
     if (!requestedAction && /^(OK|IMPORTADO|REACTIVADO|DUPLICADO)/.test(currentState)) continue;
-
-    try {
-      const result = syncMetaLeadRow_(sheet, rowNumber, headerRow, requestedAction);
-      if (result?.skipped) {
-        if (result.reason === 'before_cutoff') {
-          // Los históricos permanecen disponibles para Importar/Reactivar manualmente.
-          if (!currentState) sheet.getRange(rowNumber, CRM_STATUS_COL_).setValue('HISTÓRICO · DISPONIBLE');
-        }
-      } else {
-        sheet.getRange(rowNumber, CRM_STATUS_COL_).setValue(formatResult_(result, requestedAction));
-        sheet.getRange(rowNumber, CRM_DATE_COL_).setValue(new Date());
-        if (requestedAction) sheet.getRange(rowNumber, CRM_ACTION_COL_).clearContent();
-      }
-    } catch (error) {
-      sheet.getRange(rowNumber, CRM_STATUS_COL_).setValue('ERROR · ' + String(error && error.message || error).slice(0, 160));
-      sheet.getRange(rowNumber, CRM_DATE_COL_).setValue(new Date());
-    }
+    try { processRowAndWriteStatus_(sheet, rowNumber, headerRow, requestedAction); } catch (_) {}
   }
+}
+
+/*
+  PRUEBA CONTROLADA: ejecuta exactamente una fila, no toda la hoja.
+  Ejemplo desde el editor: probarFilaCRM(105)
+  Si la fila es histórica, selecciona antes Importar o Reactivar en W.
+*/
+function probarFilaCRM(rowNumber) {
+  const n = Number(rowNumber);
+  if (!Number.isInteger(n) || n < 2) throw new Error('Indica un número de fila válido, mayor o igual a 2.');
+  const props = PropertiesService.getScriptProperties();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = props.getProperty('CRM_SHEET_NAME') ? ss.getSheetByName(props.getProperty('CRM_SHEET_NAME')) : ss.getSheets()[0];
+  if (!sheet) throw new Error('No se encontró la hoja configurada.');
+  const headerRow = findHeaderRow_(sheet, 5);
+  if (n > sheet.getLastRow()) throw new Error('La fila indicada está fuera de los datos actuales.');
+  const action = normalizeAction_(sheet.getRange(n, CRM_ACTION_COL_).getValue());
+  const result = processRowAndWriteStatus_(sheet, n, headerRow, action);
+  Logger.log(JSON.stringify({ row: n, action: action || 'auto', result }, null, 2));
+  return result;
 }
 
 /* Ejecutar manualmente antes de crear el disparador periódico. No envía datos. */
