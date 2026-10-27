@@ -72,7 +72,9 @@ Deno.serve(async (req: Request) => {
     const phone = normalizePhone(body.phone);
     const email = text(body.email).toLowerCase();
     const rawName = text(body.full_name);
-    const name = rawName || 'Nombre pendiente de validar';
+    // El nombre recibido por Meta se conserva solo como referencia. El nombre formal
+    // debe capturarse después de validar CURP/RENAPO.
+    const name = 'Nombre pendiente de validar';
     if (!externalId && !curp && !phone && !email) return json(400, { error: 'El lead no contiene identificadores suficientes' });
 
     const fallbackKey = await sha256([curp, phone, email].join('|'));
@@ -154,7 +156,7 @@ Deno.serve(async (req: Request) => {
     const payload = {
       nombreMeta: rawName,
       nombreVerificado: false,
-      nombrePendienteValidacion: !rawName,
+      nombrePendienteValidacion: true,
       email,
       correo: email,
       ciudad: text(body.city),
