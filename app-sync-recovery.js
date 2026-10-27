@@ -150,8 +150,7 @@
   },25);
 })();
 
-/* Feature branch only: Meta/Google Sheets lead intake UX. The module is isolated so
-   production remains unchanged until the complete import path has been validated. */
+/* Meta/Google Sheets lead intake UX. */
 (function loadMetaLeadsWorkflowSafely(){
   if(window.__cyaMetaLeadsWorkflowLoaderStarted)return;
   window.__cyaMetaLeadsWorkflowLoaderStarted=true;
@@ -171,14 +170,14 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-meta-leads-workflow]'))return;
     const script=document.createElement('script');
-    script.src='/app-meta-leads-workflow.js?v=20261026-meta1';
+    script.src='/app-meta-leads-workflow.js?v=20261027-meta2';
     script.async=false;
     script.dataset.cyaMetaLeadsWorkflow='1';
     document.head.appendChild(script);
   },25);
 })();
 
-/* Feature branch only: carry known prospect fields into the client conversion form. */
+/* Carry known prospect fields into the client conversion form. */
 (function loadMetaLeadClientPrefillSafely(){
   if(window.__cyaMetaLeadClientPrefillLoaderStarted)return;
   window.__cyaMetaLeadClientPrefillLoaderStarted=true;
@@ -190,24 +189,25 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-meta-client-prefill]'))return;
     const script=document.createElement('script');
-    script.src='/app-meta-lead-client-prefill.js?v=20261026-meta1';
+    script.src='/app-meta-lead-client-prefill.js?v=20261027-meta2';
     script.async=false;script.dataset.cyaMetaClientPrefill='1';document.head.appendChild(script);
   },25);
 })();
 
-/* Feature branch only: per-advisor Google Sheets / Meta Leads settings in Mi cuenta. */
+/* Per-advisor Google Sheets / Meta Leads settings in Mi cuenta. */
 (function loadMetaLeadSettingsSafely(){
   if(window.__cyaMetaLeadSettingsLoaderStarted)return;
   window.__cyaMetaLeadSettingsLoaderStarted=true;
   let attempts=0;
   const timer=setInterval(()=>{
     attempts++;
-    const ready=window.__cyaAccountWorkspaceInstalled===true&&window.supabaseClient&&typeof renderPage==='function';
+    const hasSupabase=typeof supabaseClient!=='undefined'&&Boolean(supabaseClient);
+    const ready=window.__cyaAccountWorkspaceInstalled===true&&hasSupabase&&typeof renderPage==='function';
     if(!ready){if(attempts>500)clearInterval(timer);return;}
     clearInterval(timer);
     if(document.querySelector('script[data-cya-meta-lead-settings]'))return;
     const script=document.createElement('script');
-    script.src='/app-meta-leads-settings.js?v=20261026-meta1';
+    script.src='/app-meta-leads-settings.js?v=20261027-meta2';
     script.async=false;script.dataset.cyaMetaLeadSettings='1';document.head.appendChild(script);
   },25);
 })();
