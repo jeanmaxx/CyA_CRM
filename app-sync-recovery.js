@@ -207,7 +207,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-meta-lead-settings]'))return;
     const script=document.createElement('script');
-    script.src='/app-meta-leads-settings.js?v=20261027-meta2';
+    script.src='/app-meta-leads-settings.js?v=20261027-meta3';
     script.async=false;script.dataset.cyaMetaLeadSettings='1';document.head.appendChild(script);
   },25);
 })();
