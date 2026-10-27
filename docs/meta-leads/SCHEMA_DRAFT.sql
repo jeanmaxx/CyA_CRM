@@ -19,15 +19,14 @@ create table if not exists public.lead_integrations (
 
 alter table public.lead_integrations enable row level security;
 
--- Advisors can see their own integration metadata but never need the raw token.
-create policy "lead_integrations_select_own"
-on public.lead_integrations for select
-to authenticated
-using (
-  advisor_id = (select auth.uid())
-  and organization_id = (select organization_id from public.profiles where id = (select auth.uid()))
-);
+-- The browser never reads this table directly. All reads/writes and token rotation
+-- are mediated by authenticated Edge Functions; ingestion uses the service role.
+-- This prevents token hashes and integration metadata from becoming a public API surface.
+revoke all on table public.lead_integrations from anon, authenticated;
 
--- Creation/token rotation will be handled by a server-side RPC/Edge Function so the
--- browser never creates its own authorization data directly.
-revoke insert, update, delete on public.lead_integrations from anon, authenticated;
+create index if not exists lead_integrations_org_advisor_idx
+  on public.lead_integrations (organization_id, advisor_id);
+
+create index if not exists lead_integrations_enabled_token_idx
+  on public.lead_integrations (token_hash)
+  where enabled = true;
