@@ -1,24 +1,38 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 
-function json(status:number,payload:Record<string,unknown>){return new Response(JSON.stringify(payload),{status,headers:{'content-type':'application/json; charset=utf-8'}})}
+const corsHeaders={
+  'Access-Control-Allow-Origin':'*',
+  'Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods':'POST, OPTIONS',
+};
+function json(status:number,payload:Record<string,unknown>){return new Response(JSON.stringify(payload),{status,headers:{...corsHeaders,'content-type':'application/json; charset=utf-8'}})}
 function text(v:unknown){return String(v??'').trim()}
 async function sha256(v:string){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 function newToken(){const bytes=crypto.getRandomValues(new Uint8Array(32));return [...bytes].map(b=>b.toString(16).padStart(2,'0')).join('')}
+function envKey(jsonName:string,legacyName:string){
+  try{
+    const raw=Deno.env.get(jsonName);
+    if(raw){const parsed=JSON.parse(raw);if(parsed?.default)return String(parsed.default)}
+  }catch(_){ }
+  return Deno.env.get(legacyName)||'';
+}
 
 Deno.serve(async(req:Request)=>{
+  if(req.method==='OPTIONS')return new Response('ok',{headers:corsHeaders});
   if(req.method!=='POST')return json(405,{error:'Método no permitido'});
   try{
     const supabaseUrl=Deno.env.get('SUPABASE_URL')!;
-    const anonKey=Deno.env.get('SUPABASE_ANON_KEY')!;
-    const serviceRoleKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const publishableKey=envKey('SUPABASE_PUBLISHABLE_KEYS','SUPABASE_ANON_KEY');
+    const secretKey=envKey('SUPABASE_SECRET_KEYS','SUPABASE_SERVICE_ROLE_KEY');
+    if(!supabaseUrl||!publishableKey||!secretKey)return json(500,{error:'Configuración de Supabase incompleta'});
     const authorization=req.headers.get('Authorization');
     if(!authorization)return json(401,{error:'Sesión requerida'});
 
-    const caller=createClient(supabaseUrl,anonKey,{global:{headers:{Authorization:authorization}},auth:{persistSession:false}});
+    const caller=createClient(supabaseUrl,publishableKey,{global:{headers:{Authorization:authorization}},auth:{persistSession:false}});
     const {data:authData,error:authError}=await caller.auth.getUser();
     if(authError||!authData.user)return json(401,{error:'Sesión inválida'});
 
-    const admin=createClient(supabaseUrl,serviceRoleKey,{auth:{persistSession:false}});
+    const admin=createClient(supabaseUrl,secretKey,{auth:{persistSession:false}});
     const {data:profile,error:profileError}=await admin.from('profiles').select('id,organization_id,role,active').eq('id',authData.user.id).single();
     if(profileError||!profile||profile.active!==true)return json(403,{error:'Cuenta inactiva'});
     const {data:tenant}=await admin.from('platform_tenants').select('status').eq('organization_id',profile.organization_id).maybeSingle();
