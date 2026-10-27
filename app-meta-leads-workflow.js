@@ -1,6 +1,5 @@
-/* Meta Leads workflow - isolated additive module.
-   Loaded only from the feature branch until the complete flow is validated.
-   It does not alter production database schema and stores new prospect metadata in the existing lead payload. */
+/* Meta Leads workflow - additive production module.
+   Keeps Meta intake visually separate until the advisor requests the weeks/NSS review. */
 (function installMetaLeadsWorkflow(){
   if(window.__cyaMetaLeadsWorkflowInstalled)return;
   window.__cyaMetaLeadsWorkflowInstalled=true;
@@ -170,23 +169,94 @@
     return l?.estado!=='archivado'&&!l?.revisionSolicitada&&(l?.metaAds===true||source==='meta ads'||Boolean(l?.metaLead)||Boolean(l?.origenMeta));
   }
 
+  function metaLeadCardHtml(l){
+    const fechaBase=l?.fechaInicio||l?.fechaCaptura||l?.fechaRegistro||new Date().toISOString();
+    const dias=Math.max(0,Math.floor((Date.now()-new Date(fechaBase).getTime())/(1000*60*60*24))||0);
+    const nombre=l?.nombre||'Nombre pendiente de validar';
+    const curp=l?.curp||'CURP pendiente';
+    const rawName=l?.metaLead?.nombreRecibido||l?.origenMeta?.nombreRecibido||l?.nombreMeta||'';
+    const primeraNota=(l?.notas||'').split(/\r?\n/)[0]||'Pendiente de revisión';
+    const service=typeof getSvcLabel==='function'?getSvcLabel(l?.servicio):'Retiro por desempleo';
+    return `<div class="lead-card cya-meta-lead-card" data-lead-id="${safe(l?.id)}" role="button" tabindex="0" onclick="openModalLead('${safe(l?.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${safe(l?.id)}');}">
+      <div class="cya-meta-tag">META ADS · PENDIENTE DE REVISIÓN</div>
+      <div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start;"><div class="lead-card-nombre">${safe(nombre)}</div><span class="lead-card-dias ${dias>1?'lead-dias-normal':'lead-dias-ok'}" style="margin:0;flex-shrink:0;">${dias}d</span></div>
+      <div style="font-size:10px;color:var(--text-secondary);margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safe(curp)}</div>
+      ${rawName?`<div class="cya-meta-raw-name">Meta: ${safe(rawName)}</div>`:''}
+      <div class="lead-card-nota" title="${safe(primeraNota)}">${safe(primeraNota)}</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${safe(service)}</div>
+    </div>`;
+  }
+
+  function columnLabel(col){
+    const text=col?.querySelector('.lead-col-header span')?.textContent||'';
+    return text.replace(/[↓↑▾▸]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+  }
+
+  function installCompactStage(col,key){
+    if(!col)return;
+    col.classList.add('cya-compact-stage');
+    col.dataset.cyaStage=key;
+    const header=col.querySelector('.lead-col-header');
+    if(!header||header.dataset.cyaCompactBound==='1')return;
+    header.dataset.cyaCompactBound='1';
+    header.setAttribute('role','button');header.setAttribute('tabindex','0');header.setAttribute('aria-expanded','false');
+    const toggle=()=>{
+      const expanded=col.classList.toggle('is-expanded');
+      header.setAttribute('aria-expanded',expanded?'true':'false');
+    };
+    header.addEventListener('click',event=>{if(event.target.closest('button'))return;toggle();});
+    header.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle();}});
+  }
+
+  function applyProspectLayout(kanban,metaCol){
+    if(!kanban)return;
+    const directCols=[...kanban.children].filter(el=>el.classList?.contains('lead-col')&&el.id!=='cya-meta-new-column');
+    const pensiones=directCols.find(col=>columnLabel(col).startsWith('pensiones'))||kanban.querySelector('.cya-special-leads-stack [data-cya-stage="pensiones"]');
+    const correccion=directCols.find(col=>columnLabel(col).startsWith('corrección ante imss'))||kanban.querySelector('.cya-special-leads-stack [data-cya-stage="correccion"]');
+    const semanas=directCols.find(col=>columnLabel(col).startsWith('en revisión de semanas'))||[...kanban.querySelectorAll(':scope > .lead-col')].find(col=>columnLabel(col).startsWith('en revisión de semanas'));
+
+    let stack=kanban.querySelector(':scope > .cya-special-leads-stack');
+    if(!stack){stack=document.createElement('div');stack.className='cya-special-leads-stack';}
+    if(pensiones){installCompactStage(pensiones,'pensiones');if(pensiones.parentElement!==stack)stack.appendChild(pensiones);}
+    if(correccion){installCompactStage(correccion,'correccion');if(correccion.parentElement!==stack)stack.appendChild(correccion);}
+
+    if(stack.children.length){
+      if(stack.parentElement!==kanban){
+        if(semanas&&semanas.parentElement===kanban)kanban.insertBefore(stack,semanas);else kanban.prepend(stack);
+      }
+      if(metaCol&&metaCol.parentElement===kanban){
+        const target=semanas&&semanas.parentElement===kanban?semanas:null;
+        if(target&&metaCol.nextElementSibling!==target)kanban.insertBefore(metaCol,target);
+        if(metaCol.previousElementSibling!==stack)kanban.insertBefore(stack,metaCol);
+      }
+    }
+  }
+
   function applyMetaNewColumn(){
     const kanban=document.querySelector('.leads-kanban');
     if(!kanban)return;
-    document.getElementById('cya-meta-new-column')?.remove();
     const leads=(typeof leadsVistaActual==='function'?leadsVistaActual():(store?.leads||[])).filter(isMetaNewLead);
-    if(!leads.length)return;
-    const col=document.createElement('div');col.id='cya-meta-new-column';col.className='lead-col cya-meta-new-column';
-    const header=document.createElement('div');header.className='lead-col-header';header.innerHTML=`<span>Nuevos Meta Ads</span><span class="cya-meta-count">${leads.length}</span>`;
-    const body=document.createElement('div');body.className='lead-col-body';
-    for(const lead of leads){
-      const card=[...kanban.querySelectorAll('.lead-card[data-lead-id]')].find(el=>String(el.dataset.leadId)===String(lead.id));
-      if(!card)continue;
-      const tag=document.createElement('div');tag.className='cya-meta-tag';tag.textContent='META ADS · PENDIENTE DE REVISIÓN';
-      if(!card.querySelector('.cya-meta-tag'))card.insertBefore(tag,card.firstChild);
-      body.appendChild(card);
+
+    let col=document.getElementById('cya-meta-new-column');
+    if(!col){
+      col=document.createElement('div');col.id='cya-meta-new-column';col.className='lead-col cya-meta-new-column';
+      col.innerHTML='<div class="lead-col-header"><span>Nuevos Meta Ads</span><span class="cya-meta-count">0</span></div><div class="lead-col-body"></div>';
+      kanban.prepend(col);
     }
-    col.append(header,body);kanban.prepend(col);
+    const headerCount=col.querySelector('.cya-meta-count');if(headerCount)headerCount.textContent=String(leads.length);
+    const body=col.querySelector('.lead-col-body');
+    const signature=leads.map(l=>`${l.id}:${l.fechaInicio||l.fechaCaptura||''}:${l.revisionSolicitada?'1':'0'}`).join('|');
+    if(body&&body.dataset.cyaSignature!==signature){
+      body.dataset.cyaSignature=signature;
+      body.innerHTML=leads.length?leads.map(metaLeadCardHtml).join(''):'<div class="cya-meta-empty">Sin prospectos nuevos</div>';
+    }
+
+    for(const lead of leads){
+      [...kanban.querySelectorAll(`.lead-card[data-lead-id="${CSS.escape(String(lead.id))}"]`)].forEach(card=>{
+        if(!card.closest('#cya-meta-new-column'))card.remove();
+      });
+    }
+    applyProspectLayout(kanban,col);
   }
 
   function installStyles(){
@@ -197,9 +267,10 @@
       .cya-extra-title{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:10px}
       .cya-meta-origin-box{display:flex;flex-direction:column;gap:3px;margin-top:8px;padding:9px 10px;border-left:3px solid #1877f2;background:rgba(24,119,242,.07);border-radius:4px}
       .cya-meta-origin-box strong{font-size:10px;color:#60a5fa}.cya-meta-origin-box span{font-size:10px;color:var(--text-muted)}
-      .cya-meta-new-column{border:1px solid rgba(24,119,242,.35)}.cya-meta-new-column .lead-col-header{background:linear-gradient(90deg,#1559c7,#1877f2)}
-      .cya-meta-count{background:rgba(0,0,0,.2);padding:2px 8px;border-radius:10px;font-size:11px}.cya-meta-tag{font-size:8px;font-weight:700;letter-spacing:.45px;color:#60a5fa;margin-bottom:4px}
-      @media(max-width:700px){#lead-curp-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-review-sent{width:100%;justify-content:center}.cya-lead-extra-fields .form-row{grid-template-columns:1fr}}
+      .cya-meta-new-column{border:1px solid rgba(24,119,242,.35);flex:0 0 250px;min-width:250px}.cya-meta-new-column .lead-col-header{background:linear-gradient(90deg,#1559c7,#1877f2)}
+      .cya-meta-count{background:rgba(0,0,0,.2);padding:2px 8px;border-radius:10px;font-size:11px}.cya-meta-tag{font-size:8px;font-weight:700;letter-spacing:.45px;color:#60a5fa;margin-bottom:4px}.cya-meta-raw-name{font-size:9px;color:var(--text-muted);margin-bottom:4px}.cya-meta-empty{font-size:11px;color:var(--text-muted);text-align:center;padding:16px 0}
+      .cya-special-leads-stack{flex:0 0 205px;min-width:205px;display:flex;flex-direction:column;gap:8px;align-self:flex-start}.cya-special-leads-stack .lead-col{width:100%!important;min-width:0!important;min-height:0!important;height:auto!important}.cya-special-leads-stack .lead-col-header{cursor:pointer;border-radius:7px}.cya-special-leads-stack .lead-col-header::after{content:'▸';font-size:11px;margin-left:6px;opacity:.7}.cya-special-leads-stack .lead-col.is-expanded .lead-col-header::after{content:'▾'}.cya-special-leads-stack .lead-col-body{display:none!important}.cya-special-leads-stack .lead-col.is-expanded .lead-col-body{display:block!important;max-height:360px;overflow:auto}.cya-special-leads-stack .lead-col.is-expanded{box-shadow:0 8px 20px rgba(0,0,0,.12)}
+      @media(max-width:700px){#lead-curp-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-review-sent{width:100%;justify-content:center}.cya-lead-extra-fields .form-row{grid-template-columns:1fr}.cya-special-leads-stack{flex:0 0 180px;min-width:180px}.cya-meta-new-column{flex-basis:230px;min-width:230px}}
     `;document.head.appendChild(style);
   }
 
