@@ -177,6 +177,27 @@
   },25);
 })();
 
+/* Final visual/count correction for the Meta prospect board. */
+(function loadMetaLeadsLayoutFixSafely(){
+  if(window.__cyaMetaLeadsLayoutFixLoaderStarted)return;
+  window.__cyaMetaLeadsLayoutFixLoaderStarted=true;
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    if(window.__cyaMetaLeadsWorkflowInstalled!==true){
+      if(attempts>500)clearInterval(timer);
+      return;
+    }
+    clearInterval(timer);
+    if(document.querySelector('script[data-cya-meta-leads-layout-fix]'))return;
+    const script=document.createElement('script');
+    script.src='/app-meta-leads-layout-fix.js?v=20261027-meta1';
+    script.async=false;
+    script.dataset.cyaMetaLeadsLayoutFix='1';
+    document.head.appendChild(script);
+  },25);
+})();
+
 /* Carry known prospect fields into the client conversion form. */
 (function loadMetaLeadClientPrefillSafely(){
   if(window.__cyaMetaLeadClientPrefillLoaderStarted)return;
