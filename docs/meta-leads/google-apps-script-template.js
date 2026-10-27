@@ -8,12 +8,17 @@
   - manual tracking columns can contain duplicated Meta-like labels and must not be
     used to decide which row is the source header.
 
+  Official import cutoff agreed with the user: 2026-10-27.
+  The script keeps that as a safe default even if CRM_START_DATE is accidentally omitted.
+
   Suggested Script Properties (do not store secrets in cells):
   - CRM_ENDPOINT
   - CRM_INTEGRATION_TOKEN
   - CRM_SHEET_NAME (optional; current tab: Hoja 1)
-  - CRM_START_DATE (optional ISO date; only rows on/after this date are sent)
+  - CRM_START_DATE (optional ISO date; default: 2026-10-27)
 */
+
+const CRM_DEFAULT_START_DATE_ = '2026-10-27';
 
 const META_CANONICAL_COLUMNS_ = [
   'id','created_time','ad_id','ad_name','adset_id','adset_name','campaign_id','campaign_name',
@@ -30,8 +35,6 @@ function normalizeHeader_(value) {
 }
 
 function looksLikeCanonicalMetaHeader_(row) {
-  // The live workbook has the actual Meta table beginning in A:T. A2 is blank,
-  // so B:T are used as the strong signature and A is restored to "id" below.
   const bToT = row.slice(1, 20).map(normalizeHeader_);
   const expected = META_CANONICAL_COLUMNS_.slice(1);
   if (bToT.length < expected.length) return false;
@@ -52,7 +55,6 @@ function findHeaderRow_(sheet, maxRows) {
 
 function canonicalHeaders_(sheet, headerRow) {
   const headers = sheet.getRange(headerRow, 1, 1, 20).getValues()[0].map(normalizeHeader_);
-  // Meta writes the lead id in column A but the current workbook has A2 blank.
   headers[0] = 'id';
   return headers;
 }
@@ -114,12 +116,18 @@ function parseLeadDate_(value) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function isAfterCutoff_(payload) {
-  const raw = PropertiesService.getScriptProperties().getProperty('CRM_START_DATE');
-  if (!raw) return true;
+function configuredCutoffDate_() {
+  const raw = PropertiesService.getScriptProperties().getProperty('CRM_START_DATE') || CRM_DEFAULT_START_DATE_;
   const cutoff = new Date(raw + (String(raw).length <= 10 ? 'T00:00:00' : ''));
+  if (Number.isNaN(cutoff.getTime())) throw new Error('CRM_START_DATE no contiene una fecha válida. Usa YYYY-MM-DD.');
+  return cutoff;
+}
+
+function isAfterCutoff_(payload) {
+  const cutoff = configuredCutoffDate_();
   const leadDate = parseLeadDate_(payload.created_time);
-  if (Number.isNaN(cutoff.getTime()) || !leadDate) return true;
+  // Fail safe: a lead with an unreadable date is NOT imported automatically.
+  if (!leadDate) return false;
   return leadDate.getTime() >= cutoff.getTime();
 }
 
@@ -171,10 +179,6 @@ function ensureTechnicalColumns_(sheet, headerRow) {
   return { statusCol, dateCol };
 }
 
-/*
-  Install a time-driven trigger pointing to this function. Meta's external connector
-  does not reliably fire onEdit. Rows already marked OK / DUPLICADO / OMITIDO are skipped.
-*/
 function syncPendingMetaLeads() {
   const props = PropertiesService.getScriptProperties();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -193,7 +197,7 @@ function syncPendingMetaLeads() {
     try {
       const result = syncMetaLeadRow_(sheet, rowNumber, headerRow);
       if (result?.skipped) {
-        sheet.getRange(rowNumber, statusCol).setValue(result.reason === 'before_cutoff' ? 'OMITIDO · ANTERIOR A FECHA DE INICIO' : 'OMITIDO');
+        sheet.getRange(rowNumber, statusCol).setValue(result.reason === 'before_cutoff' ? 'OMITIDO · ANTERIOR A 27/10/2026 O FECHA INVÁLIDA' : 'OMITIDO');
       } else {
         sheet.getRange(rowNumber, statusCol).setValue(result && result.duplicate ? 'OK · DUPLICADO' : 'OK');
       }
@@ -205,7 +209,6 @@ function syncPendingMetaLeads() {
   }
 }
 
-/* Read-only diagnostic helper. Run manually before enabling the trigger. */
 function diagnosticarMetaCRM() {
   const props = PropertiesService.getScriptProperties();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -215,6 +218,6 @@ function diagnosticarMetaCRM() {
   const firstDataRow = headerRow + 1;
   const row = rowToObject_(headers, sheet.getRange(firstDataRow, 1, 1, 20).getValues()[0]);
   const payload = buildLeadPayload_(row);
-  Logger.log(JSON.stringify({ sheet: sheet.getName(), headerRow, firstDataRow, externalId: payload.external_id, createdTime: payload.created_time, curp: payload.curp, phone: payload.phone, campaign: payload.campaign_name }, null, 2));
-  return { sheet: sheet.getName(), headerRow, firstDataRow, payload };
+  Logger.log(JSON.stringify({ sheet: sheet.getName(), headerRow, firstDataRow, officialCutoff: CRM_DEFAULT_START_DATE_, configuredCutoff: PropertiesService.getScriptProperties().getProperty('CRM_START_DATE') || CRM_DEFAULT_START_DATE_, externalId: payload.external_id, createdTime: payload.created_time, curp: payload.curp, phone: payload.phone, campaign: payload.campaign_name }, null, 2));
+  return { sheet: sheet.getName(), headerRow, firstDataRow, officialCutoff: CRM_DEFAULT_START_DATE_, payload };
 }
