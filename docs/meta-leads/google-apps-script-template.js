@@ -1,24 +1,29 @@
 /*
-  Google Apps Script template for the Sheet that receives Meta Lead Ads.
-  DRAFT: keep disabled until the Supabase endpoint and per-user integration token are deployed.
+  Google Apps Script para la hoja que recibe Meta Lead Ads.
 
-  Adapted to the real LEADS DE META ADS workbook:
-  - the canonical Meta header is currently on row 2;
-  - column A contains the Meta lead id even when its header cell is blank;
-  - manual tracking columns can contain duplicated Meta-like labels and must not be
-    used to decide which row is the source header.
+  Estructura acordada de LEADS DE META ADS:
+  - A:T = datos canónicos de Meta Ads;
+  - U = Resumen para compartir;
+  - V = Notas manuales;
+  - W = Acción CRM (Importar / Reactivar);
+  - X = Estado CRM;
+  - Y = Fecha CRM.
 
-  Official import cutoff agreed with the user: 2026-10-27.
-  The script keeps that as a safe default even if CRM_START_DATE is accidentally omitted.
+  Fecha oficial de inicio automático: 2026-10-27.
+  Los leads anteriores NO se importan automáticamente, pero pueden enviarse
+  manualmente seleccionando Importar o Reactivar en la columna W.
 
-  Suggested Script Properties (do not store secrets in cells):
+  Propiedades del script (no guardar secretos en celdas):
   - CRM_ENDPOINT
   - CRM_INTEGRATION_TOKEN
-  - CRM_SHEET_NAME (optional; current tab: Hoja 1)
-  - CRM_START_DATE (optional ISO date; default: 2026-10-27)
+  - CRM_SHEET_NAME (opcional; Hoja 1)
+  - CRM_START_DATE (opcional; default 2026-10-27)
 */
 
 const CRM_DEFAULT_START_DATE_ = '2026-10-27';
+const CRM_ACTION_COL_ = 23; // W
+const CRM_STATUS_COL_ = 24; // X
+const CRM_DATE_COL_ = 25;   // Y
 
 const META_CANONICAL_COLUMNS_ = [
   'id','created_time','ad_id','ad_name','adset_id','adset_name','campaign_id','campaign_name',
@@ -35,18 +40,18 @@ function normalizeHeader_(value) {
 }
 
 function looksLikeCanonicalMetaHeader_(row) {
-  const bToT = row.slice(1, 20).map(normalizeHeader_);
-  const expected = META_CANONICAL_COLUMNS_.slice(1);
-  if (bToT.length < expected.length) return false;
+  const normalized = row.slice(0, 20).map(normalizeHeader_);
+  const expected = META_CANONICAL_COLUMNS_.map(normalizeHeader_);
+  if (normalized.length < expected.length) return false;
   let matches = 0;
-  for (let i = 0; i < expected.length; i++) if (bToT[i] === expected[i]) matches++;
-  return matches >= 17 && bToT[0] === 'created_time' && bToT[2] === 'ad_name' && bToT[6] === 'campaign_name' && bToT[15] === 'full_name';
+  for (let i = 0; i < expected.length; i++) if (normalized[i] === expected[i]) matches++;
+  return matches >= 18 && normalized[0] === 'id' && normalized[1] === 'created_time' && normalized[3] === 'ad_name' && normalized[7] === 'campaign_name' && normalized[16] === 'full_name';
 }
 
 function findHeaderRow_(sheet, maxRows) {
-  const count = Math.min(maxRows || 10, sheet.getLastRow());
+  const count = Math.min(maxRows || 5, sheet.getLastRow());
   if (!count) throw new Error('La hoja no contiene filas.');
-  const rows = sheet.getRange(1, 1, count, Math.min(20, sheet.getLastColumn())).getValues();
+  const rows = sheet.getRange(1, 1, count, 20).getValues();
   for (let r = 0; r < rows.length; r++) {
     if (looksLikeCanonicalMetaHeader_(rows[r])) return r + 1;
   }
@@ -83,7 +88,7 @@ function findQuestionValue_(row, fragment) {
   return '';
 }
 
-function buildLeadPayload_(row) {
+function buildLeadPayload_(row, crmAction) {
   const qImss = findQuestionValue_(row, 'actualmente_te_encuentras_sin_cotizar');
   const qSemanas = findQuestionValue_(row, 'calculas_haber_cotizado_al_menos_2_años');
   const qRetiro = findQuestionValue_(row, 'has_tramitado_algún_retiro_por_desempleo');
@@ -100,6 +105,7 @@ function buildLeadPayload_(row) {
     email: String(firstValue_(row, ['email', 'correo', 'correo_electronico']) || '').trim(),
     curp: String(firstValue_(row, ['curp', 'ingresa_tu_curp_(18_dígitos)_para_consultar_tus_semanas_en_el_sistema_sin_compromiso:']) || '').trim(),
     city: String(firstValue_(row, ['city', 'ciudad', 'municipio']) || '').trim(),
+    crm_action: crmAction || 'auto',
     answers: {
       imss_status_declared: qImss,
       weeks_declared: qSemanas,
@@ -124,11 +130,16 @@ function configuredCutoffDate_() {
 }
 
 function isAfterCutoff_(payload) {
-  const cutoff = configuredCutoffDate_();
   const leadDate = parseLeadDate_(payload.created_time);
-  // Fail safe: a lead with an unreadable date is NOT imported automatically.
   if (!leadDate) return false;
-  return leadDate.getTime() >= cutoff.getTime();
+  return leadDate.getTime() >= configuredCutoffDate_().getTime();
+}
+
+function normalizeAction_(value) {
+  const v = String(value || '').trim().toLowerCase();
+  if (v === 'importar') return 'import';
+  if (v === 'reactivar') return 'reactivate';
+  return '';
 }
 
 function sendLeadToCrm_(payload) {
@@ -152,31 +163,25 @@ function sendLeadToCrm_(payload) {
   return body;
 }
 
-function syncMetaLeadRow_(sheet, rowNumber, headerRow) {
+function syncMetaLeadRow_(sheet, rowNumber, headerRow, action) {
   if (rowNumber <= headerRow) return { skipped: true, reason: 'header' };
   const headers = canonicalHeaders_(sheet, headerRow);
   const values = sheet.getRange(rowNumber, 1, 1, 20).getValues()[0];
   const row = rowToObject_(headers, values);
-  const payload = buildLeadPayload_(row);
+  const payload = buildLeadPayload_(row, action || 'auto');
   if (!payload.external_id && !payload.phone && !payload.curp && !payload.email) throw new Error('La fila no contiene identificadores suficientes.');
-  if (!isAfterCutoff_(payload)) return { skipped: true, reason: 'before_cutoff' };
+
+  // Importar / Reactivar ignoran la fecha de corte, pero conservan created_time original.
+  if (!action && !isAfterCutoff_(payload)) return { skipped: true, reason: 'before_cutoff' };
   return sendLeadToCrm_(payload);
 }
 
-function ensureTechnicalColumns_(sheet, headerRow) {
-  const lastColumn = sheet.getLastColumn();
-  const headers = sheet.getRange(headerRow, 1, 1, lastColumn).getValues()[0].map(normalizeHeader_);
-  let statusCol = headers.findIndex(h => h === 'crm_sync') + 1;
-  let dateCol = headers.findIndex(h => h === 'crm_sync_date') + 1;
-  if (!statusCol) {
-    statusCol = sheet.getLastColumn() + 1;
-    sheet.getRange(headerRow, statusCol).setValue('CRM_SYNC');
-  }
-  if (!dateCol) {
-    dateCol = sheet.getLastColumn() + 1;
-    sheet.getRange(headerRow, dateCol).setValue('CRM_SYNC_DATE');
-  }
-  return { statusCol, dateCol };
+function formatResult_(result, requestedAction) {
+  if (result?.reactivated) return 'REACTIVADO';
+  if (result?.imported_historical) return 'IMPORTADO · HISTÓRICO';
+  if (result?.duplicate) return result?.possible_duplicate ? 'DUPLICADO · YA EXISTE' : 'DUPLICADO';
+  if (requestedAction === 'import') return 'IMPORTADO';
+  return 'OK · IMPORTADO';
 }
 
 function syncPendingMetaLeads() {
@@ -186,38 +191,62 @@ function syncPendingMetaLeads() {
   const sheet = configuredName ? ss.getSheetByName(configuredName) : ss.getSheets()[0];
   if (!sheet) throw new Error('No se encontró la hoja configurada.');
 
-  const headerRow = findHeaderRow_(sheet, 10);
+  const headerRow = findHeaderRow_(sheet, 5);
   const lastRow = sheet.getLastRow();
   if (lastRow <= headerRow) return;
-  const { statusCol, dateCol } = ensureTechnicalColumns_(sheet, headerRow);
 
   for (let rowNumber = headerRow + 1; rowNumber <= lastRow; rowNumber++) {
-    const state = String(sheet.getRange(rowNumber, statusCol).getValue() || '').trim().toUpperCase();
-    if (state === 'OK' || state.startsWith('OK · DUPLICADO') || state.startsWith('OMITIDO')) continue;
+    const requestedAction = normalizeAction_(sheet.getRange(rowNumber, CRM_ACTION_COL_).getValue());
+    const currentState = String(sheet.getRange(rowNumber, CRM_STATUS_COL_).getValue() || '').trim().toUpperCase();
+
+    // Un usuario puede volver a elegir Importar/Reactivar aunque la fila ya tenga estado.
+    // Si no hay acción manual, las filas finalizadas se omiten.
+    if (!requestedAction && /^(OK|IMPORTADO|REACTIVADO|DUPLICADO)/.test(currentState)) continue;
+
     try {
-      const result = syncMetaLeadRow_(sheet, rowNumber, headerRow);
+      const result = syncMetaLeadRow_(sheet, rowNumber, headerRow, requestedAction);
       if (result?.skipped) {
-        sheet.getRange(rowNumber, statusCol).setValue(result.reason === 'before_cutoff' ? 'OMITIDO · ANTERIOR A 27/10/2026 O FECHA INVÁLIDA' : 'OMITIDO');
+        if (result.reason === 'before_cutoff') {
+          // Los históricos permanecen disponibles para Importar/Reactivar manualmente.
+          if (!currentState) sheet.getRange(rowNumber, CRM_STATUS_COL_).setValue('HISTÓRICO · DISPONIBLE');
+        }
       } else {
-        sheet.getRange(rowNumber, statusCol).setValue(result && result.duplicate ? 'OK · DUPLICADO' : 'OK');
+        sheet.getRange(rowNumber, CRM_STATUS_COL_).setValue(formatResult_(result, requestedAction));
+        sheet.getRange(rowNumber, CRM_DATE_COL_).setValue(new Date());
+        if (requestedAction) sheet.getRange(rowNumber, CRM_ACTION_COL_).clearContent();
       }
-      sheet.getRange(rowNumber, dateCol).setValue(new Date());
     } catch (error) {
-      sheet.getRange(rowNumber, statusCol).setValue('ERROR · ' + String(error && error.message || error).slice(0, 160));
-      sheet.getRange(rowNumber, dateCol).setValue(new Date());
+      sheet.getRange(rowNumber, CRM_STATUS_COL_).setValue('ERROR · ' + String(error && error.message || error).slice(0, 160));
+      sheet.getRange(rowNumber, CRM_DATE_COL_).setValue(new Date());
     }
   }
 }
 
+/* Ejecutar manualmente antes de crear el disparador periódico. No envía datos. */
 function diagnosticarMetaCRM() {
   const props = PropertiesService.getScriptProperties();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = props.getProperty('CRM_SHEET_NAME') ? ss.getSheetByName(props.getProperty('CRM_SHEET_NAME')) : ss.getSheets()[0];
-  const headerRow = findHeaderRow_(sheet, 10);
+  const headerRow = findHeaderRow_(sheet, 5);
   const headers = canonicalHeaders_(sheet, headerRow);
   const firstDataRow = headerRow + 1;
   const row = rowToObject_(headers, sheet.getRange(firstDataRow, 1, 1, 20).getValues()[0]);
-  const payload = buildLeadPayload_(row);
-  Logger.log(JSON.stringify({ sheet: sheet.getName(), headerRow, firstDataRow, officialCutoff: CRM_DEFAULT_START_DATE_, configuredCutoff: PropertiesService.getScriptProperties().getProperty('CRM_START_DATE') || CRM_DEFAULT_START_DATE_, externalId: payload.external_id, createdTime: payload.created_time, curp: payload.curp, phone: payload.phone, campaign: payload.campaign_name }, null, 2));
-  return { sheet: sheet.getName(), headerRow, firstDataRow, officialCutoff: CRM_DEFAULT_START_DATE_, payload };
+  const payload = buildLeadPayload_(row, 'auto');
+  const diagnostic = {
+    sheet: sheet.getName(),
+    headerRow,
+    firstDataRow,
+    officialCutoff: CRM_DEFAULT_START_DATE_,
+    configuredCutoff: PropertiesService.getScriptProperties().getProperty('CRM_START_DATE') || CRM_DEFAULT_START_DATE_,
+    externalId: payload.external_id,
+    createdTime: payload.created_time,
+    curp: payload.curp,
+    phone: payload.phone,
+    campaign: payload.campaign_name,
+    actionColumn: 'W',
+    statusColumn: 'X',
+    dateColumn: 'Y'
+  };
+  Logger.log(JSON.stringify(diagnostic, null, 2));
+  return diagnostic;
 }
