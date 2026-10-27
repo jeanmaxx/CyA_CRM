@@ -66,6 +66,7 @@ Deno.serve(async (req: Request) => {
     if (!integration || integration.enabled !== true) return json(403, { error: 'Integración inválida o desactivada' });
 
     const body = await req.json();
+    const requestedAction = ['auto','import','reactivate'].includes(text(body.crm_action).toLowerCase()) ? text(body.crm_action).toLowerCase() : 'auto';
     const externalId = safeExternalId(body.external_id);
     const curp = normalizeCurp(body.curp);
     const phone = normalizePhone(body.phone);
@@ -76,34 +77,80 @@ Deno.serve(async (req: Request) => {
 
     const fallbackKey = await sha256([curp, phone, email].join('|'));
     const leadId = `meta_${String(integration.id).slice(0, 8)}_${externalId || fallbackKey.slice(0, 24)}`;
-    const { data: existing, error: existingError } = await admin.from('leads').select('id').eq('organization_id', integration.organization_id).eq('id', leadId).maybeSingle();
-    if (existingError) throw existingError;
-    if (existing) {
-      await admin.from('lead_integrations').update({ last_received_at: new Date().toISOString(), last_error: null }).eq('id', integration.id);
-      return json(200, { ok: true, duplicate: true, lead_id: existing.id });
+
+    async function findExistingLead() {
+      const { data: exact, error: exactError } = await admin.from('leads')
+        .select('id,payload,status,archive_type,recontact_date,advisor_id')
+        .eq('organization_id', integration.organization_id).eq('id', leadId).maybeSingle();
+      if (exactError) throw exactError;
+      if (exact) return exact;
+
+      if (curp.length === 18) {
+        const { data, error } = await admin.from('leads').select('id,payload,status,archive_type,recontact_date,advisor_id')
+          .eq('organization_id', integration.organization_id).eq('curp', curp).limit(1);
+        if (error) throw error;
+        if (data?.[0]) return data[0];
+      }
+      if (phone.length === 10) {
+        const { data, error } = await admin.from('leads').select('id,payload,status,archive_type,recontact_date,advisor_id')
+          .eq('organization_id', integration.organization_id).eq('phone', phone).limit(1);
+        if (error) throw error;
+        if (data?.[0]) return data[0];
+      }
+      if (email) {
+        const { data, error } = await admin.from('leads').select('id,payload,status,archive_type,recontact_date,advisor_id')
+          .eq('organization_id', integration.organization_id).contains('payload', { email }).limit(1);
+        if (error) throw error;
+        if (data?.[0]) return data[0];
+      }
+      return null;
     }
 
-    let possibleDuplicate: { id: string } | null = null;
-    if (curp.length === 18) {
-      const { data } = await admin.from('leads').select('id').eq('organization_id', integration.organization_id).eq('curp', curp).limit(1);
-      possibleDuplicate = data?.[0] || null;
-    }
-    if (!possibleDuplicate && phone.length === 10) {
-      const { data } = await admin.from('leads').select('id').eq('organization_id', integration.organization_id).eq('phone', phone).limit(1);
-      possibleDuplicate = data?.[0] || null;
-    }
-    if (!possibleDuplicate && email) {
-      const { data } = await admin.from('leads').select('id').eq('organization_id', integration.organization_id).contains('payload', { email }).limit(1);
-      possibleDuplicate = data?.[0] || null;
-    }
-    if (possibleDuplicate) {
-      await admin.from('lead_integrations').update({ last_received_at: new Date().toISOString(), last_error: null }).eq('id', integration.id);
-      return json(200, { ok: true, duplicate: true, possible_duplicate: true, lead_id: possibleDuplicate.id });
-    }
-
-    const createdAt = text(body.created_time) || new Date().toISOString();
+    const existing = await findExistingLead();
+    const now = new Date().toISOString();
+    const createdAt = text(body.created_time) || now;
     const declaredAnswers = typeof body.answers === 'object' && body.answers ? body.answers as Record<string, unknown> : {};
     const declared = declaredEligibility(declaredAnswers);
+
+    if (requestedAction === 'reactivate' && existing) {
+      const oldPayload = existing.payload && typeof existing.payload === 'object' ? existing.payload as Record<string, unknown> : {};
+      const priorReactivations = Array.isArray(oldPayload.reactivacionesMeta) ? oldPayload.reactivacionesMeta : [];
+      const reactivation = {
+        at: now,
+        originalMetaCreatedTime: createdAt,
+        externalId,
+        campaignName: text(body.campaign_name),
+        adsetName: text(body.adset_name),
+        adName: text(body.ad_name),
+        formName: text(body.form_name),
+        platform: text(body.platform)
+      };
+      const mergedPayload = {
+        ...oldPayload,
+        metaAds: true,
+        fuenteContacto: 'Meta Ads',
+        revisionSolicitada: false,
+        metaReactivado: true,
+        fechaReactivacion: now,
+        reactivacionesMeta: [...priorReactivations, reactivation]
+      };
+      const { error: updateError } = await admin.from('leads').update({
+        status: 'semanas',
+        archive_type: null,
+        recontact_date: null,
+        payload: mergedPayload
+      }).eq('organization_id', integration.organization_id).eq('id', existing.id);
+      if (updateError) throw updateError;
+      await admin.from('lead_integrations').update({ last_received_at: now, last_error: null }).eq('id', integration.id);
+      return json(200, { ok: true, reactivated: true, lead_id: existing.id });
+    }
+
+    if (existing && requestedAction !== 'reactivate') {
+      await admin.from('lead_integrations').update({ last_received_at: now, last_error: null }).eq('id', integration.id);
+      return json(200, { ok: true, duplicate: true, possible_duplicate: existing.id !== leadId, lead_id: existing.id });
+    }
+
+    const importedHistorical = requestedAction === 'import' || requestedAction === 'reactivate';
     const payload = {
       nombreMeta: rawName,
       nombreVerificado: false,
@@ -114,6 +161,9 @@ Deno.serve(async (req: Request) => {
       fuenteContacto: 'Meta Ads',
       metaAds: true,
       revisionSolicitada: false,
+      importacionMeta: importedHistorical ? (requestedAction === 'reactivate' ? 'reactivacion_historica' : 'manual_historica') : 'automatica',
+      fechaImportacionCRM: now,
+      ...(requestedAction === 'reactivate' ? { metaReactivado: true, fechaReactivacion: now } : {}),
       metaLead: {
         externalId,
         nombreRecibido: rawName,
@@ -129,7 +179,7 @@ Deno.serve(async (req: Request) => {
       elegibilidadDeclarada: { origen: 'Meta Ads', ...declared },
       fechaRegistro: createdAt.slice(0, 10),
       fechaInicio: createdAt,
-      fechaCaptura: new Date().toISOString(),
+      fechaCaptura: now,
     };
 
     const { error: insertError } = await admin.from('leads').insert({
@@ -147,8 +197,16 @@ Deno.serve(async (req: Request) => {
       payload,
     });
     if (insertError) throw insertError;
-    await admin.from('lead_integrations').update({ last_received_at: new Date().toISOString(), last_error: null }).eq('id', integration.id);
-    return json(201, { ok: true, duplicate: false, lead_id: leadId, precalificacion: declared.precalificacion });
+
+    await admin.from('lead_integrations').update({ last_received_at: now, last_error: null }).eq('id', integration.id);
+    return json(201, {
+      ok: true,
+      duplicate: false,
+      reactivated: requestedAction === 'reactivate',
+      imported_historical: importedHistorical,
+      lead_id: leadId,
+      precalificacion: declared.precalificacion
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error inesperado';
     return json(400, { error: message });
