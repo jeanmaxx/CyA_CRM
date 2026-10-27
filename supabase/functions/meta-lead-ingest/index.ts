@@ -20,11 +20,18 @@ async function sha256(value: string) {
   const digest = await crypto.subtle.digest('SHA-256', bytes);
   return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
-function safeExternalId(value: unknown) { return text(value).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 120); }
+function safeExternalId(value: unknown) { return text(value).replace(/[^A-Za-z0-9:_-]/g, '').slice(0, 120); }
 function findAnswer(answers: Record<string, unknown>, needle: string) {
   const normalizedNeedle = normalizeKey(needle);
   for (const [key, value] of Object.entries(answers)) if (normalizeKey(key).includes(normalizedNeedle)) return text(value);
   return '';
+}
+function envKey(jsonName:string,legacyName:string){
+  try{
+    const raw=Deno.env.get(jsonName);
+    if(raw){const parsed=JSON.parse(raw);if(parsed?.default)return String(parsed.default)}
+  }catch(_){ }
+  return Deno.env.get(legacyName)||'';
 }
 function declaredEligibility(answers: Record<string, unknown>) {
   const cotizaRaw = findAnswer(answers, 'actualmente te encuentras sin cotizar');
@@ -48,8 +55,9 @@ Deno.serve(async (req: Request) => {
     if (!token) return json(401, { error: 'Falta token de integración' });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+    const secretKey = envKey('SUPABASE_SECRET_KEYS','SUPABASE_SERVICE_ROLE_KEY');
+    if(!supabaseUrl||!secretKey)return json(500,{error:'Configuración de Supabase incompleta'});
+    const admin = createClient(supabaseUrl, secretKey, { auth: { persistSession: false } });
 
     const tokenHash = await sha256(token);
     const { data: integration, error: integrationError } = await admin.from('lead_integrations')
@@ -99,6 +107,7 @@ Deno.serve(async (req: Request) => {
     const payload = {
       nombreMeta: rawName,
       nombreVerificado: false,
+      nombrePendienteValidacion: !rawName,
       email,
       correo: email,
       ciudad: text(body.city),
