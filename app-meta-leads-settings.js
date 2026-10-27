@@ -17,10 +17,10 @@
 
   async function refreshStatus(force=false){
     if(state.loading||(!force&&state.loaded))return;
-    state.loading=true;state.error='';renderCard();
+    state.loading=true;state.error='';renderCard(true);
     try{const data=await invoke({action:'status'});state.integration=data.integration||null;state.loaded=true;}
     catch(error){state.error=error.message||String(error);state.loaded=true;}
-    finally{state.loading=false;renderCard();}
+    finally{state.loading=false;renderCard(true);}
   }
 
   function statusText(){
@@ -49,11 +49,18 @@
     </section>`;
   }
 
-  function renderCard(){
+  function renderCard(force=false){
     const host=document.querySelector('.account-sections');if(!host)return;
     const old=document.getElementById('cya-meta-settings-card');
+    if(old&&!force)return;
+    const focusedId=document.activeElement?.id||'';
+    const liveUrl=document.getElementById('cya-meta-sheet-url')?.value;
+    const liveName=document.getElementById('cya-meta-sheet-name')?.value;
     const tmp=document.createElement('div');tmp.innerHTML=html();const next=tmp.firstElementChild;
     if(old)old.replaceWith(next);else host.appendChild(next);
+    if(liveUrl!==undefined){const el=document.getElementById('cya-meta-sheet-url');if(el)el.value=liveUrl;}
+    if(liveName!==undefined){const el=document.getElementById('cya-meta-sheet-name');if(el)el.value=liveName;}
+    if(focusedId){const el=document.getElementById(focusedId);if(el){el.focus();try{const n=el.value?.length||0;el.setSelectionRange(n,n);}catch(_){}}}
   }
 
   window.cyaMetaCrearORotar=async function(){
@@ -63,7 +70,7 @@
       if(sheet_url&&!/^https:\/\/docs\.google\.com\/spreadsheets\//i.test(sheet_url))return showToast?.('Revisa la URL de Google Sheets','warn');
       const data=await invoke({action:'create_or_rotate',label:'Meta Ads',sheet_url,sheet_name});
       state.revealed={endpoint:data.endpoint,token:data.token};state.integration=data.integration||{enabled:true,config:{sheetUrl:sheet_url,sheetName:sheet_name}};state.error='';state.loaded=true;
-      renderCard();showToast?.('Integración preparada. Copia los datos al Apps Script.','success');
+      renderCard(true);showToast?.('Integración preparada. Copia los datos al Apps Script.','success');
     }catch(error){showToast?.(error.message||String(error),'warn');}
   };
   window.cyaMetaToggle=async function(){
@@ -76,9 +83,13 @@
     @media(max-width:700px){.cya-meta-settings-head{align-items:flex-start}.cya-meta-settings-body .form-row{grid-template-columns:1fr}.cya-meta-settings-actions .btn{flex:1}}
   `;document.head.appendChild(style);
 
-  let scheduled=false;
-  new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;if(document.querySelector('.account-sections')){renderCard();refreshStatus();}})}).observe(document.documentElement,{childList:true,subtree:true});
-  if(document.querySelector('.account-sections')){renderCard();refreshStatus();}
+  new MutationObserver(()=>{
+    if(document.querySelector('.account-sections')&&!document.getElementById('cya-meta-settings-card')){
+      renderCard(false);
+      refreshStatus();
+    }
+  }).observe(document.documentElement,{childList:true,subtree:true});
+  if(document.querySelector('.account-sections')){renderCard(false);refreshStatus();}
 })();
 
 /* Load Meta outcome/report enhancements from the same feature-only chain. */
