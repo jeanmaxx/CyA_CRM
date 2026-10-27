@@ -170,7 +170,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-meta-leads-workflow]'))return;
     const script=document.createElement('script');
-    script.src='/app-meta-leads-workflow.js?v=20261027-meta2';
+    script.src='/app-meta-leads-workflow.js?v=20261027-meta4';
     script.async=false;
     script.dataset.cyaMetaLeadsWorkflow='1';
     document.head.appendChild(script);
