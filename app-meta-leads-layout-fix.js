@@ -24,10 +24,9 @@
     const kanban=document.querySelector('.leads-kanban');
     if(!kanban)return;
 
-    /* The base board is CSS grid with five equal columns. Override the grid itself
-       so the Meta intake lane can actually be wider than the operational lanes. */
+    /* Keep the five main board areas proportional and visually consistent. */
     kanban.classList.add('cya-meta-board-grid');
-    kanban.style.gridTemplateColumns='190px minmax(290px,1.35fr) repeat(3,minmax(205px,1fr))';
+    kanban.style.gridTemplateColumns='repeat(5,minmax(220px,1fr))';
 
     kanban.querySelectorAll('.lead-col').forEach(updateStageCounter);
 
@@ -36,6 +35,13 @@
       meta.style.width='auto';
       meta.style.minWidth='0';
       meta.style.maxWidth='none';
+    }
+
+    const stack=kanban.querySelector(':scope > .cya-special-leads-stack');
+    if(stack){
+      stack.style.width='auto';
+      stack.style.minWidth='0';
+      stack.style.maxWidth='none';
     }
 
     kanban.querySelectorAll('.cya-special-leads-stack > .lead-col').forEach(col=>{
@@ -49,8 +55,8 @@
   const style=document.createElement('style');
   style.id='cya-meta-leads-layout-fix-styles';
   style.textContent=`
-    .leads-kanban.cya-meta-board-grid{grid-template-columns:190px minmax(290px,1.35fr) repeat(3,minmax(205px,1fr))!important;align-items:start!important;}
-    .cya-special-leads-stack{width:190px!important;min-width:190px!important;max-width:190px!important;}
+    .leads-kanban.cya-meta-board-grid{grid-template-columns:repeat(5,minmax(220px,1fr))!important;align-items:start!important;}
+    .cya-special-leads-stack{width:auto!important;min-width:0!important;max-width:none!important;}
     .cya-special-leads-stack .lead-col-header{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:6px!important;}
     .cya-special-leads-stack .lead-col-header>span:first-child{min-width:0;flex:1 1 auto;}
     .cya-special-leads-stack .lead-col-header>.cya-stage-count{margin-left:auto!important;flex:0 0 auto!important;}
@@ -59,11 +65,10 @@
     #cya-meta-new-column .lead-col-body{padding-left:10px;padding-right:10px;}
     #cya-meta-new-column .lead-card{width:100%;box-sizing:border-box;}
     @media(max-width:1100px){
-      .leads-kanban.cya-meta-board-grid{grid-template-columns:180px minmax(270px,1.3fr) repeat(3,minmax(200px,1fr))!important;}
-      .cya-special-leads-stack{width:180px!important;min-width:180px!important;max-width:180px!important;}
+      .leads-kanban.cya-meta-board-grid{grid-template-columns:repeat(5,minmax(210px,1fr))!important;}
     }
     @media(max-width:700px){
-      .leads-kanban.cya-meta-board-grid{grid-template-columns:180px 250px repeat(3,220px)!important;}
+      .leads-kanban.cya-meta-board-grid{grid-template-columns:repeat(5,220px)!important;}
       #cya-meta-new-column{width:auto!important;min-width:0!important;}
     }
   `;
