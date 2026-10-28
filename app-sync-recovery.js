@@ -105,7 +105,7 @@
   const timer=setInterval(()=>{
     attempts++;
     const ready=
-      window.__cyaClientAdvisorRequestsInstalled===true&&
+      window.__cyaClientAdvisorOwnershipInstalled===true&&
       typeof openPerfil==='function'&&
       typeof renderDashboard==='function'&&
       typeof cloudSyncNow==='function';
@@ -191,7 +191,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-meta-leads-layout-fix]'))return;
     const script=document.createElement('script');
-    script.src='/app-meta-leads-layout-fix.js?v=20261027-meta2';
+    script.src='/app-meta-leads-layout-fix.js?v=20261027-meta3';
     script.async=false;
     script.dataset.cyaMetaLeadsLayoutFix='1';
     document.head.appendChild(script);
