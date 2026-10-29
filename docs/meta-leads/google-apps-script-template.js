@@ -24,6 +24,7 @@ const CRM_DEFAULT_START_DATE_ = '2026-10-27';
 const CRM_ACTION_COL_ = 23; // W
 const CRM_STATUS_COL_ = 24; // X
 const CRM_DATE_COL_ = 25;   // Y
+const CRM_SYNC_MAX_RUNTIME_MS_ = 240000; // 4 min: margen antes del límite duro de Apps Script
 
 const META_CANONICAL_COLUMNS_ = [
   'id','created_time','ad_id','ad_name','adset_id','adset_name','campaign_id','campaign_name',
@@ -129,10 +130,11 @@ function configuredCutoffDate_() {
   return cutoff;
 }
 
-function isAfterCutoff_(payload) {
+function isAfterCutoff_(payload, cutoffDate) {
   const leadDate = parseLeadDate_(payload.created_time);
   if (!leadDate) return false;
-  return leadDate.getTime() >= configuredCutoffDate_().getTime();
+  const cutoff = cutoffDate || configuredCutoffDate_();
+  return leadDate.getTime() >= cutoff.getTime();
 }
 
 function normalizeAction_(value) {
@@ -140,6 +142,11 @@ function normalizeAction_(value) {
   if (v === 'importar') return 'import';
   if (v === 'reactivar') return 'reactivate';
   return '';
+}
+
+function isTerminalCrmState_(value) {
+  const state = String(value || '').trim().toUpperCase();
+  return /^(OK|IMPORTADO|REACTIVADO|DUPLICADO|HISTÓRICO)/.test(state);
 }
 
 function sendLeadToCrm_(payload) {
@@ -203,22 +210,118 @@ function processRowAndWriteStatus_(sheet, rowNumber, headerRow, requestedAction)
   }
 }
 
+/*
+  Sincronización periódica optimizada:
+  - una sola lectura A:Y para toda la tabla;
+  - ignora estados finales e HISTÓRICO · DISPONIBLE;
+  - prioriza filas nuevas (recorre de abajo hacia arriba);
+  - permite Importar/Reactivar manual aunque la fila ya tenga estado final;
+  - reintenta filas con ERROR;
+  - usa LockService para evitar ejecuciones solapadas;
+  - se detiene con margen antes del límite duro de Apps Script.
+*/
 function syncPendingMetaLeads() {
-  const props = PropertiesService.getScriptProperties();
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const configuredName = props.getProperty('CRM_SHEET_NAME');
-  const sheet = configuredName ? ss.getSheetByName(configuredName) : ss.getSheets()[0];
-  if (!sheet) throw new Error('No se encontró la hoja configurada.');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) {
+    Logger.log('Sincronización omitida: ya existe otra ejecución activa.');
+    return;
+  }
 
-  const headerRow = findHeaderRow_(sheet, 5);
-  const lastRow = sheet.getLastRow();
-  if (lastRow <= headerRow) return;
+  const startedAt = Date.now();
 
-  for (let rowNumber = headerRow + 1; rowNumber <= lastRow; rowNumber++) {
-    const requestedAction = normalizeAction_(sheet.getRange(rowNumber, CRM_ACTION_COL_).getValue());
-    const currentState = String(sheet.getRange(rowNumber, CRM_STATUS_COL_).getValue() || '').trim().toUpperCase();
-    if (!requestedAction && /^(OK|IMPORTADO|REACTIVADO|DUPLICADO)/.test(currentState)) continue;
-    try { processRowAndWriteStatus_(sheet, rowNumber, headerRow, requestedAction); } catch (_) {}
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const configuredName = props.getProperty('CRM_SHEET_NAME');
+    const sheet = configuredName ? ss.getSheetByName(configuredName) : ss.getSheets()[0];
+    if (!sheet) throw new Error('No se encontró la hoja configurada.');
+
+    const headerRow = findHeaderRow_(sheet, 5);
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= headerRow) return;
+
+    const firstDataRow = headerRow + 1;
+    const rowCount = lastRow - headerRow;
+    const headers = canonicalHeaders_(sheet, headerRow);
+    const cutoff = configuredCutoffDate_();
+
+    const data = sheet.getRange(firstDataRow, 1, rowCount, CRM_DATE_COL_).getValues();
+    const statusDateOutput = data.map(row => [
+      row[CRM_STATUS_COL_ - 1],
+      row[CRM_DATE_COL_ - 1]
+    ]);
+
+    const actionRowsToClear = [];
+    let changed = false;
+    let processed = 0;
+    let skipped = 0;
+    let stoppedForTime = false;
+
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (Date.now() - startedAt >= CRM_SYNC_MAX_RUNTIME_MS_) {
+        stoppedForTime = true;
+        break;
+      }
+
+      const rowNumber = firstDataRow + i;
+      const values = data[i];
+      const requestedAction = normalizeAction_(values[CRM_ACTION_COL_ - 1]);
+      const currentState = String(values[CRM_STATUS_COL_ - 1] || '').trim().toUpperCase();
+
+      if (!requestedAction && isTerminalCrmState_(currentState)) {
+        skipped++;
+        continue;
+      }
+
+      const row = rowToObject_(headers, values.slice(0, 20));
+      const payload = buildLeadPayload_(row, requestedAction || 'auto');
+
+      try {
+        if (!payload.external_id && !payload.phone && !payload.curp && !payload.email) {
+          throw new Error('La fila no contiene identificadores suficientes.');
+        }
+
+        if (!requestedAction && !isAfterCutoff_(payload, cutoff)) {
+          if (!currentState) {
+            statusDateOutput[i][0] = 'HISTÓRICO · DISPONIBLE';
+            changed = true;
+          }
+          skipped++;
+          continue;
+        }
+
+        const result = sendLeadToCrm_(payload);
+        statusDateOutput[i][0] = formatResult_(result, requestedAction);
+        statusDateOutput[i][1] = new Date();
+        changed = true;
+        processed++;
+
+        if (requestedAction) actionRowsToClear.push(rowNumber);
+      } catch (error) {
+        statusDateOutput[i][0] = 'ERROR · ' + String(error && error.message || error).slice(0, 160);
+        statusDateOutput[i][1] = new Date();
+        changed = true;
+        processed++;
+      }
+    }
+
+    if (changed) {
+      sheet.getRange(firstDataRow, CRM_STATUS_COL_, rowCount, 2).setValues(statusDateOutput);
+    }
+
+    if (actionRowsToClear.length) {
+      sheet.getRangeList(actionRowsToClear.map(rowNumber => 'W' + rowNumber)).clearContent();
+    }
+
+    Logger.log(JSON.stringify({
+      processed,
+      skipped,
+      rows: rowCount,
+      stoppedForTime,
+      elapsedMs: Date.now() - startedAt
+    }));
+  } finally {
+    lock.releaseLock();
   }
 }
 
