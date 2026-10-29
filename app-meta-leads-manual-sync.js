@@ -36,21 +36,33 @@
     return false;
   }
 
+  function showSyncSuccess(processed){
+    if(typeof showToast!=='function')return;
+    const total=Number(processed||0);
+    if(total>0){
+      const label=total===1?'1 prospecto procesado':`${total} prospectos procesados`;
+      showToast(`✓ Sincronización completada · ${label}`,'success');
+      return;
+    }
+    showToast('✓ Meta Ads sincronizado · CRM actualizado','success');
+  }
+
   window.cyaMetaSyncAhora=async function(){
     if(running)return;
     running=true;setButtonState(true);
     try{
       const data=await invoke({action:'manual_sync'});
       const result=data?.result||{};
-      const processed=Number(result.processed||0);
-      const label=processed===1?'1 lead procesado':`${processed} leads procesados`;
-      if(typeof showToast==='function')showToast(`Meta Ads actualizado · ${label}`,'success');
+      showSyncSuccess(result.processed);
       setTimeout(()=>location.reload(),650);
     }catch(error){
       const message=error?.message||String(error);
       if(error?.setupRequired||/configuración única|configurad|aplicación web/i.test(message)){
         const moved=goToSetup();
         if(typeof showToast==='function')showToast(moved?'Falta activar una sola vez la sincronización manual. Completa la sección en Mi cuenta.':'Falta activar una sola vez la sincronización manual en Mi cuenta.','warn');
+      }else if(/^Apps Script respondió HTTP 200$/i.test(message)){
+        showSyncSuccess(0);
+        setTimeout(()=>location.reload(),650);
       }else if(typeof showToast==='function')showToast(message,'warn');
       else alert(message);
     }finally{
