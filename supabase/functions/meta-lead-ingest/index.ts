@@ -72,9 +72,7 @@ Deno.serve(async (req: Request) => {
     const phone = normalizePhone(body.phone);
     const email = text(body.email).toLowerCase();
     const rawName = text(body.full_name);
-    // El nombre recibido por Meta se conserva solo como referencia. El nombre formal
-    // debe capturarse después de validar CURP/RENAPO.
-    const name = 'Nombre pendiente de validar';
+    const name = rawName || 'Nombre pendiente de validar';
     if (!externalId && !curp && !phone && !email) return json(400, { error: 'El lead no contiene identificadores suficientes' });
 
     const fallbackKey = await sha256([curp, phone, email].join('|'));
@@ -82,25 +80,25 @@ Deno.serve(async (req: Request) => {
 
     async function findExistingLead() {
       const { data: exact, error: exactError } = await admin.from('leads')
-        .select('id,payload,status,archive_type,recontact_date,advisor_id')
+        .select('id,name,payload,status,archive_type,recontact_date,advisor_id')
         .eq('organization_id', integration.organization_id).eq('id', leadId).maybeSingle();
       if (exactError) throw exactError;
       if (exact) return exact;
 
       if (curp.length === 18) {
-        const { data, error } = await admin.from('leads').select('id,payload,status,archive_type,recontact_date,advisor_id')
+        const { data, error } = await admin.from('leads').select('id,name,payload,status,archive_type,recontact_date,advisor_id')
           .eq('organization_id', integration.organization_id).eq('curp', curp).limit(1);
         if (error) throw error;
         if (data?.[0]) return data[0];
       }
       if (phone.length === 10) {
-        const { data, error } = await admin.from('leads').select('id,payload,status,archive_type,recontact_date,advisor_id')
+        const { data, error } = await admin.from('leads').select('id,name,payload,status,archive_type,recontact_date,advisor_id')
           .eq('organization_id', integration.organization_id).eq('phone', phone).limit(1);
         if (error) throw error;
         if (data?.[0]) return data[0];
       }
       if (email) {
-        const { data, error } = await admin.from('leads').select('id,payload,status,archive_type,recontact_date,advisor_id')
+        const { data, error } = await admin.from('leads').select('id,name,payload,status,archive_type,recontact_date,advisor_id')
           .eq('organization_id', integration.organization_id).contains('payload', { email }).limit(1);
         if (error) throw error;
         if (data?.[0]) return data[0];
@@ -136,7 +134,9 @@ Deno.serve(async (req: Request) => {
         fechaReactivacion: now,
         reactivacionesMeta: [...priorReactivations, reactivation]
       };
+      const shouldAdoptMetaName = Boolean(rawName && (!text(existing.name) || /^nombre pendiente de validar$/i.test(text(existing.name))));
       const { error: updateError } = await admin.from('leads').update({
+        ...(shouldAdoptMetaName ? { name: rawName } : {}),
         status: 'semanas',
         archive_type: null,
         recontact_date: null,
