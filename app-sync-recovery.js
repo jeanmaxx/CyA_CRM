@@ -232,3 +232,22 @@
     script.async=false;script.dataset.cyaMetaLeadSettings='1';document.head.appendChild(script);
   },25);
 })();
+
+/* Keep manually entered prospect fields editable and stable while the Meta workflow refreshes modal UI. */
+(function loadProspectManualFieldsFixSafely(){
+  if(window.__cyaProspectManualFieldsFixLoaderStarted)return;
+  window.__cyaProspectManualFieldsFixLoaderStarted=true;
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    const ready=window.__cyaMetaLeadsWorkflowInstalled===true&&typeof openModalLead==='function'&&typeof guardarLead==='function';
+    if(!ready){if(attempts>500)clearInterval(timer);return;}
+    clearInterval(timer);
+    if(document.querySelector('script[data-cya-prospect-manual-fields-fix]'))return;
+    const script=document.createElement('script');
+    script.src='/app-prospect-manual-fields-fix.js?v=20261030-fields1';
+    script.async=false;
+    script.dataset.cyaProspectManualFieldsFix='1';
+    document.head.appendChild(script);
+  },25);
+})();
