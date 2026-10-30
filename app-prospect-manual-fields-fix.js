@@ -17,6 +17,49 @@
     catch(_){return '__new__';}
   }
 
+  function currentLead(){
+    try{
+      if(typeof editingLeadId==='undefined'||!editingLeadId)return null;
+      return (store?.leads||[]).find(l=>String(l.id)===String(editingLeadId))||null;
+    }catch(_){return null;}
+  }
+
+  function ensureStyles(){
+    if(document.getElementById('cya-prospect-manual-fields-fix-styles'))return;
+    const style=document.createElement('style');
+    style.id='cya-prospect-manual-fields-fix-styles';
+    style.textContent=`
+      .cya-lead-extra-fields[data-cya-meta-origin]::after{
+        content:attr(data-cya-meta-origin);display:block;margin-top:8px;padding:9px 10px;
+        border-left:3px solid #1877f2;background:rgba(24,119,242,.07);border-radius:4px;
+        font-size:10px;font-weight:600;color:#60a5fa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function metaOriginLabel(){
+    const lead=currentLead();
+    const meta=lead?.metaLead||lead?.origenMeta||null;
+    if(!meta)return '';
+    const campaign=String(meta.campaignName||'Campaña no registrada').trim();
+    return `Origen Meta Ads · ${campaign}`;
+  }
+
+  function stabilizeOriginBox(){
+    const wrap=document.getElementById('cya-lead-extra-fields');
+    if(!wrap)return;
+    const label=metaOriginLabel();
+    if(label)wrap.dataset.cyaMetaOrigin=label;
+    else delete wrap.dataset.cyaMetaOrigin;
+
+    /* app-meta-leads-workflow rebuilt this child on every MutationObserver pass.
+       Removing it once breaks that self-triggering refresh loop. The same origin
+       information remains visible through the CSS pseudo-element above. */
+    const box=document.getElementById('cya-meta-origin-box');
+    if(box)box.remove();
+  }
+
   function ensureEditable(){
     for(const id of FIELD_IDS){
       const el=document.getElementById(id);
@@ -35,21 +78,37 @@
     if(!modalOpen()||!target||!FIELD_IDS.includes(target.id))return;
     const key=leadKey();
     if(activeLeadKey!==key){dirtyValues={};activeLeadKey=key;}
-    dirtyValues[target.id]=target.value;
+    dirtyValues[target.id]={
+      value:target.value,
+      start:typeof target.selectionStart==='number'?target.selectionStart:null,
+      end:typeof target.selectionEnd==='number'?target.selectionEnd:null,
+      direction:target.selectionDirection||'none'
+    };
   }
 
   function restoreManualValues(){
     if(!modalOpen())return;
     ensureEditable();
+    stabilizeOriginBox();
     if(activeLeadKey!==leadKey())return;
-    for(const [id,value] of Object.entries(dirtyValues)){
+    for(const [id,state] of Object.entries(dirtyValues)){
       const el=document.getElementById(id);
-      if(el&&el.value!==value)el.value=value;
+      if(!el)continue;
+      if(el.value!==state.value)el.value=state.value;
+      if(document.activeElement===el&&state.start!==null&&typeof el.setSelectionRange==='function'){
+        try{el.setSelectionRange(state.start,state.end,state.direction);}catch(_){ }
+      }
     }
   }
 
   document.addEventListener('input',rememberManualValue,true);
   document.addEventListener('change',rememberManualValue,true);
+  document.addEventListener('focusin',event=>{
+    if(FIELD_IDS.includes(event?.target?.id)){
+      ensureEditable();
+      stabilizeOriginBox();
+    }
+  },true);
 
   const baseOpenModalLead=window.openModalLead;
   if(typeof baseOpenModalLead==='function')window.openModalLead=function(){
@@ -57,8 +116,9 @@
     activeLeadKey='';
     const result=baseOpenModalLead.apply(this,arguments);
     activeLeadKey=leadKey();
-    setTimeout(()=>{ensureEditable();restoreManualValues();},0);
-    setTimeout(()=>{ensureEditable();restoreManualValues();},80);
+    setTimeout(()=>{ensureEditable();stabilizeOriginBox();restoreManualValues();},0);
+    setTimeout(()=>{ensureEditable();stabilizeOriginBox();restoreManualValues();},40);
+    setTimeout(()=>{ensureEditable();stabilizeOriginBox();restoreManualValues();},120);
     return result;
   };
 
@@ -67,9 +127,11 @@
     scheduled=true;
     requestAnimationFrame(()=>{
       scheduled=false;
+      stabilizeOriginBox();
       restoreManualValues();
     });
   }).observe(document.documentElement,{childList:true,subtree:true});
 
-  setTimeout(ensureEditable,100);
+  ensureStyles();
+  setTimeout(()=>{ensureEditable();stabilizeOriginBox();},100);
 })();
