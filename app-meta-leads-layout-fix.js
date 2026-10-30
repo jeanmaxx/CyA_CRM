@@ -94,7 +94,7 @@
   window.__cyaDiscardedClientReactivationInstalled=true;
 
   let reactivationClientId=null;
-  const clientById=id=>(window.store?.clientes||[]).find(c=>String(c.id)===String(id));
+  const clientById=id=>(store?.clientes||[]).find(c=>String(c.id)===String(id));
   const clone=value=>{
     try{return typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value));}
     catch(_){return JSON.parse(JSON.stringify(value));}
@@ -284,7 +284,7 @@
   function syncProfileButton(){
     const btn=document.getElementById('perfil-regresar-prospecto-btn');
     if(!btn)return;
-    const c=clientById(window.perfilClienteActivo);
+    const c=clientById(perfilClienteActivo);
     if(c?.descartado){
       btn.dataset.cyaReactivation='1';
       btn.style.display='inline-flex';
@@ -299,7 +299,7 @@
       btn.style.color='var(--warning)';
       btn.style.borderColor='';
       btn.textContent='↩ Regresar a prospectos';
-      btn.onclick=()=>typeof abrirRegresoProspecto==='function'&&abrirRegresoProspecto(window.perfilClienteActivo);
+      btn.onclick=()=>typeof abrirRegresoProspecto==='function'&&abrirRegresoProspecto(perfilClienteActivo);
     }
   }
 
@@ -318,7 +318,7 @@
       scheduled=false;
       if(document.getElementById('modal-perfil')?.classList.contains('open'))syncProfileButton();
     });
-  }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+  }).observe(document.documentElement,{childList:true,subtree:true});
 
   setTimeout(syncProfileButton,100);
 })();
