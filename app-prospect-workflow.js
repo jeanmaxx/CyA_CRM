@@ -83,7 +83,107 @@ function renderLeads(){
       ${renderArchivadosPorCausa(definitivos)}
     </div>
   </div>
-  <div class="leads-export"><button class="btn" onclick="exportarLeadsPorEtapa()">⬇ Exportar prospectos</button></div>`;
+  <div class="leads-export" style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+    <button class="btn" onclick="abrirCurpsPendientes()">CURPs PENDIENTES</button>
+    <button class="btn" onclick="exportarLeadsPorEtapa()">⬇ Exportar prospectos</button>
+  </div>`;
+}
+
+function obtenerCurpsPendientes(){
+  const vista=typeof leadsVistaActual==='function'?leadsVistaActual():(store?.leads||[]);
+  const pendientes=vista.filter(l=>l&&l.estado==='semanas');
+  const ordenados=typeof ordenarProspectos==='function'?ordenarProspectos([...pendientes],'semanas'):pendientes;
+  const vistos=new Set();
+  const curps=[];
+  let incompletas=0;
+  ordenados.forEach(l=>{
+    const curp=String(l?.curp||'').replace(/[^A-ZÑ0-9]/gi,'').toUpperCase();
+    if(curp.length!==18){incompletas++;return;}
+    if(vistos.has(curp))return;
+    vistos.add(curp);
+    curps.push(curp);
+  });
+  return {curps,incompletas,total:pendientes.length};
+}
+
+function asegurarModalCurpsPendientes(){
+  if(document.getElementById('modal-curps-pendientes'))return;
+  const modal=document.createElement('div');
+  modal.className='modal-overlay';
+  modal.id='modal-curps-pendientes';
+  modal.innerHTML=`
+    <div class="modal" style="max-width:620px;" role="dialog" aria-modal="true" aria-labelledby="curps-pendientes-title">
+      <div class="modal-header" style="border-bottom:3px solid #d97706;">
+        <div>
+          <div class="modal-title" id="curps-pendientes-title">CURPs en revisión</div>
+          <div id="curps-pendientes-contador" style="font-size:11px;color:var(--text-muted);margin-top:3px;"></div>
+        </div>
+        <button class="btn btn-icon" type="button" onclick="cerrarCurpsPendientes()" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Prospectos actualmente en <strong>En revisión de semanas / NSS</strong>. Una CURP por renglón, lista para pegar en WhatsApp.</div>
+        <textarea id="curps-pendientes-lista" class="form-textarea" readonly spellcheck="false" style="min-height:280px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:15px;line-height:1.65;resize:vertical;"></textarea>
+        <div id="curps-pendientes-aviso" style="display:none;margin-top:8px;font-size:10px;color:var(--warning);"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" type="button" onclick="cerrarCurpsPendientes()">Cerrar</button>
+        <button class="btn btn-primary" type="button" onclick="copiarCurpsPendientes()">📋 Copiar CURPs</button>
+      </div>
+    </div>`;
+  modal.addEventListener('click',event=>{if(event.target===modal)cerrarCurpsPendientes();});
+  document.body.appendChild(modal);
+}
+
+function abrirCurpsPendientes(){
+  const datos=obtenerCurpsPendientes();
+  if(!datos.curps.length){
+    showToast(datos.total?'No hay CURP completas en revisión de semanas / NSS':'No hay prospectos en revisión de semanas / NSS','info');
+    return;
+  }
+  asegurarModalCurpsPendientes();
+  const lista=document.getElementById('curps-pendientes-lista');
+  const contador=document.getElementById('curps-pendientes-contador');
+  const aviso=document.getElementById('curps-pendientes-aviso');
+  if(lista)lista.value=datos.curps.join('\n');
+  if(contador)contador.textContent=`${datos.curps.length} CURP${datos.curps.length===1?'':'s'} pendiente${datos.curps.length===1?'':'s'}`;
+  if(aviso){
+    aviso.style.display=datos.incompletas?'block':'none';
+    aviso.textContent=datos.incompletas?`${datos.incompletas} prospecto${datos.incompletas===1?'':'s'} de esta etapa no se incluye${datos.incompletas===1?'':'n'} porque la CURP está incompleta.`:'';
+  }
+  document.getElementById('modal-curps-pendientes')?.classList.add('open');
+  setTimeout(()=>lista?.focus(),0);
+}
+
+function cerrarCurpsPendientes(){
+  document.getElementById('modal-curps-pendientes')?.classList.remove('open');
+}
+
+async function copiarCurpsPendientes(){
+  const lista=document.getElementById('curps-pendientes-lista');
+  const texto=String(lista?.value||'').trim();
+  if(!texto){showToast('No hay CURP para copiar','info');return;}
+  let ok=false;
+  try{
+    if(navigator.clipboard?.writeText){
+      await navigator.clipboard.writeText(texto);
+      ok=true;
+    }
+  }catch(_){ }
+  if(!ok&&lista){
+    try{
+      lista.removeAttribute('readonly');
+      lista.select();
+      lista.setSelectionRange(0,lista.value.length);
+      ok=document.execCommand('copy');
+      lista.setAttribute('readonly','');
+    }catch(_){ok=false;}
+  }
+  showToast(ok?'CURPs pendientes copiadas. Ya puedes pegarlas en WhatsApp.':'No fue posible copiar automáticamente las CURP',ok?'success':'warn');
+}
+
+if(!window.__cyaCurpsPendientesEscapeBound){
+  window.__cyaCurpsPendientesEscapeBound=true;
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('modal-curps-pendientes')?.classList.contains('open'))cerrarCurpsPendientes();});
 }
 
 function openModalLead(id){
