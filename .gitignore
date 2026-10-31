@@ -1,2 +1,7 @@
 node_modules/
 supabase/.temp/
+mobile/node_modules/
+mobile/android/
+mobile/output/
+mobile/assets/
+*.apk
