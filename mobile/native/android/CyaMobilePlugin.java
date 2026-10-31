@@ -5,11 +5,14 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Base64;
 
@@ -33,7 +36,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -54,7 +57,7 @@ public class CyaMobilePlugin extends Plugin {
         result.put("native", true);
         result.put("platform", "android");
         result.put("sdk", Build.VERSION.SDK_INT);
-        result.put("appVersion", "1.1.0");
+        result.put("appVersion", "1.2.1");
         call.resolve(result);
     }
 
@@ -248,6 +251,52 @@ public class CyaMobilePlugin extends Plugin {
             JSObject data = new JSObject();
             data.put("deepLink", deepLink);
             notifyListeners("notificationAction", data, true);
+        }
+    }
+
+    @PluginMethod
+    public void saveBase64File(PluginCall call) {
+        String dataUrl = call.getString("dataUrl", "");
+        String fileName = call.getString("fileName", "documento.pdf").replaceAll("[^a-zA-Z0-9._ -]", "_");
+        String mimeType = call.getString("mimeType", "application/octet-stream");
+        if (dataUrl.isEmpty() || !dataUrl.contains(",")) {
+            call.reject("El archivo no contiene datos válidos");
+            return;
+        }
+        try {
+            String base64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
+            byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+            JSObject result = new JSObject();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/CyA CRM");
+                values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+                Uri uri = getContext().getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) throw new IllegalStateException("Android no pudo crear el archivo");
+                try (OutputStream out = getContext().getContentResolver().openOutputStream(uri)) {
+                    if (out == null) throw new IllegalStateException("Android no pudo abrir el archivo");
+                    out.write(bytes);
+                }
+                values.clear();
+                values.put(MediaStore.MediaColumns.IS_PENDING, 0);
+                getContext().getContentResolver().update(uri, values, null, null);
+                result.put("uri", uri.toString());
+                result.put("location", "Downloads/CyA CRM/" + fileName);
+            } else {
+                File dir = getContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+                if (dir == null) dir = getContext().getFilesDir();
+                File file = new File(dir, fileName);
+                try (FileOutputStream out = new FileOutputStream(file)) { out.write(bytes); }
+                result.put("uri", Uri.fromFile(file).toString());
+                result.put("location", file.getAbsolutePath());
+            }
+            result.put("saved", true);
+            result.put("fileName", fileName);
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("No se pudo guardar el archivo: " + error.getMessage());
         }
     }
 
