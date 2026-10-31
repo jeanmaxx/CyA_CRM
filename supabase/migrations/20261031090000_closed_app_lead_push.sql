@@ -5,7 +5,9 @@
 
 create table if not exists public.mobile_push_webhook_secrets (
   organization_id uuid primary key references public.organizations(id) on delete cascade,
-  secret text not null,
+  secret text not null default (
+    replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '')
+  ),
   created_at timestamptz not null default now(),
   rotated_at timestamptz not null default now()
 );
@@ -14,10 +16,8 @@ alter table public.mobile_push_webhook_secrets enable row level security;
 revoke all on public.mobile_push_webhook_secrets from anon, authenticated;
 grant all on public.mobile_push_webhook_secrets to service_role;
 
-insert into public.mobile_push_webhook_secrets (organization_id, secret)
-select
-  o.id,
-  replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '')
+insert into public.mobile_push_webhook_secrets (organization_id)
+select o.id
 from public.organizations o
 on conflict (organization_id) do nothing;
 
@@ -55,6 +55,11 @@ as $$
 declare
   hook_secret text;
 begin
+  -- Future organizations get a secret automatically on their first lead.
+  insert into public.mobile_push_webhook_secrets (organization_id)
+  values (new.organization_id)
+  on conflict (organization_id) do nothing;
+
   select s.secret
     into hook_secret
     from public.mobile_push_webhook_secrets s
