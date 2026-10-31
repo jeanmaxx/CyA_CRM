@@ -13,17 +13,19 @@
   const EMAIL_KEY='cya_mobile_last_email';
   let leadChannel=null;
   let currentPushToken='';
+  let scheduleTimer=null;
+  let lastRenapoFunction=null;
   const basePrepare=window.cloudPrepareLogin;
   const baseEnter=window.cloudEnterSession;
-  const baseInit=window.initCloudApp;
   const baseLogout=window.cerrarSesion;
+  const baseSave=window.saveStore;
 
   function injectStyles(){
     if(document.getElementById('cya-native-mobile-styles'))return;
     const style=document.createElement('style');
     style.id='cya-native-mobile-styles';
     style.textContent=`
-      html.cya-native-app{--cya-native-top-inset:24px;--cya-native-bottom-inset:0px}
+      html.cya-native-app{--cya-native-top-inset:var(--safe-area-inset-top,24px);--cya-native-bottom-inset:var(--safe-area-inset-bottom,0px)}
       @media(max-width:700px){
         html.cya-native-app .topbar{height:calc(60px + var(--cya-native-top-inset))!important;padding-top:var(--cya-native-top-inset)!important;box-sizing:border-box!important}
         html.cya-native-app .sidebar{padding-top:var(--cya-native-top-inset)!important;box-sizing:border-box!important}
@@ -58,7 +60,8 @@
       email.style.display='none';
       const box=document.createElement('div');
       box.id='cya-mobile-saved-account';box.className='cya-mobile-saved-account';
-      box.innerHTML=`<div><span>Cuenta guardada</span><strong>${saved.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</strong></div><button class="cya-mobile-change-account" type="button">Cambiar</button>`;
+      const escaped=saved.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      box.innerHTML=`<div><span>Cuenta guardada</span><strong>${escaped}</strong></div><button class="cya-mobile-change-account" type="button">Cambiar</button>`;
       box.querySelector('button').onclick=()=>{
         localStorage.removeItem(EMAIL_KEY);
         box.remove();email.value='';email.style.display='block';email.focus();
@@ -67,9 +70,7 @@
       email.insertAdjacentElement('beforebegin',box);
       const sub=document.getElementById('login-pin-sub');if(sub)sub.textContent='Ingresa tu contraseña para continuar';
       setTimeout(()=>password.focus(),80);
-    }else{
-      email.style.display='block';
-    }
+    }else email.style.display='block';
   }
 
   window.cloudPrepareLogin=function(){
@@ -93,7 +94,7 @@
   window.cloudEnterSession=async function(session){
     if(session?.user?.email)rememberEmail(session.user.email);
     const result=await baseEnter.call(this,session);
-    if(window.cloudReady&&window.sesionActiva)await onSessionReady(session);
+    if(typeof cloudReady!=='undefined'&&cloudReady&&typeof sesionActiva!=='undefined'&&sesionActiva)await onSessionReady(session);
     return result;
   };
 
@@ -117,6 +118,36 @@
     catch(error){console.error(error);showToast?.('No se pudo abrir RENAPO dentro de la aplicación','warn');return null;}
   };
 
+  async function verifyRenapoInsideApp(){
+    const curp=String(document.getElementById('lead-curp')?.value||'').replace(/[^A-ZÑ0-9]/gi,'').toUpperCase().slice(0,18);
+    if(curp.length!==18){showToast?.('Captura una CURP válida de 18 caracteres antes de verificar','warn');return;}
+    try{await Mobile?.copyText?.({text:curp});}catch(_){ }
+    const result=await window.cyaMobileOpenRenapo(curp);
+    const name=String(result?.name||'').trim().toUpperCase();
+    if(!result?.verified||!name)return;
+    const input=document.getElementById('lead-nombre');
+    if(input){input.value=name;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));}
+    let lead=null;
+    try{if(typeof editingLeadId!=='undefined'&&editingLeadId)lead=(store.leads||[]).find(l=>String(l.id)===String(editingLeadId));}catch(_){ }
+    if(lead){
+      lead.nombre=name;
+      lead.nombreVerificado=true;
+      lead.nombrePendienteValidacion=false;
+      lead.fechaNombreVerificado=new Date().toISOString();
+      lead.origenNombreVerificado='RENAPO';
+      try{await cloudSyncNow?.({throwOnError:true});}catch(error){console.warn('Nombre RENAPO cargado localmente; sincronización pendiente',error);}
+    }
+    const helper=document.getElementById('cya-meta-name-helper');if(helper){helper.textContent='✓ Nombre cargado desde la consulta de RENAPO.';helper.style.color='var(--success)';}
+    showToast?.('Nombre verificado cargado directamente en el CRM','success');
+  }
+
+  function installWorkflowOverrides(){
+    if(typeof window.cyaVerificarCurpProspecto==='function'&&window.cyaVerificarCurpProspecto!==lastRenapoFunction){
+      window.cyaVerificarCurpProspecto=verifyRenapoInsideApp;
+      lastRenapoFunction=window.cyaVerificarCurpProspecto;
+    }
+  }
+
   window.cyaMobileShareWhatsApp=async function(options={}){
     try{return await Mobile?.shareWhatsApp?.({text:options.text||'',phone:options.phone||'',dataUrl:options.dataUrl||'',fileName:options.fileName||'cya-crm.png'});}
     catch(error){console.error(error);return null;}
@@ -137,7 +168,7 @@
   }
 
   async function scheduleNativeNotifications(){
-    if(!Mobile?.scheduleNotifications||!window.store)return;
+    if(!Mobile?.scheduleNotifications||typeof store==='undefined')return;
     const now=Date.now();const limit=now+1000*60*60*24*90;const list=[];
     for(const e of (store.agenda||[])){
       if(e.completado||e.cancelarRecordatorio||!e.fecha||!e.hora||!advisorAllows(e))continue;
@@ -156,6 +187,11 @@
     }
     try{await Mobile.scheduleNotifications({notifications:list});}catch(error){console.warn('No se pudieron programar avisos nativos',error);}
   }
+
+  function queueNotificationResync(){
+    clearTimeout(scheduleTimer);scheduleTimer=setTimeout(()=>{if(typeof cloudReady!=='undefined'&&cloudReady)scheduleNativeNotifications();},1200);
+  }
+  if(typeof baseSave==='function')window.saveStore=function(){const result=baseSave.apply(this,arguments);queueNotificationResync();return result;};
 
   async function registerPush(session){
     if(!Push||!session?.user?.id)return;
@@ -192,7 +228,7 @@
 
   function handleDeepLink(deepLink){
     const value=String(deepLink||'dashboard');
-    if(!window.cloudReady){sessionStorage.setItem('cya_pending_deep_link',value);return;}
+    if(typeof cloudReady==='undefined'||!cloudReady){sessionStorage.setItem('cya_pending_deep_link',value);return;}
     if(value.startsWith('client:')){
       navigate('clientes',document.querySelector('[data-page="clientes"]'));
       const id=value.slice(7);setTimeout(()=>{try{openPerfil(id);}catch(_){}},180);return;
@@ -206,11 +242,12 @@
   window.cyaMobileHandleDeepLink=handleDeepLink;
 
   async function onSessionReady(session){
-    if(!window.cloudReady||!window.sesionActiva)return;
+    if(typeof cloudReady==='undefined'||!cloudReady||typeof sesionActiva==='undefined'||!sesionActiva)return;
     await requestNativeNotifications();
     await scheduleNativeNotifications();
     subscribeLeadNotifications();
     await registerPush(session);
+    installWorkflowOverrides();
     try{
       Mobile?.addListener?.('notificationAction',event=>handleDeepLink(event?.deepLink));
       const pending=await Mobile?.getPendingAction?.();if(pending?.deepLink)handleDeepLink(pending.deepLink);
@@ -220,7 +257,7 @@
 
   window.cerrarSesion=async function(){
     try{
-      if(currentPushToken&&window.supabaseClient)await supabaseClient.from('mobile_push_tokens').update({active:false,last_seen_at:new Date().toISOString()}).eq('token',currentPushToken);
+      if(currentPushToken)await supabaseClient.from('mobile_push_tokens').update({active:false,last_seen_at:new Date().toISOString()}).eq('token',currentPushToken);
       if(leadChannel)await supabaseClient.removeChannel(leadChannel);
       await Push?.removeAllListeners?.();
     }catch(_){ }
@@ -229,4 +266,5 @@
 
   injectStyles();
   configureInsets();
+  setInterval(installWorkflowOverrides,500);
 })();
