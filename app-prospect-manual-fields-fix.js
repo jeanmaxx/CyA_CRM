@@ -169,7 +169,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-birthday-greetings]'))return;
     const script=document.createElement('script');
-    script.src='/app-birthday-greetings.js?v=20261030-birthday1';
+    script.src='/app-birthday-greetings.js?v=20261030-birthday2';
     script.async=false;
     script.dataset.cyaBirthdayGreetings='1';
     document.head.appendChild(script);
