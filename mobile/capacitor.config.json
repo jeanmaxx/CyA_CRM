@@ -3,7 +3,7 @@
   "appName": "C&A CRM",
   "webDir": "www",
   "server": {
-    "url": "https://crm-alvasd.pages.dev/app/casillas-asociados/",
+    "url": "https://crm-alvasd.pages.dev/app/casillas-asociados/?native=android-v23&firebase=1",
     "cleartext": false,
     "allowNavigation": [
       "crm-alvasd.pages.dev"
