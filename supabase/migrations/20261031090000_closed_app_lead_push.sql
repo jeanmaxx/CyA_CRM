@@ -44,6 +44,10 @@ create index if not exists mobile_push_deliveries_lead_idx
   on public.mobile_push_deliveries (organization_id, lead_id);
 create index if not exists mobile_push_deliveries_status_idx
   on public.mobile_push_deliveries (status, updated_at desc);
+create index if not exists mobile_push_deliveries_push_token_idx
+  on public.mobile_push_deliveries (push_token_id);
+create index if not exists mobile_push_deliveries_user_idx
+  on public.mobile_push_deliveries (user_id);
 
 alter table public.mobile_push_deliveries enable row level security;
 revoke all on public.mobile_push_deliveries from anon, authenticated;
