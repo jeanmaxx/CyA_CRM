@@ -16,6 +16,7 @@ on:
       - 'supabase/functions/mobile-push/**'
       - 'supabase/migrations/*mobile_notifications*'
       - 'supabase/migrations/*closed_app_lead_push*'
+      - 'supabase/migrations/*mobile_push_delivery_fk_indexes*'
       - '.github/workflows/android-apk.yml'
   push:
     branches: [main]
@@ -32,6 +33,7 @@ on:
       - 'supabase/functions/mobile-push/**'
       - 'supabase/migrations/*mobile_notifications*'
       - 'supabase/migrations/*closed_app_lead_push*'
+      - 'supabase/migrations/*mobile_push_delivery_fk_indexes*'
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
 
@@ -70,7 +72,9 @@ jobs:
         shell: bash
         run: |
           grep -q 'FIREBASE_SERVICE_ACCOUNT_JSON' supabase/functions/mobile-push/index.ts
-          grep -q 'cya_dispatch_new_lead_mobile_push' supabase/migrations/20261031090000_closed_app_lead_push.sql
+          grep -q 'cya_dispatch_new_lead_mobile_push' supabase/migrations/20261031090038_closed_app_lead_push_scaffold.sql
+          grep -q 'disable trigger cya_new_lead_mobile_push' supabase/migrations/20261031090038_closed_app_lead_push_scaffold.sql
+          test -s supabase/migrations/20261031090129_mobile_push_delivery_fk_indexes.sql
           grep -q 'app-mobile-push-v13.js' _worker.js
 
       - name: Validate Firebase Android client
