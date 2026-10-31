@@ -1,6 +1,25 @@
 -- C&A CRM Android 1.3: closed-app lead push dispatch.
 -- The Edge Function fetches the canonical lead row and never trusts message text
--- from this webhook payload.
+-- from this webhook payload. The database-to-function call is authenticated with
+-- a per-organization random secret that is never exposed to client roles.
+
+create table if not exists public.mobile_push_webhook_secrets (
+  organization_id uuid primary key references public.organizations(id) on delete cascade,
+  secret text not null,
+  created_at timestamptz not null default now(),
+  rotated_at timestamptz not null default now()
+);
+
+alter table public.mobile_push_webhook_secrets enable row level security;
+revoke all on public.mobile_push_webhook_secrets from anon, authenticated;
+grant all on public.mobile_push_webhook_secrets to service_role;
+
+insert into public.mobile_push_webhook_secrets (organization_id, secret)
+select
+  o.id,
+  replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '')
+from public.organizations o
+on conflict (organization_id) do nothing;
 
 create table if not exists public.mobile_push_deliveries (
   id uuid primary key default gen_random_uuid(),
@@ -33,7 +52,19 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  hook_secret text;
 begin
+  select s.secret
+    into hook_secret
+    from public.mobile_push_webhook_secrets s
+   where s.organization_id = new.organization_id;
+
+  -- Never make lead creation depend on notification infrastructure.
+  if hook_secret is null then
+    return new;
+  end if;
+
   perform net.http_post(
     url := 'https://ibhgisndtaclvwznqugu.supabase.co/functions/v1/mobile-push',
     body := jsonb_build_object(
@@ -46,7 +77,10 @@ begin
         'created_at', new.created_at
       )
     ),
-    headers := jsonb_build_object('Content-Type', 'application/json'),
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'X-CYA-Push-Hook', hook_secret
+    ),
     timeout_milliseconds := 5000
   );
   return new;
