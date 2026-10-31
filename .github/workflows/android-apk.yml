@@ -60,11 +60,9 @@ jobs:
         working-directory: mobile
         run: npm install --no-audit --no-fund
 
-      - name: Prepare official C&A Android branding
+      - name: Validate padded C&A Android branding
         shell: bash
-        run: |
-          mkdir -p mobile/assets
-          cp assets/brand/cya-logo-dark.svg mobile/assets/logo.svg
+        run: test -s mobile/assets/logo.svg
 
       - name: Generate and patch Android project
         working-directory: mobile
