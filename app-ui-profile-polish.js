@@ -3,12 +3,22 @@
   if(window.__cyaProfilePolishBundleLoaderStarted)return;
   window.__cyaProfilePolishBundleLoaderStarted=true;
 
+  function loadCompact(){
+    if(document.querySelector('script[data-cya-client-profile-compact]'))return;
+    const compact=document.createElement('script');
+    compact.src='/app-client-profile-compact.js?v=20261031-compact1';
+    compact.async=false;
+    compact.dataset.cyaClientProfileCompact='1';
+    document.head.appendChild(compact);
+  }
+
   function loadStage2(){
-    if(document.querySelector('script[data-cya-client-profile-stage2]'))return;
+    if(document.querySelector('script[data-cya-client-profile-stage2]')){loadCompact();return;}
     const script=document.createElement('script');
     script.src='/app-client-profile-stage2.js?v=20261030-stage2';
     script.async=false;
     script.dataset.cyaClientProfileStage2='1';
+    script.onload=loadCompact;
     document.head.appendChild(script);
   }
 
