@@ -13,5 +13,15 @@
   "android": {
     "allowMixedContent": false,
     "minWebViewVersion": 60
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover",
+      "hidden": false
+    },
+    "PushNotifications": {
+      "presentationOptions": ["alert", "sound", "badge"]
+    }
   }
 }
