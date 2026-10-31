@@ -2,6 +2,9 @@
 -- The Edge Function fetches the canonical lead row and never trusts message text
 -- from this webhook payload. The database-to-function call is authenticated with
 -- a per-organization random secret that is never exposed to client roles.
+--
+-- IMPORTANT: the trigger is installed DISABLED. It is enabled only after the
+-- Firebase service-account secret has been configured and verified.
 
 create table if not exists public.mobile_push_webhook_secrets (
   organization_id uuid primary key references public.organizations(id) on delete cascade,
@@ -100,3 +103,6 @@ create trigger cya_new_lead_mobile_push
   after insert on public.leads
   for each row
   execute function public.cya_dispatch_new_lead_mobile_push();
+
+-- Production safety gate: leave delivery off until Firebase server auth is ready.
+alter table public.leads disable trigger cya_new_lead_mobile_push;
