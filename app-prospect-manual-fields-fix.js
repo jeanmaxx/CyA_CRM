@@ -135,3 +135,23 @@
   ensureStyles();
   setTimeout(()=>{ensureEditable();stabilizeOriginBox();},100);
 })();
+
+/* Load the unified prospect WhatsApp message center only after the prospect modal
+   stability fix is active. This keeps the message UX additive and easy to roll back. */
+(function loadWhatsAppMessageCenterSafely(){
+  if(window.__cyaWhatsAppMessageCenterLoaderStarted)return;
+  window.__cyaWhatsAppMessageCenterLoaderStarted=true;
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    const ready=window.__cyaProspectManualFieldsFixInstalled===true&&typeof openModalLead==='function'&&typeof renderPage==='function';
+    if(!ready){if(attempts>500)clearInterval(timer);return;}
+    clearInterval(timer);
+    if(document.querySelector('script[data-cya-whatsapp-message-center]'))return;
+    const script=document.createElement('script');
+    script.src='/app-whatsapp-message-center.js?v=20261030-wa1';
+    script.async=false;
+    script.dataset.cyaWhatsappMessageCenter='1';
+    document.head.appendChild(script);
+  },25);
+})();
