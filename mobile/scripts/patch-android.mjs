@@ -72,8 +72,8 @@ let gradleText=read(gradle);
 if(!gradleText.includes('androidx.biometric:biometric:1.1.0')){
   gradleText=gradleText.replace(/dependencies\s*\{/,`dependencies {\n    implementation "androidx.biometric:biometric:1.1.0"`);
 }
-gradleText=gradleText.replace(/versionCode\s+\d+/, 'versionCode 3');
-gradleText=gradleText.replace(/versionName\s+["'][^"']+["']/, 'versionName "1.2.0"');
+gradleText=gradleText.replace(/versionCode\s+\d+/, 'versionCode 4');
+gradleText=gradleText.replace(/versionName\s+["'][^"']+["']/, 'versionName "1.2.1"');
 write(gradle,gradleText);
 
-console.log('Android V2.3 native patch applied');
+console.log('Android 1.2.1 native patch applied');
