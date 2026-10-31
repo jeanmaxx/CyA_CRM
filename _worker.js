@@ -63,7 +63,7 @@ function injectMobileBridge(response,target){
   return new HTMLRewriter()
     .on('script[src^="/cloud-adapter.js"]',{
       element(element){
-        element.after('<script src="/app-mobile-native.js?v=20261031-v2"><\/script>',{html:true});
+        element.after('<script src="/app-mobile-native.js?v=20261031-v2"><\/script><script src="/app-mobile-native-links.js?v=20261031-v2"><\/script>',{html:true});
       }
     })
     .transform(response);
