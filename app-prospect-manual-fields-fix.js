@@ -155,3 +155,23 @@
     document.head.appendChild(script);
   },25);
 })();
+
+/* Birthday greeting workflow: waits for Agenda + Operational Board + client profile
+   so the same feature is available from all three web CRM surfaces. */
+(function loadBirthdayGreetingsSafely(){
+  if(window.__cyaBirthdayGreetingsLoaderStarted)return;
+  window.__cyaBirthdayGreetingsLoaderStarted=true;
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    const ready=window.__cyaOperationalBoardModuleLoaded===true&&typeof renderAgenda==='function'&&typeof openPerfil==='function'&&typeof cloudSyncNow==='function';
+    if(!ready){if(attempts>800)clearInterval(timer);return;}
+    clearInterval(timer);
+    if(document.querySelector('script[data-cya-birthday-greetings]'))return;
+    const script=document.createElement('script');
+    script.src='/app-birthday-greetings.js?v=20261030-birthday1';
+    script.async=false;
+    script.dataset.cyaBirthdayGreetings='1';
+    document.head.appendChild(script);
+  },25);
+})();
