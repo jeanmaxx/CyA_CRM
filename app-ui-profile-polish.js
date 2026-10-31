@@ -201,3 +201,14 @@
     };
   },25);
 })();
+
+// Stage 1 client-profile and birthday visual refinements.
+// Kept as a separate additive module so these layout changes are easy to validate or roll back.
+(function loadClientProfileStage1(){
+  if(document.querySelector('script[data-cya-client-profile-stage1]'))return;
+  const script=document.createElement('script');
+  script.src='/app-client-profile-stage1.js?v=20261030-stage1';
+  script.async=false;
+  script.dataset.cyaClientProfileStage1='1';
+  document.head.appendChild(script);
+})();
