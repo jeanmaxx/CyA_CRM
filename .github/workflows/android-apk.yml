@@ -6,26 +6,32 @@ on:
     paths:
       - 'mobile/**'
       - 'app-mobile-native.js'
+      - 'app-mobile-push-v13.js'
       - 'app-mobile-native-links.js'
       - 'app-mobile-password-hotfix.js'
       - 'app-mobile-fcm-guard.js'
       - 'app-renapo-verification-fix.js'
       - 'app-contract-history-pdf.js'
       - '_worker.js'
+      - 'supabase/functions/mobile-push/**'
       - 'supabase/migrations/*mobile_notifications*'
+      - 'supabase/migrations/*closed_app_lead_push*'
       - '.github/workflows/android-apk.yml'
   push:
     branches: [main]
     paths:
       - 'mobile/**'
       - 'app-mobile-native.js'
+      - 'app-mobile-push-v13.js'
       - 'app-mobile-native-links.js'
       - 'app-mobile-password-hotfix.js'
       - 'app-mobile-fcm-guard.js'
       - 'app-renapo-verification-fix.js'
       - 'app-contract-history-pdf.js'
       - '_worker.js'
+      - 'supabase/functions/mobile-push/**'
       - 'supabase/migrations/*mobile_notifications*'
+      - 'supabase/migrations/*closed_app_lead_push*'
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
 
@@ -51,6 +57,7 @@ jobs:
         shell: bash
         run: |
           node --check app-mobile-native.js
+          node --check app-mobile-push-v13.js
           node --check app-mobile-native-links.js
           node --check app-mobile-password-hotfix.js
           node --check app-mobile-fcm-guard.js
@@ -58,6 +65,13 @@ jobs:
           node --check app-contract-history-pdf.js
           node --check _worker.js
           node --check mobile/scripts/patch-android.mjs
+
+      - name: Validate closed-app push wiring
+        shell: bash
+        run: |
+          grep -q 'FIREBASE_SERVICE_ACCOUNT_JSON' supabase/functions/mobile-push/index.ts
+          grep -q 'cya_dispatch_new_lead_mobile_push' supabase/migrations/20261031090000_closed_app_lead_push.sql
+          grep -q 'app-mobile-push-v13.js' _worker.js
 
       - name: Validate Firebase Android client
         shell: bash
@@ -112,7 +126,7 @@ jobs:
         run: |
           cp firebase/google-services.json android/app/google-services.json
           test -s android/app/google-services.json
-          echo 'Firebase configuration installed for C&A CRM Android 1.2.1.'
+          echo 'Firebase configuration installed for C&A CRM Android 1.3.0.'
 
       - name: Build debug APK
         working-directory: mobile/android
@@ -125,15 +139,15 @@ jobs:
         shell: bash
         run: |
           mkdir -p mobile/output
-          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk mobile/output/CYA-CRM-1.2.1-debug.apk
-          sha256sum mobile/output/CYA-CRM-1.2.1-debug.apk | tee mobile/output/CYA-CRM-1.2.1-debug.sha256
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk mobile/output/CYA-CRM-1.3.0-debug.apk
+          sha256sum mobile/output/CYA-CRM-1.3.0-debug.apk | tee mobile/output/CYA-CRM-1.3.0-debug.sha256
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CYA-CRM-Android-1.2.1-debug
+          name: CYA-CRM-Android-1.3.0-debug
           path: |
-            mobile/output/CYA-CRM-1.2.1-debug.apk
-            mobile/output/CYA-CRM-1.2.1-debug.sha256
+            mobile/output/CYA-CRM-1.3.0-debug.apk
+            mobile/output/CYA-CRM-1.3.0-debug.sha256
           if-no-files-found: error
           retention-days: 14
