@@ -1,0 +1,17 @@
+{
+  "appId": "com.alvasd.cya.crm",
+  "appName": "C&A CRM",
+  "webDir": "www",
+  "server": {
+    "url": "https://crm-alvasd.pages.dev/app/casillas-asociados/",
+    "cleartext": false,
+    "allowNavigation": [
+      "crm-alvasd.pages.dev"
+    ],
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "minWebViewVersion": 60
+  }
+}
