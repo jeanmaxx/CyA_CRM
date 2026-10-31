@@ -98,6 +98,14 @@ function isInvalidRegistration(status: number, payload: any) {
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === "GET") {
+    return json({
+      ok: true,
+      service: "mobile-push",
+      firebaseConfigured: Boolean(decodeServiceAccount()),
+      supabaseAdminConfigured: Boolean(supabaseSecretKey()),
+    });
+  }
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
   const url = Deno.env.get("SUPABASE_URL") || "";
