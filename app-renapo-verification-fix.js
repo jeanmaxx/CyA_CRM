@@ -22,14 +22,15 @@
   }
   function needsVerification(lead){return isMetaLead(lead)&&lead?.nombreVerificado!==true;}
   function visibleName(){return String(document.getElementById('lead-nombre')?.value||'').trim().toUpperCase();}
+  function setDisplay(el,value){if(el&&el.style.display!==value)el.style.display=value;}
 
   function updateModalState(){
     const lead=currentLead();
+    const pending=needsVerification(lead);
     const helper=document.getElementById('cya-meta-name-helper');
     if(helper){
-      const pending=needsVerification(lead);
-      helper.style.display=pending?'block':'none';
-      if(pending)helper.textContent='⚠ Verificar nombre mediante RENAPO.';
+      setDisplay(helper,pending?'block':'none');
+      if(pending&&helper.textContent!=='⚠ Verificar nombre mediante RENAPO.')helper.textContent='⚠ Verificar nombre mediante RENAPO.';
     }
 
     let button=document.getElementById('cya-confirm-renapo-name');
@@ -44,14 +45,14 @@
       button.onclick=window.cyaConfirmarNombreRenapoWeb;
       (helper||input).insertAdjacentElement('afterend',button);
     }
-    if(button)button.style.display=needsVerification(lead)?'inline-flex':'none';
+    if(button)setDisplay(button,pending?'inline-flex':'none');
   }
 
   function updateCards(){
     document.querySelectorAll('.cya-meta-lead-card[data-lead-id]').forEach(card=>{
       const lead=leadById(card.dataset.leadId);
       const warning=card.querySelector('.cya-meta-raw-name');
-      if(warning)warning.style.display=needsVerification(lead)?'block':'none';
+      if(warning)setDisplay(warning,needsVerification(lead)?'block':'none');
     });
   }
 
@@ -98,7 +99,7 @@
 
   const observer=new MutationObserver(queueRefresh);
   const start=()=>{
-    observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+    observer.observe(document.body,{childList:true,subtree:true});
     refresh();
   };
   if(document.body)start();else document.addEventListener('DOMContentLoaded',start,{once:true});
