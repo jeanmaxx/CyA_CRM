@@ -124,6 +124,18 @@ Deno.serve(async (req: Request) => {
   if (!organizationId || !leadId) return json({ error: "missing_lead_identity" }, 400);
 
   const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+
+  const hookHeader = String(req.headers.get("x-cya-push-hook") || "").trim();
+  const { data: hookAuth, error: hookAuthError } = await supabase
+    .from("mobile_push_webhook_secrets")
+    .select("secret")
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (hookAuthError) return json({ error: "hook_auth_lookup_failed" }, 500);
+  if (!hookHeader || !hookAuth?.secret || hookHeader !== String(hookAuth.secret)) {
+    return json({ error: "unauthorized_webhook" }, 401);
+  }
+
   const { data: lead, error: leadError } = await supabase
     .from("leads")
     .select("organization_id,id,advisor_id,name,service_id,payload,created_at")
