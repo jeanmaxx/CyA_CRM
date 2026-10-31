@@ -18,3 +18,7 @@ El workflow `.github/workflows/android-apk.yml` genera una APK `debug` instalabl
 Esta APK no es todavía la versión final de distribución. La firma release, biometría, notificaciones push, integración RENAPO y puente nativo de compartir/WhatsApp se incorporarán en las siguientes fases.
 
 El envío de WhatsApp siempre debe terminar con una acción humana; la aplicación no enviará mensajes automáticamente.
+
+## Validación CI
+
+Este archivo también sirve como cambio mínimo para validar el primer build Android después de instalar el workflow en `main`.
