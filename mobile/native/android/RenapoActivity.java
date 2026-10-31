@@ -8,8 +8,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.View;
-import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -21,6 +19,10 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import org.json.JSONTokener;
 
@@ -33,6 +35,7 @@ public class RenapoActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         curp = getIntent().getStringExtra("curp");
         if (curp == null) curp = "";
         copyCurp();
@@ -44,6 +47,15 @@ public class RenapoActivity extends AppCompatActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.rgb(12, 17, 27));
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, windowInsets) -> {
+            Insets safe = windowInsets.getInsets(
+                WindowInsetsCompat.Type.statusBars()
+                    | WindowInsetsCompat.Type.navigationBars()
+                    | WindowInsetsCompat.Type.displayCutout()
+            );
+            view.setPadding(safe.left, safe.top, safe.right, safe.bottom);
+            return windowInsets;
+        });
 
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
@@ -76,7 +88,7 @@ public class RenapoActivity extends AppCompatActivity {
         settings.setSupportZoom(true);
         settings.setBuiltInZoomControls(true);
         settings.setDisplayZoomControls(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " CYA-CRM-Android/1.1");
+        settings.setUserAgentString(settings.getUserAgentString() + " CYA-CRM-Android/1.2");
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
@@ -90,6 +102,7 @@ public class RenapoActivity extends AppCompatActivity {
         root.addView(status, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         root.addView(webView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
         setContentView(root);
+        ViewCompat.requestApplyInsets(root);
     }
 
     private Button button(String label) {
@@ -131,7 +144,6 @@ public class RenapoActivity extends AppCompatActivity {
         String script = "(function(){" +
             "function clean(s){return (s||'').replace(/\\s+/g,' ').trim();}" +
             "function norm(s){return clean(s).normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();}" +
-            "var fields=[].slice.call(document.querySelectorAll('input,textarea,[data-value],dd,td,strong,span,p'));" +
             "function byLabel(words){" +
               "var labels=[].slice.call(document.querySelectorAll('label,dt,th,.control-label,.form-label,strong'));" +
               "for(var i=0;i<labels.length;i++){var t=norm(labels[i].innerText||labels[i].textContent);if(words.some(function(w){return t.indexOf(w)>=0;})){" +
