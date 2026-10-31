@@ -1,0 +1,94 @@
+name: Android APK
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/android-apk.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    name: Build C&A CRM debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+
+      - name: Install Capacitor dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Prepare official C&A Android branding
+        shell: bash
+        run: |
+          mkdir -p mobile/assets
+          cp assets/brand/cya-logo-dark.svg mobile/assets/logo.svg
+
+      - name: Generate Android project
+        working-directory: mobile
+        shell: bash
+        run: |
+          rm -rf android
+          npx cap add android
+          npx capacitor-assets generate --android --assetPath assets \
+            --iconBackgroundColor '#071A33' \
+            --iconBackgroundColorDark '#071A33' \
+            --splashBackgroundColor '#071A33' \
+            --splashBackgroundColorDark '#071A33'
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: mobile/android
+        shell: bash
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          mkdir -p mobile/output
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk mobile/output/CYA-CRM-1.0.0-debug.apk
+          sha256sum mobile/output/CYA-CRM-1.0.0-debug.apk | tee mobile/output/CYA-CRM-1.0.0-debug.sha256
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CYA-CRM-Android-debug
+          path: |
+            mobile/output/CYA-CRM-1.0.0-debug.apk
+            mobile/output/CYA-CRM-1.0.0-debug.sha256
+          if-no-files-found: error
+          retention-days: 14
