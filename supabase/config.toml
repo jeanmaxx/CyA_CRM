@@ -3,3 +3,6 @@ verify_jwt = true
 
 [functions.meta-lead-ingest]
 verify_jwt = false
+
+[functions.mobile-push]
+verify_jwt = false
