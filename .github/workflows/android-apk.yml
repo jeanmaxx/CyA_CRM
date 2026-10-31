@@ -37,6 +37,13 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Validate mobile JavaScript syntax
+        shell: bash
+        run: |
+          node --check app-mobile-native.js
+          node --check _worker.js
+          node --check mobile/scripts/patch-android.mjs
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
