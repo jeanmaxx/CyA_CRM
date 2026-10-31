@@ -8,6 +8,7 @@ on:
       - 'app-mobile-native.js'
       - 'app-mobile-native-links.js'
       - 'app-mobile-password-hotfix.js'
+      - 'app-mobile-fcm-guard.js'
       - '_worker.js'
       - 'supabase/migrations/*mobile_notifications*'
       - '.github/workflows/android-apk.yml'
@@ -18,6 +19,7 @@ on:
       - 'app-mobile-native.js'
       - 'app-mobile-native-links.js'
       - 'app-mobile-password-hotfix.js'
+      - 'app-mobile-fcm-guard.js'
       - '_worker.js'
       - 'supabase/migrations/*mobile_notifications*'
       - '.github/workflows/android-apk.yml'
@@ -47,6 +49,7 @@ jobs:
           node --check app-mobile-native.js
           node --check app-mobile-native-links.js
           node --check app-mobile-password-hotfix.js
+          node --check app-mobile-fcm-guard.js
           node --check _worker.js
           node --check mobile/scripts/patch-android.mjs
 
