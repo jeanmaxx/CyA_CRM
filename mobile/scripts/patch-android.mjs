@@ -20,10 +20,12 @@ for(const name of ['CyaMobilePlugin.java','RenapoActivity.java','NotificationRec
   fs.copyFileSync(path.join(nativeDir,name),path.join(javaDir,name));
 }
 
-// Report the real Android version instead of keeping a stale hard-coded value.
+// Keep the bridge metadata aligned with the generated Android release.
+// BuildConfig is not emitted by this Capacitor/AGP setup, so stamp the same
+// version that is applied to build.gradle below.
 const mobilePlugin=path.join(javaDir,'CyaMobilePlugin.java');
 let mobilePluginText=read(mobilePlugin);
-mobilePluginText=mobilePluginText.replace(/result\.put\("appVersion",\s*"[^"]+"\);/,'result.put("appVersion", BuildConfig.VERSION_NAME);');
+mobilePluginText=mobilePluginText.replace(/result\.put\("appVersion",\s*"[^"]+"\);/,'result.put("appVersion", "1.3.0");');
 write(mobilePlugin,mobilePluginText);
 
 fs.mkdirSync(path.join(resDir,'xml'),{recursive:true});
