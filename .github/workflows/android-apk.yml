@@ -6,6 +6,7 @@ on:
     paths:
       - 'mobile/**'
       - 'app-mobile-native.js'
+      - 'app-mobile-native-links.js'
       - '_worker.js'
       - 'supabase/migrations/*mobile_notifications*'
       - '.github/workflows/android-apk.yml'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'mobile/**'
       - 'app-mobile-native.js'
+      - 'app-mobile-native-links.js'
       - '_worker.js'
       - 'supabase/migrations/*mobile_notifications*'
       - '.github/workflows/android-apk.yml'
@@ -41,6 +43,7 @@ jobs:
         shell: bash
         run: |
           node --check app-mobile-native.js
+          node --check app-mobile-native-links.js
           node --check _worker.js
           node --check mobile/scripts/patch-android.mjs
 
