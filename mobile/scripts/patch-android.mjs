@@ -19,6 +19,13 @@ fs.mkdirSync(javaDir,{recursive:true});
 for(const name of ['CyaMobilePlugin.java','RenapoActivity.java','NotificationReceiver.java','CyaDownloadHandler.java']){
   fs.copyFileSync(path.join(nativeDir,name),path.join(javaDir,name));
 }
+
+// Report the real Android version instead of keeping a stale hard-coded value.
+const mobilePlugin=path.join(javaDir,'CyaMobilePlugin.java');
+let mobilePluginText=read(mobilePlugin);
+mobilePluginText=mobilePluginText.replace(/result\.put\("appVersion",\s*"[^"]+"\);/,'result.put("appVersion", BuildConfig.VERSION_NAME);');
+write(mobilePlugin,mobilePluginText);
+
 fs.mkdirSync(path.join(resDir,'xml'),{recursive:true});
 fs.copyFileSync(path.join(nativeDir,'file_paths.xml'),path.join(resDir,'xml','cya_file_paths.xml'));
 
@@ -72,8 +79,8 @@ let gradleText=read(gradle);
 if(!gradleText.includes('androidx.biometric:biometric:1.1.0')){
   gradleText=gradleText.replace(/dependencies\s*\{/,`dependencies {\n    implementation "androidx.biometric:biometric:1.1.0"`);
 }
-gradleText=gradleText.replace(/versionCode\s+\d+/, 'versionCode 4');
-gradleText=gradleText.replace(/versionName\s+["'][^"']+["']/, 'versionName "1.2.1"');
+gradleText=gradleText.replace(/versionCode\s+\d+/, 'versionCode 5');
+gradleText=gradleText.replace(/versionName\s+["'][^"']+["']/, 'versionName "1.3.0"');
 write(gradle,gradleText);
 
-console.log('Android 1.2.1 native patch applied');
+console.log('Android 1.3.0 native patch applied');
