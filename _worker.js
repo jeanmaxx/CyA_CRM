@@ -63,7 +63,7 @@ function injectMobileBridge(response,target){
   return new HTMLRewriter()
     .on('script[src^="/cloud-adapter.js"]',{
       element(element){
-        element.after('<script src="/app-mobile-fcm-guard.js?v=20261031-v23"><\/script><script src="/app-mobile-native.js?v=20261031-v23"><\/script><script src="/app-mobile-native-links.js?v=20261031-v23"><\/script><script src="/app-mobile-password-hotfix.js?v=20261031-v23"><\/script>',{html:true});
+        element.after('<script src="/app-mobile-fcm-guard.js?v=20261031-v23"><\/script><script src="/app-mobile-native.js?v=20261031-v23"><\/script><script src="/app-mobile-native-links.js?v=20261031-v23"><\/script><script src="/app-mobile-password-hotfix.js?v=20261031-v23"><\/script><script src="/app-renapo-verification-fix.js?v=20261031-polish1"><\/script><script src="/app-contract-history-pdf.js?v=20261031-polish1"><\/script>',{html:true});
       }
     })
     .transform(response);
