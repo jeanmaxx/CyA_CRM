@@ -13,7 +13,6 @@ const nativeDir=path.join(mobile,'native','android');
 function ensure(condition,message){if(!condition)throw new Error(message);}
 function read(file){return fs.readFileSync(file,'utf8');}
 function write(file,content){fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,content);}
-function patch(file,fn){const before=read(file);const after=fn(before);ensure(after!==before,`No se pudo aplicar parche a ${file}`);write(file,after);}
 
 ensure(fs.existsSync(android),'No existe mobile/android. Ejecuta npx cap add android primero.');
 fs.mkdirSync(javaDir,{recursive:true});
@@ -42,7 +41,7 @@ public class MainActivity extends BridgeActivity {
 const manifest=path.join(app,'src','main','AndroidManifest.xml');
 let manifestText=read(manifest);
 if(!manifestText.includes('android.permission.POST_NOTIFICATIONS')){
-  manifestText=manifestText.replace('<manifest ', '<manifest ').replace(/(<manifest[^>]*>)/,`$1\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />`);
+  manifestText=manifestText.replace(/(<manifest[^>]*>)/,`$1\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />`);
 }
 if(!manifestText.includes('RenapoActivity')){
   manifestText=manifestText.replace('</application>',`        <activity
@@ -73,24 +72,5 @@ if(!gradleText.includes('androidx.biometric:biometric:1.1.0')){
 gradleText=gradleText.replace(/versionCode\s+\d+/, 'versionCode 2');
 gradleText=gradleText.replace(/versionName\s+["'][^"']+["']/, 'versionName "1.1.0"');
 write(gradle,gradleText);
-
-const paddedDrawable=path.join(resDir,'drawable','ic_launcher_foreground_padded.xml');
-write(paddedDrawable,`<?xml version="1.0" encoding="utf-8"?>
-<inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@mipmap/ic_launcher_foreground"
-    android:insetLeft="18dp"
-    android:insetTop="18dp"
-    android:insetRight="18dp"
-    android:insetBottom="18dp" />
-`);
-for(const file of [
-  path.join(resDir,'mipmap-anydpi-v26','ic_launcher.xml'),
-  path.join(resDir,'mipmap-anydpi-v26','ic_launcher_round.xml')
-]){
-  if(fs.existsSync(file)){
-    const text=read(file).replace('@mipmap/ic_launcher_foreground','@drawable/ic_launcher_foreground_padded');
-    write(file,text);
-  }
-}
 
 console.log('Android V2 native patch applied');
