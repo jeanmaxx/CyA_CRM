@@ -16,7 +16,7 @@ function write(file,content){fs.mkdirSync(path.dirname(file),{recursive:true});f
 
 ensure(fs.existsSync(android),'No existe mobile/android. Ejecuta npx cap add android primero.');
 fs.mkdirSync(javaDir,{recursive:true});
-for(const name of ['CyaMobilePlugin.java','RenapoActivity.java','NotificationReceiver.java']){
+for(const name of ['CyaMobilePlugin.java','RenapoActivity.java','NotificationReceiver.java','CyaDownloadHandler.java']){
   fs.copyFileSync(path.join(nativeDir,name),path.join(javaDir,name));
 }
 fs.mkdirSync(path.join(resDir,'xml'),{recursive:true});
@@ -26,6 +26,7 @@ const mainActivity=path.join(javaDir,'MainActivity.java');
 write(mainActivity,`package com.alvasd.cya.crm;
 
 import android.os.Bundle;
+import androidx.activity.EdgeToEdge;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -33,7 +34,9 @@ public class MainActivity extends BridgeActivity {
   public void onCreate(Bundle savedInstanceState) {
     registerPlugin(CyaMobilePlugin.class);
     super.onCreate(savedInstanceState);
+    EdgeToEdge.enable(this);
     NotificationReceiver.createChannels(this);
+    CyaDownloadHandler.install(getBridge().getWebView());
   }
 }
 `);
