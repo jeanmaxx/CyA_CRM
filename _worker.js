@@ -63,7 +63,7 @@ function injectMobileBridge(response,target){
   return new HTMLRewriter()
     .on('script[src^="/cloud-adapter.js"]',{
       element(element){
-        element.after('<script src="/app-mobile-fcm-guard.js?v=20261031-v22"><\/script><script src="/app-mobile-native.js?v=20261031-v22"><\/script><script src="/app-mobile-native-links.js?v=20261031-v22"><\/script><script src="/app-mobile-password-hotfix.js?v=20261031-v22"><\/script>',{html:true});
+        element.after('<script src="/app-mobile-fcm-guard.js?v=20261031-v23"><\/script><script src="/app-mobile-native.js?v=20261031-v23"><\/script><script src="/app-mobile-native-links.js?v=20261031-v23"><\/script><script src="/app-mobile-password-hotfix.js?v=20261031-v23"><\/script>',{html:true});
       }
     })
     .transform(response);
@@ -79,8 +79,6 @@ export default {
     const target=routeTarget(url.pathname);
     if(!target)return env.ASSETS.fetch(request);
 
-    // Pages redirects /app/index.html to /app/. Fetch the clean asset URL
-    // internally so the browser keeps its tenant path and query parameters.
     const assetUrl=new URL(request.url);
     assetUrl.pathname=target;
     assetUrl.search='';

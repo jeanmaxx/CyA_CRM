@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "15223161402",
+    "project_id": "cya-crm",
+    "storage_bucket": "cya-crm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:15223161402:android:bb2f339fb18962fcf46b03",
+        "android_client_info": {
+          "package_name": "com.alvasd.cya.crm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3ltuBJe4Qsf3zTBoXO6WYTzSYr-5xMMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
