@@ -58,6 +58,17 @@ function redirectResponse(request,url,path){
   return Response.redirect(destination.toString(),308);
 }
 
+function injectMobileBridge(response,target){
+  if(target!=='/app/'||typeof HTMLRewriter==='undefined')return response;
+  return new HTMLRewriter()
+    .on('script[src^="/cloud-adapter.js"]',{
+      element(element){
+        element.after('<script src="/app-mobile-native.js?v=20261031-v2"><\/script>',{html:true});
+      }
+    })
+    .transform(response);
+}
+
 export default {
   async fetch(request,env){
     const url=new URL(request.url);
@@ -73,8 +84,9 @@ export default {
     const assetUrl=new URL(request.url);
     assetUrl.pathname=target;
     assetUrl.search='';
-    return env.ASSETS.fetch(new Request(assetUrl.toString(),request));
+    const response=await env.ASSETS.fetch(new Request(assetUrl.toString(),request));
+    return injectMobileBridge(response,target);
   }
 };
 
-export {legacyRedirectPath,routeTarget};
+export {legacyRedirectPath,routeTarget,injectMobileBridge};
