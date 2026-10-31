@@ -5,11 +5,17 @@ on:
     branches: [main]
     paths:
       - 'mobile/**'
+      - 'app-mobile-native.js'
+      - '_worker.js'
+      - 'supabase/migrations/*mobile_notifications*'
       - '.github/workflows/android-apk.yml'
   push:
     branches: [main]
     paths:
       - 'mobile/**'
+      - 'app-mobile-native.js'
+      - '_worker.js'
+      - 'supabase/migrations/*mobile_notifications*'
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
 
@@ -18,9 +24,9 @@ permissions:
 
 jobs:
   build-debug-apk:
-    name: Build C&A CRM debug APK
+    name: Build C&A CRM Android APK
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -46,7 +52,6 @@ jobs:
             SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager -perm -u+x | head -n 1)"
           fi
           test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
-          echo "Using sdkmanager: $SDKMANAGER"
           "$SDKMANAGER" --version
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
@@ -61,7 +66,7 @@ jobs:
           mkdir -p mobile/assets
           cp assets/brand/cya-logo-dark.svg mobile/assets/logo.svg
 
-      - name: Generate Android project
+      - name: Generate and patch Android project
         working-directory: mobile
         shell: bash
         run: |
@@ -73,6 +78,20 @@ jobs:
             --splashBackgroundColor '#071A33' \
             --splashBackgroundColorDark '#071A33'
           npx cap sync android
+          node scripts/patch-android.mjs
+
+      - name: Add Firebase configuration when available
+        working-directory: mobile
+        shell: bash
+        env:
+          FIREBASE_GOOGLE_SERVICES_B64: ${{ secrets.CYA_FIREBASE_GOOGLE_SERVICES_B64 }}
+        run: |
+          if [ -n "$FIREBASE_GOOGLE_SERVICES_B64" ]; then
+            printf '%s' "$FIREBASE_GOOGLE_SERVICES_B64" | base64 --decode > android/app/google-services.json
+            echo 'Firebase configuration installed for this build.'
+          else
+            echo 'Firebase configuration not present; local notifications remain available and remote FCM registration will stay inactive.'
+          fi
 
       - name: Build debug APK
         working-directory: mobile/android
@@ -85,15 +104,15 @@ jobs:
         shell: bash
         run: |
           mkdir -p mobile/output
-          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk mobile/output/CYA-CRM-1.0.0-debug.apk
-          sha256sum mobile/output/CYA-CRM-1.0.0-debug.apk | tee mobile/output/CYA-CRM-1.0.0-debug.sha256
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk mobile/output/CYA-CRM-1.1.0-debug.apk
+          sha256sum mobile/output/CYA-CRM-1.1.0-debug.apk | tee mobile/output/CYA-CRM-1.1.0-debug.sha256
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CYA-CRM-Android-debug
+          name: CYA-CRM-Android-1.1.0-debug
           path: |
-            mobile/output/CYA-CRM-1.0.0-debug.apk
-            mobile/output/CYA-CRM-1.0.0-debug.sha256
+            mobile/output/CYA-CRM-1.1.0-debug.apk
+            mobile/output/CYA-CRM-1.1.0-debug.sha256
           if-no-files-found: error
           retention-days: 14
