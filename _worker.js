@@ -61,11 +61,6 @@ function redirectResponse(request,url,path){
 function injectMobileBridge(response,target){
   if(target!=='/app/'||typeof HTMLRewriter==='undefined')return response;
   return new HTMLRewriter()
-    .on('script[src^="/cloud-config.js"]',{
-      element(element){
-        element.before('<script src="/app-cya-login-brand-lock.js?v=20261031-brandlock1"><\/script>',{html:true});
-      }
-    })
     .on('script[src^="/cloud-adapter.js"]',{
       element(element){
         element.after('<script src="/app-mobile-fcm-guard.js?v=20261031-v23"><\/script><script src="/app-mobile-native.js?v=20261031-v23"><\/script><script src="/app-mobile-push-v13.js?v=20261031-v13"><\/script><script src="/app-mobile-native-links.js?v=20261031-v23"><\/script><script src="/app-mobile-password-hotfix.js?v=20261031-v23"><\/script><script src="/app-renapo-verification-fix.js?v=20261031-polish1"><\/script><script src="/app-contract-history-pdf.js?v=20261031-polish1"><\/script><script src="/app-wa-sindos-template.js?v=20261031-sindos1"><\/script>',{html:true});
