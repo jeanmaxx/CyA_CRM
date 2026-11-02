@@ -13,7 +13,6 @@
   const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   let patchedWa=false;
   let patchedOutcome=false;
-  let savedRevision=false;
 
   function leadIdFromContext(){
     try{
@@ -75,7 +74,7 @@
 
   function migrateStoredTemplates(){
     try{
-      if(!window.store||!Array.isArray(store.plantillas))return false;
+      if(typeof store==='undefined'||!Array.isArray(store.plantillas))return false;
       let changed=false;
       for(const id of [WA_TEMPLATE_ID,OUTCOME_TEMPLATE_ID]){
         const tpl=store.plantillas.find(p=>p?.id===id);
@@ -86,9 +85,8 @@
           changed=true;
         }
       }
-      if(changed&&!savedRevision){
-        savedRevision=true;
-        try{saveStore?.();}catch(_){ }
+      if(changed){
+        try{if(typeof saveStore==='function')saveStore();}catch(_){ }
       }
       return changed;
     }catch(_){return false;}
