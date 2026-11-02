@@ -80,7 +80,7 @@
       for(const id of [WA_TEMPLATE_ID,OUTCOME_TEMPLATE_ID]){
         const tpl=store.plantillas.find(p=>p?.id===id);
         if(!tpl)continue;
-        if(tpl.cyaRevision!==REVISION||!String(tpl.texto||'').includes('{{FECHA_ULTIMO_RETIRO}}')){
+        if(tpl.cyaRevision!==REVISION){
           tpl.texto=TEMPLATE_TEXT;
           tpl.cyaRevision=REVISION;
           changed=true;
