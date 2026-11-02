@@ -13,6 +13,7 @@
   const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   let patchedWa=false;
   let patchedOutcome=false;
+  let lastOutcomeLead=null;
 
   function leadIdFromContext(){
     try{
@@ -104,7 +105,7 @@
     });
   }
 
-  function hydrateOutcomeModal(){
+  function hydrateOutcomeModal(leadOverride){
     const modal=document.getElementById('cya-outcome-message-modal');
     if(!modal?.classList.contains('open'))return;
     const cause=String(document.getElementById('cya-outcome-cause')?.textContent||'').toLowerCase();
@@ -113,7 +114,8 @@
       if(!cause.includes('5 años')&&!cause.includes('retiro'))return;
       if(!area)return;
     }
-    const next=hydrateText(area.value,currentLead());
+    const lead=leadOverride||lastOutcomeLead||currentLead();
+    const next=hydrateText(area.value,lead);
     if(next!==area.value)area.value=next;
   }
 
@@ -136,20 +138,23 @@
     if(typeof window.cyaPrevisualizarRespuestaArchivo==='function'){
       const previewBase=window.cyaPrevisualizarRespuestaArchivo;
       window.cyaPrevisualizarRespuestaArchivo=function(){
+        lastOutcomeLead=currentLead()||lastOutcomeLead;
         migrateStoredTemplates();
         const result=previewBase.apply(this,arguments);
-        setTimeout(hydrateOutcomeModal,0);
-        setTimeout(hydrateOutcomeModal,100);
+        setTimeout(()=>hydrateOutcomeModal(lastOutcomeLead),0);
+        setTimeout(()=>hydrateOutcomeModal(lastOutcomeLead),100);
         return result;
       };
     }
     if(typeof window.confirmarArchivarLead==='function'){
       const archiveBase=window.confirmarArchivarLead;
       window.confirmarArchivarLead=function(){
+        const leadBefore=currentLead();
+        if(leadBefore)lastOutcomeLead=leadBefore;
         migrateStoredTemplates();
         const result=archiveBase.apply(this,arguments);
-        setTimeout(hydrateOutcomeModal,100);
-        setTimeout(hydrateOutcomeModal,180);
+        setTimeout(()=>hydrateOutcomeModal(leadBefore||lastOutcomeLead),100);
+        setTimeout(()=>hydrateOutcomeModal(leadBefore||lastOutcomeLead),180);
         return result;
       };
     }
