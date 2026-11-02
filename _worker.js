@@ -68,7 +68,7 @@ function injectMobileBridge(response,target){
     })
     .on('script[src^="/cloud-adapter.js"]',{
       element(element){
-        element.after('<script src="/app-mobile-fcm-guard.js?v=20261031-v23"><\/script><script src="/app-mobile-native.js?v=20261031-v23"><\/script><script src="/app-mobile-push-v13.js?v=20261031-v13"><\/script><script src="/app-mobile-native-links.js?v=20261031-v23"><\/script><script src="/app-mobile-password-hotfix.js?v=20261031-v23"><\/script><script src="/app-renapo-verification-fix.js?v=20261031-polish1"><\/script><script src="/app-contract-history-pdf.js?v=20261031-polish1"><\/script><script src="/app-wa-sindos-template.js?v=20261031-sindos1"><\/script>',{html:true});
+        element.after('<script src="/app-mobile-fcm-guard.js?v=20261031-v23"><\/script><script src="/app-mobile-native.js?v=20261031-v23"><\/script><script src="/app-mobile-push-v13.js?v=20261031-v13"><\/script><script src="/app-mobile-native-links.js?v=20261031-v23"><\/script><script src="/app-mobile-password-hotfix.js?v=20261031-v23"><\/script><script src="/app-renapo-verification-fix.js?v=20261031-polish1"><\/script><script src="/app-contract-history-pdf.js?v=20261031-polish1"><\/script><script src="/app-wa-sindos-template.js?v=20261031-sindos1"><\/script><script src="/app-wa-retiro5-dates.js?v=20261102-retiro5dates1"><\/script>',{html:true});
       }
     })
     .transform(response);
