@@ -34,6 +34,18 @@
       texto:'¡Muy bien!\n\nQuedo a tus enteras órdenes para cualquier duda que llegue a surgir en el futuro.\n\nAprovecho para recordarte los servicios en los que nos especializamos aquí en *Casillas & Asociados*:\n\n*Retiros por Desempleo de AFORE* (para quienes necesiten liquidez y tengan más de 45 días sin empleo).\n*Estrategias y Trámites de Pensiones.*\n*Corrección de Datos y Documentos ante el IMSS/AFORE.*\n\nTe dejo mi tarjeta digital por si algún amigo, conocido o familiar necesita de este o de otros servicios de consultoría; con gusto los podemos apoyar.\n\nhttps://ttd-alvasd.pages.dev/?asesor=emmanuel-alvarez\n\n¡Que tengas un excelente día!\n\n*{{ASESOR}}* | _Consultor Previsional_'
     },
     {
+      id:'pl_wa_finalizacion_1',nombre:'WhatsApp · Finalización (1/3) · Depósito recibido',etapa:'deposito',tipo:'whatsapp',icono:'',cyaGrupo:'finalizacion',cyaOrden:1,
+      texto:'¡Qué alegría, {{NOMBRE}}! 🎉🙌\n\nMe da muchísimo gusto saber que ya recibiste tu depósito.\n\nDespués de todo el proceso y la espera, me da mucho gusto saber que ya cuentas con este recurso.\n\nTambién quiero agradecerte, a nombre de todo el equipo de *Casillas & Asociados*, la confianza y paciencia que depositaste en nosotros para acompañarte hasta este momento.\n\nDe corazón, espero que este dinero te brinde tranquilidad, te ayude a resolver aquello que tienes pendiente o te permita dar ese paso hacia algún proyecto que tengas en mente.\n\n*¡Muchas felicidades, {{NOMBRE}}!* 🎊\nFue un verdadero gusto acompañarte y ser parte de este proceso.'
+    },
+    {
+      id:'pl_wa_finalizacion_2',nombre:'WhatsApp · Finalización (2/3) · Pago de honorarios',etapa:'cobro_honorarios',tipo:'whatsapp',icono:'',cyaGrupo:'finalizacion',cyaOrden:2,
+      texto:'Ahora que hemos concluido satisfactoriamente tu trámite, te comparto los datos para realizar el pago de los honorarios de acompañamiento y asesoría que acordamos.\n\nJorge Casillas Avila\nClip\n730969400005611793'
+    },
+    {
+      id:'pl_wa_finalizacion_3',nombre:'WhatsApp · Finalización (3/3) · Pago confirmado',etapa:'cobro_honorarios',tipo:'whatsapp',icono:'',cyaGrupo:'finalizacion',cyaOrden:3,
+      texto:'¡Te confirmo de recibido el pago, {{NOMBRE}}!\n\nMuchas gracias nuevamente por tu confianza.\n\nTe dejo mi tarjeta digital por si algún amigo, conocido o familiar necesita de este o de otros servicios de consultoría; ya sabes que con gusto los podemos apoyar.\n\nhttps://ttd-alvasd.pages.dev/?asesor=emmanuel-alvarez\n\nSeguimos a tus órdenes para cualquier duda. 🤝 ¡Que tengas un excelente día!\n\n*Emmanuel Alvarez* | _Consultor Previsional_'
+    },
+    {
       id:'pl_wa_curp_mal_1',nombre:'WhatsApp · CURP incorrecta',etapa:'',tipo:'whatsapp',icono:'',cyaGrupo:'curp_mal',cyaOrden:1,
       texto:'¡Hola, {{NOMBRE}}!\n\nYa estamos validando tus datos en el sistema para calcular el monto al que puedes acceder, pero nos arroja un *error en la CURP*.\n\nTe agradecería si nos puedes escribir nuevamente la CURP o bien compartirnos una fotografía desde tu INE o una captura desde el archivo PDF.\n\nQuedo pendiente para continuar cuanto antes el proceso.'
     },
@@ -60,6 +72,7 @@
     {key:'revision',label:'Revisión',kind:'main',ids:['pl_wa_revision_1']},
     {key:'aprobado',label:'Aprobado',kind:'main',ids:['pl_wa_aprobado_1','pl_wa_aprobado_2']},
     {key:'despedida',label:'Despedida',kind:'main',ids:['pl_wa_despedida_1']},
+    {key:'finalizacion',label:'Finalización',kind:'main',ids:['pl_wa_finalizacion_1','pl_wa_finalizacion_2','pl_wa_finalizacion_3']},
     {key:'curp_mal',label:'CURP mal',kind:'reject',ids:['pl_wa_curp_mal_1']},
     {key:'imss_activo',label:'IMSS activo',kind:'reject',ids:['pl_wa_imss_activo_1']},
     {key:'inconsistencias',label:'Inconsistencias',kind:'reject',ids:['pl_wa_inconsistencias_1','pl_wa_inconsistencias_2']},
@@ -73,10 +86,12 @@
     return typeof escapeHTMLBasico==='function'?escapeHTMLBasico(String(value??'')):String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   }
 
-  function sanitizeWhatsAppText(value){
+  function sanitizeWhatsAppText(value,preserveEmoji=false){
     let text=String(value??'').replace(/\uFFFD/g,'').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'');
-    try{text=text.replace(/\p{Extended_Pictographic}/gu,'');}catch(_){text=text.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'');}
-    text=text.replace(/[\uFE0E\uFE0F\u200D\u20E3]/g,'');
+    if(!preserveEmoji){
+      try{text=text.replace(/\p{Extended_Pictographic}/gu,'');}catch(_){text=text.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'');}
+      text=text.replace(/[\uFE0E\uFE0F\u200D\u20E3]/g,'');
+    }
     return text.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
   }
   window.cyaSanitizeWhatsAppText=sanitizeWhatsAppText;
@@ -135,7 +150,7 @@
       }
       for(const tpl of arr){
         if(String(tpl?.tipo||'').toLowerCase()!=='whatsapp'||typeof tpl.texto!=='string')continue;
-        const clean=sanitizeWhatsAppText(tpl.texto);
+        const clean=sanitizeWhatsAppText(tpl.texto,tpl.cyaGrupo==='finalizacion');
         if(clean!==tpl.texto){tpl.texto=clean;changed=true;}
       }
       if(changed&&typeof saveStore==='function')saveStore();
@@ -154,20 +169,20 @@
       .replace(/\{\{NOMBRE\}\}/g,firstName(visibleName))
       .replace(/\{\{ASESOR\}\}/g,advisorName())
       .replace(/\{\{SALUDO\}\}/g,greeting())
-      .replace(/ +([,.!?])/g,'$1'));
+      .replace(/ +([,.!?])/g,'$1'),template?.cyaGrupo==='finalizacion');
   }
 
-  async function copyText(value){
-    const text=sanitizeWhatsAppText(value);if(!text)return false;
+  async function copyText(value,preserveEmoji=false){
+    const text=sanitizeWhatsAppText(value,preserveEmoji);if(!text)return false;
     try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return true;}}catch(_){ }
     const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,text.length);
     let ok=false;try{ok=document.execCommand('copy');}catch(_){ok=false;}ta.remove();return ok;
   }
 
-  function openWhatsApp(lead,text){
+  function openWhatsApp(lead,text,preserveEmoji=false){
     const phone=normalizePhone(document.getElementById('lead-tel')?.value||lead?.telefono||lead?.phone||'');
     if(phone.length!==10){showToast?.('El prospecto necesita un teléfono válido de 10 dígitos para abrir WhatsApp','warn');return null;}
-    const clean=sanitizeWhatsAppText(text);
+    const clean=sanitizeWhatsAppText(text,preserveEmoji);
     const tab=window.open(`https://wa.me/52${phone}?text=${encodeURIComponent(clean)}`,'_blank');
     if(tab)try{tab.opener=null;}catch(_){ }
     showToast?.(tab?'WhatsApp abierto. Revisa el mensaje y pulsa Enviar manualmente.':'El navegador bloqueó la apertura de WhatsApp.',tab?'success':'warn');
@@ -217,7 +232,7 @@
       <div class="modal-body">
         <div class="cya-wa-section-label">Seguimiento</div><div class="cya-wa-template-row" id="cya-wa-main-buttons"></div>
         <div class="cya-wa-section-label">No viable / seguimiento futuro</div><div class="cya-wa-template-row" id="cya-wa-reject-buttons"></div>
-        <div class="cya-wa-helper">Los mensajes conservan *negritas* y _cursivas_ de WhatsApp. Los emojis se eliminan antes de copiar o abrir WhatsApp para evitar rombos o símbolos incompatibles. El CRM nunca envía automáticamente: revisa el texto y pulsa Enviar manualmente en WhatsApp.</div>
+        <div class="cya-wa-helper">Los mensajes conservan *negritas* y _cursivas_ de WhatsApp. En Finalización también se conservan los emojis; en las demás plantillas se omiten para evitar símbolos incompatibles. El CRM nunca envía automáticamente: revisa el texto y pulsa Enviar manualmente en WhatsApp.</div>
         <div id="cya-wa-block-list"></div>
       </div>
       <div class="modal-footer"><span class="cya-wa-human-note">Última acción siempre manual.</span><button class="btn" type="button" onclick="cyaEditarPlantillaWhatsAppSeleccionada()">Editar en Plantillas</button><button class="btn btn-primary" type="button" onclick="cyaCerrarCentroMensajesWhatsApp()">Cerrar</button></div>
@@ -243,7 +258,9 @@
     const templates=group.ids.map(templateById).filter(Boolean);
     list.innerHTML=templates.map((tpl,index)=>{
       const text=renderText(tpl,lead);
-      return `<div class="cya-wa-block"><div class="cya-wa-block-head"><span class="cya-wa-block-name">${safe(group.label)} · Mensaje ${index+1}${templates.length>1?' de '+templates.length:''}</span><span>Plantilla editable</span></div><textarea class="form-textarea" id="cya-wa-text-${index}" spellcheck="true">${safe(text)}</textarea><div class="cya-wa-block-actions"><button class="btn" type="button" onclick="cyaCopiarBloqueWhatsApp(${index})">Copiar</button><button class="btn cya-wa-direct" type="button" onclick="cyaAbrirBloqueWhatsApp(${index})">Abrir WhatsApp</button></div></div>`;
+      const finalizacionTitles=['Felicitación por depósito','Datos para pagar honorarios','Pago recibido y despedida'];
+      const caption=group.key==='finalizacion'?finalizacionTitles[index]:group.label+' · Mensaje '+(index+1)+(templates.length>1?' de '+templates.length:'');
+      return `<div class="cya-wa-block"><div class="cya-wa-block-head"><span class="cya-wa-block-name">${safe(caption)}</span><span>Plantilla editable</span></div><textarea class="form-textarea" id="cya-wa-text-${index}" spellcheck="true">${safe(text)}</textarea><div class="cya-wa-block-actions"><button class="btn" type="button" onclick="cyaCopiarBloqueWhatsApp(${index})">Copiar</button><button class="btn cya-wa-direct" type="button" onclick="cyaAbrirBloqueWhatsApp(${index})">Abrir WhatsApp</button></div></div>`;
     }).join('');
   }
 
@@ -268,13 +285,13 @@
 
   window.cyaCopiarBloqueWhatsApp=async function(index){
     const area=document.getElementById(`cya-wa-text-${Number(index)}`);if(!area)return;
-    const clean=sanitizeWhatsAppText(area.value);area.value=clean;
-    const ok=await copyText(clean);showToast?.(ok?'Mensaje copiado':'No fue posible copiar el mensaje',ok?'success':'warn');
+    const clean=sanitizeWhatsAppText(area.value,currentGroupKey==='finalizacion');area.value=clean;
+    const ok=await copyText(clean,currentGroupKey==='finalizacion');showToast?.(ok?'Mensaje copiado':'No fue posible copiar el mensaje',ok?'success':'warn');
   };
 
   window.cyaAbrirBloqueWhatsApp=function(index){
     const area=document.getElementById(`cya-wa-text-${Number(index)}`);const lead=leadById(messageLeadId);if(!area||!lead)return;
-    const clean=sanitizeWhatsAppText(area.value);area.value=clean;openWhatsApp(lead,clean);
+    const clean=sanitizeWhatsAppText(area.value,currentGroupKey==='finalizacion');area.value=clean;openWhatsApp(lead,clean,currentGroupKey==='finalizacion');
   };
 
   window.cyaEditarPlantillaWhatsAppSeleccionada=function(){
