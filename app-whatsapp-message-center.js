@@ -1,6 +1,6 @@
-/* C&A WhatsApp message center for prospects.
-   - One WhatsApp entry point in the prospect modal.
-   - Grouped, editable templates with one or two intentional message blocks.
+/* C&A WhatsApp message center for prospects and existing clients.
+   - A single center with context-specific WhatsApp entry points.
+   - Grouped, editable templates with one or more intentional message blocks.
    - Preserves WhatsApp *bold* and _italic_ markup.
    - Removes emoji / replacement glyphs from outbound template text.
    - Never sends automatically: the advisor always reviews and presses Send in WhatsApp. */
@@ -32,6 +32,10 @@
     {
       id:'pl_wa_despedida_1',nombre:'WhatsApp · Despedida / servicios',etapa:'',tipo:'whatsapp',icono:'',cyaGrupo:'despedida',cyaOrden:1,
       texto:'¡Muy bien!\n\nQuedo a tus enteras órdenes para cualquier duda que llegue a surgir en el futuro.\n\nAprovecho para recordarte los servicios en los que nos especializamos aquí en *Casillas & Asociados*:\n\n*Retiros por Desempleo de AFORE* (para quienes necesiten liquidez y tengan más de 45 días sin empleo).\n*Estrategias y Trámites de Pensiones.*\n*Corrección de Datos y Documentos ante el IMSS/AFORE.*\n\nTe dejo mi tarjeta digital por si algún amigo, conocido o familiar necesita de este o de otros servicios de consultoría; con gusto los podemos apoyar.\n\nhttps://ttd-alvasd.pages.dev/?asesor=emmanuel-alvarez\n\n¡Que tengas un excelente día!\n\n*{{ASESOR}}* | _Consultor Previsional_'
+    },
+    {
+      id:'pl_wa_alta_15_1',nombre:'WhatsApp · Seguimiento · 15 días después del alta',etapa:'dado_alta',tipo:'whatsapp',icono:'',cyaGrupo:'alta_15',cyaOrden:1,
+      texto:'¡Hola, {{NOMBRE}}!\n\nTe escribo para recordarte que ya pasaron dos semanas desde tu alta y me gustaría que nos organicemos esta semana para realizar la actualización de tu expediente en la AFORE.\n\n¿Qué día y en qué horario te quedaría mejor? Así podemos coordinar la visita y preparar tu documentación con anticipación.\n\nTambién quisiera saber si ya tienes lista tu cuenta bancaria. Si es así, ¿me podrías compartir únicamente la carátula de tu estado de cuenta más reciente? Es para verificar que el tipo de cuenta sea adecuado para recibir tu recurso.\n\nQuedo pendiente de tus comentarios. ¡Muchas gracias!'
     },
     {
       id:'pl_wa_finalizacion_1',nombre:'WhatsApp · Finalización (1/3) · Depósito recibido',etapa:'deposito',tipo:'whatsapp',icono:'',cyaGrupo:'finalizacion',cyaOrden:1,
@@ -71,8 +75,9 @@
     {key:'bienvenida',label:'Bienvenida',kind:'main',ids:['pl_wa_bienvenida_1','pl_wa_bienvenida_2']},
     {key:'revision',label:'Revisión',kind:'main',ids:['pl_wa_revision_1']},
     {key:'aprobado',label:'Aprobado',kind:'main',ids:['pl_wa_aprobado_1','pl_wa_aprobado_2']},
-    {key:'despedida',label:'Despedida',kind:'main',ids:['pl_wa_despedida_1']},
+    {key:'alta_15',label:'15 días después del alta',kind:'main',ids:['pl_wa_alta_15_1']},
     {key:'finalizacion',label:'Finalización',kind:'main',ids:['pl_wa_finalizacion_1','pl_wa_finalizacion_2','pl_wa_finalizacion_3']},
+    {key:'despedida',label:'Despedida',kind:'main',ids:['pl_wa_despedida_1']},
     {key:'curp_mal',label:'CURP mal',kind:'reject',ids:['pl_wa_curp_mal_1']},
     {key:'imss_activo',label:'IMSS activo',kind:'reject',ids:['pl_wa_imss_activo_1']},
     {key:'inconsistencias',label:'Inconsistencias',kind:'reject',ids:['pl_wa_inconsistencias_1','pl_wa_inconsistencias_2']},
@@ -80,7 +85,9 @@
   ];
 
   let currentGroupKey='';
-  let messageLeadId=null;
+  let messageContactId=null;
+  let messageContactType='lead';
+  window.cyaTipoContactoWhatsApp=()=>messageContactType;
 
   function safe(value){
     return typeof escapeHTMLBasico==='function'?escapeHTMLBasico(String(value??'')):String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -105,6 +112,35 @@
 
   function leadById(id){
     try{return (store?.leads||[]).find(l=>String(l.id)===String(id))||null;}catch(_){return null;}
+  }
+
+  function clientById(id){
+    try{return (store?.clientes||[]).find(c=>String(c.id)===String(id))||null;}catch(_){return null;}
+  }
+
+  function activeContact(){
+    return messageContactType==='client'?clientById(messageContactId):leadById(messageContactId)||currentLead();
+  }
+
+  function daysSinceClientAlta(client,now=new Date()){
+    if(!client)return null;
+    let raw=String(client.fechaAltaAfore||'').trim();
+    if(!raw&&typeof fechaEntradaEtapaDadoAlta==='function'){
+      try{raw=String(fechaEntradaEtapaDadoAlta(client)||'').trim();}catch(_){ }
+    }
+    let year,month,day;
+    let match=raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/);
+    if(match){year=Number(match[1]);month=Number(match[2]);day=Number(match[3]);}
+    else{
+      match=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if(!match)return null;
+      day=Number(match[1]);month=Number(match[2]);year=Number(match[3]);
+    }
+    const utc=Date.UTC(year,month-1,day);
+    const verified=new Date(utc);
+    if(!Number.isFinite(utc)||verified.getUTCFullYear()!==year||verified.getUTCMonth()!==month-1||verified.getUTCDate()!==day)return null;
+    const today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+    return Math.floor((today-utc)/86400000);
   }
 
   function normalizePhone(value){
@@ -163,8 +199,10 @@
     catch(_){return TEMPLATE_DEFAULTS.find(p=>p.id===id)||null;}
   }
 
-  function renderText(template,lead){
-    const visibleName=String(document.getElementById('lead-nombre')?.value||lead?.nombre||lead?.name||'').trim();
+  function renderText(template,contact){
+    const visibleName=String(messageContactType==='client'
+      ?(contact?.nombre||contact?.name||'')
+      :(document.getElementById('lead-nombre')?.value||contact?.nombre||contact?.name||'')).trim();
     return sanitizeWhatsAppText(String(template?.texto||'')
       .replace(/\{\{NOMBRE\}\}/g,firstName(visibleName))
       .replace(/\{\{ASESOR\}\}/g,advisorName())
@@ -179,9 +217,12 @@
     let ok=false;try{ok=document.execCommand('copy');}catch(_){ok=false;}ta.remove();return ok;
   }
 
-  function openWhatsApp(lead,text,preserveEmoji=false){
-    const phone=normalizePhone(document.getElementById('lead-tel')?.value||lead?.telefono||lead?.phone||'');
-    if(phone.length!==10){showToast?.('El prospecto necesita un teléfono válido de 10 dígitos para abrir WhatsApp','warn');return null;}
+  function openWhatsApp(contact,text,preserveEmoji=false){
+    const rawPhone=messageContactType==='client'
+      ?(contact?.telefono||contact?.phone||'')
+      :(document.getElementById('lead-tel')?.value||contact?.telefono||contact?.phone||'');
+    const phone=normalizePhone(rawPhone);
+    if(phone.length!==10){showToast?.('El '+(messageContactType==='client'?'cliente':'prospecto')+' necesita un teléfono válido de 10 dígitos para abrir WhatsApp','warn');return null;}
     const clean=sanitizeWhatsAppText(text,preserveEmoji);
     const tab=window.open(`https://wa.me/52${phone}?text=${encodeURIComponent(clean)}`,'_blank');
     if(tab)try{tab.opener=null;}catch(_){ }
@@ -200,11 +241,21 @@
     return 'bienvenida';
   }
 
+  function recommendedClientGroup(client){
+    const stage=String(client?.etapa||'');
+    const pay=String(client?.estadoPago||'').toLocaleLowerCase('es-MX');
+    if(client?.archivado||['deposito_recibido','honorarios_recibidos'].includes(stage)||/cobrado|pago recibido|pagado/.test(pay))return 'finalizacion';
+    return 'alta_15';
+  }
+
   function ensureStyles(){
     if(document.getElementById('cya-wa-message-center-styles'))return;
     const style=document.createElement('style');style.id='cya-wa-message-center-styles';
     style.textContent=`
       #cya-client-message-actions{display:none!important}
+      #perfil-whatsapp-btn{background:#188653;border-color:#188653;color:white;font-weight:700}
+      #perfil-whatsapp-btn:hover{background:#157648;border-color:#157648}
+      .cya-wa-alta-status{padding:10px 12px;margin:0 0 12px;border:1px solid rgba(202,158,56,.45);border-radius:8px;font-size:12px;line-height:1.5;color:var(--text-secondary,#cbd5e1);background:rgba(202,158,56,.08)}
       #cya-wa-center-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
       #cya-wa-center-actions .cya-wa-open{background:#25d366;border-color:#25d366;color:#fff;font-weight:700}
       .cya-wa-center-modal{width:min(780px,94vw);max-height:90vh;display:flex;flex-direction:column}
@@ -231,7 +282,7 @@
       <div class="modal-header"><div><div class="modal-title" id="cya-wa-center-title">Mensajes WhatsApp</div><div class="form-helper" id="cya-wa-center-person"></div></div><button class="modal-close" type="button" onclick="cyaCerrarCentroMensajesWhatsApp()">×</button></div>
       <div class="modal-body">
         <div class="cya-wa-section-label">Seguimiento</div><div class="cya-wa-template-row" id="cya-wa-main-buttons"></div>
-        <div class="cya-wa-section-label">No viable / seguimiento futuro</div><div class="cya-wa-template-row" id="cya-wa-reject-buttons"></div>
+        <div class="cya-wa-section-label" id="cya-wa-reject-label">No viable / seguimiento futuro</div><div class="cya-wa-template-row" id="cya-wa-reject-buttons"></div>
         <div class="cya-wa-helper">Los mensajes conservan *negritas* y _cursivas_ de WhatsApp. En Finalización también se conservan los emojis; en las demás plantillas se omiten para evitar símbolos incompatibles. El CRM nunca envía automáticamente: revisa el texto y pulsa Enviar manualmente en WhatsApp.</div>
         <div id="cya-wa-block-list"></div>
       </div>
@@ -246,18 +297,30 @@
     const main=document.getElementById('cya-wa-main-buttons');const reject=document.getElementById('cya-wa-reject-buttons');
     if(!main||!reject)return;
     const button=g=>`<button class="btn${g.key===currentGroupKey?' active':''}" type="button" data-cya-wa-group="${safe(g.key)}">${safe(g.label)}</button>`;
-    main.innerHTML=GROUPS.filter(g=>g.kind==='main').map(button).join('');
-    reject.innerHTML=GROUPS.filter(g=>g.kind==='reject').map(button).join('');
+    main.innerHTML=GROUPS.filter(g=>g.kind==='main'&&(
+      messageContactType==='client'
+        ? ['alta_15','finalizacion','despedida'].includes(g.key)
+        : g.key!=='alta_15'
+    )).map(button).join('');
+    reject.innerHTML=messageContactType==='client'?'':GROUPS.filter(g=>g.kind==='reject').map(button).join('');
+    const rejectLabel=document.getElementById('cya-wa-reject-label');
+    if(rejectLabel)rejectLabel.style.display=messageContactType==='client'?'none':'';
     document.querySelectorAll('[data-cya-wa-group]').forEach(el=>el.onclick=()=>selectGroup(el.dataset.cyaWaGroup));
   }
 
   function renderSelectedGroup(){
     const group=GROUPS.find(g=>g.key===currentGroupKey)||GROUPS[0];
-    const lead=leadById(messageLeadId)||currentLead();
-    const list=document.getElementById('cya-wa-block-list');if(!list||!lead)return;
+    const contact=activeContact();
+    const list=document.getElementById('cya-wa-block-list');if(!list||!contact)return;
     const templates=group.ids.map(templateById).filter(Boolean);
-    list.innerHTML=templates.map((tpl,index)=>{
-      const text=renderText(tpl,lead);
+    const altaDays=group.key==='alta_15'&&messageContactType==='client'?daysSinceClientAlta(contact):null;
+    const altaNote=group.key==='alta_15'&&messageContactType==='client'
+      ?(altaDays===null?'No hay una fecha de alta válida registrada. Confirma la fecha antes de enviar este recordatorio.'
+        :altaDays<15?`Han transcurrido ${Math.max(0,altaDays)} días desde el alta. Este recordatorio corresponde a partir del día 15; ${15-Math.max(0,altaDays)===1?'falta 1 día':'faltan '+(15-Math.max(0,altaDays))+' días'}.`
+        :`Han transcurrido ${altaDays} días desde el alta. Revisa si ya se realizó la actualización AFORE antes de enviar el recordatorio.`)
+      :'';
+    list.innerHTML=(altaNote?`<div class="cya-wa-alta-status">${safe(altaNote)}</div>`:'')+templates.map((tpl,index)=>{
+      const text=renderText(tpl,contact);
       const finalizacionTitles=['Felicitación por depósito','Datos para pagar honorarios','Pago recibido y despedida'];
       const caption=group.key==='finalizacion'?finalizacionTitles[index]:group.label+' · Mensaje '+(index+1)+(templates.length>1?' de '+templates.length:'');
       return `<div class="cya-wa-block"><div class="cya-wa-block-head"><span class="cya-wa-block-name">${safe(caption)}</span><span>Plantilla editable</span></div><textarea class="form-textarea" id="cya-wa-text-${index}" spellcheck="true">${safe(text)}</textarea><div class="cya-wa-block-actions"><button class="btn" type="button" onclick="cyaCopiarBloqueWhatsApp(${index})">Copiar</button><button class="btn cya-wa-direct" type="button" onclick="cyaAbrirBloqueWhatsApp(${index})">Abrir WhatsApp</button></div></div>`;
@@ -265,22 +328,44 @@
   }
 
   function selectGroup(key){
-    if(!GROUPS.some(g=>g.key===key))return;
+    if(!GROUPS.some(g=>g.key===key&&(g.key!=='alta_15'||messageContactType==='client')))return;
     currentGroupKey=key;renderGroupButtons();renderSelectedGroup();
   }
 
-  window.cyaAbrirCentroMensajesWhatsApp=function(groupKey){
-    const lead=currentLead();if(!lead){showToast?.('Guarda primero el prospecto para preparar mensajes de WhatsApp','warn');return;}
+  function openContactCenter(type,contact,groupKey){
     ensureTemplates();ensureStyles();ensureCenterModal();
-    messageLeadId=lead.id;
-    currentGroupKey=GROUPS.some(g=>g.key===groupKey)?groupKey:recommendedGroup(lead);
-    const person=document.getElementById('cya-wa-center-person');if(person)person.textContent=`Prospecto: ${lead.nombre||'Sin nombre'} · ${normalizePhone(document.getElementById('lead-tel')?.value||lead.telefono||'')||'sin teléfono'}`;
+    messageContactType=type;
+    messageContactId=contact.id;
+    const validGroup=GROUPS.some(g=>g.key===groupKey&&(g.key!=='alta_15'||type==='client'));
+    currentGroupKey=validGroup?groupKey:(type==='client'?recommendedClientGroup(contact):recommendedGroup(contact));
+    const person=document.getElementById('cya-wa-center-person');
+    const phone=normalizePhone(type==='client'?contact.telefono:(document.getElementById('lead-tel')?.value||contact.telefono));
+    if(person)person.textContent=`${type==='client'?'Cliente':'Prospecto'}: ${contact.nombre||'Sin nombre'} · ${phone||'sin teléfono'}`;
     renderGroupButtons();renderSelectedGroup();
     document.getElementById('cya-wa-message-center')?.classList.add('open');
+  }
+
+  window.cyaAbrirCentroMensajesWhatsApp=function(groupKey){
+    const lead=currentLead();
+    if(!lead){showToast?.('Guarda primero el prospecto para preparar mensajes de WhatsApp','warn');return;}
+    openContactCenter('lead',lead,groupKey);
+  };
+
+  window.cyaAbrirWhatsAppCliente=function(groupKey){
+    const profile=document.getElementById('modal-perfil');
+    const id=typeof perfilClienteActivo!=='undefined'?perfilClienteActivo:null;
+    const client=clientById(id);
+    if(!client||!profile?.classList.contains('open')){
+      showToast?.('Abre primero el expediente del cliente para preparar el mensaje.','warn');
+      return;
+    }
+    openContactCenter('client',client,groupKey);
   };
 
   window.cyaCerrarCentroMensajesWhatsApp=function(){
-    document.getElementById('cya-wa-message-center')?.classList.remove('open');messageLeadId=null;
+    document.getElementById('cya-wa-message-center')?.classList.remove('open');
+    messageContactId=null;
+    messageContactType='lead';
   };
 
   window.cyaCopiarBloqueWhatsApp=async function(index){
@@ -290,14 +375,15 @@
   };
 
   window.cyaAbrirBloqueWhatsApp=function(index){
-    const area=document.getElementById(`cya-wa-text-${Number(index)}`);const lead=leadById(messageLeadId);if(!area||!lead)return;
-    const clean=sanitizeWhatsAppText(area.value,currentGroupKey==='finalizacion');area.value=clean;openWhatsApp(lead,clean,currentGroupKey==='finalizacion');
+    const area=document.getElementById(`cya-wa-text-${Number(index)}`);const contact=activeContact();if(!area||!contact)return;
+    const clean=sanitizeWhatsAppText(area.value,currentGroupKey==='finalizacion');area.value=clean;openWhatsApp(contact,clean,currentGroupKey==='finalizacion');
   };
 
   window.cyaEditarPlantillaWhatsAppSeleccionada=function(){
     const group=GROUPS.find(g=>g.key===currentGroupKey);const templateId=group?.ids?.[0]||null;if(!templateId)return;
+    const contactType=messageContactType;
     window.cyaCerrarCentroMensajesWhatsApp();
-    try{closeModal?.('modal-lead');navigate('plantillas',document.querySelector('[data-page="plantillas"]'));setTimeout(()=>{if(typeof seleccionarPlantilla==='function')seleccionarPlantilla(templateId);},100);}catch(_){ }
+    try{closeModal?.(contactType==='client'?'modal-perfil':'modal-lead');navigate('plantillas',document.querySelector('[data-page="plantillas"]'));setTimeout(()=>{if(typeof seleccionarPlantilla==='function')seleccionarPlantilla(templateId);},100);}catch(_){ }
   };
 
   function ensureProspectButton(){
