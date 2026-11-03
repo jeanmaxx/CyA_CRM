@@ -55,7 +55,7 @@ async function avanzarEtapa(id){
   }
   // Auto-calcular comisión al llegar a deposito_recibido
   if(next.id==='deposito_recibido' && c.montoAfore && !c.estadoPago){
-    const calc=calcComision(Number(c.montoAfore),c.servicio,c.asesorId);
+    const calc=calcComision(Number(c.montoAfore),c.servicio,c.asesorId,c);
     c.honorarios=calc.honorarios; c.comision=calc.comision; c.comisionCalc=calc.comision;
     c.estadoPago='Pendiente';
     addHist(c,'finanzas','Cálculo automático: $'+calc.honorarios.toLocaleString('es-MX')+' hon / $'+calc.comision.toLocaleString('es-MX')+' comisión');
@@ -180,9 +180,9 @@ async function guardarFinanzas(id){
   c.comisionManual=comisionManual!=='';
   // La referencia automática permanece separada de los importes capturados.
   // Esto evita que una edición manual vuelva a convertirse en un cálculo estimado.
-  const referencia=calcComision(Number(c.montoAfore)||0,c.servicio,c.asesorId);
-  c.honorariosCalc=referencia.honorarios;
-  c.comisionCalc=referencia.comision;
+  const referencia=calcComision(Number(c.montoAfore)||0,c.servicio,c.asesorId,c);
+  if(c.tarifaComisionesVersion==='2026-11'||!tieneMontoFinanciero(c.honorariosCalc))c.honorariosCalc=referencia.honorarios;
+  if(c.tarifaComisionesVersion==='2026-11'||!tieneMontoFinanciero(c.comisionCalc))c.comisionCalc=referencia.comision;
   c.estadoPago=estadoPago||'';
   c.fechaRetiroEstimada=fechaEst;
   c.fechaRetiroEstimadaManual=true;
@@ -317,17 +317,17 @@ function onServicioChange(existingDocs){
   if(defaults) defaults.style.display=svc==='retiro_desempleo'?'':'none';
   if(svc==='retiro_desempleo'){
     const clienteEditado=editingId?store.clientes.find(c=>c.id===editingId):null;
-    const cargarDefaults=!clienteEditado||clienteEditado.finanzasConfiguradas!==true;
-    const comisionDefault=comisionDefaultParaAsesor(clienteEditado?.asesorId||asesorDestinoVista());
-    if(cargarDefaults&&!getVal('fc-monto')) setVal('fc-monto',35190);
-    if(cargarDefaults&&!getVal('fc-honorarios')) setVal('fc-honorarios',8000);
-    if(cargarDefaults&&!getVal('fc-comision')) setVal('fc-comision',comisionDefault);
+    // Los importes automáticos solo se cargan en altas nuevas. En edición
+    // nunca reemplazar los importes históricos de clientes ya registrados.
+    if(!clienteEditado&&!getVal('fc-monto'))setVal('fc-monto',tarifaEquipoEmmanuel(asesorTarifaAltaActual())?35193:35190);
     previewCalculo();
   } else if(svc==='correccion_imss'){
     // La corrección ante IMSS se cotiza al concluir; retirar únicamente valores automáticos heredados de Retiro.
-    if(String(getVal('fc-monto'))==='35190') setVal('fc-monto','');
-    if(String(getVal('fc-honorarios'))==='8000') setVal('fc-honorarios','');
-    if(['2000','3000'].includes(String(getVal('fc-comision')))) setVal('fc-comision','');
+    if(!editingId){
+      if(['35190','35193'].includes(String(getVal('fc-monto'))))setVal('fc-monto','');
+      if(!document.getElementById('fc-honorarios')?.dataset.cyaManual)setVal('fc-honorarios','');
+      if(!document.getElementById('fc-comision')?.dataset.cyaManual)setVal('fc-comision','');
+    }
   }
 }
 
@@ -789,6 +789,7 @@ function renderServicios(){
 }
 
 function renderEsquemaLabel(s){
+  if(s.id==='retiro_desempleo')return 'Nuevos clientes del equipo de Emmanuel: retiro ≥ $35,193 → honorarios $10,000 (empresa $5,000 / asesoría $5,000; con colaborador $3,000 + $2,000). Retiro menor: 25% honorarios, mitad empresa y mitad asesoría; con colaborador, esa mitad se reparte 50/50. Clientes anteriores sin cambios. Importes editables por expediente.';
   if(s.esquema==='mixto') return `≥ $${Number(s.umbralFijo||0).toLocaleString('es-MX')}: honorarios $${Number(s.honorariosFijo||0).toLocaleString('es-MX')} / comisión $${Number(s.comisionFija||0).toLocaleString('es-MX')} · < umbral: ${s.honorariosPct||0}% honorarios / ${s.comisionPct||0}% de honorarios`;
   if(s.esquema==='porcentaje') return `Honorarios: ${s.honorariosPct||0}% del monto · Comisión asesor: ${s.comisionPct||0}%`;
   return 'Definir manualmente en cada caso';

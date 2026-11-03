@@ -82,8 +82,8 @@ function openPerfil(id){
   const esRetiro=c.servicio==='retiro_desempleo';
   const finanzasConfiguradas=c.finanzasConfiguradas===true;
   const finMontoValor=finanzasConfiguradas?(c.montoRetiro??c.montoAfore??''):(c.montoRetiro||c.montoAfore||(esRetiro?35190:''));
-  const finHonorariosValor=finanzasConfiguradas?(c.honorarios??''):(c.honorarios||c.honorariosCalc||(esRetiro?8000:''));
-  const finComisionValor=finanzasConfiguradas?(tieneMontoFinanciero(c.comision)?comisionEfectiva(c):''):(c.comision||c.comisionCalc||(esRetiro?comisionDefaultParaAsesor(c.asesorId):''));
+  const finHonorariosValor=finanzasConfiguradas?(c.honorarios??''):(c.honorarios||c.honorariosCalc||(esRetiro?(c.tarifaComisionesVersion==='2026-11'?calcComision(Number(c.montoAfore)||35193,c.servicio,c.asesorId,c).honorarios:8000):''));
+  const finComisionValor=finanzasConfiguradas?(tieneMontoFinanciero(c.comision)?comisionEfectiva(c):''):(c.comision||c.comisionCalc||(esRetiro?(c.tarifaComisionesVersion==='2026-11'?calcComision(Number(c.montoAfore)||35193,c.servicio,c.asesorId,c).comision:comisionDefaultParaAsesor(c.asesorId)):''));
   const estadoPagoPerfil=estadoPagoEfectivo(c);
   perfilClienteActivo=id;
   perfilDirty=false;
@@ -350,6 +350,9 @@ function editCliente(id){
 
 function clearModalCliente(){
   ['fc-nombre','fc-telefono','fc-email','fc-ciudad','fc-nss','fc-curp','fc-rfc','fc-monto','fc-honorarios','fc-comision','fc-domicilio','fc-notas','el-semanas','el-fecha','fc-prox-fecha','fc-prox-nota','fc-prox-hora','fc-banco','fc-clabe','fc-col-pct','fc-fecha-biometrica','fc-fecha-solicitud-manual'].forEach(id=>setVal(id,''));
+  for(const id of ['fc-honorarios','fc-comision','fc-col-comision']){
+    const field=document.getElementById(id);if(field)delete field.dataset.cyaManual;
+  }
   ['fc-servicio','fc-fuente','el-imss','el-retiro','fc-prox-tipo','fc-colaborador'].forEach(id=>setVal(id,''));
   setVal('fc-etapa','perfilamiento');
   setVal('fc-prox-hora','10:00');
@@ -434,6 +437,7 @@ async function guardarCliente(){
   }else if(svc==='retiro_desempleo'&&!oldCliente?.contratoFirmado&&['dado_alta','afore_actualizada','solicitud_realizada','deposito_recibido','honorarios_recibidos'].includes(etapaDestino)&&oldCliente?.etapa!==etapaDestino){
     confirmacionAvance=await confirmarFirmaCliente({nombre},false);if(!confirmacionAvance)return;
   }
+  const asesorCalculoId=oldCliente?.asesorId||leadOrigenConversion?.asesorId||asesorDestinoVista();
   const cliente={...JSON.parse(JSON.stringify(oldCliente||{})),
     ...fechasReales,afore:getVal('fc-afore'),
     nombre,telefono:tel,email:getVal('fc-email'),ciudad:getVal('fc-ciudad'),
@@ -456,12 +460,14 @@ async function guardarCliente(){
     honorarios:honorariosFin===''?'':Number(honorariosFin),
     comision:comisionFin===''?'':Number(comisionFin),
     finanzasConfiguradas:editingId?true:[montoFin,honorariosFin,comisionFin].some(v=>v!==''),
+    tarifaComisionesVersion:oldCliente?.tarifaComisionesVersion||(!oldCliente&&svc==='retiro_desempleo'&&tarifaEquipoEmmanuel(asesorCalculoId)?'2026-11':undefined),
   };
-  // Calcular comisión automática si hay monto
-  const asesorCalculoId=oldCliente?.asesorId||leadOrigenConversion?.asesorId||asesorDestinoVista();
-  const calc=calcComision(Number(cliente.montoAfore)||0, cliente.servicio, asesorCalculoId);
-  cliente.honorariosCalc=calc.honorarios;
-  cliente.comisionCalc=calc.comision;
+  // La nueva tarifa se asigna al crear el cliente; nunca se migra un expediente anterior.
+  const calc=calcComision(Number(cliente.montoAfore)||0, cliente.servicio, asesorCalculoId,cliente);
+  cliente.honorariosCalc=oldCliente&&cliente.tarifaComisionesVersion!=='2026-11'&&tieneMontoFinanciero(oldCliente.honorariosCalc)
+    ? oldCliente.honorariosCalc:calc.honorarios;
+  cliente.comisionCalc=oldCliente&&cliente.tarifaComisionesVersion!=='2026-11'&&tieneMontoFinanciero(oldCliente.comisionCalc)
+    ? oldCliente.comisionCalc:calc.comision;
   cliente.comisionManual=comisionFin!==''&&(
     oldCliente?.comisionManual===true||
     Math.abs(Number(comisionFin)-Number(calc.comision||0))>0.009
@@ -492,8 +498,8 @@ async function guardarCliente(){
       cliente.fechaRetiroEstimadaManual=old.fechaRetiroEstimadaManual||false;
       // Si etapa cambió a espera_45 y no estaba antes, autocompletar finanzas
       if(cliente.etapa==='espera_45'&&old.etapa!=='espera_45'&&cliente.montoAfore&&!old.estadoPago){
-        cliente.honorarios=calc.honorarios;
-        cliente.comision=calc.comision;
+        if(!tieneMontoFinanciero(cliente.honorarios)) cliente.honorarios=calc.honorarios;
+        if(!tieneMontoFinanciero(cliente.comision)) cliente.comision=calc.comision;
         cliente.estadoPago='Pendiente';
         addHist(cliente,'finanzas',`Cálculo automático: honorarios $${calc.honorarios.toLocaleString('es-MX')}, comisión $${calc.comision.toLocaleString('es-MX')}`);
       }
@@ -518,8 +524,8 @@ async function guardarCliente(){
     }
     // Si se registra directo en espera_45 con monto, calcular
     if(cliente.etapa==='espera_45'&&cliente.montoAfore){
-      cliente.honorarios=calc.honorarios;
-      cliente.comision=calc.comision;
+      if(!tieneMontoFinanciero(cliente.honorarios)) cliente.honorarios=calc.honorarios;
+      if(!tieneMontoFinanciero(cliente.comision)) cliente.comision=calc.comision;
       cliente.estadoPago='Pendiente';
       addHist(cliente,'finanzas',`Cálculo automático: honorarios $${calc.honorarios.toLocaleString('es-MX')}, comisión $${calc.comision.toLocaleString('es-MX')}`);
     }

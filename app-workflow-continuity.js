@@ -36,7 +36,7 @@
     const baseCollaboratorCommission=comisionDelColaborador;
     comisionDelColaborador=function(cliente,colaborador){
       const fixed=money(cliente?.colComision);
-      if(fixed!==null)return Math.round(fixed);
+      if(fixed!==null)return cliente?.tarifaComisionesVersion==='2026-11'?redondearMoneda(fixed):Math.round(fixed);
       return baseCollaboratorCommission.apply(this,arguments);
     };
 
@@ -50,7 +50,9 @@
 
     function collaboratorDefault(collaborator){
       const configured=money(collaborator?.comisionDefault);
-      return configured!==null?configured:1000;
+      // Colaboradores anteriores mantienen su default histórico.
+      // Los nuevos comienzan con $2,000, además de la regla por cliente nuevo.
+      return configured!==null?configured:(collaborator?1000:2000);
     }
 
     function ensureAdvisorDefaultField(advisor=null){
@@ -101,6 +103,16 @@
       try{return money(baseCollaboratorCommission(client,col));}catch(_){return null;}
     }
 
+    function newTariffClient(client){
+      return client?.tarifaComisionesVersion==='2026-11'||(!client&&!editingId&&document.getElementById('fc-servicio')?.value==='retiro_desempleo'&&tarifaEquipoEmmanuel(asesorTarifaAltaActual()));
+    }
+
+    function suggestedCollaboratorCommission(){
+      const amount=money(document.getElementById('fc-monto')?.value)||35193;
+      const estimate=calcComision(amount,'retiro_desempleo',null,{tarifaComisionesVersion:'2026-11'});
+      return amount>=35193?2000:redondearMoneda(estimate.comision/2);
+    }
+
     function ensureClientCollaboratorCommissionField(client=null){
       const pct=document.getElementById('fc-col-pct');
       const select=document.getElementById('fc-colaborador');
@@ -113,7 +125,7 @@
         group.className='form-group';
         group.id='cya-fc-col-comision-group';
         group.innerHTML=`<label class="form-label" for="fc-col-comision">Comisión del colaborador ($)</label>
-          <input class="form-input" id="fc-col-comision" type="number" min="0" step="100" inputmode="numeric" placeholder="1000" style="font-size:13px;">
+          <input class="form-input" id="fc-col-comision" type="number" min="0" step="0.01" inputmode="decimal" placeholder="2000" style="font-size:13px;" oninput="this.dataset.cyaManual='1';previewCalculo()">
           <div class="form-helper">Se carga el valor predeterminado del colaborador y puedes cambiarlo para este cliente.</div>`;
         if(pctGroup)pctGroup.insertAdjacentElement('beforebegin',group);
       }
@@ -125,7 +137,7 @@
         const legacy=explicit===null?legacyClientCollaboratorCommission(client,col):null;
         if(explicit!==null)input.value=String(explicit);
         else if(client&&legacy!==null)input.value=String(legacy);
-        else if(col)input.value=String(collaboratorDefault(col));
+        else if(col)input.value=String(newTariffClient(client)?suggestedCollaboratorCommission():collaboratorDefault(col));
         else input.value='';
       }
 
@@ -134,7 +146,11 @@
         select.addEventListener('change',()=>setTimeout(()=>{
           const current=selectedCollaborator();
           const field=document.getElementById('fc-col-comision');
-          if(field)field.value=current?String(collaboratorDefault(current)):'';
+          if(field){
+            delete field.dataset.cyaManual;
+            field.value=current?String(newTariffClient(editingId?(store.clientes||[]).find(c=>String(c.id)===String(editingId)):null)?suggestedCollaboratorCommission():collaboratorDefault(current)):'';
+          }
+          if(typeof previewCalculo==='function')previewCalculo();
         },0));
       }
     }
@@ -183,7 +199,7 @@
       if(!client)return;
 
       if(collaboratorId&&commission!==null){
-        client.colComision=Math.round(commission);
+        client.colComision=client.tarifaComisionesVersion==='2026-11'?redondearMoneda(commission):Math.round(commission);
         const advisorCommission=money(comisionEfectiva(client));
         if(advisorCommission&&advisorCommission>0){
           // Keep the legacy percentage equivalent synchronized so the collaborator portal

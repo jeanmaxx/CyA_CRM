@@ -272,7 +272,7 @@ async function marcarSolicitudRechazada(id){
 async function avanzarSolicitudRechazadaADeposito(id){
   const original=store.clientes.find(x=>x.id===id);if(!original)return;
   const c=JSON.parse(JSON.stringify(original));
-  if(c.montoAfore&&!c.estadoPago){const calc=calcComision(Number(c.montoAfore),c.servicio,c.asesorId);if(!tieneMontoFinanciero(c.honorarios))c.honorarios=calc.honorarios;if(!tieneMontoFinanciero(c.comision))c.comision=calc.comision;c.comisionCalc=calc.comision;c.estadoPago='Pendiente';}
+  if(c.montoAfore&&!c.estadoPago){const calc=calcComision(Number(c.montoAfore),c.servicio,c.asesorId,c);if(!tieneMontoFinanciero(c.honorarios))c.honorarios=calc.honorarios;if(!tieneMontoFinanciero(c.comision))c.comision=calc.comision;c.comisionCalc=calc.comision;c.estadoPago='Pendiente';}
   c.etapa='deposito_recibido';addHist(c,'etapa','Avanzó a: Depósito recibido · solicitud previamente rechazada');
   const pos=store.clientes.indexOf(original);store.clientes[pos]=c;
   try{await cloudSyncNow({throwOnError:true});closeModal('modal-perfil');renderPage(currentPage);showToast('Etapa: Depósito recibido','success');}
