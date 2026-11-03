@@ -316,7 +316,7 @@
     const altaDays=group.key==='alta_15'&&messageContactType==='client'?daysSinceClientAlta(contact):null;
     const altaNote=group.key==='alta_15'&&messageContactType==='client'
       ?(altaDays===null?'No hay una fecha de alta válida registrada. Confirma la fecha antes de enviar este recordatorio.'
-        :altaDays<15?`Han transcurrido ${Math.max(0,altaDays)} días desde el alta. Este recordatorio corresponde a partir del día 15; faltan ${15-Math.max(0,altaDays)} días.`
+        :altaDays<15?`Han transcurrido ${Math.max(0,altaDays)} días desde el alta. Este recordatorio corresponde a partir del día 15; ${15-Math.max(0,altaDays)===1?'falta 1 día':'faltan '+(15-Math.max(0,altaDays))+' días'}.`
         :`Han transcurrido ${altaDays} días desde el alta. Revisa si ya se realizó la actualización AFORE antes de enviar el recordatorio.`)
       :'';
     list.innerHTML=(altaNote?`<div class="cya-wa-alta-status">${safe(altaNote)}</div>`:'')+templates.map((tpl,index)=>{
