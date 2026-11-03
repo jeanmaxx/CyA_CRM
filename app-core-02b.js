@@ -437,6 +437,7 @@ async function guardarCliente(){
   }else if(svc==='retiro_desempleo'&&!oldCliente?.contratoFirmado&&['dado_alta','afore_actualizada','solicitud_realizada','deposito_recibido','honorarios_recibidos'].includes(etapaDestino)&&oldCliente?.etapa!==etapaDestino){
     confirmacionAvance=await confirmarFirmaCliente({nombre},false);if(!confirmacionAvance)return;
   }
+  const asesorCalculoId=oldCliente?.asesorId||leadOrigenConversion?.asesorId||asesorDestinoVista();
   const cliente={...JSON.parse(JSON.stringify(oldCliente||{})),
     ...fechasReales,afore:getVal('fc-afore'),
     nombre,telefono:tel,email:getVal('fc-email'),ciudad:getVal('fc-ciudad'),
@@ -459,10 +460,9 @@ async function guardarCliente(){
     honorarios:honorariosFin===''?'':Number(honorariosFin),
     comision:comisionFin===''?'':Number(comisionFin),
     finanzasConfiguradas:editingId?true:[montoFin,honorariosFin,comisionFin].some(v=>v!==''),
-    tarifaComisionesVersion:oldCliente?.tarifaComisionesVersion||(!oldCliente&&svc==='retiro_desempleo'?'2026-11':undefined),
+    tarifaComisionesVersion:oldCliente?.tarifaComisionesVersion||(!oldCliente&&svc==='retiro_desempleo'&&tarifaEquipoEmmanuel(asesorCalculoId)?'2026-11':undefined),
   };
   // La nueva tarifa se asigna al crear el cliente; nunca se migra un expediente anterior.
-  const asesorCalculoId=oldCliente?.asesorId||leadOrigenConversion?.asesorId||asesorDestinoVista();
   const calc=calcComision(Number(cliente.montoAfore)||0, cliente.servicio, asesorCalculoId,cliente);
   cliente.honorariosCalc=oldCliente&&cliente.tarifaComisionesVersion!=='2026-11'&&tieneMontoFinanciero(oldCliente.honorariosCalc)
     ? oldCliente.honorariosCalc:calc.honorarios;
