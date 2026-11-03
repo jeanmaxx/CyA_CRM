@@ -786,6 +786,16 @@ function renderComingSoon(page){
 }
 
 // ==================== CÁLCULO COMISIÓN ====================
+// Solo aplica a altas asignadas al equipo de Emmanuel. Las tarifas de otros
+// asesores y los expedientes existentes permanecen independientes.
+function tarifaEquipoEmmanuel(advisorId){
+  const id=String(advisorId||'');
+  if(id==='asesor_ea')return true;
+  const asesor=(store.asesores||[]).find(a=>String(a.id)===id||String(a.legacyId||'')===id);
+  if(!asesor)return false;
+  if(asesor.legacyId==='asesor_ea')return true;
+  return String(asesor.nombre||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLocaleLowerCase('es-MX')==='emmanuel alvarez';
+}
 function comisionDefaultParaAsesor(advisorId){
   const asesor=(store.asesores||[]).find(a=>a.id===advisorId);
   return asesor&&asesor.rol!=='admin'?2000:3000;
@@ -924,7 +934,7 @@ function previewCalculo(){
   if(!preview) return;
   if(!monto){ preview.classList.remove('show'); return; }
   const clienteEditado=editingId?store.clientes.find(c=>c.id===editingId):null;
-  const nuevaTarifa=!editingId&&svcId==='retiro_desempleo';
+  const nuevaTarifa=!editingId&&svcId==='retiro_desempleo'&&tarifaEquipoEmmanuel(asesorDestinoVista());
   const tarifaActiva=svcId==='retiro_desempleo'&&(nuevaTarifa||clienteEditado?.tarifaComisionesVersion==='2026-11');
   const contexto=clienteEditado||(nuevaTarifa?{tarifaComisionesVersion:'2026-11'}:null);
   const calc=calcComision(monto,svcId,clienteEditado?.asesorId||asesorDestinoVista(),contexto);
