@@ -925,6 +925,7 @@ function previewCalculo(){
   if(!monto){ preview.classList.remove('show'); return; }
   const clienteEditado=editingId?store.clientes.find(c=>c.id===editingId):null;
   const nuevaTarifa=!editingId&&svcId==='retiro_desempleo';
+  const tarifaActiva=svcId==='retiro_desempleo'&&(nuevaTarifa||clienteEditado?.tarifaComisionesVersion==='2026-11');
   const contexto=clienteEditado||(nuevaTarifa?{tarifaComisionesVersion:'2026-11'}:null);
   const calc=calcComision(monto,svcId,clienteEditado?.asesorId||asesorDestinoVista(),contexto);
   const conColaborador=Boolean(document.getElementById('fc-colaborador')?.value);
@@ -933,11 +934,21 @@ function previewCalculo(){
     colField.value=conColaborador?(monto>=35193?2000:redondearMoneda(calc.comision/2)):'';
   }
   const colSugerida=monto>=35193?2000:redondearMoneda(calc.comision/2);
+  const honField=document.getElementById('fc-honorarios');
+  const commissionField=document.getElementById('fc-comision');
+  const editedHonorarios=tarifaActiva&&(editingId||honField?.dataset.cyaManual)&&honField?.value!==''&&Number.isFinite(Number(honField.value));
+  const editedCommission=tarifaActiva&&(editingId||commissionField?.dataset.cyaManual)&&commissionField?.value!==''&&Number.isFinite(Number(commissionField.value));
+  const honShown=editedHonorarios?Number(honField.value):calc.honorarios;
+  const commissionShown=editedCommission?Number(commissionField.value):calc.comision;
   const colParte=conColaborador?(colField?.value!==''&&Number.isFinite(Number(colField?.value))?Number(colField.value):colSugerida):0;
-  const ownPart=redondearMoneda(calc.comision-colParte);
-  document.getElementById('cp-honorarios').textContent=formatoMoneda(calc.honorarios);
-  document.getElementById('cp-comision').textContent=nuevaTarifa
-    ? (conColaborador?'Asesor '+formatoMoneda(ownPart)+' · Colaborador '+formatoMoneda(colParte):'Asesor '+formatoMoneda(calc.comision))
+  const ownPart=redondearMoneda(commissionShown-colParte);
+  document.getElementById('cp-honorarios').textContent=formatoMoneda(honShown);
+  const companyRow=document.getElementById('cp-empresa-row');
+  if(companyRow)companyRow.style.display=tarifaActiva?'':'none';
+  const company=document.getElementById('cp-empresa');
+  if(company&&tarifaActiva)company.textContent=formatoMoneda(honShown-commissionShown);
+  document.getElementById('cp-comision').textContent=tarifaActiva
+    ? (conColaborador?'Asesor '+formatoMoneda(ownPart)+' · Colaborador '+formatoMoneda(colParte):'Asesor '+formatoMoneda(commissionShown))
     : formatoMoneda(calc.comision);
   if(!editingId){
     const h=document.getElementById('fc-honorarios');
