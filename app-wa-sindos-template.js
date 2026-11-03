@@ -80,6 +80,8 @@
   window.cyaSeleccionarPlantillaSindos=renderSindos;
 
   function ensureButton(){
+    // La revisión SINDOs solo corresponde al expediente de prospectos.
+    if(window.cyaTipoContactoWhatsApp?.()==='client')return;
     const row=document.getElementById('cya-wa-main-buttons');
     if(!row||sindosButton())return;
     const btn=document.createElement('button');
