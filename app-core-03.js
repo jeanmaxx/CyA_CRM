@@ -319,7 +319,7 @@ function onServicioChange(existingDocs){
     const clienteEditado=editingId?store.clientes.find(c=>c.id===editingId):null;
     // Los importes automáticos solo se cargan en altas nuevas. En edición
     // nunca reemplazar los importes históricos de clientes ya registrados.
-    if(!clienteEditado&&!getVal('fc-monto'))setVal('fc-monto',35193);
+    if(!clienteEditado&&!getVal('fc-monto'))setVal('fc-monto',tarifaEquipoEmmanuel(asesorDestinoVista())?35193:35190);
     previewCalculo();
   } else if(svc==='correccion_imss'){
     // La corrección ante IMSS se cotiza al concluir; retirar únicamente valores automáticos heredados de Retiro.
