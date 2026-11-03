@@ -87,6 +87,7 @@
   let currentGroupKey='';
   let messageContactId=null;
   let messageContactType='lead';
+  window.cyaTipoContactoWhatsApp=()=>messageContactType;
 
   function safe(value){
     return typeof escapeHTMLBasico==='function'?escapeHTMLBasico(String(value??'')):String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
