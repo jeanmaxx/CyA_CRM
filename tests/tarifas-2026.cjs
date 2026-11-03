@@ -10,13 +10,16 @@ for(const id of ['fc-monto','fc-servicio','fc-colaborador','fc-honorarios','fc-c
 fields['fc-servicio'].value='retiro_desempleo';
 const store={
   servicios:[{id:'retiro_desempleo',esquema:'mixto',honorariosFijo:8000,comisionFija:3000,umbralFijo:35000,honorariosPct:25,comisionPct:40},{id:'asesoria_pension',esquema:'manual'}],
-  asesores:[{id:'owner',rol:'admin'}],colaboradores:[{id:'collab',pctComision:40}],
+  asesores:[{id:'owner',legacyId:'asesor_ea',nombre:'Emmanuel Alvarez',rol:'admin'},{id:'other',nombre:'Otra asesora',rol:'asesor'}],colaboradores:[{id:'collab',pctComision:40}],
   clientes:[{id:'historico',servicio:'retiro_desempleo',montoAfore:35193,honorarios:8000,comision:3000,asesorId:'owner'}],
 };
 const scope=vm.createContext({store,document:{getElementById:id=>fields[id]||null},editingId:null,asesorDestinoVista:()=> 'owner'});
 vm.runInContext(fs.readFileSync('app-core-04.js','utf8'),scope);
 const calc=(m,client)=>vm.runInContext('calcComision('+m+',"retiro_desempleo","owner",'+JSON.stringify(client)+')',scope);
 const current={tarifaComisionesVersion:'2026-11'};
+assert.equal(vm.runInContext('tarifaEquipoEmmanuel("owner")',scope),true);
+assert.equal(vm.runInContext('tarifaEquipoEmmanuel("other")',scope),false);
+assert.equal(vm.runInContext('tarifaEquipoEmmanuel("desconocido")',scope),false);
 for(const [m,h,c] of [[35193,10000,5000],[50000,10000,5000],[35192,8798,4399],[35192.5,8798.13,4399.07],[30000,7500,3750],[10000,2500,1250]]){
   assert.equal(calc(m,current).honorarios,h,'honorarios '+m);
   assert.equal(calc(m,current).comision,c,'comision '+m);
