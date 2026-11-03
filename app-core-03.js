@@ -789,6 +789,7 @@ function renderServicios(){
 }
 
 function renderEsquemaLabel(s){
+  if(s.id==='retiro_desempleo')return 'Nuevos clientes: retiro ≥ $35,193 → honorarios $10,000 (empresa $5,000 / asesoría $5,000; con colaborador $3,000 + $2,000). Retiro menor: 25% honorarios, mitad empresa y mitad asesoría; con colaborador, esa mitad se reparte 50/50. Clientes anteriores sin cambios. Importes editables por expediente.';
   if(s.esquema==='mixto') return `≥ $${Number(s.umbralFijo||0).toLocaleString('es-MX')}: honorarios $${Number(s.honorariosFijo||0).toLocaleString('es-MX')} / comisión $${Number(s.comisionFija||0).toLocaleString('es-MX')} · < umbral: ${s.honorariosPct||0}% honorarios / ${s.comisionPct||0}% de honorarios`;
   if(s.esquema==='porcentaje') return `Honorarios: ${s.honorariosPct||0}% del monto · Comisión asesor: ${s.comisionPct||0}%`;
   return 'Definir manualmente en cada caso';
