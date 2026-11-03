@@ -181,13 +181,13 @@ function onContratoClienteChange(){
   const svcId=svcSelect?.value||c.servicio;
   const s=store.servicios.find(x=>x.id===svcId);
   let honCalculado=0;
-  if(s&&s.esquema==='mixto'&&c.montoAfore){
-    const calc=calcComision(Number(c.montoAfore),svcId,c.asesorId);
-    honCalculado=calc.honorarios;
-    setVal('ct-honorarios',calc.honorarios);
-  } else if(c.honorarios){
+  if(tieneMontoFinanciero(c.honorarios)){
     honCalculado=Number(c.honorarios);
     setVal('ct-honorarios',c.honorarios);
+  } else if(s&&s.esquema==='mixto'&&c.montoAfore){
+    const calc=calcComision(Number(c.montoAfore),svcId,c.asesorId,c);
+    honCalculado=calc.honorarios;
+    setVal('ct-honorarios',calc.honorarios);
   }
 
   // Precargar monto pagaré (honorarios + 5000)
@@ -844,7 +844,7 @@ function colaboradorDeCliente(cliente){
 // solo aplica a importes automáticos a menos de $10 del total exacto esperado.
 function comisionCompartidaPorConciliar(cliente){
   const colaborador=colaboradorDeCliente(cliente);
-  if(!colaborador||cliente?.comisionManual===true) return null;
+  if(cliente?.tarifaComisionesVersion==='2026-11'||!colaborador||cliente?.comisionManual===true) return null;
   const porcentaje=porcentajeComisionColaborador(cliente,colaborador);
   if(porcentaje<=0||porcentaje>=1) return null;
   const actual=tieneMontoFinanciero(cliente?.comision)?Number(cliente.comision):Number(cliente?.comisionCalc||0);
@@ -866,15 +866,24 @@ function conciliarComisionCompartida(cliente){
 function comisionDelColaborador(cliente,colaborador){
   // Las comisiones operativas se pagan en pesos completos; así no se generan
   // centavos artificiales al repartir un porcentaje.
-  return Math.round(comisionEfectiva(cliente)*porcentajeComisionColaborador(cliente,colaborador));
+  const importe=comisionEfectiva(cliente)*porcentajeComisionColaborador(cliente,colaborador);
+  return cliente?.tarifaComisionesVersion==='2026-11'?redondearMoneda(importe):Math.round(importe);
 }
 
 function comisionDelAsesor(cliente,colaborador){
-  return Math.round(comisionEfectiva(cliente))-comisionDelColaborador(cliente,colaborador);
+  return cliente?.tarifaComisionesVersion==='2026-11'
+    ? redondearMoneda(comisionEfectiva(cliente)-comisionDelColaborador(cliente,colaborador))
+    : Math.round(comisionEfectiva(cliente))-comisionDelColaborador(cliente,colaborador);
 }
 
-function calcComision(monto, servicioId, advisorId){
+function calcComision(monto, servicioId, advisorId, cliente=null){
   if(!monto||monto<=0) return {honorarios:0,comision:0};
+  // Tarifa nueva exclusivamente para expedientes creados desde noviembre de 2026.
+  // La tarifa de expedientes anteriores y los demás servicios no se recalculan.
+  if(servicioId==='retiro_desempleo'&&cliente?.tarifaComisionesVersion==='2026-11'){
+    const honorarios=monto>=35193?10000:redondearMoneda(monto*0.25);
+    return {honorarios,comision:redondearMoneda(honorarios/2)};
+  }
   // Buscar esquema del servicio si se pasa
   const svc=servicioId?store.servicios.find(s=>s.id===servicioId):store.servicios.find(s=>s.id==='retiro_desempleo');
   let honorarios,comision;
@@ -913,14 +922,26 @@ function previewCalculo(){
   if(!preview) return;
   if(!monto){ preview.classList.remove('show'); return; }
   const clienteEditado=editingId?store.clientes.find(c=>c.id===editingId):null;
-  const calc=calcComision(monto, svcId, clienteEditado?.asesorId||asesorDestinoVista());
-  document.getElementById('cp-honorarios').textContent='$'+calc.honorarios.toLocaleString('es-MX');
-  document.getElementById('cp-comision').textContent='$'+calc.comision.toLocaleString('es-MX');
+  const nuevaTarifa=!editingId&&svcId==='retiro_desempleo';
+  const contexto=clienteEditado||(nuevaTarifa?{tarifaComisionesVersion:'2026-11'}:null);
+  const calc=calcComision(monto,svcId,clienteEditado?.asesorId||asesorDestinoVista(),contexto);
+  const conColaborador=Boolean(document.getElementById('fc-colaborador')?.value);
+  const colField=document.getElementById('fc-col-comision');
+  if(nuevaTarifa&&colField&&!colField.dataset.cyaManual){
+    colField.value=conColaborador?(monto>=35193?2000:redondearMoneda(calc.comision/2)):'';
+  }
+  const colSugerida=monto>=35193?2000:redondearMoneda(calc.comision/2);
+  const colParte=conColaborador?(colField?.value!==''&&Number.isFinite(Number(colField?.value))?Number(colField.value):colSugerida):0;
+  const ownPart=redondearMoneda(calc.comision-colParte);
+  document.getElementById('cp-honorarios').textContent=formatoMoneda(calc.honorarios);
+  document.getElementById('cp-comision').textContent=nuevaTarifa
+    ? (conColaborador?'Asesor '+formatoMoneda(ownPart)+' · Colaborador '+formatoMoneda(colParte):'Asesor '+formatoMoneda(calc.comision))
+    : formatoMoneda(calc.comision);
   if(!editingId){
     const h=document.getElementById('fc-honorarios');
     const c=document.getElementById('fc-comision');
-    if(h) h.value=calc.honorarios;
-    if(c) c.value=calc.comision;
+    if(h&&!h.dataset.cyaManual) h.value=calc.honorarios;
+    if(c&&!c.dataset.cyaManual) c.value=calc.comision;
   }
   preview.classList.add('show');
 }
