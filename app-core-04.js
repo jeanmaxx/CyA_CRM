@@ -796,6 +796,11 @@ function tarifaEquipoEmmanuel(advisorId){
   if(asesor.legacyId==='asesor_ea')return true;
   return String(asesor.nombre||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLocaleLowerCase('es-MX')==='emmanuel alvarez';
 }
+function asesorTarifaAltaActual(){
+  const leadId=typeof leadConversionPendienteId!=='undefined'?leadConversionPendienteId:null;
+  const lead=leadId?(store.leads||[]).find(l=>String(l.id)===String(leadId)):null;
+  return lead?.asesorId||asesorDestinoVista();
+}
 function comisionDefaultParaAsesor(advisorId){
   const asesor=(store.asesores||[]).find(a=>a.id===advisorId);
   return asesor&&asesor.rol!=='admin'?2000:3000;
@@ -934,10 +939,10 @@ function previewCalculo(){
   if(!preview) return;
   if(!monto){ preview.classList.remove('show'); return; }
   const clienteEditado=editingId?store.clientes.find(c=>c.id===editingId):null;
-  const nuevaTarifa=!editingId&&svcId==='retiro_desempleo'&&tarifaEquipoEmmanuel(asesorDestinoVista());
+  const nuevaTarifa=!editingId&&svcId==='retiro_desempleo'&&tarifaEquipoEmmanuel(asesorTarifaAltaActual());
   const tarifaActiva=svcId==='retiro_desempleo'&&(nuevaTarifa||clienteEditado?.tarifaComisionesVersion==='2026-11');
   const contexto=clienteEditado||(nuevaTarifa?{tarifaComisionesVersion:'2026-11'}:null);
-  const calc=calcComision(monto,svcId,clienteEditado?.asesorId||asesorDestinoVista(),contexto);
+  const calc=calcComision(monto,svcId,clienteEditado?.asesorId||asesorTarifaAltaActual(),contexto);
   const conColaborador=Boolean(document.getElementById('fc-colaborador')?.value);
   const colField=document.getElementById('fc-col-comision');
   if(nuevaTarifa&&colField&&!colField.dataset.cyaManual){
