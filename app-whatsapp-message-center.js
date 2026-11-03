@@ -281,7 +281,7 @@
       <div class="modal-header"><div><div class="modal-title" id="cya-wa-center-title">Mensajes WhatsApp</div><div class="form-helper" id="cya-wa-center-person"></div></div><button class="modal-close" type="button" onclick="cyaCerrarCentroMensajesWhatsApp()">×</button></div>
       <div class="modal-body">
         <div class="cya-wa-section-label">Seguimiento</div><div class="cya-wa-template-row" id="cya-wa-main-buttons"></div>
-        <div class="cya-wa-section-label">No viable / seguimiento futuro</div><div class="cya-wa-template-row" id="cya-wa-reject-buttons"></div>
+        <div class="cya-wa-section-label" id="cya-wa-reject-label">No viable / seguimiento futuro</div><div class="cya-wa-template-row" id="cya-wa-reject-buttons"></div>
         <div class="cya-wa-helper">Los mensajes conservan *negritas* y _cursivas_ de WhatsApp. En Finalización también se conservan los emojis; en las demás plantillas se omiten para evitar símbolos incompatibles. El CRM nunca envía automáticamente: revisa el texto y pulsa Enviar manualmente en WhatsApp.</div>
         <div id="cya-wa-block-list"></div>
       </div>
@@ -296,8 +296,14 @@
     const main=document.getElementById('cya-wa-main-buttons');const reject=document.getElementById('cya-wa-reject-buttons');
     if(!main||!reject)return;
     const button=g=>`<button class="btn${g.key===currentGroupKey?' active':''}" type="button" data-cya-wa-group="${safe(g.key)}">${safe(g.label)}</button>`;
-    main.innerHTML=GROUPS.filter(g=>g.kind==='main'&&(g.key!=='alta_15'||messageContactType==='client')).map(button).join('');
-    reject.innerHTML=GROUPS.filter(g=>g.kind==='reject').map(button).join('');
+    main.innerHTML=GROUPS.filter(g=>g.kind==='main'&&(
+      messageContactType==='client'
+        ? ['alta_15','finalizacion','despedida'].includes(g.key)
+        : g.key!=='alta_15'
+    )).map(button).join('');
+    reject.innerHTML=messageContactType==='client'?'':GROUPS.filter(g=>g.kind==='reject').map(button).join('');
+    const rejectLabel=document.getElementById('cya-wa-reject-label');
+    if(rejectLabel)rejectLabel.style.display=messageContactType==='client'?'none':'';
     document.querySelectorAll('[data-cya-wa-group]').forEach(el=>el.onclick=()=>selectGroup(el.dataset.cyaWaGroup));
   }
 
@@ -374,8 +380,9 @@
 
   window.cyaEditarPlantillaWhatsAppSeleccionada=function(){
     const group=GROUPS.find(g=>g.key===currentGroupKey);const templateId=group?.ids?.[0]||null;if(!templateId)return;
+    const contactType=messageContactType;
     window.cyaCerrarCentroMensajesWhatsApp();
-    try{closeModal?.(messageContactType==='client'?'modal-perfil':'modal-lead');navigate('plantillas',document.querySelector('[data-page="plantillas"]'));setTimeout(()=>{if(typeof seleccionarPlantilla==='function')seleccionarPlantilla(templateId);},100);}catch(_){ }
+    try{closeModal?.(contactType==='client'?'modal-perfil':'modal-lead');navigate('plantillas',document.querySelector('[data-page="plantillas"]'));setTimeout(()=>{if(typeof seleccionarPlantilla==='function')seleccionarPlantilla(templateId);},100);}catch(_){ }
   };
 
   function ensureProspectButton(){
