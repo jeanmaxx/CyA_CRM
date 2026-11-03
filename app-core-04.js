@@ -881,8 +881,10 @@ function calcComision(monto, servicioId, advisorId, cliente=null){
   // Tarifa nueva exclusivamente para expedientes creados desde noviembre de 2026.
   // La tarifa de expedientes anteriores y los demás servicios no se recalculan.
   if(servicioId==='retiro_desempleo'&&cliente?.tarifaComisionesVersion==='2026-11'){
-    const honorarios=monto>=35193?10000:redondearMoneda(monto*0.25);
-    return {honorarios,comision:redondearMoneda(honorarios/2)};
+    // Calcular en centavos enteros para evitar errores de redondeo con .005.
+    const centavosHonorarios=monto>=35193?1000000:Math.round(monto*25);
+    const honorarios=centavosHonorarios/100;
+    return {honorarios,comision:Math.round(centavosHonorarios/2)/100};
   }
   // Buscar esquema del servicio si se pasa
   const svc=servicioId?store.servicios.find(s=>s.id===servicioId):store.servicios.find(s=>s.id==='retiro_desempleo');
