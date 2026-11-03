@@ -104,7 +104,7 @@
     }
 
     function newTariffClient(client){
-      return client?.tarifaComisionesVersion==='2026-11'||(!client&&!editingId&&document.getElementById('fc-servicio')?.value==='retiro_desempleo'&&tarifaEquipoEmmanuel(asesorDestinoVista()));
+      return client?.tarifaComisionesVersion==='2026-11'||(!client&&!editingId&&document.getElementById('fc-servicio')?.value==='retiro_desempleo'&&tarifaEquipoEmmanuel(asesorTarifaAltaActual()));
     }
 
     function suggestedCollaboratorCommission(){
