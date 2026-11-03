@@ -50,7 +50,9 @@
 
     function collaboratorDefault(collaborator){
       const configured=money(collaborator?.comisionDefault);
-      return configured!==null?configured:2000;
+      // Colaboradores anteriores mantienen su default histórico.
+      // Los nuevos comienzan con $2,000, además de la regla por cliente nuevo.
+      return configured!==null?configured:(collaborator?1000:2000);
     }
 
     function ensureAdvisorDefaultField(advisor=null){
