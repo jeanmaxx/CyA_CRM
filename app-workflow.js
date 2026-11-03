@@ -246,7 +246,7 @@ avanzarEtapa=async function(id){
   if(next.id==='honorarios_recibidos'){mostrarPopupCierre(id);return;}
   if(next.id==='dado_alta')c.fechaAltaAfore||=fechaISOLocal(new Date());
   if(next.id==='solicitud_realizada')c.fechaSolicitudRealizada||=c.fechaSolicitudManual||fechaISOLocal(new Date());
-  if(next.id==='deposito_recibido'&&c.montoAfore&&!c.estadoPago){const calc=calcComision(Number(c.montoAfore),c.servicio,c.asesorId);if(!tieneMontoFinanciero(c.honorarios))c.honorarios=calc.honorarios;if(!tieneMontoFinanciero(c.comision))c.comision=calc.comision;c.comisionCalc=calc.comision;c.estadoPago='Pendiente';}
+  if(next.id==='deposito_recibido'&&c.montoAfore&&!c.estadoPago){const calc=calcComision(Number(c.montoAfore),c.servicio,c.asesorId,c);if(!tieneMontoFinanciero(c.honorarios))c.honorarios=calc.honorarios;if(!tieneMontoFinanciero(c.comision))c.comision=calc.comision;c.comisionCalc=calc.comision;c.estadoPago='Pendiente';}
   c.etapa=next.id;addHist(c,'etapa','Avanzó a: '+next.label);
   const agendaBefore=JSON.parse(JSON.stringify(store.agenda));sincronizarFechasCliente(c,original);
   const pos=store.clientes.indexOf(original);store.clientes[pos]=c;
