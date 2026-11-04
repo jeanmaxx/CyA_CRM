@@ -287,9 +287,15 @@ async function guardarLead(){
     store.leads.push(lead);
 
   }
+  const aprobadoAhora=lead.estado==='aprobado'&&leadAnterior?.estado!=='aprobado';
   editingLeadId=lead.id;
   try{await cloudSyncNow({throwOnError:true});}catch(e){showToast('Prospecto pendiente de guardar. Conservamos la captura para reintentar.','warn');return;}
   showToast('Prospecto guardado en la nube','success');
   closeModal('modal-lead');
   renderPage('leads');
+  // Una única invitación por transición confirmada a Aprobado. Abrir
+  // la vista previa, nunca enviar el mensaje automáticamente.
+  if(aprobadoAhora&&typeof window.cyaAbrirCentroMensajesWhatsApp==='function'){
+    window.cyaAbrirCentroMensajesWhatsApp('aprobado');
+  }
 }

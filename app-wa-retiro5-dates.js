@@ -49,20 +49,53 @@
     return `${p.day} de ${MONTHS[p.month-1]} de ${p.year}`;
   }
 
+  function isoDate(value){
+    const p=parseDateParts(value);
+    if(!p||p.month<1||p.month>12||p.day<1||p.day>31)return '';
+    const d=new Date(Date.UTC(p.year,p.month-1,p.day));
+    if(d.getUTCFullYear()!==p.year||d.getUTCMonth()!==p.month-1||d.getUTCDate()!==p.day)return '';
+    return `${p.year}-${String(p.month).padStart(2,'0')}-${String(p.day).padStart(2,'0')}`;
+  }
+
   function rawLastWithdrawal(lead){
-    const formValue=String(document.getElementById('lead-fecha-ultimo-retiro')?.value||'').trim();
-    return formValue||lead?.fechaUltimoRetiro||'';
+    if(!lead)return '';
+    const leadId=String(lead.id||'');
+    const archiveOpen=document.getElementById('modal-archivar-lead')?.classList.contains('open');
+    const selectedArchive=String(window.leadParaArchivar||'')===leadId||
+      (typeof leadParaArchivar!=='undefined'&&String(leadParaArchivar||'')===leadId);
+    if(archiveOpen&&selectedArchive){
+      const candidate=isoDate(document.getElementById('lead-fecha-ultimo-retiro')?.value);
+      if(candidate)return candidate;
+    }
+    const editingCurrent=typeof editingLeadId!=='undefined'&&String(editingLeadId||'')===leadId;
+    if(editingCurrent&&document.getElementById('modal-lead')?.classList.contains('open')){
+      const draft=isoDate(document.getElementById('lead-el-fecha-retiro')?.value);
+      if(draft)return draft;
+    }
+    return isoDate(lead.fechaUltimoRetiro)||isoDate(lead.elegibilidad?.fechaRetiro)||'';
   }
 
   function rawRecontactDate(lead){
-    if(lead?.fechaRecontacto)return lead.fechaRecontacto;
+    if(!lead)return '';
+    // Lo almacenado o agendado siempre es la fuente prioritaria.
+    const scheduled=isoDate(lead.fechaRecontacto);
+    if(scheduled)return scheduled;
     try{
       const event=(store?.agenda||[]).find(e=>
-        String(e?.leadId||'')===String(lead?.id||'')&&
-        (String(e?.id||'')===`ev_recontacto_${lead?.id}`||String(e?.titulo||'').toLowerCase().includes('recontactar prospecto'))
+        String(e?.leadId||'')===String(lead.id)&&
+        (String(e?.id||'')===`ev_recontacto_${lead.id}`||String(e?.titulo||'').toLowerCase().includes('recontactar prospecto'))
       );
-      return event?.fecha||'';
-    }catch(_){return '';}
+      const calendarDate=isoDate(event?.fecha);
+      if(calendarDate)return calendarDate;
+    }catch(_){ }
+    // Mientras el prospecto aún no se archiva, la evaluación de
+    // elegibilidad ya conoce el último retiro y calcula 59 meses.
+    const last=rawLastWithdrawal(lead);
+    if(!last)return '';
+    try{
+      if(typeof sumarMesesISO==='function')return isoDate(sumarMesesISO(last,59));
+    }catch(_){ }
+    return '';
   }
 
   function hydrateText(value,lead){
@@ -72,6 +105,10 @@
       .replace(/\{\{FECHA_ULTIMO_RETIRO\}\}/g,last)
       .replace(/\{\{FECHA_RECONTACTO\}\}/g,recontact);
   }
+
+  // También se usa al generar el mensaje en el centro, sin esperar
+  // eventos de clic o temporizadores que puedan mostrar una fecha vacía.
+  window.cyaCompletarFechasRetiroWhatsApp=hydrateText;
 
   function migrateStoredTemplates(){
     try{
