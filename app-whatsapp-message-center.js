@@ -203,11 +203,15 @@
     const visibleName=String(messageContactType==='client'
       ?(contact?.nombre||contact?.name||'')
       :(document.getElementById('lead-nombre')?.value||contact?.nombre||contact?.name||'')).trim();
-    return sanitizeWhatsAppText(String(template?.texto||'')
+    const personalized=String(template?.texto||'')
       .replace(/\{\{NOMBRE\}\}/g,firstName(visibleName))
       .replace(/\{\{ASESOR\}\}/g,advisorName())
       .replace(/\{\{SALUDO\}\}/g,greeting())
-      .replace(/ +([,.!?])/g,'$1'),template?.cyaGrupo==='finalizacion');
+      .replace(/ +([,.!?])/g,'$1');
+    const dated=template?.cyaGrupo==='retiro_5'&&messageContactType==='lead'&&typeof window.cyaCompletarFechasRetiroWhatsApp==='function'
+      ?window.cyaCompletarFechasRetiroWhatsApp(personalized,contact)
+      :personalized;
+    return sanitizeWhatsAppText(dated,template?.cyaGrupo==='finalizacion');
   }
 
   async function copyText(value,preserveEmoji=false){
