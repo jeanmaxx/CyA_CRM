@@ -203,7 +203,20 @@
     const visibleName=String(messageContactType==='client'
       ?(contact?.nombre||contact?.name||'')
       :(document.getElementById('lead-nombre')?.value||contact?.nombre||contact?.name||'')).trim();
-    const personalized=String(template?.texto||'')
+    let templateText=String(template?.texto||'');
+    // Un prospecto nuevo de este equipo no debe recibir la cotización
+    // antigua de $8,000 ni el límite obsoleto de $35,190. No modifica
+    // el texto guardado de la plantilla ni el esquema de otros asesores.
+    if(messageContactType==='lead'&&template?.cyaGrupo==='aprobado'
+       &&typeof tarifaEquipoEmmanuel==='function'&&tarifaEquipoEmmanuel(contact?.asesorId)){
+      templateText=templateText
+        .replace('(hasta $35,190 pesos)','(según el monto autorizado para tu caso)')
+        .replace(
+          'Nuestros honorarios de asesoría _($8,000 pesos)_ se liquidan únicamente hasta que el dinero esté depositado en tu cuenta bancaria.',
+          'Los honorarios por nuestro acompañamiento y asesoría se calculan según el monto de retiro y se acuerdan contigo antes de formalizar el contrato. Se liquidan únicamente después de que el recurso esté depositado en tu cuenta bancaria.'
+        );
+    }
+    const personalized=templateText
       .replace(/\{\{NOMBRE\}\}/g,firstName(visibleName))
       .replace(/\{\{ASESOR\}\}/g,advisorName())
       .replace(/\{\{SALUDO\}\}/g,greeting())
