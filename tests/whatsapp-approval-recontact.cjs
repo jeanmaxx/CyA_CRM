@@ -82,5 +82,29 @@ vm.runInContext(code,ctx);
   assert.match(win.cyaCompletarFechasRetiroWhatsApp(text,lead),/16 de septiembre de 2028/);
   const center=fs.readFileSync('app-whatsapp-message-center.js','utf8');
   assert.match(center,/cyaCompletarFechasRetiroWhatsApp\(personalized,contact\)/,'La fecha debe aplicarse durante el renderizado');
-  console.log('Aprobación: un solo aviso después de guardar; retiro: 59 meses y prioridades de fecha OK');
+
+  // La cotización antigua no debe mostrarse al aprobar un prospecto del
+  // nuevo equipo; los demás asesores mantienen sus textos configurados.
+  const renderStart=center.indexOf('function renderText(template,contact){');
+  const renderEnd=center.indexOf('\n  async function copyText(',renderStart);
+  assert(renderStart>0&&renderEnd>renderStart,'Render WhatsApp localizable');
+  const renderCtx=vm.createContext({
+    window:{},messageContactType:'lead',
+    document:{getElementById:()=>null},
+    firstName:value=>String(value).split(/\s+/)[0],
+    advisorName:()=> 'Emmanuel Alvarez',greeting:()=> 'Buen día',
+    sanitizeWhatsAppText:value=>String(value),
+    tarifaEquipoEmmanuel:id=>id==='owner',
+    template:{cyaGrupo:'aprobado',texto:'Monto (hasta $35,190 pesos). Nuestros honorarios de asesoría _($8,000 pesos)_ se liquidan únicamente hasta que el dinero esté depositado en tu cuenta bancaria.'},
+    contact:{nombre:'CARLOS RAMÍREZ',asesorId:'owner'}
+  });
+  vm.runInContext(center.slice(renderStart,renderEnd),renderCtx);
+  const ownMessage=vm.runInContext('renderText(template,contact)',renderCtx);
+  assert.doesNotMatch(ownMessage,/8,000|35,190/);
+  assert.match(ownMessage,/se calculan según el monto de retiro/);
+  renderCtx.contact.asesorId='another';
+  const otherMessage=vm.runInContext('renderText(template,contact)',renderCtx);
+  assert.match(otherMessage,/8,000/);
+  assert.match(otherMessage,/35,190/);
+  console.log('Aprobación: aviso tras guardar, tarifa contextual; retiro: 59 meses y fechas persistidas OK');
 })().catch(error=>{console.error(error);process.exitCode=1;});
