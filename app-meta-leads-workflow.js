@@ -344,8 +344,8 @@
 
 
   function metaQualification(l){
-    const a=l?.metaLead?.answers||{},d=l?.elegibilidadDeclarada||{};
-    const norm=v=>String(v||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_');
+    const a=l?.metaLead?.answers||{},d=l?.elegibilidadDeclarada||l?.elegibilidad?.porServicio?.retiro_desempleo?.declarado||{};
+    const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_');
     const imss=norm(a.imss_status_declared||d.respuestasOriginales?.cotiza);
     const retiro=norm(a.previous_withdrawal_declared||d.respuestasOriginales?.retiro);
     const semanas=norm(a.weeks_declared||d.respuestasOriginales?.semanas);
@@ -449,7 +449,7 @@
     }
     const headerCount=col.querySelector('.cya-meta-count');if(headerCount)headerCount.textContent=String(leads.length);
     const body=col.querySelector('.lead-col-body');
-    const signature=leads.map(l=>`${l.id}:${l.nombre||''}:${l.fechaInicio||l.fechaCaptura||''}:${l.revisionSolicitada?'1':'0'}`).join('|');
+    const signature=leads.map(l=>`${l.id}:${l.nombre||''}:${l.fechaInicio||l.fechaCaptura||''}:${l.revisionSolicitada?'1':'0'}:${metaQualification(l).tone}`).join('|');
     if(body&&body.dataset.cyaSignature!==signature){
       body.dataset.cyaSignature=signature;
       body.innerHTML=leads.length?leads.map(metaLeadCardHtml).join(''):'<div class="cya-meta-empty">Sin prospectos nuevos</div>';
