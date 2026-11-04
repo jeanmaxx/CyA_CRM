@@ -34,18 +34,40 @@ function envKey(jsonName:string,legacyName:string){
   return Deno.env.get(legacyName)||'';
 }
 function declaredEligibility(answers: Record<string, unknown>) {
-  const cotizaRaw = findAnswer(answers, 'actualmente te encuentras sin cotizar');
-  const semanasRaw = findAnswer(answers, 'calculas haber cotizado al menos 2 anos');
-  const retiroRaw = findAnswer(answers, 'has tramitado algun retiro por desempleo');
-  const opt = (v: string) => normalizeKey(v);
-  const c = opt(cotizaRaw), s = opt(semanasRaw), r = opt(retiroRaw);
-  const sinCotizar = c.includes('opcion_a') ? 'mas_45_dias_sin_cotizar' : c.includes('opcion_b') ? 'cotiza_activo' : c ? 'requiere_revision' : '';
-  const semanas = s.includes('opcion_a') ? '105_o_mas' : s.includes('opcion_b') ? 'menos_105' : s.includes('opcion_c') ? 'no_recuerda' : '';
-  const retiro = r.includes('opcion_a') ? 'nunca' : r.includes('opcion_b') ? 'mas_5_anos' : r.includes('opcion_c') ? 'menos_5_anos' : r.includes('opcion_d') ? 'no_recuerda' : '';
-  let precalificacion = 'requiere_revision';
-  if (sinCotizar === 'cotiza_activo' || semanas === 'menos_105' || retiro === 'menos_5_anos') precalificacion = 'probable_no_elegible';
-  else if (sinCotizar === 'mas_45_dias_sin_cotizar' && semanas === '105_o_mas' && ['nunca','mas_5_anos'].includes(retiro)) precalificacion = 'favorable';
-  return { sinCotizar, semanas, retiro, precalificacion, respuestasOriginales: { cotiza: cotizaRaw, semanas: semanasRaw, retiro: retiroRaw } };
+  const raw = answers.raw && typeof answers.raw === 'object' ? answers.raw as Record<string, unknown> : {};
+  const pick = (canonical: string, needles: string[]) => {
+    const direct = text(answers[canonical]);
+    if (direct) return direct;
+    for (const needle of needles) {
+      const value = findAnswer(raw, needle) || findAnswer(answers, needle);
+      if (value) return value;
+    }
+    return '';
+  };
+  const cotizaRaw = pick('imss_status_declared', ['cual describe mejor tu situacion actual ante el imss','actualmente te encuentras sin cotizar']);
+  const semanasRaw = pick('weeks_declared', ['acumulaste al menos 2 anos cotizando','calculas haber cotizado al menos 2 anos']);
+  const retiroRaw = pick('previous_withdrawal_declared', ['has realizado antes un retiro por desempleo','has tramitado algun retiro por desempleo']);
+  const c = normalizeKey(cotizaRaw), s = normalizeKey(semanasRaw), r = normalizeKey(retiroRaw);
+  // Conservative interpretation: unknown or ambiguous answers never become a favorable result.
+  const activo = /opcion_b|actualmente_cotiz|imss_activo|trabajando|empleo_formal|dado_de_alta|si_cotizo/.test(c)
+    && !/no_estoy|sin_cotizar|ya_no|no_cotizo/.test(c);
+  const sinCotizar = activo ? 'cotiza_activo'
+    : /opcion_a|mas_de_45|45_dias|sin_cotizar|dado_de_baja|no_estoy_cotizando/.test(c) ? 'mas_45_dias_sin_cotizar'
+    : 'requiere_revision';
+  const semanas = /opcion_b|menos_de_2_anos|menos_de_105/.test(s) ? 'menos_105'
+    : /opcion_a|al_menos_2_anos|105_o_mas|mas_de_2_anos/.test(s) ? '105_o_mas'
+    : 'no_recuerda';
+  const retiro = /opcion_c|menos_de_5_anos|hace_menos_de_5/.test(r) ? 'menos_5_anos'
+    : /opcion_b|mas_de_5_anos|hace_mas_de_5/.test(r) ? 'mas_5_anos'
+    : /opcion_a|nunca|no_he_realizado/.test(r) ? 'nunca' : 'no_recuerda';
+  const motivos = [];
+  if (sinCotizar === 'cotiza_activo') motivos.push('imss_activo');
+  if (retiro === 'menos_5_anos') motivos.push('retiro_menos_5');
+  if (semanas === 'menos_105') motivos.push('cotizacion_insuficiente_declarada');
+  const precalificacion = motivos.length ? 'probable_no_elegible'
+    : sinCotizar === 'mas_45_dias_sin_cotizar' && semanas === '105_o_mas' && ['nunca','mas_5_anos'].includes(retiro)
+      ? 'favorable' : 'requiere_revision';
+  return { sinCotizar, semanas, retiro, precalificacion, motivos, respuestasOriginales: { cotiza: cotizaRaw, semanas: semanasRaw, retiro: retiroRaw } };
 }
 
 Deno.serve(async (req: Request) => {

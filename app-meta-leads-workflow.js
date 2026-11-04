@@ -301,7 +301,7 @@
       const meta=l?.metaLead||l?.origenMeta||null;
       if(meta){
         metaBox.hidden=false;
-        metaBox.innerHTML=`<strong>Origen Meta Ads</strong><span>${safe(meta.campaignName||'Campaña no registrada')}</span>`;
+        metaBox.innerHTML=`<strong>Origen Meta Ads</strong><span>${safe(meta.campaignName||'Campaña no registrada')}</span><strong>${safe(metaQualification(l).label)}</strong><div class="cya-meta-answers"><b>Respuestas del formulario</b>${metaQuestionsHtml(l)}</div>`;
       }else metaBox.hidden=true;
     }
     const clientActions=document.getElementById('cya-client-message-actions');if(clientActions)clientActions.style.display=l&&isMetaLead(l)?'flex':'none';
@@ -342,6 +342,36 @@
     return l?.estado!=='archivado'&&!l?.revisionSolicitada&&(l?.metaAds===true||source==='meta ads'||Boolean(l?.metaLead)||Boolean(l?.origenMeta));
   }
 
+
+  function metaQualification(l){
+    const a=l?.metaLead?.answers||{},d=l?.elegibilidadDeclarada||l?.elegibilidad?.porServicio?.retiro_desempleo?.declarado||{};
+    const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_');
+    const imss=norm(a.imss_status_declared||d.respuestasOriginales?.cotiza);
+    const retiro=norm(a.previous_withdrawal_declared||d.respuestasOriginales?.retiro);
+    const semanas=norm(a.weeks_declared||d.respuestasOriginales?.semanas);
+    const active=d.sinCotizar==='cotiza_activo'||(/opcion_b|actualmente_cotiz|imss_activo|dado_de_alta|trabajando/.test(imss)&&!/no_estoy|sin_cotizar|no_cotizo/.test(imss));
+    const recent=d.retiro==='menos_5_anos'||/opcion_c|menos_de_5_anos/.test(retiro);
+    const short=d.semanas==='menos_105'||/opcion_b|menos_de_2_anos|menos_de_105/.test(semanas);
+    const favorable=!active&&!recent&&!short&&(d.precalificacion==='favorable'||(/opcion_a|45_dias|sin_cotizar/.test(imss)&&/opcion_a|al_menos_2_anos/.test(semanas)&&/opcion_a|opcion_b|nunca|mas_de_5_anos/.test(retiro)));
+    return {tone:active||recent||short?'red':favorable?'green':'orange',active,recent,label:active?'IMSS activo · Declarado':recent?'Retiro menor a 5 años · Declarado':short?'Cotización insuficiente · Declarada':favorable?'Buen candidato · Por verificar':'Información por verificar'};
+  }
+  function metaQuestionsHtml(l){
+    const a=l?.metaLead?.answers||{},raw=a.raw||{};
+    const excluded=/^(id|lead_id|leadgen_id|created_time|campaign_name|adset_name|ad_name|form_name|platform|full_name|email|phone|phone_number|lead_status|resumen_para_compartir|notas_manuales|accion_crm|estado_crm|fecha_crm)$/i;
+    const entries=Object.entries(raw).filter(([k,v])=>!excluded.test(k)&&v!==null&&String(v).trim());
+    const items=entries.length?entries:[['Situación IMSS',a.imss_status_declared],['Tiempo cotizado',a.weeks_declared],['Retiro anterior',a.previous_withdrawal_declared]].filter(([,v])=>v);
+    return items.length?items.map(([k,v])=>'<div class="cya-meta-answer"><strong>'+safe(String(k).replace(/_/g,' '))+'</strong><span>'+safe(v)+'</span></div>').join(''):'<p>Este registro no incluye respuestas del cuestionario.</p>';
+  }
+  window.cyaMetaWhatsApp=function(id){
+    const l=leadById(id);if(!l)return;
+    const q=metaQualification(l);if(!q.active&&!q.recent)return;
+    const phone=normalizePhone(l.telefono||l.phone);
+    if(phone.length!==10){showToast?.('Verifica el teléfono del prospecto','warn');return;}
+    const intro='Hola, gracias por responder nuestro formulario de Retiro por Desempleo de AFORE.';
+    const detail=q.active?'Según tus respuestas, actualmente sigues cotizando ante el IMSS. Por ahora no podemos iniciar el trámite; conservaremos tu solicitud para retomarla si cambia tu situación laboral.':'Según tus respuestas, realizaste un retiro por desempleo hace menos de cinco años. En general, debe transcurrir un plazo de cinco años entre retiros. Conservaremos tu solicitud para darle seguimiento.';
+    const message=intro+'\\n\\n'+detail+'\\n\\nEsta es una orientación inicial basada en tus respuestas, no una verificación oficial. Si algún dato es incorrecto, podemos revisarlo contigo.\\n\\nCasillas & Asociados.';
+    window.open('https://wa.me/52'+phone+'?text='+encodeURIComponent(message),'_blank','noopener,noreferrer');
+  };
   function metaLeadCardHtml(l){
     const fechaBase=l?.fechaInicio||l?.fechaCaptura||l?.fechaRegistro||new Date().toISOString();
     const dias=Math.max(0,Math.floor((Date.now()-new Date(fechaBase).getTime())/(1000*60*60*24))||0);
@@ -349,13 +379,15 @@
     const curp=l?.curp||'CURP pendiente';
     const primeraNota=(l?.notas||'').split(/\r?\n/)[0]||'Pendiente de revisión';
     const service=typeof getSvcLabel==='function'?getSvcLabel(l?.servicio):'Retiro por desempleo';
-    return `<div class="lead-card cya-meta-lead-card" data-lead-id="${safe(l?.id)}" role="button" tabindex="0" onclick="openModalLead('${safe(l?.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${safe(l?.id)}');}">
-      <div class="cya-meta-tag">META ADS · PENDIENTE DE REVISIÓN</div>
+    const qualification=metaQualification(l);
+    return `<div class="lead-card cya-meta-lead-card cya-meta-tone-${qualification.tone}" data-lead-id="${safe(l?.id)}" role="button" tabindex="0" onclick="openModalLead('${safe(l?.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${safe(l?.id)}');}">
+      <div class="cya-meta-tag">META ADS · ${safe(qualification.label)}</div>
       <div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start;"><div class="lead-card-nombre">${safe(nombre)}</div><span class="lead-card-dias ${dias>1?'lead-dias-normal':'lead-dias-ok'}" style="margin:0;flex-shrink:0;">${dias}d</span></div>
       <div style="font-size:10px;color:var(--text-secondary);margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safe(curp)}</div>
       <div class="cya-meta-raw-name">⚠ Verificar nombre en RENAPO</div>
       <div class="lead-card-nota" title="${safe(primeraNota)}">${safe(primeraNota)}</div>
       <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${safe(service)}</div>
+      ${qualification.active||qualification.recent?`<button type="button" class="btn cya-meta-wa" onclick="event.stopPropagation();cyaMetaWhatsApp(\'${safe(l?.id)}\')">💬 WhatsApp sugerido</button>`:""}
     </div>`;
   }
 
@@ -417,7 +449,7 @@
     }
     const headerCount=col.querySelector('.cya-meta-count');if(headerCount)headerCount.textContent=String(leads.length);
     const body=col.querySelector('.lead-col-body');
-    const signature=leads.map(l=>`${l.id}:${l.nombre||''}:${l.fechaInicio||l.fechaCaptura||''}:${l.revisionSolicitada?'1':'0'}`).join('|');
+    const signature=leads.map(l=>`${l.id}:${l.nombre||''}:${l.fechaInicio||l.fechaCaptura||''}:${l.revisionSolicitada?'1':'0'}:${metaQualification(l).tone}`).join('|');
     if(body&&body.dataset.cyaSignature!==signature){
       body.dataset.cyaSignature=signature;
       body.innerHTML=leads.length?leads.map(metaLeadCardHtml).join(''):'<div class="cya-meta-empty">Sin prospectos nuevos</div>';
@@ -462,6 +494,7 @@
       .cya-meta-origin-box{display:flex;flex-direction:column;gap:3px;margin-top:8px;padding:9px 10px;border-left:3px solid #1877f2;background:rgba(24,119,242,.07);border-radius:4px}
       .cya-meta-origin-box strong{font-size:10px;color:#60a5fa}.cya-meta-origin-box span{font-size:10px;color:var(--text-muted)}
       .cya-meta-new-column{border:1px solid rgba(24,119,242,.35);flex:0 0 250px;min-width:250px}.cya-meta-new-column .lead-col-header{background:linear-gradient(90deg,#1559c7,#1877f2)}
+      .cya-meta-lead-card.cya-meta-tone-green{background:rgba(22,163,74,.12)!important;border:1px solid #16a34a!important}.cya-meta-lead-card.cya-meta-tone-orange{background:rgba(245,158,11,.12)!important;border:1px solid #f59e0b!important}.cya-meta-lead-card.cya-meta-tone-red{background:rgba(220,38,38,.12)!important;border:1px solid #dc2626!important}.cya-meta-wa{font-size:10px!important;margin-top:8px}.cya-meta-answers{margin-top:10px;display:grid;gap:7px}.cya-meta-answer{display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);padding-bottom:6px}.cya-meta-answer strong{font-size:10px}.cya-meta-answer span{font-size:11px;overflow-wrap:anywhere}
       .cya-meta-count{background:rgba(0,0,0,.2);padding:2px 8px;border-radius:10px;font-size:11px}.cya-meta-tag{font-size:8px;font-weight:700;letter-spacing:.45px;color:#60a5fa;margin-bottom:4px}.cya-meta-raw-name{font-size:9px;color:var(--warning);margin-bottom:4px}.cya-meta-empty{font-size:11px;color:var(--text-muted);text-align:center;padding:16px 0}
       .cya-special-leads-stack{flex:0 0 205px;min-width:205px;display:flex;flex-direction:column;gap:8px;align-self:flex-start}.cya-special-leads-stack .lead-col{width:100%!important;min-width:0!important;min-height:0!important;height:auto!important}.cya-special-leads-stack .lead-col-header{cursor:pointer;border-radius:7px}.cya-special-leads-stack .lead-col-header::after{content:'▸';font-size:11px;margin-left:6px;opacity:.7}.cya-special-leads-stack .lead-col.is-expanded .lead-col-header::after{content:'▾'}.cya-special-leads-stack .lead-col-body{display:none!important}.cya-special-leads-stack .lead-col.is-expanded .lead-col-body{display:block!important;max-height:360px;overflow:auto}.cya-special-leads-stack .lead-col.is-expanded{box-shadow:0 8px 20px rgba(0,0,0,.12)}
       @media(max-width:700px){#lead-curp-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-review-sent{width:100%;justify-content:center}.cya-client-message-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-client-review-modal{max-width:96vw}.cya-client-review-text{min-height:280px}.cya-lead-extra-fields .form-row{grid-template-columns:1fr}.cya-special-leads-stack{flex:0 0 180px;min-width:180px}.cya-meta-new-column{flex-basis:230px;min-width:230px}}
