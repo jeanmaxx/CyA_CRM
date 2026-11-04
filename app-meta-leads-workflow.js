@@ -332,6 +332,9 @@
     if(!visible){setQuestionnaireTab('datos');return;}
     const q=metaQualification(l);
     const heading=q.tone==='green'?'🟢':q.tone==='red'?'🔴':'🟠';
+    const signature=String(l.id)+':'+JSON.stringify(l.metaLead?.answers||{});
+    if(panel.dataset.cyaLeadSignature===signature)return;
+    panel.dataset.cyaLeadSignature=signature;
     panel.innerHTML='<div class="cya-meta-questionnaire-head"><strong>'+heading+' '+safe(q.label)+'</strong><p>Precalificación orientativa basada únicamente en las respuestas del formulario. No sustituye la validación ante IMSS/AFORE.</p></div><div class="cya-meta-questionnaire-list">'+metaQuestionsHtml(l)+'</div>';
     setQuestionnaireTab('datos');
   }
