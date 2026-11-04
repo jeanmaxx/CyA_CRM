@@ -5,7 +5,8 @@ const vm=require('node:vm');
 // Sin mensajes reales, datos productivos ni solicitudes de red.
 const approvalSource=fs.readFileSync('app-prospect-workflow.js','utf8');
 const start=approvalSource.indexOf('async function guardarLead(){');
-const end=approvalSource.indexOf('\nfunction ',start+1);
+const next=approvalSource.indexOf('\nfunction ',start+1);
+const end=next>start?next:approvalSource.length;
 assert(start>0&&end>start,'Debe encontrarse guardarLead() completo');
 const code=approvalSource.slice(start,end);
 const calls=[],fields={
