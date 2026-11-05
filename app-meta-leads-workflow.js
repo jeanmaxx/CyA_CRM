@@ -437,7 +437,7 @@
 
   function isMetaNewLead(l){
     const source=String(l?.fuenteContacto||l?.origen?.fuente||'').toLowerCase();
-    return l?.estado!=='archivado'&&!l?.revisionSolicitada&&(l?.metaAds===true||source==='meta ads'||Boolean(l?.metaLead)||Boolean(l?.origenMeta));
+    return l?.estado!=='archivado'&&l?.estado!=='aprobado'&&!l?.revisionSolicitada&&(l?.metaAds===true||source==='meta ads'||Boolean(l?.metaLead)||Boolean(l?.origenMeta));
   }
 
 
