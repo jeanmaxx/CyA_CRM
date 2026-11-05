@@ -287,11 +287,71 @@
     const service=document.getElementById('lead-servicio')?.value||'retiro_desempleo';
     if(service==='asesoria_pension')return [['pensiones','Pensiones']];
     if(service==='correccion_imss')return [['correccion_imss','Corrección ante IMSS']];
-    return [['semanas','Semanas / NSS'],['sindos','SINDOs'],['aprobado','Aprobado']];
+    return [['semanas','Semanas / NSS'],['reconsulta','Nueva consulta'],['sindos','SINDOs'],['aprobado','Aprobado']];
   }
+
+  const RECONSULTA_MOTIVOS={
+    limite:'Límite de consultas por día',
+    servicio:'Servicio temporalmente no disponible',
+    datos:'Información pendiente de verificar',
+    baja:'IMSS activo, pero ya no labora ahí; pendiente de que se refleje la baja',
+    otro:'Otro motivo'
+  };
+  function ensureReconsultaOption(){
+    const select=document.getElementById('lead-estado');
+    if(select&&![...select.options].some(o=>o.value==='reconsulta')){
+      const option=new Option('🗓 Pendiente de nueva consulta','reconsulta');
+      const sindos=[...select.options].find(o=>o.value==='sindos');
+      select.add(option,sindos||null);
+    }
+  }
+  function todayIso(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
+  function askReconsulta(lead){
+    return new Promise(resolve=>{
+      let modal=document.getElementById('cya-reconsulta-modal');
+      if(!modal){
+        modal=document.createElement('div');modal.id='cya-reconsulta-modal';modal.className='modal-overlay';
+        modal.innerHTML='<div class="modal" style="max-width:490px" role="dialog" aria-modal="true"><div class="modal-header"><div class="modal-title">🗓 Programar nueva consulta</div></div><div class="modal-body"><p style="font-size:12px;color:var(--text-muted)">Indica cuándo se volverá a consultar la CURP. No se archivará al prospecto.</p><div class="form-group"><label class="form-label">Motivo</label><select id="cya-reconsulta-motivo" class="form-select"></select></div><div class="form-group"><label class="form-label">Fecha de próxima consulta</label><input id="cya-reconsulta-fecha" type="date" class="form-input" required></div><div class="form-group"><label class="form-label">Observaciones (opcional)</label><textarea id="cya-reconsulta-notas" class="form-textarea" rows="3"></textarea></div></div><div class="modal-footer"><button type="button" class="btn" data-cya-cancel>Cancelar</button><button type="button" class="btn btn-primary" data-cya-confirm>Programar consulta</button></div></div>';
+        document.body.appendChild(modal);
+      }
+      const reason=modal.querySelector('#cya-reconsulta-motivo');
+      reason.innerHTML=Object.entries(RECONSULTA_MOTIVOS).map(([key,label])=>'<option value="'+key+'">'+safe(label)+'</option>').join('');
+      reason.value=lead?.reconsulta?.motivo||'limite';
+      const date=modal.querySelector('#cya-reconsulta-fecha');
+      date.min=todayIso();date.value=lead?.reconsulta?.fecha>=todayIso()?lead.reconsulta.fecha:todayIso();
+      modal.querySelector('#cya-reconsulta-notas').value=lead?.reconsulta?.notas||'';
+      const close=result=>{modal.classList.remove('open');modal.querySelector('[data-cya-cancel]').onclick=null;modal.querySelector('[data-cya-confirm]').onclick=null;resolve(result);};
+      modal.querySelector('[data-cya-cancel]').onclick=()=>close(null);
+      modal.querySelector('[data-cya-confirm]').onclick=()=>{
+        if(!date.value||date.value<todayIso()){showToast?.('Selecciona una fecha válida a partir de hoy','warn');return;}
+        close({fecha:date.value,motivo:reason.value,notas:modal.querySelector('#cya-reconsulta-notas').value.trim(),registradoEn:new Date().toISOString()});
+      };
+      modal.classList.add('open');date.focus();
+    });
+  }
+  async function persistReconsulta(lead,stage,info){
+    const previous={estado:lead.estado,reconsulta:lead.reconsulta,historialReconsultas:lead.historialReconsultas};
+    lead.estado=stage;
+    if(info){
+      lead.reconsulta=info;
+      lead.historialReconsultas=[...(lead.historialReconsultas||[]),info];
+    }
+    try{
+      if(typeof saveStore==='function')saveStore();
+      if(typeof cloudSyncNow==='function')await cloudSyncNow({throwOnError:true});
+      return true;
+    }catch(e){
+      Object.assign(lead,previous);
+      try{if(typeof saveStore==='function')saveStore();}catch(_){}
+      showToast?.('No se pudo sincronizar; se restauró la etapa anterior','warn');
+      return false;
+    }
+  }
+
   let cyaStageClickTimer=null;
   let cyaStageSaving=false;
   async function setProspectStage(value){
+    ensureReconsultaOption();
     const select=document.getElementById('lead-estado');
     if(!select||select.disabled||cyaStageSaving||![...select.options].some(o=>o.value===value))return;
     const oldValue=select.value;
@@ -299,14 +359,15 @@
     const lead=currentLead();
     if(!lead){showToast?.('No se encontró el prospecto abierto; vuelve a abrir su expediente','warn');return;}
     const oldStage=lead.estado;
+    const reconsultaInfo=value==='reconsulta'?await askReconsulta(lead):null;
+    if(value==='reconsulta'&&!reconsultaInfo)return;
     cyaStageSaving=true;
     select.value=value;
     select.dispatchEvent(new Event('change',{bubbles:true}));
     renderProspectStageStepper();
     try{
-      lead.estado=value;
-      if(typeof saveStore==='function')saveStore();
-      if(typeof cloudSyncNow==='function')await cloudSyncNow({throwOnError:true});
+      const ok=await persistReconsulta(lead,value,reconsultaInfo);
+      if(!ok)throw new Error('No se pudo guardar la nueva etapa');
       showToast?.('Etapa guardada: '+(CYA_STAGES[value]||value),'success');
     }catch(err){
       lead.estado=oldStage;
@@ -353,6 +414,7 @@
   function renderProspectStageStepper(){
     const stepper=ensureProspectStageStepper();
     if(!stepper)return;
+    ensureReconsultaOption();
     const select=document.getElementById('lead-estado');
     const active=select?.value||'semanas';
     const stages=prospectStages();
@@ -424,6 +486,8 @@
   function fillExtraFields(){
     ensureExtraFields();ensureReviewButtons();ensureClientMessageButtons();ensureMetaNameHelper();
     const l=currentLead();
+    ensureReconsultaOption();
+    if(l?.estado==='reconsulta')document.getElementById('lead-estado').value='reconsulta';
     fillQuestionnaireTab(l);
     renderProspectStageStepper();
     const set=(id,value)=>{const el=document.getElementById(id);if(el)el.value=value??'';};
@@ -471,17 +535,22 @@
   const baseGuardarLead=window.guardarLead;
   if(typeof baseGuardarLead==='function')window.guardarLead=async function(){
     const extras=captureExtraFields();
+    const existing=currentLead();
+    const requested=document.getElementById('lead-estado')?.value;
+    const info=requested==='reconsulta'&&existing?.estado!=='reconsulta'?await askReconsulta(existing):null;
+    if(requested==='reconsulta'&&existing?.estado!=='reconsulta'&&!info)return;
     await baseGuardarLead.apply(this,arguments);
     const lead=currentLead();
     if(!lead)return;
     Object.assign(lead,extras);
+    if(info){lead.reconsulta=info;lead.historialReconsultas=[...(lead.historialReconsultas||[]),info];}
     if(extras.fuenteContacto===META_SOURCE){lead.metaAds=true;lead.nombreVerificado=lead.nombreVerificado===true;lead.nombrePendienteValidacion=lead.nombreVerificado!==true;}
     try{await cloudSyncNow?.({throwOnError:true});}catch(_){showToast?.('Los datos adicionales quedaron pendientes de sincronizar','warn');}
   };
 
   function isMetaNewLead(l){
     const source=String(l?.fuenteContacto||l?.origen?.fuente||'').toLowerCase();
-    return l?.estado!=='archivado'&&l?.estado!=='aprobado'&&!l?.revisionSolicitada&&(l?.metaAds===true||source==='meta ads'||Boolean(l?.metaLead)||Boolean(l?.origenMeta));
+    return l?.estado!=='archivado'&&l?.estado!=='aprobado'&&l?.estado!=='reconsulta'&&!l?.revisionSolicitada&&(l?.metaAds===true||source==='meta ads'||Boolean(l?.metaLead)||Boolean(l?.origenMeta));
   }
 
 
@@ -579,7 +648,7 @@
   }
 
 
-  const CYA_STAGES={pensiones:'Pensiones',correccion_imss:'Corrección ante IMSS',semanas:'En revisión de semanas / NSS',sindos:'En revisión de SINDOs',aprobado:'Aprobado'};
+  const CYA_STAGES={pensiones:'Pensiones',correccion_imss:'Corrección ante IMSS',semanas:'En revisión de semanas / NSS',reconsulta:'Pendiente de nueva consulta',sindos:'En revisión de SINDOs',aprobado:'Aprobado'};
   let cyaMoving=false;
   async function moveProspectStage(id,stage){
     if(cyaMoving||!Object.hasOwn(CYA_STAGES,stage))return;
@@ -587,9 +656,10 @@
     if(!lead||lead.estado==='archivado'||lead.estado===stage)return;
     cyaMoving=true;
     const previous=lead.estado;
-    lead.estado=stage;
+    const info=stage==='reconsulta'?await askReconsulta(lead):null;
+    if(stage==='reconsulta'&&!info){cyaMoving=false;return;}
     try{
-      await cloudSyncNow({throwOnError:true});
+      if(!await persistReconsulta(lead,stage,info))throw new Error('No se pudo sincronizar');
       showToast?.('Etapa actualizada: '+CYA_STAGES[stage],'success');
       renderPage('leads');
       if(stage==='aprobado'&&previous!=='aprobado'&&typeof window.cyaAbrirCentroMensajesWhatsApp==='function')window.cyaAbrirCentroMensajesWhatsApp('aprobado');
