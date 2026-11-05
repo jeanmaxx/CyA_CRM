@@ -289,12 +289,31 @@
     if(service==='correccion_imss')return [['correccion_imss','Corrección ante IMSS']];
     return [['semanas','Semanas / NSS'],['sindos','SINDOs'],['aprobado','Aprobado']];
   }
-  function setProspectStage(value){
+  let cyaStageClickTimer=null;
+  let cyaStageSaving=false;
+  async function setProspectStage(value){
     const select=document.getElementById('lead-estado');
-    if(!select||select.disabled||![...select.options].some(o=>o.value===value))return;
+    if(!select||select.disabled||cyaStageSaving||![...select.options].some(o=>o.value===value))return;
+    const oldValue=select.value;
+    if(oldValue===value)return;
+    const lead=currentLead();
     select.value=value;
     select.dispatchEvent(new Event('change',{bubbles:true}));
     renderProspectStageStepper();
+    if(!lead)return;
+    const oldStage=lead.estado;
+    cyaStageSaving=true;
+    lead.estado=value;
+    try{
+      await cloudSyncNow({throwOnError:true});
+      showToast?.('Etapa actualizada: '+(CYA_STAGES[value]||value),'success');
+    }catch(err){
+      lead.estado=oldStage;
+      select.value=oldValue;
+      select.dispatchEvent(new Event('change',{bubbles:true}));
+      renderProspectStageStepper();
+      showToast?.('No se pudo guardar el cambio de etapa; se restauró la anterior','warn');
+    }finally{cyaStageSaving=false;}
   }
   function ensureProspectStageStepper(){
     const body=document.querySelector('#modal-lead .modal-body');
@@ -307,15 +326,22 @@
       body.insertBefore(stepper,body.firstChild);
       stepper.addEventListener('click',e=>{
         const btn=e.target.closest('[data-cya-stage-select]');
-        if(btn)setProspectStage(btn.dataset.cyaStageSelect);
+        if(!btn)return;
+        if(cyaStageClickTimer)clearTimeout(cyaStageClickTimer);
+        const target=btn.dataset.cyaStageSelect;
+        cyaStageClickTimer=setTimeout(()=>{cyaStageClickTimer=null;void setProspectStage(target);},280);
       });
       stepper.addEventListener('dblclick',e=>{
         const btn=e.target.closest('[data-cya-stage-select]');
         if(!btn)return;
         e.preventDefault();
+        if(cyaStageClickTimer){clearTimeout(cyaStageClickTimer);cyaStageClickTimer=null;}
         const stages=prospectStages();
-        const idx=stages.findIndex(([key])=>key===btn.dataset.cyaStageSelect);
-        if(idx>0)setProspectStage(stages[idx-1][0]);
+        const select=document.getElementById('lead-estado');
+        const current=stages.findIndex(([key])=>key===select?.value);
+        if(current<=0){showToast?.('Ya estás en la primera etapa','info');return;}
+        const previous=stages[current-1];
+        if(window.confirm('¿Deseas regresar a la etapa anterior: '+previous[1]+'?'))void setProspectStage(previous[0]);
       });
       document.getElementById('lead-estado')?.addEventListener('change',renderProspectStageStepper);
       document.getElementById('lead-servicio')?.addEventListener('change',()=>setTimeout(renderProspectStageStepper,0));
@@ -332,8 +358,8 @@
     stepper.innerHTML='<div class="cya-prospect-stage-caption">ETAPAS DEL TRÁMITE</div><div class="cya-prospect-stage-steps">'+stages.map(([key,label],i)=>{
       const done=current>=0&&i<current;
       const selected=key===active;
-      return '<button type="button" class="cya-prospect-stage-step'+(selected?' active':'')+(done?' done':'')+'" data-cya-stage-select="'+key+'" aria-current="'+(selected?'step':'false')+'" title="Clic para seleccionar; doble clic para retroceder una etapa"><span class="cya-prospect-stage-dot">'+(done?'✓':i+1)+'</span><span class="cya-prospect-stage-label">'+safe(label)+'</span></button>';
-    }).join('')+'</div><div class="cya-prospect-stage-note">Seleccionada: <strong>'+safe(Object.fromEntries(stages)[active]||CYA_STAGES[active]||'Sin definir')+'</strong> · Guardar para confirmar</div>';
+      return '<button type="button" class="cya-prospect-stage-step'+(selected?' active':'')+(done?' done':'')+'" data-cya-stage-select="'+key+'" aria-current="'+(selected?'step':'false')+'" title="Clic para cambiar de etapa; doble clic para confirmar regreso a la anterior"><span class="cya-prospect-stage-dot">'+(done?'✓':i+1)+'</span><span class="cya-prospect-stage-label">'+safe(label)+'</span></button>';
+    }).join('')+'</div><div class="cya-prospect-stage-note">Seleccionada: <strong>'+safe(Object.fromEntries(stages)[active]||CYA_STAGES[active]||'Sin definir')+'</strong> · Cambio guardado al seleccionar</div>';
   }
 
   function ensureQuestionnaireTab(){
