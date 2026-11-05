@@ -770,12 +770,13 @@
       const visible=typeof leadsVistaActual==='function'?leadsVistaActual():(store?.leads||[]);
       const groups=[
         {id:'meta',title:'Nuevos Meta Ads',leads:visible.filter(isMetaNewLead)},
-        {id:'semanas',title:'En revisión de semanas / NSS',leads:visible.filter(l=>l?.estado==='semanas'&&!isMetaNewLead(l))}
+        {id:'semanas',title:'En revisión de semanas / NSS',leads:visible.filter(l=>l?.estado==='semanas'&&!isMetaNewLead(l))},
+        {id:'reconsulta',title:'Pendiente de nueva consulta',leads:visible.filter(l=>l?.estado==='reconsulta')}
       ];
       let modal=document.getElementById('cya-curps-priority-modal');
       if(!modal){
         modal=document.createElement('div');modal.className='modal-overlay';modal.id='cya-curps-priority-modal';
-        modal.innerHTML='<div class="modal" style="max-width:680px" role="dialog" aria-modal="true"><div class="modal-header"><div class="modal-title">CURPs pendientes por columna y prioridad</div><button type="button" class="btn btn-icon" data-cya-curp-close>✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--text-muted)">Grupos separados por columna. Dentro de cada grupo: verde, naranja y rojo. Los registros sin precalificación aparecen en «Por verificar».</p><div class="cya-curp-tabs" role="tablist" aria-label="Columna de prospectos"><button type="button" class="cya-curp-tab active" role="tab" aria-selected="true" data-cya-curp-tab="meta">Meta Ads</button><button type="button" class="cya-curp-tab" role="tab" aria-selected="false" data-cya-curp-tab="semanas">En revisión</button></div><div id="cya-curp-groups"></div></div><div class="modal-footer"><button type="button" class="btn" data-cya-curp-close>Cerrar</button></div></div>';
+        modal.innerHTML='<div class="modal" style="max-width:680px" role="dialog" aria-modal="true"><div class="modal-header"><div class="modal-title">CURPs pendientes por columna y prioridad</div><button type="button" class="btn btn-icon" data-cya-curp-close>✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--text-muted)">Grupos separados por columna. Dentro de cada grupo: verde, naranja y rojo. Los registros sin precalificación aparecen en «Por verificar».</p><div class="cya-curp-tabs" role="tablist" aria-label="Columna de prospectos"><button type="button" class="cya-curp-tab active" role="tab" aria-selected="true" data-cya-curp-tab="meta">Meta Ads</button><button type="button" class="cya-curp-tab" role="tab" aria-selected="false" data-cya-curp-tab="semanas">En revisión</button><button type="button" class="cya-curp-tab" role="tab" aria-selected="false" data-cya-curp-tab="reconsulta">Nueva consulta</button></div><div id="cya-curp-groups"></div></div><div class="modal-footer"><button type="button" class="btn" data-cya-curp-close>Cerrar</button></div></div>';
         modal.addEventListener('click',e=>{if(e.target===modal||e.target.closest('[data-cya-curp-close]'))modal.classList.remove('open');});
         modal.addEventListener('click',e=>{
           const tab=e.target.closest('[data-cya-curp-tab]');
