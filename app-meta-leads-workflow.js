@@ -626,14 +626,14 @@
   function applyProspectLayout(kanban,metaCol){
     if(!kanban)return;
     const cols=[...kanban.children].filter(el=>el.classList?.contains('lead-col'));
-    const pensiones=cols.find(col=>columnLabel(col).startsWith('pensiones'))||kanban.querySelector('.cya-special-leads-stack [data-cya-stage="pensiones"]');
-    const correccion=cols.find(col=>columnLabel(col).startsWith('corrección ante imss'))||kanban.querySelector('.cya-special-leads-stack [data-cya-stage="correccion"]');
-    let stack=kanban.querySelector(':scope > .cya-special-leads-stack');
+    const pensiones=cols.find(col=>columnLabel(col).startsWith('pensiones'))||document.querySelector('.cya-special-leads-stack [data-cya-stage="pensiones"]');
+    const correccion=cols.find(col=>columnLabel(col).startsWith('corrección ante imss'))||document.querySelector('.cya-special-leads-stack [data-cya-stage="correccion"]');
+    const wrap=kanban.closest('.leads-scroll-wrap');
+    let stack=wrap?.parentElement?.querySelector(':scope > .cya-special-leads-stack')||kanban.querySelector(':scope > .cya-special-leads-stack');
     if(!stack){stack=document.createElement('div');stack.className='cya-special-leads-stack';}
-    if(pensiones){installCompactStage(pensiones,'pensiones');stack.appendChild(pensiones);}
-    if(correccion){installCompactStage(correccion,'correccion');stack.appendChild(correccion);}
-    if(stack.children.length&&stack.parentElement!==kanban)kanban.appendChild(stack);
-    if(stack.parentElement===kanban&&stack!==kanban.lastElementChild)kanban.appendChild(stack);
+    if(pensiones){installCompactStage(pensiones,'pensiones');if(pensiones.parentElement!==stack)stack.appendChild(pensiones);}
+    if(correccion){installCompactStage(correccion,'correccion');if(correccion.parentElement!==stack)stack.appendChild(correccion);}
+    if(stack.children.length&&wrap?.parentElement){wrap.insertAdjacentElement('afterend',stack);}
     if(metaCol&&metaCol.parentElement===kanban&&metaCol!==kanban.firstElementChild)kanban.prepend(metaCol);
   }
 
