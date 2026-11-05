@@ -625,28 +625,17 @@
 
   function applyProspectLayout(kanban,metaCol){
     if(!kanban)return;
-    const directCols=[...kanban.children].filter(el=>el.classList?.contains('lead-col')&&el.id!=='cya-meta-new-column');
-    const pensiones=directCols.find(col=>columnLabel(col).startsWith('pensiones'))||kanban.querySelector('.cya-special-leads-stack [data-cya-stage="pensiones"]');
-    const correccion=directCols.find(col=>columnLabel(col).startsWith('corrección ante imss'))||kanban.querySelector('.cya-special-leads-stack [data-cya-stage="correccion"]');
-    const semanas=directCols.find(col=>columnLabel(col).startsWith('en revisión de semanas'))||[...kanban.querySelectorAll(':scope > .lead-col')].find(col=>columnLabel(col).startsWith('en revisión de semanas'));
-
+    const cols=[...kanban.children].filter(el=>el.classList?.contains('lead-col'));
+    const pensiones=cols.find(col=>columnLabel(col).startsWith('pensiones'))||kanban.querySelector('.cya-special-leads-stack [data-cya-stage="pensiones"]');
+    const correccion=cols.find(col=>columnLabel(col).startsWith('corrección ante imss'))||kanban.querySelector('.cya-special-leads-stack [data-cya-stage="correccion"]');
     let stack=kanban.querySelector(':scope > .cya-special-leads-stack');
     if(!stack){stack=document.createElement('div');stack.className='cya-special-leads-stack';}
-    if(pensiones){installCompactStage(pensiones,'pensiones');if(pensiones.parentElement!==stack)stack.appendChild(pensiones);}
-    if(correccion){installCompactStage(correccion,'correccion');if(correccion.parentElement!==stack)stack.appendChild(correccion);}
-
-    if(stack.children.length){
-      if(stack.parentElement!==kanban){
-        if(semanas&&semanas.parentElement===kanban)kanban.insertBefore(stack,semanas);else kanban.prepend(stack);
-      }
-      if(metaCol&&metaCol.parentElement===kanban){
-        const target=semanas&&semanas.parentElement===kanban?semanas:null;
-        if(target&&metaCol.nextElementSibling!==target)kanban.insertBefore(metaCol,target);
-        if(metaCol.previousElementSibling!==stack)kanban.insertBefore(stack,metaCol);
-      }
-    }
+    if(pensiones){installCompactStage(pensiones,'pensiones');stack.appendChild(pensiones);}
+    if(correccion){installCompactStage(correccion,'correccion');stack.appendChild(correccion);}
+    if(stack.children.length&&stack.parentElement!==kanban)kanban.appendChild(stack);
+    if(stack.parentElement===kanban&&stack!==kanban.lastElementChild)kanban.appendChild(stack);
+    if(metaCol&&metaCol.parentElement===kanban&&metaCol!==kanban.firstElementChild)kanban.prepend(metaCol);
   }
-
 
   const CYA_STAGES={pensiones:'Pensiones',correccion_imss:'Corrección ante IMSS',semanas:'En revisión de semanas / NSS',reconsulta:'Pendiente de nueva consulta',sindos:'En revisión de SINDOs',aprobado:'Aprobado'};
   let cyaMoving=false;
@@ -691,7 +680,7 @@
     const cols=[...kanban.querySelectorAll('.lead-col')];
     for(const col of cols){
       const label=columnLabel(col);
-      const stage=col.id==='cya-meta-new-column'?'meta':Object.keys(CYA_STAGES).find(key=>label.startsWith(CYA_STAGES[key].toLowerCase().split(' / ')[0].toLowerCase()));
+      const stage=col.id==='cya-meta-new-column'?'meta':col.id==='cya-reconsulta-column'?'reconsulta':Object.keys(CYA_STAGES).find(key=>label.startsWith(CYA_STAGES[key].toLowerCase().split(' / ')[0].toLowerCase()));
       if(!stage)continue;
       col.dataset.cyaDropStage=stage;
       const body=col.querySelector('.lead-col-body');
@@ -730,7 +719,7 @@
     for(const col of kanban.querySelectorAll('.lead-col')){
       const body=col.querySelector('.lead-col-body'),header=col.querySelector('.lead-col-header');
       if(!body||!header)continue;
-      const stage=col.id==='cya-meta-new-column'?'meta':col.dataset.cyaDropStage||columnLabel(col);
+      const stage=col.id==='cya-meta-new-column'?'meta':col.id==='cya-reconsulta-column'?'reconsulta':col.dataset.cyaDropStage||columnLabel(col);
       if(!stage)continue;
       let actions=header.querySelector('.cya-column-sort-actions');
       if(!actions){
@@ -825,6 +814,33 @@
     };
   }
 
+
+  function installReconsultaColumn(kanban){
+    const visible=typeof leadsVistaActual==='function'?leadsVistaActual():(store?.leads||[]);
+    const leads=visible.filter(l=>l.estado==='reconsulta');
+    let col=document.getElementById('cya-reconsulta-column');
+    if(!col){
+      col=document.createElement('div');col.id='cya-reconsulta-column';col.className='lead-col cya-reconsulta-column';
+      col.innerHTML='<div class="lead-col-header"><span>🗓 Pendiente de nueva consulta</span><span class="cya-reconsulta-count">0</span></div><div class="lead-col-body"></div>';
+    }
+    col.querySelector('.cya-reconsulta-count').textContent=String(leads.length);
+    const body=col.querySelector('.lead-col-body');
+    const signature=leads.map(l=>[l.id,l.nombre,l.reconsulta?.fecha,l.reconsulta?.motivo].join(':')).join('|');
+    if(body.dataset.cyaSignature!==signature){
+      body.dataset.cyaSignature=signature;
+      body.innerHTML=leads.length?leads.map(l=>{
+        const date=l.reconsulta?.fecha||'Sin fecha';
+        const today=todayIso();
+        const status=date==='Sin fecha'?'Sin programar':date<today?'Vencida':date===today?'Consultar hoy':'Programada';
+        const motive=RECONSULTA_MOTIVOS[l.reconsulta?.motivo]||'Nueva consulta';
+        return '<div class="lead-card cya-reconsulta-card" data-lead-id="'+safe(l.id)+'" role="button" tabindex="0" onclick="openModalLead(\''+String(l.id).replace(/[^a-zA-Z0-9_-]/g,'')+'\')"><strong>'+safe(l.nombre||'Prospecto')+'</strong><div>'+safe(l.curp||'CURP pendiente')+'</div><div class="cya-reconsulta-date">'+safe(date)+' · '+safe(status)+'</div><div>'+safe(motive)+'</div></div>';
+      }).join(''):'<div class="cya-meta-empty">Sin consultas programadas</div>';
+    }
+    const semanas=[...kanban.children].find(el=>el.classList?.contains('lead-col')&&columnLabel(el).startsWith('en revisión de semanas'));
+    if(semanas&&semanas.parentElement===kanban)kanban.insertBefore(col,semanas.nextSibling);
+    else if(col.parentElement!==kanban)kanban.appendChild(col);
+  }
+
   function applyMetaNewColumn(){
     const kanban=document.querySelector('.leads-kanban');
     if(!kanban)return;
@@ -849,6 +865,7 @@
         if(!card.closest('#cya-meta-new-column'))card.remove();
       });
     }
+    installReconsultaColumn(kanban);
     applyProspectLayout(kanban,col);
     for(const card of kanban.querySelectorAll('.lead-card[data-lead-id]')){
       const lead=leadById(card.dataset.leadId);
@@ -900,8 +917,8 @@
       .cya-column-sort-actions{display:inline-flex;gap:3px;margin-left:auto;align-items:center}.cya-sort-action{border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.12);color:#fff;border-radius:5px;cursor:pointer;font-size:13px;padding:3px 5px;line-height:1.2}.cya-sort-action.active{background:rgba(255,255,255,.3);border-color:#fff}.cya-curp-column{margin:14px 0 20px;padding:12px;border:1px solid var(--border);border-radius:10px}.cya-curp-column h3{font-size:13px;margin:0 0 10px}.cya-curp-priority-group{margin:10px 0}.cya-curp-priority-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;font-size:11px}.cya-curp-priority-heading .btn{font-size:10px;padding:4px 8px}.cya-curp-priority-group textarea{font-family:monospace;font-size:12px;min-height:50px;resize:vertical}.cya-curp-missing{font-size:10px;color:var(--warning);margin-top:3px}
       .cya-curp-tabs{display:flex;gap:8px;margin:12px 0 6px}.cya-curp-tab{flex:1;padding:11px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);color:var(--text-secondary);font-weight:700;cursor:pointer}.cya-curp-tab.active{background:#1559c7;border-color:#3b82f6;color:#fff}.cya-curp-column[hidden]{display:none!important}
       .cya-meta-count{background:rgba(0,0,0,.2);padding:2px 8px;border-radius:10px;font-size:11px}.cya-meta-tag{font-size:8px;font-weight:700;letter-spacing:.45px;color:#60a5fa;margin-bottom:4px}.cya-meta-raw-name{font-size:9px;color:var(--warning);margin-bottom:4px}.cya-meta-empty{font-size:11px;color:var(--text-muted);text-align:center;padding:16px 0}
-      .cya-special-leads-stack{flex:0 0 205px;min-width:205px;display:flex;flex-direction:column;gap:8px;align-self:flex-start}.cya-special-leads-stack .lead-col{width:100%!important;min-width:0!important;min-height:0!important;height:auto!important}.cya-special-leads-stack .lead-col-header{cursor:pointer;border-radius:7px}.cya-special-leads-stack .lead-col-header::after{content:'▸';font-size:11px;margin-left:6px;opacity:.7}.cya-special-leads-stack .lead-col.is-expanded .lead-col-header::after{content:'▾'}.cya-special-leads-stack .lead-col-body{display:none!important}.cya-special-leads-stack .lead-col.is-expanded .lead-col-body{display:block!important;max-height:360px;overflow:auto}.cya-special-leads-stack .lead-col.is-expanded{box-shadow:0 8px 20px rgba(0,0,0,.12)}
-      @media(max-width:700px){#lead-curp-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-review-sent{width:100%;justify-content:center}.cya-client-message-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-client-review-modal{max-width:96vw}.cya-client-review-text{min-height:280px}.cya-lead-extra-fields .form-row{grid-template-columns:1fr}.cya-special-leads-stack{flex:0 0 180px;min-width:180px}.cya-meta-new-column{flex-basis:230px;min-width:230px}}
+      .cya-special-leads-stack{flex:0 0 100%;width:100%;min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-self:stretch;margin-top:12px}.cya-reconsulta-column{flex:0 0 250px;min-width:250px}.cya-reconsulta-column .lead-col-header{background:#0e7490}.cya-reconsulta-card{font-size:11px}.cya-reconsulta-card div{margin-top:6px;color:var(--text-muted);overflow-wrap:anywhere}.cya-reconsulta-date{font-weight:700;color:#38bdf8!important}.cya-reconsulta-count{background:rgba(0,0,0,.2);padding:2px 8px;border-radius:10px;font-size:11px}.cya-special-leads-stack .lead-col{width:100%!important;min-width:0!important;min-height:0!important;height:auto!important}.cya-special-leads-stack .lead-col-header{cursor:pointer;border-radius:7px}.cya-special-leads-stack .lead-col-header::after{content:'▸';font-size:11px;margin-left:6px;opacity:.7}.cya-special-leads-stack .lead-col.is-expanded .lead-col-header::after{content:'▾'}.cya-special-leads-stack .lead-col-body{display:none!important}.cya-special-leads-stack .lead-col.is-expanded .lead-col-body{display:block!important;max-height:360px;overflow:auto}.cya-special-leads-stack .lead-col.is-expanded{box-shadow:0 8px 20px rgba(0,0,0,.12)}
+      @media(max-width:700px){#lead-curp-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-review-sent{width:100%;justify-content:center}.cya-client-message-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-client-review-modal{max-width:96vw}.cya-client-review-text{min-height:280px}.cya-lead-extra-fields .form-row{grid-template-columns:1fr}.cya-special-leads-stack{grid-template-columns:repeat(2,minmax(0,1fr));width:100%;min-width:0}.cya-meta-new-column{flex-basis:230px;min-width:230px}}
     `;document.head.appendChild(style);
   }
 
