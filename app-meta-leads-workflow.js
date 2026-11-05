@@ -843,7 +843,7 @@
   let scheduled=false;
   new MutationObserver(()=>{
     if(scheduled)return;scheduled=true;
-    requestAnimationFrame(()=>{scheduled=false;ensureReviewButtons();ensureClientMessageButtons();ensureMetaNameHelper();if(document.getElementById('modal-lead')?.classList.contains('open'))fillExtraFields();applyMetaNewColumn();});
+    requestAnimationFrame(()=>{scheduled=false;ensureReviewButtons();ensureClientMessageButtons();ensureMetaNameHelper();applyMetaNewColumn();});
   }).observe(document.documentElement,{childList:true,subtree:true});
   setTimeout(applyMetaNewColumn,100);
 })();
