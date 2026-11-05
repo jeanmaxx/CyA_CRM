@@ -87,6 +87,7 @@
   let currentGroupKey='';
   let messageContactId=null;
   let messageContactType='lead';
+  let archivedMessageMode=false;
   window.cyaTipoContactoWhatsApp=()=>messageContactType;
 
   function safe(value){
@@ -202,7 +203,7 @@
   function renderText(template,contact){
     const visibleName=String(messageContactType==='client'
       ?(contact?.nombre||contact?.name||'')
-      :(document.getElementById('lead-nombre')?.value||contact?.nombre||contact?.name||'')).trim();
+      :(archivedMessageMode?(contact?.nombre||contact?.name||''):(document.getElementById('lead-nombre')?.value||contact?.nombre||contact?.name||''))).trim();
     let templateText=String(template?.texto||'');
     // Un prospecto nuevo de este equipo no debe recibir la cotización
     // antigua de $8,000 ni el límite obsoleto de $35,190. No modifica
@@ -362,7 +363,17 @@
     document.getElementById('cya-wa-message-center')?.classList.add('open');
   }
 
+  window.cyaAbrirWhatsAppArchivado=function(leadId,groupKey){
+    const lead=leadById(leadId);
+    if(!lead){showToast?.('No se encontró el prospecto archivado','warn');return false;}
+    openContactCenter('lead',lead,groupKey);
+    archivedMessageMode=true;
+    renderSelectedGroup();
+    return true;
+  };
+
   window.cyaAbrirCentroMensajesWhatsApp=function(groupKey){
+    archivedMessageMode=false;
     const lead=currentLead();
     if(!lead){showToast?.('Guarda primero el prospecto para preparar mensajes de WhatsApp','warn');return;}
     openContactCenter('lead',lead,groupKey);
@@ -376,6 +387,7 @@
       showToast?.('Abre primero el expediente del cliente para preparar el mensaje.','warn');
       return;
     }
+    archivedMessageMode=false;
     openContactCenter('client',client,groupKey);
   };
 
@@ -383,6 +395,7 @@
     document.getElementById('cya-wa-message-center')?.classList.remove('open');
     messageContactId=null;
     messageContactType='lead';
+    archivedMessageMode=false;
   };
 
   window.cyaCopiarBloqueWhatsApp=async function(index){

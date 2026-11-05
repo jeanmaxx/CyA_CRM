@@ -171,7 +171,10 @@
   window.cyaPrevisualizarRespuestaArchivo=function(){
     const cause=String(document.getElementById('lead-causa-archivo')?.value||'');
     const lead=(store?.leads||[]).find(l=>String(l.id)===String(window.leadParaArchivar||leadParaArchivar||''));
-    if(lead&&TEMPLATE_BY_CAUSE[cause])openOutcomeModal(lead,cause);
+    if(lead&&TEMPLATE_BY_CAUSE[cause]){
+      const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',inconsistencias_curp_nss:'inconsistencias'}[cause];
+      if(!group||!window.cyaAbrirWhatsAppArchivado?.(lead.id,group))openOutcomeModal(lead,cause);
+    }
   };
 
   const toggleBase=window.toggleLeadOtros;
@@ -184,7 +187,10 @@
     const cause=String(document.getElementById('lead-causa-archivo')?.value||'');
     const leadBefore=(store?.leads||[]).find(l=>String(l.id)===String(leadId));
     const result=confirmArchiveBase.apply(this,arguments);
-    if(leadBefore&&TEMPLATE_BY_CAUSE[cause])setTimeout(()=>openOutcomeModal(leadBefore,cause),80);
+    if(leadBefore&&TEMPLATE_BY_CAUSE[cause])setTimeout(()=>{
+      const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',inconsistencias_curp_nss:'inconsistencias'}[cause];
+      if(!group||!window.cyaAbrirWhatsAppArchivado?.(leadBefore.id,group))openOutcomeModal(leadBefore,cause);
+    },80);
     return result;
   };
 
