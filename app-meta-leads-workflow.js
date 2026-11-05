@@ -495,6 +495,74 @@
     }
   }
 
+
+  const CYA_STAGES={pensiones:'Pensiones',correccion_imss:'Corrección ante IMSS',semanas:'En revisión de semanas / NSS',sindos:'En revisión de SINDOs',aprobado:'Aprobado'};
+  let cyaMoving=false;
+  async function moveProspectStage(id,stage){
+    if(cyaMoving||!Object.hasOwn(CYA_STAGES,stage))return;
+    const lead=leadById(id);
+    if(!lead||lead.estado==='archivado'||lead.estado===stage)return;
+    cyaMoving=true;
+    const previous=lead.estado;
+    lead.estado=stage;
+    try{
+      await cloudSyncNow({throwOnError:true});
+      showToast?.('Etapa actualizada: '+CYA_STAGES[stage],'success');
+      renderPage('leads');
+      if(stage==='aprobado'&&previous!=='aprobado'&&typeof window.cyaAbrirCentroMensajesWhatsApp==='function')window.cyaAbrirCentroMensajesWhatsApp('aprobado');
+    }catch(e){
+      lead.estado=previous;
+      showToast?.('No se pudo sincronizar el movimiento; se conservó la etapa anterior','warn');
+      renderPage('leads');
+    }finally{cyaMoving=false;}
+  }
+  window.cyaMoverProspectoEtapa=function(id){
+    const lead=leadById(id);if(!lead)return;
+    let modal=document.getElementById('cya-move-lead-modal');
+    if(!modal){
+      modal=document.createElement('div');modal.id='cya-move-lead-modal';modal.className='modal-overlay';
+      modal.innerHTML='<div class="modal" style="max-width:440px"><div class="modal-header"><div class="modal-title">Mover prospecto</div><button type="button" class="btn btn-icon" id="cya-move-close">✕</button></div><div class="modal-body"><p id="cya-move-lead-name" style="font-weight:600;margin-bottom:12px"></p><label class="form-label" for="cya-move-stage">Nueva etapa</label><select class="form-select" id="cya-move-stage"></select><p style="font-size:11px;color:var(--text-muted);margin-top:10px">La precalificación y las respuestas del cuestionario se conservarán.</p></div><div class="modal-footer"><button type="button" class="btn" id="cya-move-cancel">Cancelar</button><button type="button" class="btn btn-primary" id="cya-move-confirm">Mover</button></div></div>';
+      document.body.appendChild(modal);
+      modal.querySelector('#cya-move-close').onclick=modal.querySelector('#cya-move-cancel').onclick=()=>modal.classList.remove('open');
+      modal.querySelector('#cya-move-confirm').onclick=async()=>{
+        const target=modal.querySelector('#cya-move-stage').value;
+        modal.classList.remove('open');await moveProspectStage(modal.dataset.leadId,target);
+      };
+    }
+    modal.dataset.leadId=String(id);
+    modal.querySelector('#cya-move-lead-name').textContent=lead.nombre||'Prospecto';
+    modal.querySelector('#cya-move-stage').innerHTML=Object.entries(CYA_STAGES).map(([key,label])=>'<option value="'+key+'"'+(key===lead.estado?' selected':'')+'>'+label+'</option>').join('');
+    modal.classList.add('open');
+  };
+  function enhanceProspectKanban(kanban){
+    const cols=[...kanban.querySelectorAll('.lead-col')];
+    for(const col of cols){
+      const label=columnLabel(col);
+      const stage=col.id==='cya-meta-new-column'?'meta':Object.keys(CYA_STAGES).find(key=>label.startsWith(CYA_STAGES[key].toLowerCase().split(' / ')[0].toLowerCase()));
+      if(!stage)continue;
+      col.dataset.cyaDropStage=stage;
+      const body=col.querySelector('.lead-col-body');
+      if(!body)continue;
+      if(body.dataset.cyaDropBound!=='1'){
+        body.dataset.cyaDropBound='1';
+        body.addEventListener('dragover',e=>{if(stage==='meta')return;e.preventDefault();e.dataTransfer.dropEffect='move';col.classList.add('cya-drop-target');});
+        body.addEventListener('dragleave',e=>{if(!body.contains(e.relatedTarget))col.classList.remove('cya-drop-target');});
+        body.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('cya-drop-target');const id=e.dataTransfer.getData('text/x-cya-lead');if(id&&stage!=='meta')moveProspectStage(id,stage);});
+      }
+    }
+    for(const card of kanban.querySelectorAll('.lead-card[data-lead-id]')){
+      const id=card.dataset.leadId;
+      if(!id||card.dataset.cyaDragBound==='1')continue;
+      card.dataset.cyaDragBound='1';
+      card.draggable=true;
+      card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/x-cya-lead',id);e.dataTransfer.effectAllowed='move';card.classList.add('cya-dragging');});
+      card.addEventListener('dragend',()=>{card.classList.remove('cya-dragging');kanban.querySelectorAll('.cya-drop-target').forEach(el=>el.classList.remove('cya-drop-target'));});
+      const move=document.createElement('button');move.type='button';move.className='cya-lead-move-btn';move.textContent='⇄ Mover a etapa';move.title='Cambiar etapa';
+      move.onclick=e=>{e.stopPropagation();window.cyaMoverProspectoEtapa(id);};
+      card.appendChild(move);
+    }
+  }
+
   function applyMetaNewColumn(){
     const kanban=document.querySelector('.leads-kanban');
     if(!kanban)return;
@@ -520,6 +588,14 @@
       });
     }
     applyProspectLayout(kanban,col);
+    for(const card of kanban.querySelectorAll('.lead-card[data-lead-id]')){
+      const lead=leadById(card.dataset.leadId);
+      if(!lead||!isMetaLead(lead)||card.closest('#cya-meta-new-column'))continue;
+      const q=metaQualification(lead);
+      card.classList.add('cya-meta-lead-card','cya-meta-tone-'+q.tone);
+      if(!card.querySelector('.cya-meta-tag'))card.insertAdjacentHTML('afterbegin','<div class="cya-meta-tag">META ADS · '+safe(q.label)+'</div>');
+    }
+    enhanceProspectKanban(kanban);
   }
 
   function migrateExistingMetaNames(){
@@ -555,6 +631,7 @@
       .cya-meta-new-column{border:1px solid rgba(24,119,242,.35);flex:0 0 250px;min-width:250px}.cya-meta-new-column .lead-col-header{background:linear-gradient(90deg,#1559c7,#1877f2)}
       .cya-meta-lead-card.cya-meta-tone-green{background:rgba(22,163,74,.12)!important;border:1px solid #16a34a!important}.cya-meta-lead-card.cya-meta-tone-orange{background:rgba(245,158,11,.12)!important;border:1px solid #f59e0b!important}.cya-meta-lead-card.cya-meta-tone-red{background:rgba(220,38,38,.12)!important;border:1px solid #dc2626!important}.cya-meta-wa{font-size:10px!important;margin-top:8px}.cya-meta-answers{margin-top:10px;display:grid;gap:7px}.cya-meta-answer{display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);padding-bottom:6px}.cya-meta-answer strong{font-size:10px}.cya-meta-answer span{font-size:11px;overflow-wrap:anywhere}
       .cya-meta-lead-tabs{display:flex;gap:8px;position:sticky;top:0;z-index:5;background:var(--bg-secondary);padding:10px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--border)}.cya-meta-tab{flex:1;min-width:0;padding:11px 8px;border:1px solid var(--border);border-radius:9px;background:var(--bg-card,var(--bg-secondary));color:var(--text-secondary);font-size:12px;font-weight:700;cursor:pointer}.cya-meta-tab.active{background:#1559c7;color:#fff;border-color:#1877f2}.cya-meta-questionnaire-panel{padding:4px 0 22px}.cya-meta-questionnaire-head{padding:14px;border-radius:10px;background:var(--bg-secondary);border:1px solid var(--border);margin-bottom:12px}.cya-meta-questionnaire-head strong{font-size:14px}.cya-meta-questionnaire-head p{font-size:11px;color:var(--text-muted);margin:8px 0 0}.cya-meta-questionnaire-list{display:grid;gap:10px}.cya-meta-questionnaire-list .cya-meta-answer{padding:12px;border:1px solid var(--border);border-radius:9px;background:var(--bg-secondary)}.cya-meta-questionnaire-list .cya-meta-answer strong{font-size:12px}.cya-meta-questionnaire-list .cya-meta-answer span{font-size:13px;color:var(--text-primary)}[hidden]#cya-meta-lead-tabs,[hidden]#cya-meta-questionnaire-panel{display:none!important}
+      .cya-drop-target{outline:2px dashed #3b82f6;outline-offset:-3px}.cya-dragging{opacity:.55}.cya-lead-move-btn{display:block;margin-top:8px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-secondary);font-size:10px;cursor:pointer;touch-action:manipulation}.cya-lead-move-btn:hover{color:#60a5fa;border-color:#60a5fa}
       .cya-meta-count{background:rgba(0,0,0,.2);padding:2px 8px;border-radius:10px;font-size:11px}.cya-meta-tag{font-size:8px;font-weight:700;letter-spacing:.45px;color:#60a5fa;margin-bottom:4px}.cya-meta-raw-name{font-size:9px;color:var(--warning);margin-bottom:4px}.cya-meta-empty{font-size:11px;color:var(--text-muted);text-align:center;padding:16px 0}
       .cya-special-leads-stack{flex:0 0 205px;min-width:205px;display:flex;flex-direction:column;gap:8px;align-self:flex-start}.cya-special-leads-stack .lead-col{width:100%!important;min-width:0!important;min-height:0!important;height:auto!important}.cya-special-leads-stack .lead-col-header{cursor:pointer;border-radius:7px}.cya-special-leads-stack .lead-col-header::after{content:'▸';font-size:11px;margin-left:6px;opacity:.7}.cya-special-leads-stack .lead-col.is-expanded .lead-col-header::after{content:'▾'}.cya-special-leads-stack .lead-col-body{display:none!important}.cya-special-leads-stack .lead-col.is-expanded .lead-col-body{display:block!important;max-height:360px;overflow:auto}.cya-special-leads-stack .lead-col.is-expanded{box-shadow:0 8px 20px rgba(0,0,0,.12)}
       @media(max-width:700px){#lead-curp-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-review-sent{width:100%;justify-content:center}.cya-client-message-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-client-review-modal{max-width:96vw}.cya-client-review-text{min-height:280px}.cya-lead-extra-fields .form-row{grid-template-columns:1fr}.cya-special-leads-stack{flex:0 0 180px;min-width:180px}.cya-meta-new-column{flex-basis:230px;min-width:230px}}
