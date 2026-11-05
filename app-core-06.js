@@ -469,7 +469,7 @@ function poblarSelectColaborador(){
 let editingLeadId = null;
 let leadParaArchivar = null;
 let leadConversionPendienteId = null;
-let archivadosLeadsAbiertos = true;
+let archivadosLeadsAbiertos = false;
 let leadSearchTerm = '';
 let leadSearchHighlightTimer = null;
 
