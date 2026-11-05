@@ -614,12 +614,13 @@
     const header=col.querySelector('.lead-col-header');
     if(!header||header.dataset.cyaCompactBound==='1')return;
     header.dataset.cyaCompactBound='1';
+    col.classList.remove('is-expanded');
     header.setAttribute('role','button');header.setAttribute('tabindex','0');header.setAttribute('aria-expanded','false');
     const toggle=()=>{
       const expanded=col.classList.toggle('is-expanded');
       header.setAttribute('aria-expanded',expanded?'true':'false');
     };
-    header.addEventListener('click',event=>{if(event.target.closest('button'))return;toggle();});
+    header.addEventListener('click',event=>{if(event.target.closest('.cya-column-sort-actions'))return;toggle();});
     header.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle();}});
   }
 
@@ -633,7 +634,8 @@
     if(!stack){stack=document.createElement('div');stack.className='cya-special-leads-stack';}
     if(pensiones){installCompactStage(pensiones,'pensiones');if(pensiones.parentElement!==stack)stack.appendChild(pensiones);}
     if(correccion){installCompactStage(correccion,'correccion');if(correccion.parentElement!==stack)stack.appendChild(correccion);}
-    if(stack.children.length&&wrap?.parentElement){wrap.insertAdjacentElement('afterend',stack);}
+    // No recolocar el nodo en cada observación: evita un bucle de mutaciones y clics perdidos.
+    if(stack.children.length&&wrap?.parentElement&&wrap.nextElementSibling!==stack){wrap.insertAdjacentElement('afterend',stack);}
     const reconsulta=kanban.querySelector(':scope > #cya-reconsulta-column');
     if(reconsulta&&reconsulta!==kanban.firstElementChild)kanban.prepend(reconsulta);
     if(metaCol&&metaCol.parentElement===kanban&&metaCol.previousElementSibling!==reconsulta){
