@@ -282,6 +282,44 @@
   }
 
 
+
+  function ensureProspectStageStepper(){
+    const body=document.querySelector('#modal-lead .modal-body');
+    if(!body)return null;
+    let stepper=document.getElementById('cya-prospect-stage-stepper');
+    if(!stepper){
+      stepper=document.createElement('section');
+      stepper.id='cya-prospect-stage-stepper';
+      stepper.className='cya-prospect-stage-stepper';
+      body.insertBefore(stepper,body.firstChild);
+      stepper.addEventListener('click',e=>{
+        const btn=e.target.closest('[data-cya-stage-select]');
+        if(!btn)return;
+        const select=document.getElementById('lead-estado');
+        if(!select||select.disabled)return;
+        const target=btn.dataset.cyaStageSelect;
+        if(![...select.options].some(o=>o.value===target))return;
+        select.value=target;
+        select.dispatchEvent(new Event('change',{bubbles:true}));
+        renderProspectStageStepper();
+      });
+    }
+    return stepper;
+  }
+  function renderProspectStageStepper(){
+    const stepper=ensureProspectStageStepper();
+    if(!stepper)return;
+    const select=document.getElementById('lead-estado');
+    const active=select?.value||'semanas';
+    const stages=Object.entries(CYA_STAGES);
+    const current=stages.findIndex(([key])=>key===active);
+    stepper.innerHTML='<div class="cya-prospect-stage-caption">ETAPAS DEL PROSPECTO</div><div class="cya-prospect-stage-steps">'+stages.map(([key,label],i)=>{
+      const done=current>=0&&i<current;
+      const selected=key===active;
+      return '<button type="button" class="cya-prospect-stage-step'+(selected?' active':'')+(done?' done':'')+'" data-cya-stage-select="'+key+'" aria-current="'+(selected?'step':'false')+'"><span class="cya-prospect-stage-dot">'+(done?'✓':i+1)+'</span><span class="cya-prospect-stage-label">'+safe(label)+'</span></button>';
+    }).join('')+'</div><div class="cya-prospect-stage-note">Etapa seleccionada: <strong>'+safe(CYA_STAGES[active]||'Sin definir')+'</strong> · Guarda el prospecto para aplicar el cambio</div>';
+  }
+
   function ensureQuestionnaireTab(){
     const modal=document.getElementById('modal-lead');
     const body=modal?.querySelector('.modal-body');
@@ -343,6 +381,7 @@
     ensureExtraFields();ensureReviewButtons();ensureClientMessageButtons();ensureMetaNameHelper();
     const l=currentLead();
     fillQuestionnaireTab(l);
+    renderProspectStageStepper();
     const set=(id,value)=>{const el=document.getElementById(id);if(el)el.value=value??'';};
     set('lead-email',l?.email||l?.correo||'');
     set('lead-ciudad',l?.ciudad||l?.municipio||'');
@@ -398,7 +437,7 @@
 
   function isMetaNewLead(l){
     const source=String(l?.fuenteContacto||l?.origen?.fuente||'').toLowerCase();
-    return l?.estado!=='archivado'&&!l?.revisionSolicitada&&(l?.metaAds===true||source==='meta ads'||Boolean(l?.metaLead)||Boolean(l?.origenMeta));
+    return l?.estado!=='archivado'&&l?.estado!=='aprobado'&&!l?.revisionSolicitada&&(l?.metaAds===true||source==='meta ads'||Boolean(l?.metaLead)||Boolean(l?.origenMeta));
   }
 
 
@@ -557,9 +596,6 @@
       card.draggable=true;
       card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/x-cya-lead',id);e.dataTransfer.effectAllowed='move';card.classList.add('cya-dragging');});
       card.addEventListener('dragend',()=>{card.classList.remove('cya-dragging');kanban.querySelectorAll('.cya-drop-target').forEach(el=>el.classList.remove('cya-drop-target'));});
-      const move=document.createElement('button');move.type='button';move.className='cya-lead-move-btn';move.textContent='⇄ Mover a etapa';move.title='Cambiar etapa';
-      move.onclick=e=>{e.stopPropagation();window.cyaMoverProspectoEtapa(id);};
-      card.appendChild(move);
     }
   }
 
@@ -590,7 +626,7 @@
     applyProspectLayout(kanban,col);
     for(const card of kanban.querySelectorAll('.lead-card[data-lead-id]')){
       const lead=leadById(card.dataset.leadId);
-      if(!lead||!isMetaLead(lead)||card.closest('#cya-meta-new-column'))continue;
+      if(!lead||!isMetaLead(lead)||lead.estado==='aprobado'||card.closest('#cya-meta-new-column'))continue;
       const q=metaQualification(lead);
       card.classList.add('cya-meta-lead-card','cya-meta-tone-'+q.tone);
       if(!card.querySelector('.cya-meta-tag'))card.insertAdjacentHTML('afterbegin','<div class="cya-meta-tag">META ADS · '+safe(q.label)+'</div>');
@@ -632,6 +668,7 @@
       .cya-meta-lead-card.cya-meta-tone-green{background:rgba(22,163,74,.12)!important;border:1px solid #16a34a!important}.cya-meta-lead-card.cya-meta-tone-orange{background:rgba(245,158,11,.12)!important;border:1px solid #f59e0b!important}.cya-meta-lead-card.cya-meta-tone-red{background:rgba(220,38,38,.12)!important;border:1px solid #dc2626!important}.cya-meta-wa{font-size:10px!important;margin-top:8px}.cya-meta-answers{margin-top:10px;display:grid;gap:7px}.cya-meta-answer{display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);padding-bottom:6px}.cya-meta-answer strong{font-size:10px}.cya-meta-answer span{font-size:11px;overflow-wrap:anywhere}
       .cya-meta-lead-tabs{display:flex;gap:8px;position:sticky;top:0;z-index:5;background:var(--bg-secondary);padding:10px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--border)}.cya-meta-tab{flex:1;min-width:0;padding:11px 8px;border:1px solid var(--border);border-radius:9px;background:var(--bg-card,var(--bg-secondary));color:var(--text-secondary);font-size:12px;font-weight:700;cursor:pointer}.cya-meta-tab.active{background:#1559c7;color:#fff;border-color:#1877f2}.cya-meta-questionnaire-panel{padding:4px 0 22px}.cya-meta-questionnaire-head{padding:14px;border-radius:10px;background:var(--bg-secondary);border:1px solid var(--border);margin-bottom:12px}.cya-meta-questionnaire-head strong{font-size:14px}.cya-meta-questionnaire-head p{font-size:11px;color:var(--text-muted);margin:8px 0 0}.cya-meta-questionnaire-list{display:grid;gap:10px}.cya-meta-questionnaire-list .cya-meta-answer{padding:12px;border:1px solid var(--border);border-radius:9px;background:var(--bg-secondary)}.cya-meta-questionnaire-list .cya-meta-answer strong{font-size:12px}.cya-meta-questionnaire-list .cya-meta-answer span{font-size:13px;color:var(--text-primary)}[hidden]#cya-meta-lead-tabs,[hidden]#cya-meta-questionnaire-panel{display:none!important}
       .cya-drop-target{outline:2px dashed #3b82f6;outline-offset:-3px}.cya-dragging{opacity:.55}.cya-lead-move-btn{display:block;margin-top:8px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-secondary);font-size:10px;cursor:pointer;touch-action:manipulation}.cya-lead-move-btn:hover{color:#60a5fa;border-color:#60a5fa}
+      .cya-prospect-stage-stepper{margin-bottom:16px;padding:12px 4px 14px;border-bottom:1px solid var(--border)}.cya-prospect-stage-caption{font-size:10px;letter-spacing:1px;color:var(--text-muted);font-weight:700;margin-bottom:14px}.cya-prospect-stage-steps{display:flex;justify-content:space-between;gap:3px;position:relative}.cya-prospect-stage-step{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;gap:6px;padding:3px 1px;border:0;background:transparent;color:var(--text-muted);cursor:pointer}.cya-prospect-stage-dot{width:26px;height:26px;border:2px solid #334155;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--bg-secondary)}.cya-prospect-stage-step.done .cya-prospect-stage-dot{background:#10b981;border-color:#10b981;color:#fff}.cya-prospect-stage-step.active .cya-prospect-stage-dot{border-color:#3b82f6;color:#3b82f6}.cya-prospect-stage-label{font-size:10px;line-height:1.25;text-align:center;overflow-wrap:anywhere}.cya-prospect-stage-step.active .cya-prospect-stage-label{color:#60a5fa;font-weight:700}.cya-prospect-stage-step.done .cya-prospect-stage-label{color:#10b981}.cya-prospect-stage-note{text-align:center;font-size:10px;color:var(--text-muted);margin-top:12px}.cya-prospect-stage-note strong{color:#60a5fa}@media(max-width:600px){.cya-prospect-stage-label{font-size:8px}.cya-prospect-stage-dot{width:23px;height:23px}}
       .cya-meta-count{background:rgba(0,0,0,.2);padding:2px 8px;border-radius:10px;font-size:11px}.cya-meta-tag{font-size:8px;font-weight:700;letter-spacing:.45px;color:#60a5fa;margin-bottom:4px}.cya-meta-raw-name{font-size:9px;color:var(--warning);margin-bottom:4px}.cya-meta-empty{font-size:11px;color:var(--text-muted);text-align:center;padding:16px 0}
       .cya-special-leads-stack{flex:0 0 205px;min-width:205px;display:flex;flex-direction:column;gap:8px;align-self:flex-start}.cya-special-leads-stack .lead-col{width:100%!important;min-width:0!important;min-height:0!important;height:auto!important}.cya-special-leads-stack .lead-col-header{cursor:pointer;border-radius:7px}.cya-special-leads-stack .lead-col-header::after{content:'▸';font-size:11px;margin-left:6px;opacity:.7}.cya-special-leads-stack .lead-col.is-expanded .lead-col-header::after{content:'▾'}.cya-special-leads-stack .lead-col-body{display:none!important}.cya-special-leads-stack .lead-col.is-expanded .lead-col-body{display:block!important;max-height:360px;overflow:auto}.cya-special-leads-stack .lead-col.is-expanded{box-shadow:0 8px 20px rgba(0,0,0,.12)}
       @media(max-width:700px){#lead-curp-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-review-sent{width:100%;justify-content:center}.cya-client-message-actions{display:grid!important;grid-template-columns:1fr 1fr}.cya-client-review-modal{max-width:96vw}.cya-client-review-text{min-height:280px}.cya-lead-extra-fields .form-row{grid-template-columns:1fr}.cya-special-leads-stack{flex:0 0 180px;min-width:180px}.cya-meta-new-column{flex-basis:230px;min-width:230px}}
