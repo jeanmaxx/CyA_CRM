@@ -362,6 +362,13 @@
     document.getElementById('cya-wa-message-center')?.classList.add('open');
   }
 
+  window.cyaAbrirWhatsAppArchivado=function(leadId,groupKey){
+    const lead=leadById(leadId);
+    if(!lead){showToast?.('No se encontró el prospecto archivado','warn');return false;}
+    openContactCenter('lead',lead,groupKey);
+    return true;
+  };
+
   window.cyaAbrirCentroMensajesWhatsApp=function(groupKey){
     const lead=currentLead();
     if(!lead){showToast?.('Guarda primero el prospecto para preparar mensajes de WhatsApp','warn');return;}
