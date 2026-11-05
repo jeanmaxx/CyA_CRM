@@ -297,21 +297,23 @@
     const oldValue=select.value;
     if(oldValue===value)return;
     const lead=currentLead();
+    if(!lead){showToast?.('No se encontró el prospecto abierto; vuelve a abrir su expediente','warn');return;}
+    const oldStage=lead.estado;
+    cyaStageSaving=true;
     select.value=value;
     select.dispatchEvent(new Event('change',{bubbles:true}));
     renderProspectStageStepper();
-    if(!lead)return;
-    const oldStage=lead.estado;
-    cyaStageSaving=true;
-    lead.estado=value;
     try{
-      await cloudSyncNow({throwOnError:true});
-      showToast?.('Etapa actualizada: '+(CYA_STAGES[value]||value),'success');
+      lead.estado=value;
+      if(typeof saveStore==='function')saveStore();
+      if(typeof cloudSyncNow==='function')await cloudSyncNow({throwOnError:true});
+      showToast?.('Etapa guardada: '+(CYA_STAGES[value]||value),'success');
     }catch(err){
       lead.estado=oldStage;
       select.value=oldValue;
       select.dispatchEvent(new Event('change',{bubbles:true}));
       renderProspectStageStepper();
+      try{if(typeof saveStore==='function')saveStore();}catch(_){}
       showToast?.('No se pudo guardar el cambio de etapa; se restauró la anterior','warn');
     }finally{cyaStageSaving=false;}
   }
