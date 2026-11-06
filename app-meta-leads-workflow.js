@@ -527,6 +527,12 @@
 
   const baseOpenModalLead=window.openModalLead;
   if(typeof baseOpenModalLead==='function')window.openModalLead=function(){
+    const requestedId=arguments[0];
+    if(requestedId!=null&&requestedId!==''&&!leadById(requestedId)){
+      showToast?.('No se encontró el expediente solicitado. Actualiza o sincroniza antes de abrirlo','warn');
+      return;
+    }
+    ensureReconsultaOption(); // Base editor selects stage before adding options.
     const result=baseOpenModalLead.apply(this,arguments);
     setTimeout(fillExtraFields,0);
     return result;
@@ -534,6 +540,10 @@
 
   const baseGuardarLead=window.guardarLead;
   if(typeof baseGuardarLead==='function')window.guardarLead=async function(){
+    if(editingLeadId&&!currentLead()){
+      showToast?.('No se encontró el expediente original. No se guardaron cambios para evitar crear un registro incompleto','warn');
+      return;
+    }
     const extras=captureExtraFields();
     const existing=currentLead();
     const requested=document.getElementById('lead-estado')?.value;
@@ -823,6 +833,19 @@
   }
 
 
+  window.cyaAbrirReconsultaDesdeTarjeta=function(card){
+    const id=card?.dataset?.leadId;
+    const lead=leadById(id);
+    if(!lead){showToast?.('No se encontró el expediente; sincroniza los prospectos y vuelve a intentar','warn');return;}
+    window.openModalLead(lead.id);
+  };
+  document.addEventListener('keydown',event=>{
+    const card=event.target.closest?.('.cya-reconsulta-card');
+    if(!card||(event.key!=='Enter'&&event.key!==' '))return;
+    event.preventDefault();
+    window.cyaAbrirReconsultaDesdeTarjeta(card);
+  });
+
   function installReconsultaColumn(kanban){
     const visible=typeof leadsVistaActual==='function'?leadsVistaActual():(store?.leads||[]);
     const leads=visible.filter(l=>l.estado==='reconsulta');
@@ -841,7 +864,7 @@
         const today=todayIso();
         const status=date==='Sin fecha'?'Sin programar':date<today?'Vencida':date===today?'Consultar hoy':'Programada';
         const motive=RECONSULTA_MOTIVOS[l.reconsulta?.motivo]||'Nueva consulta';
-        return '<div class="lead-card cya-reconsulta-card" data-lead-id="'+safe(l.id)+'" role="button" tabindex="0" onclick="openModalLead(\''+String(l.id).replace(/[^a-zA-Z0-9_-]/g,'')+'\')"><strong>'+safe(l.nombre||'Prospecto')+'</strong><div>'+safe(l.curp||'CURP pendiente')+'</div><div class="cya-reconsulta-date">'+safe(date)+' · '+safe(status)+'</div><div>'+safe(motive)+'</div></div>';
+        return '<div class="lead-card cya-reconsulta-card" data-lead-id="'+safe(l.id)+'" role="button" tabindex="0" onclick="cyaAbrirReconsultaDesdeTarjeta(this)"><strong>'+safe(l.nombre||'Prospecto')+'</strong><div>'+safe(l.curp||'CURP pendiente')+'</div><div class="cya-reconsulta-date">'+safe(date)+' · '+safe(status)+'</div><div>'+safe(motive)+'</div></div>';
       }).join(''):'<div class="cya-meta-empty">Sin consultas programadas</div>';
     }
     // Nueva consulta inicia el recorrido: el prospecto vuelve a la primera etapa visual.
