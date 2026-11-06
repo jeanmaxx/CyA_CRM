@@ -112,6 +112,13 @@ function datosContratoWord(){
   if(!fecha||!vence||vence<fecha)throw new Error('Revisa la fecha de firma y el vencimiento del pagaré');
   const vars={CLIENTE_NOMBRE:getVal('ct-word-nombre').trim().toUpperCase(),CLIENTE_DOMICILIO:getVal('ct-word-domicilio').trim().toUpperCase(),EMPRESA_REPRESENTANTE:getVal('ct-word-representante').trim().toUpperCase(),EMPRESA_DOMICILIO:getVal('ct-word-empresa-dom').trim(),CIUDAD_CONTRATO:getVal('ct-word-ciudad').trim(),ESTADO_OFICINA:estadoOficinaContrato(),FECHA_CONTRATO:fechaContratoLarga(fecha),PAGARE_VENCIMIENTO:fechaContratoLarga(vence)};
   for(const v of Object.values(vars))if(!v)throw new Error('Completa nombre, domicilios, representante, lugar y fechas del documento');
+  const withdrawal=cyaContractAmountNumber('ct-monto'),balance=cyaContractAmountNumber('ct-word-saldo');
+  if(!Number.isFinite(withdrawal)||withdrawal<0||!Number.isFinite(balance)||Math.abs(withdrawal-balance)>.009)throw new Error('Monto de retiro y saldo de retiro deben coincidir');
+  const selectedMode=document.getElementById('ct-honorarios-modo')?.value;
+  if(selectedMode==='porcentaje'){
+    const pct=cyaContractAmountNumber('ct-honorarios-porcentaje');
+    if(!Number.isFinite(pct)||pct<0||pct>100)throw new Error('El porcentaje de honorarios debe estar entre 0 y 100');
+  }
   const monetary=[['ct-monto','MONTO_RETIRO'],['ct-honorarios','HONORARIOS'],['ct-pagare-monto','PAGARE_MONTO'],['ct-word-saldo','SALDO_MINIMO'],['ct-word-cobranza','PAGARE_COBRANZA']];
   const raw={};for(const [id,key] of monetary){const s=getVal(id);const n=Number(s);if(s===''||!Number.isFinite(n)||n<0||n>999999999)throw new Error('Revisa los importes del documento');raw[key]=n;vars[key]=n.toLocaleString('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2,maximumFractionDigits:2});vars[key+'_LETRAS']=dineroEnLetras(n);}
   if(Math.abs(raw.PAGARE_MONTO-raw.HONORARIOS-raw.PAGARE_COBRANZA)>0.009)throw new Error('El monto del pagaré debe coincidir con honorarios más cobranza externa');
