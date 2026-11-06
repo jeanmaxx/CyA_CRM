@@ -12,6 +12,45 @@ const guardarContratoAnterior=guardarContratoHistorial;
 const verVersionContratoAnterior=verVersionContrato;
 const onContratoClienteAnterior=onContratoClienteChange;
 const onContratoServicioAnterior=onContratoServicioChange;
+
+let cyaContractSyncBusy=false;
+function cyaContractAmountNumber(id){const value=document.getElementById(id)?.value;return value===''||value==null?NaN:Number(value);}
+function cyaContractSync(source){
+  if(cyaContractSyncBusy)return;
+  cyaContractSyncBusy=true;
+  try{
+    const upper=document.getElementById('ct-monto'),lower=document.getElementById('ct-word-saldo');
+    if(source==='saldo'&&lower&&upper)upper.value=lower.value;
+    else if(upper&&lower)lower.value=upper.value;
+    const mode=document.getElementById('ct-honorarios-modo')?.value||'fijo';
+    const rate=document.getElementById('ct-honorarios-porcentaje');
+    const honor=document.getElementById('ct-honorarios');
+    if(rate)rate.disabled=mode!=='porcentaje';
+    if(honor)honor.readOnly=mode==='porcentaje';
+    if(mode==='porcentaje'&&honor&&rate){
+      const amount=cyaContractAmountNumber('ct-monto'),percent=Number(rate.value);
+      if(Number.isFinite(amount)&&amount>=0&&Number.isFinite(percent)&&percent>=0&&percent<=100)honor.value=(Math.round(amount*percent)/100).toFixed(2);
+    }
+    const pagare=document.getElementById('ct-pagare-monto');
+    const cob=cyaContractAmountNumber('ct-word-cobranza');
+    const fee=cyaContractAmountNumber('ct-honorarios');
+    if(pagare&&Number.isFinite(fee))pagare.value=(Math.round((fee+(Number.isFinite(cob)?cob:5000))*100)/100).toFixed(2);
+    if(typeof invalidarContratoActual==='function')invalidarContratoActual();
+  }finally{cyaContractSyncBusy=false;}
+}
+function cyaContractInitAmounts(cliente){
+  const amount=cyaContractAmountNumber('ct-monto');
+  const fee=cyaContractAmountNumber('ct-honorarios');
+  const mode=document.getElementById('ct-honorarios-modo');
+  const rate=document.getElementById('ct-honorarios-porcentaje');
+  if(mode&&rate){
+    const isThirty=Number.isFinite(amount)&&amount>0&&Number.isFinite(fee)&&Math.abs(fee-amount*.3)<.011;
+    mode.value=!Number.isFinite(fee)||isThirty?'porcentaje':'fijo';
+    rate.value='30';
+  }
+  cyaContractSync('monto');
+}
+
 onContratoServicioChange=function(){invalidarContratoActual();return onContratoServicioAnterior();};
 renderContratos=function(){
   wordContractCurrent=null;
@@ -21,6 +60,9 @@ renderContratos=function(){
   html=html.replace('id="ct-pagare-fecha" type="date"','id="ct-pagare-fecha" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" oninput="mascaraFechaMX(this)"');
   html=html.replace('<button class="btn" onclick="imprimirContrato()"','<button class="btn" id="btn-word" onclick="descargarContratoWord()" style="display:none;">↓ Word</button><button class="btn" onclick="imprimirContrato()"');
   html=html.replace(/<button class="btn btn-primary" style="width:100%;font-size:14px;" onclick="generarContrato\(\)">👁 Vista previa<\/button>/,'').replace('(honorarios + $5,000)','(honorarios + cobranza externa)').replace('Incluye $5,000 por cobranza externa en caso de requerirse','El importe de cobranza externa se puede ajustar en los datos del contrato.');
+  html=html.replace(/(<input[^>]*id="ct-monto"[^>]*)(>)/,'$1 oninput="cyaContractSync(\'monto\')"$2');
+  html=html.replace(/(<input[^>]*id="ct-honorarios"[^>]*)(>)/,'$1 oninput="cyaContractSync(\'honorarios\')"$2');
+  html=html.replace(/(<input[^>]*id="ct-honorarios"[^>]*>\s*<\/div>)/,'$1<div class="form-group"><label class="form-label" for="ct-honorarios-modo">Forma de cobro</label><select class="form-select" id="ct-honorarios-modo" onchange="cyaContractSync(\'modo\')"><option value="porcentaje">Porcentaje del retiro</option><option value="fijo">Cantidad fija</option></select></div><div class="form-group"><label class="form-label" for="ct-honorarios-porcentaje">Porcentaje de honorarios (%)</label><input class="form-input" type="number" min="0" max="100" step="0.01" id="ct-honorarios-porcentaje" value="30" oninput="cyaContractSync(\'porcentaje\')"><div class="form-helper">30 % por defecto. El importe se calcula sobre el monto de retiro.</div></div>');
   html=html.replace('<div class="card" id="ct-datos-preview"','<div class="card" id="ct-word-fields"><div class="card-header"><div class="card-title">Datos editables del contrato</div></div><div class="card-body" id="ct-word-fields-body"><p class="form-helper">Selecciona un cliente para cargar sus datos.</p></div></div><div class="card" id="ct-datos-preview"');
   return html;
 };
@@ -32,10 +74,11 @@ onContratoClienteChange=function(){
   const c=store.clientes.find(c=>c.id===selectedClienteId);if(!c)return;
   const cfg={...(privateContractTemplate?.defaults||{}),...store.configuracion};
   const el=document.getElementById('ct-word-fields-body');
-  if(el)el.innerHTML=`<div class="contract-fields"><div class="contract-subsection">Datos del cliente</div>${contractTextField('ct-word-nombre','Nombre del cliente',c.nombre,true)}${contractTextField('ct-word-domicilio','Domicilio del cliente',c.domicilio,true)}<div class="contract-subsection">Datos de la empresa</div>${contractTextField('ct-word-representante','Representante de la empresa',cfg.empresa_representante||privateContractTemplate?.defaults?.empresa_representante||'',true)}<div id="ct-office-slot" class="wide"></div><input type="hidden" id="ct-word-empresa-dom" value="${esc(cfg.empresa_domicilio||privateContractTemplate?.defaults?.empresa_domicilio||'')}"><div class="form-group wide"><label class="form-label" for="ct-word-ciudad">Lugar de firma · municipio y estado de la oficina</label><input class="form-input" id="ct-word-ciudad" value="${esc(cfg.ciudad_contrato||privateContractTemplate?.defaults?.ciudad_contrato||'')}" readonly></div><div class="form-group"><label class="form-label">Saldo de retiro</label><input class="form-input" type="number" id="ct-word-saldo" value="35000" min="0" step="0.01"></div><div class="form-group"><label class="form-label">Cobranza externa</label><input class="form-input" type="number" id="ct-word-cobranza" value="5000" min="0" step="0.01"></div><div class="wide contract-generate-actions"><button class="btn btn-primary" style="width:100%;font-size:14px;" onclick="generarContrato()">Generar contrato</button></div></div><p class="form-helper">Estos ajustes se aplican a esta versión del documento. El expediente conserva sus datos originales.</p>`;
+  if(el)el.innerHTML=`<div class="contract-fields"><div class="contract-subsection">Datos del cliente</div>${contractTextField('ct-word-nombre','Nombre del cliente',c.nombre,true)}${contractTextField('ct-word-domicilio','Domicilio del cliente',c.domicilio,true)}<div class="contract-subsection">Datos de la empresa</div>${contractTextField('ct-word-representante','Representante de la empresa',cfg.empresa_representante||privateContractTemplate?.defaults?.empresa_representante||'',true)}<div id="ct-office-slot" class="wide"></div><input type="hidden" id="ct-word-empresa-dom" value="${esc(cfg.empresa_domicilio||privateContractTemplate?.defaults?.empresa_domicilio||'')}"><div class="form-group wide"><label class="form-label" for="ct-word-ciudad">Lugar de firma · municipio y estado de la oficina</label><input class="form-input" id="ct-word-ciudad" value="${esc(cfg.ciudad_contrato||privateContractTemplate?.defaults?.ciudad_contrato||'')}" readonly></div><div class="form-group"><label class="form-label">Saldo de retiro</label><input class="form-input" type="number" id="ct-word-saldo" value="${esc(getVal('ct-monto')||c.montoAfore||0)}" min="0" step="0.01" oninput="cyaContractSync('saldo')"></div><div class="form-group"><label class="form-label">Cobranza externa</label><input class="form-input" type="number" id="ct-word-cobranza" value="5000" min="0" step="0.01" oninput="cyaContractSync('cobranza')"></div><div class="wide contract-generate-actions"><button class="btn btn-primary" style="width:100%;font-size:14px;" onclick="generarContrato()">Generar contrato</button></div></div><p class="form-helper">Estos ajustes se aplican a esta versión del documento. El expediente conserva sus datos originales.</p>`;
   if(tieneMontoFinanciero(c.honorarios)){setVal('ct-honorarios',c.honorarios);setVal('ct-pagare-monto',Number(c.honorarios)+5000);}
   setVal('ct-fecha',fechaISOaMX(c.fechaFirmaContrato||fechaISOLocal(new Date())));
   actualizarFechaPagare();
+  cyaContractInitAmounts(c);
   invalidarContratoActual();
 };
 actualizarFechaPagare=function(){const fecha=fechaMXaISO(getVal('ct-fecha'));if(fecha)setVal('ct-pagare-fecha',fechaISOaMX(sumarDiasISO(fecha,60)));};
@@ -69,6 +112,13 @@ function datosContratoWord(){
   if(!fecha||!vence||vence<fecha)throw new Error('Revisa la fecha de firma y el vencimiento del pagaré');
   const vars={CLIENTE_NOMBRE:getVal('ct-word-nombre').trim().toUpperCase(),CLIENTE_DOMICILIO:getVal('ct-word-domicilio').trim().toUpperCase(),EMPRESA_REPRESENTANTE:getVal('ct-word-representante').trim().toUpperCase(),EMPRESA_DOMICILIO:getVal('ct-word-empresa-dom').trim(),CIUDAD_CONTRATO:getVal('ct-word-ciudad').trim(),ESTADO_OFICINA:estadoOficinaContrato(),FECHA_CONTRATO:fechaContratoLarga(fecha),PAGARE_VENCIMIENTO:fechaContratoLarga(vence)};
   for(const v of Object.values(vars))if(!v)throw new Error('Completa nombre, domicilios, representante, lugar y fechas del documento');
+  const withdrawal=cyaContractAmountNumber('ct-monto'),balance=cyaContractAmountNumber('ct-word-saldo');
+  if(!Number.isFinite(withdrawal)||withdrawal<0||!Number.isFinite(balance)||Math.abs(withdrawal-balance)>.009)throw new Error('Monto de retiro y saldo de retiro deben coincidir');
+  const selectedMode=document.getElementById('ct-honorarios-modo')?.value;
+  if(selectedMode==='porcentaje'){
+    const pct=cyaContractAmountNumber('ct-honorarios-porcentaje');
+    if(!Number.isFinite(pct)||pct<0||pct>100)throw new Error('El porcentaje de honorarios debe estar entre 0 y 100');
+  }
   const monetary=[['ct-monto','MONTO_RETIRO'],['ct-honorarios','HONORARIOS'],['ct-pagare-monto','PAGARE_MONTO'],['ct-word-saldo','SALDO_MINIMO'],['ct-word-cobranza','PAGARE_COBRANZA']];
   const raw={};for(const [id,key] of monetary){const s=getVal(id);const n=Number(s);if(s===''||!Number.isFinite(n)||n<0||n>999999999)throw new Error('Revisa los importes del documento');raw[key]=n;vars[key]=n.toLocaleString('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2,maximumFractionDigits:2});vars[key+'_LETRAS']=dineroEnLetras(n);}
   if(Math.abs(raw.PAGARE_MONTO-raw.HONORARIOS-raw.PAGARE_COBRANZA)>0.009)throw new Error('El monto del pagaré debe coincidir con honorarios más cobranza externa');
@@ -157,6 +207,7 @@ generarContrato=async function(){
   const fields=[...document.querySelectorAll('input[id^="ct-"],select[id^="ct-"],textarea[id^="ct-"]')].map(el=>({el,disabled:el.disabled}));
   fields.forEach(({el})=>el.disabled=true);
   try{
+    cyaContractSync('monto');
     const vars=datosContratoWord();const bytes=await crearDocxContrato(vars);
     wordContractCurrent={id:crypto.randomUUID(),clienteId,vars,bytes,saved:false,templateVersion:CONTRACT_TEMPLATE_VERSION};
     try{await renderWordBytes(bytes,document.getElementById('ct-visor'));}catch(previewError){document.getElementById('ct-visor').textContent='Vista previa no disponible. Puedes descargar el Word. '+previewError.message;}
