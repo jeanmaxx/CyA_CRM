@@ -527,6 +527,11 @@
 
   const baseOpenModalLead=window.openModalLead;
   if(typeof baseOpenModalLead==='function')window.openModalLead=function(){
+    const requestedId=arguments[0];
+    if(requestedId!=null&&requestedId!==''&&!leadById(requestedId)){
+      showToast?.('No se encontró el expediente solicitado. Actualiza o sincroniza antes de abrirlo','warn');
+      return;
+    }
     ensureReconsultaOption(); // Base editor selects stage before adding options.
     const result=baseOpenModalLead.apply(this,arguments);
     setTimeout(fillExtraFields,0);
@@ -535,6 +540,10 @@
 
   const baseGuardarLead=window.guardarLead;
   if(typeof baseGuardarLead==='function')window.guardarLead=async function(){
+    if(editingLeadId&&!currentLead()){
+      showToast?.('No se encontró el expediente original. No se guardaron cambios para evitar crear un registro incompleto','warn');
+      return;
+    }
     const extras=captureExtraFields();
     const existing=currentLead();
     const requested=document.getElementById('lead-estado')?.value;
