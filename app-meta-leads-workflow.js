@@ -758,7 +758,7 @@
   function applyColumnSort(col,stage){
     const body=col.querySelector('.lead-col-body');
     if(!body)return;
-    const mode=cyaSortMode[stage]||'date';
+    const mode=cyaSortMode[stage]||'priority';
     for(const button of col.querySelectorAll('.cya-sort-action'))button.classList.toggle('active',button.dataset.sort===mode);
     const cards=[...body.querySelectorAll(':scope > .lead-card[data-lead-id]')];
     if(cards.length<2)return;
@@ -921,9 +921,14 @@
     // Once those cards move to their own column, match the badge to actual cards.
     const semanasCol=[...kanban.querySelectorAll(':scope > .lead-col')].find(item=>columnLabel(item).startsWith('en revisión de semanas'));
     if(semanasCol){
-      const count=semanasCol.querySelector('.lead-col-header > span:last-child');
+      const header=semanasCol.querySelector('.lead-col-header');
+      // Never replace the sorting controls: the badge is the second direct span.
+      const count=header?.querySelector(':scope > span:nth-child(2)');
       const cards=semanasCol.querySelectorAll('.lead-col-body > .lead-card[data-lead-id]');
-      if(count)count.textContent=String(cards.length);
+      if(count){
+        count.textContent=String(cards.length);
+        count.classList.add('cya-weeks-count');
+      }
       const empty=semanasCol.querySelector('.lead-col-body > div:not(.lead-card)');
       if(empty&&cards.length)empty.remove();
     }
