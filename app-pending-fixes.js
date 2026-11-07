@@ -153,8 +153,8 @@
       });
     };
 
-    // Archivados: No elegibles open; definitives and every definitive cause closed initially.
-    if(typeof archivadosLeadsAbiertos!=='undefined')archivadosLeadsAbiertos=true;
+    // Archivados starts collapsed on every fresh session; users can expand it explicitly.
+    if(typeof archivadosLeadsAbiertos!=='undefined')archivadosLeadsAbiertos=false;
     archiveCollapsed.temporal=false;
     archiveCollapsed.definitivos=true;
     for(const lead of (store.leads||[])){

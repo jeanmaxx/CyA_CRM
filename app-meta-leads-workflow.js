@@ -807,6 +807,27 @@
           try{await navigator.clipboard.writeText(value);showToast?.('CURPs copiadas','success');}
           catch(_){textarea.focus();textarea.select();showToast?.('Selecciona y copia las CURPs','info');}
         });
+        modal.addEventListener('click',async e=>{
+          const button=e.target.closest('[data-cya-curp-copy-all]');
+          if(!button)return;
+          const panel=button.closest('[data-cya-curp-panel]');
+          if(!panel)return;
+          const titles={meta:'META ADS',semanas:'EN REVISIÓN DE SEMANAS / NSS',reconsulta:'PENDIENTE DE NUEVA CONSULTA'};
+          const priorities=['Favorable','Por verificar','No favorable'];
+          const groups=[...panel.querySelectorAll('.cya-curp-priority-group')];
+          const parts=[titles[panel.dataset.cyaCurpPanel]||'CURPS PENDIENTES'];
+          groups.forEach((group,index)=>{
+            const lines=(group.querySelector('textarea')?.value||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+            parts.push('',priorities[index]+':',...(lines.length?lines:[]));
+          });
+          const value=parts.join('\n').trim();
+          try{await navigator.clipboard.writeText(value);showToast?.('Lista completa copiada por prioridad','success');}
+          catch(_){
+            const active=panel.querySelector('textarea');
+            if(active){active.focus();active.select();}
+            showToast?.('No se pudo copiar automáticamente; revisa los permisos del navegador','warn');
+          }
+        });
         document.body.appendChild(modal);
       }
       let total=0;
@@ -821,9 +842,9 @@
             if(!seen.has(curp)){seen.add(curp);curps.push(curp);}
           }
           total+=curps.length;
-          return '<div class="cya-curp-priority-group"><div class="cya-curp-priority-heading"><strong>'+label+' ('+curps.length+')</strong><button type="button" class="btn" data-cya-curp-copy '+(!curps.length?'disabled':'')+'>📋 Copiar</button></div><textarea class="form-textarea" readonly rows="'+Math.min(7,Math.max(2,curps.length))+'">'+safe(curps.join('\\n'))+'</textarea>'+(missing?'<div class="cya-curp-missing">'+missing+' sin CURP completa</div>':'')+'</div>';
+          return '<div class="cya-curp-priority-group"><div class="cya-curp-priority-heading"><strong>'+label+' ('+curps.length+')</strong><button type="button" class="btn" data-cya-curp-copy '+(!curps.length?'disabled':'')+'>📋 Copiar</button></div><textarea class="form-textarea" readonly rows="'+Math.min(7,Math.max(2,curps.length))+'">'+safe(curps.join('\n'))+'</textarea>'+(missing?'<div class="cya-curp-missing">'+missing+' sin CURP completa</div>':'')+'</div>';
         }).join('');
-        return '<section class="cya-curp-column" data-cya-curp-panel="'+group.id+'"'+(group.id==='meta'?'':' hidden')+'><h3>'+safe(group.title)+' ('+group.leads.length+')</h3>'+sections+'</section>';
+        return '<section class="cya-curp-column" data-cya-curp-panel="'+group.id+'"'+(group.id==='meta'?'':' hidden')+'><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px"><h3 style="margin:0">'+safe(group.title)+' ('+group.leads.length+')</h3><button type="button" class="btn btn-primary" data-cya-curp-copy-all>📋 Copiar todo</button></div>'+sections+'</section>';
       }).join('');
       modal.querySelector('#cya-curp-groups').innerHTML=html;
       for(const tab of modal.querySelectorAll('[data-cya-curp-tab]')){const active=tab.dataset.cyaCurpTab==='meta';tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active));}
@@ -896,6 +917,16 @@
       });
     }
     installReconsultaColumn(kanban);
+    // The base kanban initially counts Meta Ads intake in 'semanas'.
+    // Once those cards move to their own column, match the badge to actual cards.
+    const semanasCol=[...kanban.querySelectorAll(':scope > .lead-col')].find(item=>columnLabel(item).startsWith('en revisión de semanas'));
+    if(semanasCol){
+      const count=semanasCol.querySelector('.lead-col-header > span:last-child');
+      const cards=semanasCol.querySelectorAll('.lead-col-body > .lead-card[data-lead-id]');
+      if(count)count.textContent=String(cards.length);
+      const empty=semanasCol.querySelector('.lead-col-body > div:not(.lead-card)');
+      if(empty&&cards.length)empty.remove();
+    }
     applyProspectLayout(kanban,col);
     for(const card of kanban.querySelectorAll('.lead-card[data-lead-id]')){
       const lead=leadById(card.dataset.leadId);
