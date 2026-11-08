@@ -306,25 +306,37 @@
     }
   }
   function todayIso(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
+  function cyaReconsultaDateDisplay(iso){
+    const match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''));
+    return match?match[3]+'/'+match[2]+'/'+match[1]:'';
+  }
+  function cyaReconsultaDateIso(display){
+    const match=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(display||'').trim());
+    if(!match)return '';
+    const iso=match[3]+'-'+match[2]+'-'+match[1];
+    const date=new Date(iso+'T12:00:00');
+    return !Number.isNaN(date.getTime())&&date.getFullYear()===Number(match[3])&&date.getMonth()+1===Number(match[2])&&date.getDate()===Number(match[1])?iso:'';
+  }
   function askReconsulta(lead){
     return new Promise(resolve=>{
       let modal=document.getElementById('cya-reconsulta-modal');
       if(!modal){
         modal=document.createElement('div');modal.id='cya-reconsulta-modal';modal.className='modal-overlay';
-        modal.innerHTML='<div class="modal" style="max-width:490px" role="dialog" aria-modal="true"><div class="modal-header"><div class="modal-title">🗓 Programar nueva consulta</div></div><div class="modal-body"><p style="font-size:12px;color:var(--text-muted)">Indica cuándo se volverá a consultar la CURP. No se archivará al prospecto.</p><div class="form-group"><label class="form-label">Motivo</label><select id="cya-reconsulta-motivo" class="form-select"></select></div><div class="form-group"><label class="form-label">Fecha de próxima consulta</label><input id="cya-reconsulta-fecha" type="date" class="form-input" required></div><div class="form-group"><label class="form-label">Observaciones (opcional)</label><textarea id="cya-reconsulta-notas" class="form-textarea" rows="3"></textarea></div></div><div class="modal-footer"><button type="button" class="btn" data-cya-cancel>Cancelar</button><button type="button" class="btn btn-primary" data-cya-confirm>Programar consulta</button></div></div>';
+        modal.innerHTML='<div class="modal" style="max-width:490px" role="dialog" aria-modal="true"><div class="modal-header"><div class="modal-title">🗓 Programar nueva consulta</div></div><div class="modal-body"><p style="font-size:12px;color:var(--text-muted)">Indica cuándo se volverá a consultar la CURP. No se archivará al prospecto.</p><div class="form-group"><label class="form-label">Motivo</label><select id="cya-reconsulta-motivo" class="form-select"></select></div><div class="form-group"><label class="form-label">Fecha de próxima consulta</label><input id="cya-reconsulta-fecha" type="text" class="form-input" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" required></div><div class="form-group"><label class="form-label">Observaciones (opcional)</label><textarea id="cya-reconsulta-notas" class="form-textarea" rows="3"></textarea></div></div><div class="modal-footer"><button type="button" class="btn" data-cya-cancel>Cancelar</button><button type="button" class="btn btn-primary" data-cya-confirm>Programar consulta</button></div></div>';
         document.body.appendChild(modal);
       }
       const reason=modal.querySelector('#cya-reconsulta-motivo');
       reason.innerHTML=Object.entries(RECONSULTA_MOTIVOS).map(([key,label])=>'<option value="'+key+'">'+safe(label)+'</option>').join('');
       reason.value=lead?.reconsulta?.motivo||'limite';
       const date=modal.querySelector('#cya-reconsulta-fecha');
-      date.min=todayIso();date.value=lead?.reconsulta?.fecha>=todayIso()?lead.reconsulta.fecha:todayIso();
+      date.value=cyaReconsultaDateDisplay(lead?.reconsulta?.fecha>=todayIso()?lead.reconsulta.fecha:todayIso());
       modal.querySelector('#cya-reconsulta-notas').value=lead?.reconsulta?.notas||'';
       const close=result=>{modal.classList.remove('open');modal.querySelector('[data-cya-cancel]').onclick=null;modal.querySelector('[data-cya-confirm]').onclick=null;resolve(result);};
       modal.querySelector('[data-cya-cancel]').onclick=()=>close(null);
       modal.querySelector('[data-cya-confirm]').onclick=()=>{
-        if(!date.value||date.value<todayIso()){showToast?.('Selecciona una fecha válida a partir de hoy','warn');return;}
-        close({fecha:date.value,motivo:reason.value,notas:modal.querySelector('#cya-reconsulta-notas').value.trim(),registradoEn:new Date().toISOString()});
+        const iso=cyaReconsultaDateIso(date.value);
+        if(!iso||iso<todayIso()){showToast?.('Escribe una fecha válida en formato dd/mm/aaaa, a partir de hoy','warn');date.focus();return;}
+        close({fecha:iso,motivo:reason.value,notas:modal.querySelector('#cya-reconsulta-notas').value.trim(),registradoEn:new Date().toISOString()});
       };
       modal.classList.add('open');date.focus();
     });
@@ -885,7 +897,7 @@
         const today=todayIso();
         const status=date==='Sin fecha'?'Sin programar':date<today?'Vencida':date===today?'Consultar hoy':'Programada';
         const motive=RECONSULTA_MOTIVOS[l.reconsulta?.motivo]||'Nueva consulta';
-        return '<div class="lead-card cya-reconsulta-card" data-lead-id="'+safe(l.id)+'" role="button" tabindex="0" onclick="cyaAbrirReconsultaDesdeTarjeta(this)"><strong>'+safe(l.nombre||'Prospecto')+'</strong><div>'+safe(l.curp||'CURP pendiente')+'</div><div class="cya-reconsulta-date">'+safe(date)+' · '+safe(status)+'</div><div>'+safe(motive)+'</div></div>';
+        return '<div class="lead-card cya-reconsulta-card" data-lead-id="'+safe(l.id)+'" role="button" tabindex="0" onclick="cyaAbrirReconsultaDesdeTarjeta(this)"><strong>'+safe(l.nombre||'Prospecto')+'</strong><div>'+safe(l.curp||'CURP pendiente')+'</div><div class="cya-reconsulta-date">'+safe(cyaReconsultaDateDisplay(date)||date)+' · '+safe(status)+'</div><div>'+safe(motive)+'</div></div>';
       }).join(''):'<div class="cya-meta-empty">Sin consultas programadas</div>';
     }
     // Nueva consulta inicia el recorrido: el prospecto vuelve a la primera etapa visual.
