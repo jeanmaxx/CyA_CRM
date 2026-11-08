@@ -6,7 +6,14 @@
 
   const META_SOURCE='Meta Ads';
   const META_PENDING_NAME='Nombre pendiente de validar';
-
+  const CLIENT_REVIEW_TEMPLATE={
+    id:'pl_meta_revision_en_proceso',
+    nombre:'Meta Ads · Aviso de revisión en proceso',
+    etapa:'semanas',
+    tipo:'whatsapp',
+    icono:'🔎',
+    texto:'¡Hola, {{NOMBRE}}!\n\nTe saluda {{ASESOR}}, Consultor Previsional de Casillas & Asociados y soy tu asesor asignado para brindarte la información.\n\nQuiero confirmarte que recibimos tu solicitud para la revisión de tu Retiro por Desempleo de AFORE.\nYa estamos validando tus datos en el sistema para calcular el monto al que puedes acceder.\n\n📍 Cobertura: Te comento que nuestra atención y firma presencial se realiza en:\nQuerétaro, San Juan del Río, Tequisquiapan, Ezequiel Montes, Cadereyta, Tepeji e Irapuato.\n\nEn unos momentos te comparto los resultados de tu consulta y cómo podemos iniciar tu trámite.\n\n¡Quedo a tus órdenes! 📲'
+  };
 
   const safe=value=>typeof escapeHTMLBasico==='function'?escapeHTMLBasico(String(value??'')):String(value??'');
   const leadById=id=>(store?.leads||[]).find(l=>String(l.id)===String(id));
@@ -54,6 +61,40 @@
     }catch(_){return String(sesionActiva?.nombre||'').trim()||'tu asesor';}
   }
 
+  function ensureClientReviewTemplate(){
+    if(!window.store)return false;
+    let arr=Array.isArray(store.plantillas)?store.plantillas:null;
+    if(!arr){
+      try{arr=typeof PLANTILLAS_DEFAULT!=='undefined'?PLANTILLAS_DEFAULT.map(p=>({...p})):[];}catch(_){arr=[];}
+      store.plantillas=arr;
+    }
+    if(arr.some(p=>p.id===CLIENT_REVIEW_TEMPLATE.id))return false;
+    arr.push({...CLIENT_REVIEW_TEMPLATE});
+    try{saveStore?.();}catch(_){ }
+    return true;
+  }
+
+  function clientReviewTemplate(){
+    ensureClientReviewTemplate();
+    return (store?.plantillas||[]).find(p=>p.id===CLIENT_REVIEW_TEMPLATE.id)||CLIENT_REVIEW_TEMPLATE;
+  }
+
+  function clientReviewMessage(lead=currentLead()){
+    if(!lead)return {ok:false,message:'',phone:'',name:''};
+    const visibleName=preferredMetaName(lead)||String(document.getElementById('lead-nombre')?.value||'').trim();
+    const name=firstName(visibleName);
+    const phone=normalizePhone(document.getElementById('lead-tel')?.value||lead?.telefono||lead?.phone||'');
+    let message=String(clientReviewTemplate().texto||CLIENT_REVIEW_TEMPLATE.texto)
+      .replace(/{{NOMBRE}}/g,name||'')
+      .replace(/{{ASESOR}}/g,currentAdvisorName())
+      .trim();
+    if(name){
+      const hello=`¡Hola, ${name}!`;
+      if(message.startsWith(hello))message=message.replace(hello,`${hello} ${greeting()}.`);
+    }
+    return {ok:true,message,phone,name};
+  }
+
   function reviewMessage(){
     const curp=normalizeCurp(document.getElementById('lead-curp')?.value||currentLead()?.curp||'');
     if(curp.length!==18)return {ok:false,curp,message:''};
@@ -94,8 +135,69 @@
     copyText(payload.message).then(ok=>showToast?.(tab?(ok?'WhatsApp abierto y solicitud copiada':'WhatsApp abierto. Selecciona tu grupo de trabajo.'):'El navegador bloqueó WhatsApp; la solicitud quedó copiada.',tab?'success':'warn'));
   };
 
-  window.cyaCopiarAvisoRevisionCliente=function(){window.cyaAbrirCentroMensajesWhatsApp?.('revision');};
-  window.cyaAbrirWhatsAppCliente=function(){window.cyaAbrirCentroMensajesWhatsApp?.('revision');};
+  window.cyaCopiarAvisoRevisionCliente=async function(){
+    const payload=clientReviewMessage();
+    if(!payload.ok)return;
+    const ok=await copyText(payload.message);
+    showToast?.(ok?'Mensaje para el prospecto copiado':'No fue posible copiar el mensaje',ok?'success':'warn');
+  };
+
+  window.cyaAbrirWhatsAppCliente=function(){
+    const payload=clientReviewMessage();
+    if(!payload.ok)return;
+    const tab=openClientWhatsApp(payload);
+    if(tab)showToast?.('WhatsApp abierto con el número y mensaje del prospecto','success');
+  };
+
+  let clientMessageLeadId=null;
+  function ensureClientReviewModal(){
+    if(document.getElementById('cya-client-review-message-modal'))return;
+    const modal=document.createElement('div');
+    modal.id='cya-client-review-message-modal';modal.className='modal-overlay';
+    modal.innerHTML=`<div class="modal cya-client-review-modal" role="dialog" aria-modal="true" aria-labelledby="cya-client-review-title">
+      <div class="modal-header"><div><div class="modal-title" id="cya-client-review-title">Avisar al prospecto</div><div class="cya-client-review-sub">La revisión ya quedó marcada como enviada. Puedes avisarle al prospecto que estamos trabajando en su caso.</div></div><button class="modal-close" type="button" onclick="cyaCerrarAvisoRevisionCliente()">×</button></div>
+      <div class="modal-body"><div class="cya-client-review-template">Plantilla: ${safe(CLIENT_REVIEW_TEMPLATE.nombre)}</div><textarea class="form-textarea cya-client-review-text" id="cya-client-review-text" spellcheck="true"></textarea><div class="form-helper">El mensaje usa únicamente el primer nombre. Puedes editarlo antes de copiarlo o enviarlo por WhatsApp.</div></div>
+      <div class="modal-footer"><button class="btn" type="button" onclick="cyaIrPlantillaRevisionCliente()">Plantillas</button><button class="btn" type="button" onclick="cyaCopiarAvisoRevisionPopup()">📋 Copiar mensaje</button><button class="btn" type="button" onclick="cyaAbrirWhatsAppAvisoRevision()" style="background:#25d366;border-color:#25d366;color:#fff;">💬 Abrir WhatsApp</button><button class="btn btn-primary" type="button" onclick="cyaCerrarAvisoRevisionCliente()">Listo</button></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+
+  function openClientReviewModal(lead){
+    ensureClientReviewModal();
+    clientMessageLeadId=lead?.id||null;
+    const payload=clientReviewMessage(lead);
+    const area=document.getElementById('cya-client-review-text');if(area)area.value=payload.message;
+    document.getElementById('cya-client-review-message-modal')?.classList.add('open');
+  }
+
+  window.cyaCopiarAvisoRevisionPopup=async function(){
+    const text=document.getElementById('cya-client-review-text')?.value||'';
+    const ok=await copyText(text);showToast?.(ok?'Mensaje copiado':'No fue posible copiar el mensaje',ok?'success':'warn');
+  };
+
+  window.cyaAbrirWhatsAppAvisoRevision=function(){
+    const lead=leadById(clientMessageLeadId);
+    if(!lead)return;
+    const payload=clientReviewMessage(lead);
+    payload.message=document.getElementById('cya-client-review-text')?.value||payload.message;
+    const tab=openClientWhatsApp(payload);
+    if(tab)showToast?.('WhatsApp abierto con el mensaje de revisión','success');
+  };
+
+  window.cyaCerrarAvisoRevisionCliente=function(){
+    document.getElementById('cya-client-review-message-modal')?.classList.remove('open');
+    clientMessageLeadId=null;
+    closeModal?.('modal-lead');
+    renderPage?.('leads');
+  };
+
+  window.cyaIrPlantillaRevisionCliente=function(){
+    const templateId=CLIENT_REVIEW_TEMPLATE.id;
+    document.getElementById('cya-client-review-message-modal')?.classList.remove('open');
+    clientMessageLeadId=null;
+    closeModal?.('modal-lead');
+    try{navigate('plantillas',document.querySelector('[data-page="plantillas"]'));setTimeout(()=>{if(typeof seleccionarPlantilla==='function')seleccionarPlantilla(templateId);},80);}catch(_){ }
+  };
 
   window.cyaMarcarRevisionEnviada=async function(){
     const lead=currentLead();
@@ -111,7 +213,7 @@
     try{
       await cloudSyncNow?.({throwOnError:true});
       showToast?.('Revisión marcada como enviada. El prospecto pasó a En revisión de semanas / NSS.','success');
-      window.cyaAbrirCentroMensajesWhatsApp?.('revision');
+      openClientReviewModal(lead);
     }catch(error){
       lead.revisionSolicitada=false;
       lead.fechaRevisionSolicitada=null;
@@ -280,7 +382,6 @@
       const ok=await persistReconsulta(lead,value,reconsultaInfo);
       if(!ok)throw new Error('No se pudo guardar la nueva etapa');
       showToast?.('Etapa guardada: '+(CYA_STAGES[value]||value),'success');
-      if(value==='sindos'&&oldStage!=='sindos')window.cyaAbrirCentroMensajesWhatsApp?.('sindos');
     }catch(err){
       lead.estado=oldStage;
       select.value=oldValue;
@@ -461,16 +562,13 @@
     const requested=document.getElementById('lead-estado')?.value;
     const info=requested==='reconsulta'&&existing?.estado!=='reconsulta'?await askReconsulta(existing):null;
     if(requested==='reconsulta'&&existing?.estado!=='reconsulta'&&!info)return;
-    const previousStage=existing?.estado;
     await baseGuardarLead.apply(this,arguments);
-    const lead=currentLead()||(existing?leadById(existing.id):null);
+    const lead=currentLead();
     if(!lead)return;
     Object.assign(lead,extras);
     if(info){lead.reconsulta=info;lead.historialReconsultas=[...(lead.historialReconsultas||[]),info];}
     if(extras.fuenteContacto===META_SOURCE){lead.metaAds=true;lead.nombreVerificado=lead.nombreVerificado===true;lead.nombrePendienteValidacion=lead.nombreVerificado!==true;}
-    let synced=false;
-    try{await cloudSyncNow?.({throwOnError:true});synced=true;}catch(_){showToast?.('Los datos adicionales quedaron pendientes de sincronizar','warn');}
-    if(synced&&requested==='sindos'&&previousStage!=='sindos'&&lead.estado==='sindos')window.cyaAbrirWhatsAppProspectoPorId?.(lead.id,'sindos');
+    try{await cloudSyncNow?.({throwOnError:true});}catch(_){showToast?.('Los datos adicionales quedaron pendientes de sincronizar','warn');}
   };
 
   function isMetaNewLead(l){
@@ -584,7 +682,6 @@
       showToast?.('Etapa actualizada: '+CYA_STAGES[stage],'success');
       renderPage('leads');
       if(stage==='aprobado'&&previous!=='aprobado'&&typeof window.cyaAbrirCentroMensajesWhatsApp==='function')window.cyaAbrirCentroMensajesWhatsApp('aprobado');
-      if(stage==='sindos'&&previous!=='sindos')window.cyaAbrirWhatsAppProspectoPorId?.(lead.id,'sindos');
     }catch(e){
       lead.estado=previous;
       showToast?.('No se pudo sincronizar el movimiento; se conservó la etapa anterior','warn');
