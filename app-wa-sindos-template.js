@@ -63,8 +63,8 @@
   }
 
   function renderedText(){
-    const lead=window.cyaWhatsAppContactoActivo?.()||currentLead();
-    const visibleName=String(lead?.nombre||lead?.name||document.getElementById('lead-nombre')?.value||'').trim();
+    const lead=currentLead();
+    const visibleName=String(document.getElementById('lead-nombre')?.value||lead?.nombre||lead?.name||'').trim();
     return String(templateFromStore().texto||TEMPLATE.texto).replace(/\{\{NOMBRE\}\}/g,firstName(visibleName)||'{{NOMBRE}}');
   }
 
@@ -102,7 +102,7 @@
       const result=base.apply(this,arguments);
       setTimeout(()=>{
         ensureButton();
-        const lead=window.cyaWhatsAppContactoActivo?.()||currentLead();
+        const lead=currentLead();
         const state=String(lead?.estado||lead?.status||'').toLowerCase();
         if(state==='sindos')renderSindos();
       },50);
@@ -111,20 +111,6 @@
     wrapped.__cyaSindosWrapped=true;
     window.cyaAbrirCentroMensajesWhatsApp=wrapped;
     wrappedOpen=true;
-  }
-
-  function wrapOpenById(){
-    const base=window.cyaAbrirWhatsAppProspectoPorId;
-    if(typeof base!=='function'||base.__cyaSindosWrapped)return;
-    const wrapped=function(leadId,groupKey){
-      const result=base.apply(this,arguments);
-      if(result&&groupKey==='sindos'){
-        setTimeout(()=>{ensureButton();renderSindos();},50);
-      }
-      return result;
-    };
-    wrapped.__cyaSindosWrapped=true;
-    window.cyaAbrirWhatsAppProspectoPorId=wrapped;
   }
 
   function wrapEdit(){
@@ -150,7 +136,7 @@
 
   function tick(){
     if(!persisted)ensurePersistedTemplate();
-    ensureButton();wrapOpen();wrapOpenById();wrapEdit();
+    ensureButton();wrapOpen();wrapEdit();
   }
 
   const observer=new MutationObserver(()=>tick());
