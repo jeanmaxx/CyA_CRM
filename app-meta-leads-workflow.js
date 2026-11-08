@@ -567,7 +567,7 @@
     const info=requested==='reconsulta'&&existing?.estado!=='reconsulta'?await askReconsulta(existing):null;
     if(requested==='reconsulta'&&existing?.estado!=='reconsulta'&&!info)return;
     await baseGuardarLead.apply(this,arguments);
-    const lead=currentLead();
+    const lead=currentLead()||(existing?leadById(existing.id):null);
     if(!lead)return;
     Object.assign(lead,extras);
     if(info){lead.reconsulta=info;lead.historialReconsultas=[...(lead.historialReconsultas||[]),info];}
