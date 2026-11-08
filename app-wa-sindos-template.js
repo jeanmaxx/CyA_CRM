@@ -118,9 +118,7 @@
     if(typeof base!=='function'||base.__cyaSindosWrapped)return;
     const wrapped=function(leadId,groupKey){
       const result=base.apply(this,arguments);
-      if(result&&groupKey==='sindos'){
-        setTimeout(()=>{ensureButton();renderSindos();},50);
-      }
+      if(result&&groupKey==='sindos')setTimeout(()=>{ensureButton();renderSindos();},50);
       return result;
     };
     wrapped.__cyaSindosWrapped=true;

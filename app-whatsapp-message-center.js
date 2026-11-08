@@ -181,11 +181,10 @@
         try{arr=typeof PLANTILLAS_DEFAULT!=='undefined'?PLANTILLAS_DEFAULT.map(p=>({...p})):[];}catch(_){arr=[];}
         store.plantillas=arr;
       }
-      // Retire the duplicate Meta-only revision template; the shared revision
-      // template (pl_wa_revision_1) remains the single editable source.
-      const legacyIndex=arr.findIndex(p=>p?.id==='pl_meta_revision_en_proceso');
       let changed=false;
-      if(legacyIndex>=0){arr.splice(legacyIndex,1);changed=true;}
+      // Remove only the obsolete duplicate; never touch the user's saved review text.
+      const obsolete=arr.findIndex(p=>p?.id==='pl_meta_revision_en_proceso');
+      if(obsolete>=0){arr.splice(obsolete,1);changed=true;}
       for(const tpl of TEMPLATE_DEFAULTS){
         if(!arr.some(p=>p.id===tpl.id)){arr.push({...tpl});changed=true;}
       }
@@ -207,7 +206,7 @@
   function renderText(template,contact){
     const visibleName=String(messageContactType==='client'
       ?(contact?.nombre||contact?.name||'')
-      :(archivedMessageMode?(contact?.nombre||contact?.name||''):(document.getElementById('lead-nombre')?.value||contact?.nombre||contact?.name||''))).trim();
+      :((archivedMessageMode||String(currentLead()?.id)!==String(contact?.id))?(contact?.nombre||contact?.name||''):(document.getElementById('lead-nombre')?.value||contact?.nombre||contact?.name||''))).trim();
     let templateText=String(template?.texto||'');
     // Un prospecto nuevo de este equipo no debe recibir la cotización
     // antigua de $8,000 ni el límite obsoleto de $35,190. No modifica
@@ -242,7 +241,7 @@
   function openWhatsApp(contact,text,preserveEmoji=false){
     const rawPhone=messageContactType==='client'
       ?(contact?.telefono||contact?.phone||'')
-      :(document.getElementById('lead-tel')?.value||contact?.telefono||contact?.phone||'');
+      :(String(currentLead()?.id)===String(contact?.id)?(document.getElementById('lead-tel')?.value||contact?.telefono||contact?.phone||''):(contact?.telefono||contact?.phone||''));
     const phone=normalizePhone(rawPhone);
     if(phone.length!==10){showToast?.('El '+(messageContactType==='client'?'cliente':'prospecto')+' necesita un teléfono válido de 10 dígitos para abrir WhatsApp','warn');return null;}
     const clean=sanitizeWhatsAppText(text,preserveEmoji);
@@ -361,14 +360,13 @@
     const validGroup=GROUPS.some(g=>g.key===groupKey&&(g.key!=='alta_15'||type==='client'));
     currentGroupKey=validGroup?groupKey:(type==='client'?recommendedClientGroup(contact):recommendedGroup(contact));
     const person=document.getElementById('cya-wa-center-person');
-    const phone=normalizePhone(type==='client'?contact.telefono:(document.getElementById('lead-tel')?.value||contact.telefono));
+    const phone=normalizePhone(type==='client'?contact.telefono:(String(currentLead()?.id)===String(contact?.id)?(document.getElementById('lead-tel')?.value||contact.telefono):contact.telefono));
     if(person)person.textContent=`${type==='client'?'Cliente':'Prospecto'}: ${contact.nombre||'Sin nombre'} · ${phone||'sin teléfono'}`;
     renderGroupButtons();renderSelectedGroup();
     document.getElementById('cya-wa-message-center')?.classList.add('open');
   }
 
-  // Open the same saved-template center after a kanban transition,
-  // even when the prospect editor is no longer visible.
+  // Open a specific prospect without relying on an editor that may be closed.
   window.cyaWhatsAppContactoActivo=function(){return activeContact();};
   window.cyaAbrirWhatsAppProspectoPorId=function(leadId,groupKey){
     const lead=leadById(leadId);
@@ -439,6 +437,23 @@
     actions.style.display=lead?'flex':'none';
   }
 
+  function patchReviewFlow(){
+    const base=window.cyaMarcarRevisionEnviada;
+    if(typeof base!=='function'||base.__cyaWaCenterWrapped)return false;
+    const wrapped=async function(){
+      const result=await base.apply(this,arguments);
+      setTimeout(()=>{
+        const old=document.getElementById('cya-client-review-message-modal');
+        if(old?.classList.contains('open')){
+          old.classList.remove('open');
+          window.cyaAbrirCentroMensajesWhatsApp('revision');
+        }
+      },0);
+      return result;
+    };
+    wrapped.__cyaWaCenterWrapped=true;window.cyaMarcarRevisionEnviada=wrapped;return true;
+  }
+
   function patchLegacyTemplateActions(){
     const pairs=[
       ['cyaCopiarAvisoRevisionPopup','cya-client-review-text'],
@@ -457,11 +472,11 @@
   let scheduled=false;
   new MutationObserver(()=>{
     if(scheduled)return;scheduled=true;
-    requestAnimationFrame(()=>{scheduled=false;ensureProspectButton();patchLegacyTemplateActions();});
+    requestAnimationFrame(()=>{scheduled=false;ensureProspectButton();patchReviewFlow();patchLegacyTemplateActions();});
   }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
 
   let tries=0;const patchTimer=setInterval(()=>{
-    tries++;patchLegacyTemplateActions();ensureProspectButton();
-    if(tries>200)clearInterval(patchTimer);
+    tries++;patchReviewFlow();patchLegacyTemplateActions();ensureProspectButton();
+    if(tries>200||(window.__cyaMetaLeadOutcomesInstalled===true&&patchReviewFlow()===false))clearInterval(patchTimer);
   },100);
 })();
