@@ -181,7 +181,11 @@
         try{arr=typeof PLANTILLAS_DEFAULT!=='undefined'?PLANTILLAS_DEFAULT.map(p=>({...p})):[];}catch(_){arr=[];}
         store.plantillas=arr;
       }
+      // Retire the duplicate Meta-only revision template; the shared revision
+      // template (pl_wa_revision_1) remains the single editable source.
+      const legacyIndex=arr.findIndex(p=>p?.id==='pl_meta_revision_en_proceso');
       let changed=false;
+      if(legacyIndex>=0){arr.splice(legacyIndex,1);changed=true;}
       for(const tpl of TEMPLATE_DEFAULTS){
         if(!arr.some(p=>p.id===tpl.id)){arr.push({...tpl});changed=true;}
       }
@@ -363,6 +367,17 @@
     document.getElementById('cya-wa-message-center')?.classList.add('open');
   }
 
+  // Open the same saved-template center after a kanban transition,
+  // even when the prospect editor is no longer visible.
+  window.cyaWhatsAppContactoActivo=function(){return activeContact();};
+  window.cyaAbrirWhatsAppProspectoPorId=function(leadId,groupKey){
+    const lead=leadById(leadId);
+    if(!lead)return false;
+    archivedMessageMode=false;
+    openContactCenter('lead',lead,groupKey);
+    return true;
+  };
+
   window.cyaAbrirWhatsAppArchivado=function(leadId,groupKey){
     const lead=leadById(leadId);
     if(!lead){showToast?.('No se encontró el prospecto archivado','warn');return false;}
@@ -424,23 +439,6 @@
     actions.style.display=lead?'flex':'none';
   }
 
-  function patchReviewFlow(){
-    const base=window.cyaMarcarRevisionEnviada;
-    if(typeof base!=='function'||base.__cyaWaCenterWrapped)return false;
-    const wrapped=async function(){
-      const result=await base.apply(this,arguments);
-      setTimeout(()=>{
-        const old=document.getElementById('cya-client-review-message-modal');
-        if(old?.classList.contains('open')){
-          old.classList.remove('open');
-          window.cyaAbrirCentroMensajesWhatsApp('revision');
-        }
-      },0);
-      return result;
-    };
-    wrapped.__cyaWaCenterWrapped=true;window.cyaMarcarRevisionEnviada=wrapped;return true;
-  }
-
   function patchLegacyTemplateActions(){
     const pairs=[
       ['cyaCopiarAvisoRevisionPopup','cya-client-review-text'],
@@ -459,11 +457,11 @@
   let scheduled=false;
   new MutationObserver(()=>{
     if(scheduled)return;scheduled=true;
-    requestAnimationFrame(()=>{scheduled=false;ensureProspectButton();patchReviewFlow();patchLegacyTemplateActions();});
+    requestAnimationFrame(()=>{scheduled=false;ensureProspectButton();patchLegacyTemplateActions();});
   }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
 
   let tries=0;const patchTimer=setInterval(()=>{
-    tries++;patchReviewFlow();patchLegacyTemplateActions();ensureProspectButton();
-    if(tries>200||(window.__cyaMetaLeadOutcomesInstalled===true&&patchReviewFlow()===false))clearInterval(patchTimer);
+    tries++;patchLegacyTemplateActions();ensureProspectButton();
+    if(tries>200)clearInterval(patchTimer);
   },100);
 })();
