@@ -50,7 +50,8 @@
   }
 
   function firstName(value){
-    return String(value||'').trim().split(/\s+/)[0]||'';
+    const first=String(value||'').trim().split(/\s+/)[0]||'';
+    return first.toLocaleLowerCase('es-MX').replace(/(^|[-'’])([\p{L}])/gu,(_,prefix,letter)=>prefix+letter.toLocaleUpperCase('es-MX'));
   }
 
   function currentAdvisorName(){
