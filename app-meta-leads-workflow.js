@@ -213,7 +213,9 @@
     try{
       await cloudSyncNow?.({throwOnError:true});
       showToast?.('Revisión marcada como enviada. El prospecto pasó a En revisión de semanas / NSS.','success');
-      openClientReviewModal(lead);
+      // Use the persisted WhatsApp template, identical to manual 'Revisión'.
+      if(typeof window.cyaAbrirCentroMensajesWhatsApp==='function')window.cyaAbrirCentroMensajesWhatsApp('revision');
+      else openClientReviewModal(lead);
     }catch(error){
       lead.revisionSolicitada=false;
       lead.fechaRevisionSolicitada=null;
@@ -382,6 +384,7 @@
       const ok=await persistReconsulta(lead,value,reconsultaInfo);
       if(!ok)throw new Error('No se pudo guardar la nueva etapa');
       showToast?.('Etapa guardada: '+(CYA_STAGES[value]||value),'success');
+      if(value==='sindos'&&oldStage!=='sindos')window.cyaAbrirWhatsAppProspectoPorId?.(lead.id,'sindos');
     }catch(err){
       lead.estado=oldStage;
       select.value=oldValue;
@@ -560,6 +563,7 @@
     const extras=captureExtraFields();
     const existing=currentLead();
     const requested=document.getElementById('lead-estado')?.value;
+    const previousStage=existing?.estado;
     const info=requested==='reconsulta'&&existing?.estado!=='reconsulta'?await askReconsulta(existing):null;
     if(requested==='reconsulta'&&existing?.estado!=='reconsulta'&&!info)return;
     await baseGuardarLead.apply(this,arguments);
@@ -568,7 +572,9 @@
     Object.assign(lead,extras);
     if(info){lead.reconsulta=info;lead.historialReconsultas=[...(lead.historialReconsultas||[]),info];}
     if(extras.fuenteContacto===META_SOURCE){lead.metaAds=true;lead.nombreVerificado=lead.nombreVerificado===true;lead.nombrePendienteValidacion=lead.nombreVerificado!==true;}
-    try{await cloudSyncNow?.({throwOnError:true});}catch(_){showToast?.('Los datos adicionales quedaron pendientes de sincronizar','warn');}
+    let synced=false;
+    try{await cloudSyncNow?.({throwOnError:true});synced=true;}catch(_){showToast?.('Los datos adicionales quedaron pendientes de sincronizar','warn');}
+    if(synced&&requested==='sindos'&&previousStage!=='sindos'&&lead.estado==='sindos')window.cyaAbrirWhatsAppProspectoPorId?.(lead.id,'sindos');
   };
 
   function isMetaNewLead(l){
@@ -682,6 +688,7 @@
       showToast?.('Etapa actualizada: '+CYA_STAGES[stage],'success');
       renderPage('leads');
       if(stage==='aprobado'&&previous!=='aprobado'&&typeof window.cyaAbrirCentroMensajesWhatsApp==='function')window.cyaAbrirCentroMensajesWhatsApp('aprobado');
+      if(stage==='sindos'&&previous!=='sindos')window.cyaAbrirWhatsAppProspectoPorId?.(lead.id,'sindos');
     }catch(e){
       lead.estado=previous;
       showToast?.('No se pudo sincronizar el movimiento; se conservó la etapa anterior','warn');
