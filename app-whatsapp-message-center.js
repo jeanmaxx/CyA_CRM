@@ -181,7 +181,11 @@
         try{arr=typeof PLANTILLAS_DEFAULT!=='undefined'?PLANTILLAS_DEFAULT.map(p=>({...p})):[];}catch(_){arr=[];}
         store.plantillas=arr;
       }
+      // Retire the duplicate Meta-only revision template; the shared revision
+      // template (pl_wa_revision_1) remains the single editable source.
+      const legacyIndex=arr.findIndex(p=>p?.id==='pl_meta_revision_en_proceso');
       let changed=false;
+      if(legacyIndex>=0){arr.splice(legacyIndex,1);changed=true;}
       for(const tpl of TEMPLATE_DEFAULTS){
         if(!arr.some(p=>p.id===tpl.id)){arr.push({...tpl});changed=true;}
       }
@@ -365,6 +369,7 @@
 
   // Open the same saved-template center after a kanban transition,
   // even when the prospect editor is no longer visible.
+  window.cyaWhatsAppContactoActivo=function(){return activeContact();};
   window.cyaAbrirWhatsAppProspectoPorId=function(leadId,groupKey){
     const lead=leadById(leadId);
     if(!lead)return false;
