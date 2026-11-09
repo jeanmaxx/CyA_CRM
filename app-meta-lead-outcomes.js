@@ -12,12 +12,14 @@
     imss_activo:'Tiene IMSS activo',
     inconsistencias_curp_nss:'Inconsistencias de CURP / NSS',
     retiro_menos_5:'Retiró hace menos de 5 años',
+    sin_semanas:'Sin semanas suficientes',
     otros:'Otros',
   });
 
   const TEMPLATE_BY_CAUSE=Object.freeze({
     imss_activo:'pl_no_elegible_imss_activo',
     retiro_menos_5:'pl_no_elegible_retiro_5',
+    sin_semanas:'pl_wa_sin_semanas_1',
     inconsistencias_curp_nss:'pl_no_elegible_inconsistencia',
   });
 
@@ -172,7 +174,7 @@
     const cause=String(document.getElementById('lead-causa-archivo')?.value||'');
     const lead=(store?.leads||[]).find(l=>String(l.id)===String(window.leadParaArchivar||leadParaArchivar||''));
     if(lead&&TEMPLATE_BY_CAUSE[cause]){
-      const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',inconsistencias_curp_nss:'inconsistencias'}[cause];
+      const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',inconsistencias_curp_nss:'inconsistencias',sin_semanas:'sin_semanas'}[cause];
       if(!group||!window.cyaAbrirWhatsAppArchivado?.(lead.id,group))openOutcomeModal(lead,cause);
     }
   };
