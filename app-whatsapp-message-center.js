@@ -66,6 +66,10 @@
       texto:'*¿Cuáles son las opciones para solucionarlo?*\n\n*1. Por tu cuenta* (directo en ventanilla):\nPuedes acudir personalmente a tu Subdelegación del IMSS y a las oficinas de tu AFORE para ingresar la aclaración y unificación de datos. Una vez que queden corregidos y actualizados en el sistema, con mucho gusto retomamos tu trámite de retiro aquí con nosotros.\n\n*2. Con nuestro apoyo* (gestoría especializada):\nSi prefieres evitar las vueltas, filas y trámites burocráticos, en la consultora nos encargamos de realizar la corrección y saneamiento de tu expediente para dejar tu cuenta 100% limpia y proceder con el retiro.\n\nDime con total confianza cómo prefieres manejarlo y con gusto te orientamos.\n\n¡Quedo a tus órdenes!'
     },
     {
+      id:'pl_wa_sin_semanas_1',nombre:'WhatsApp · Sin semanas suficientes',etapa:'',tipo:'whatsapp',icono:'',cyaGrupo:'sin_semanas',cyaOrden:1,
+      texto:'¡Hola, {{NOMBRE}}! {{SALUDO}}.\n\nTe informo que hemos terminado de revisar tu información y encontramos lo siguiente:\n\n*Por el momento no cumples con el criterio inicial de semanas cotizadas para continuar con tu solicitud de retiro por desempleo.*\n\nActualmente registras *{{SEMANAS_COTIZADAS}} semanas cotizadas* y el criterio inicial que utilizamos para esta revisión es de *105 semanas*. La elegibilidad definitiva depende de la modalidad y los requisitos aplicables a tu cuenta AFORE.\n\n¡Seguimos a tus órdenes para cualquier duda sobre tu AFORE o trámites de pensión!\n\nSaludos.\n\n*{{ASESOR}}*\n_Consultor previsional_\n*Casillas & Asociados*'
+    },
+    {
       id:'pl_wa_retiro_5_1',nombre:'WhatsApp · Retiro hace menos de 5 años',etapa:'',tipo:'whatsapp',icono:'',cyaGrupo:'retiro_5',cyaOrden:1,
       texto:'¡Hola, {{NOMBRE}}!\n\nRevisamos tus datos en el sistema respecto a tu solicitud de Retiro por Desempleo de AFORE.\n\nPor disposición legal, para acceder nuevamente a este beneficio es obligatorio que hayan transcurrido al menos 5 años desde tu último retiro.\n\nLamentablemente, en tu caso aún no se cumple el plazo y la ley establece que solo es posible ejercer este derecho una vez cada 5 años, por lo que *no es viable iniciar el proceso por ahora.*\n\nCon gusto dejamos tu registro guardado para cuando se cumpla este plazo y te contactamos para intentarlo nuevamente.\n\n¡Coméntame si tienes alguna duda, que tengas un excelente día!'
     }
@@ -81,7 +85,8 @@
     {key:'curp_mal',label:'CURP mal',kind:'reject',ids:['pl_wa_curp_mal_1']},
     {key:'imss_activo',label:'IMSS activo',kind:'reject',ids:['pl_wa_imss_activo_1']},
     {key:'inconsistencias',label:'Inconsistencias',kind:'reject',ids:['pl_wa_inconsistencias_1','pl_wa_inconsistencias_2']},
-    {key:'retiro_5',label:'Retiro -5 años',kind:'reject',ids:['pl_wa_retiro_5_1']}
+    {key:'retiro_5',label:'Retiro -5 años',kind:'reject',ids:['pl_wa_retiro_5_1']},
+    {key:'sin_semanas',label:'Sin semanas suficientes',kind:'reject',ids:['pl_wa_sin_semanas_1']}
   ];
 
   let currentGroupKey='';
@@ -224,6 +229,7 @@
       .replace(/\{\{NOMBRE\}\}/g,firstName(visibleName))
       .replace(/\{\{ASESOR\}\}/g,advisorName())
       .replace(/\{\{SALUDO\}\}/g,greeting())
+      .replace(/\{\{SEMANAS_COTIZADAS\}\}/g,(()=>{const raw=contact?.elegibilidad?.porServicio?.retiro_desempleo?.semanas??contact?.elegibilidad?.semanas;const n=Number(raw);return raw!==undefined&&raw!==null&&String(raw).trim()!==''&&Number.isFinite(n)&&n>=0?String(n):'pendientes de confirmar';})())
       .replace(/ +([,.!?])/g,'$1');
     const dated=template?.cyaGrupo==='retiro_5'&&messageContactType==='lead'&&typeof window.cyaCompletarFechasRetiroWhatsApp==='function'
       ?window.cyaCompletarFechasRetiroWhatsApp(personalized,contact)
@@ -254,6 +260,7 @@
   function recommendedGroup(lead){
     const state=String(lead?.estado||lead?.status||'').toLowerCase();
     const cause=String(lead?.causaArchivo||lead?.motivoArchivo||lead?.archiveCause||'').toLowerCase();
+    if(cause==='sin_semanas'||cause.includes('sin semanas'))return 'sin_semanas';
     if(cause.includes('imss'))return 'imss_activo';
     if(cause.includes('incons'))return 'inconsistencias';
     if(cause.includes('5')||cause.includes('retiro'))return 'retiro_5';
