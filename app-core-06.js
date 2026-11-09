@@ -826,7 +826,7 @@ function causaArchivoCodigo(lead){
   const porTexto={
     'No envió toda la documentación':'docs_incompletos','No contesta':'no_contesta',
     'Aprobado y no contesta':'aprobado_no_contesta','No quiso continuar':'no_quiso',
-    'Tiene IMSS activo':'imss_activo','Inconsistencias de CURP / NSS':'inconsistencias_curp_nss','Retiró hace menos de 5 años':'retiro_menos_5',
+    'Tiene IMSS activo':'imss_activo','Inconsistencias de CURP / NSS':'inconsistencias_curp_nss','Retiró hace menos de 5 años':'retiro_menos_5','Sin semanas suficientes':'sin_semanas',
   };
   return porTexto[lead.causaArchivo]||'otros';
 }
@@ -860,7 +860,7 @@ function confirmarArchivarLead(){
   if(!lead) return;
   const causa=getVal('lead-causa-archivo');
   const otros=getVal('lead-otros-texto');
-  const causaLabel={docs_incompletos:'No envió toda la documentación',no_contesta:'No contesta',aprobado_no_contesta:'Aprobado y no contesta',no_quiso:'No quiso continuar',imss_activo:'Tiene IMSS activo',inconsistencias_curp_nss:'Inconsistencias de CURP / NSS',retiro_menos_5:'Retiró hace menos de 5 años',otros:otros||'Otros'};
+  const causaLabel={docs_incompletos:'No envió toda la documentación',no_contesta:'No contesta',aprobado_no_contesta:'Aprobado y no contesta',no_quiso:'No quiso continuar',imss_activo:'Tiene IMSS activo',inconsistencias_curp_nss:'Inconsistencias de CURP / NSS',retiro_menos_5:'Retiró hace menos de 5 años',sin_semanas:'Sin semanas suficientes',otros:otros||'Otros'};
   if(causa==='otros'&&!otros.trim()){ showToast('Especifica la causa de archivo','warn'); return; }
   const fechaUltimoRetiro=causa==='retiro_menos_5'?leerFechaMX('lead-fecha-ultimo-retiro',true):'';
   if(causa==='retiro_menos_5'&&fechaUltimoRetiro===null) return;
