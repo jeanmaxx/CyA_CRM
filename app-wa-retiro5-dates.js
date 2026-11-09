@@ -7,7 +7,7 @@
 
   const WA_TEMPLATE_ID='pl_wa_retiro_5_1';
   const OUTCOME_TEMPLATE_ID='pl_no_elegible_retiro_5';
-  const REVISION='retiro5-dates-v1';
+  const REVISION='retiro5-dates-v2';
   const TEMPLATE_TEXT='¡Hola, {{NOMBRE}}!\n\nAl revisar tu información encontramos que _ya realizaste anteriormente un retiro por desempleo_.\n\nDe acuerdo con tu expediente, la fecha de tu último retiro es *{{FECHA_ULTIMO_RETIRO}}*.\n\nPor ello, hemos programado una nueva revisión para el *{{FECHA_RECONTACTO}}*. En esa fecha te contactaremos para revisar nuevamente tu información y confirmar si ya cumples con los requisitos vigentes para iniciar un nuevo retiro por desempleo.\n\nPor el momento no es posible continuar con el trámite, pero con gusto dejaremos tu registro guardado para dar seguimiento en la fecha indicada.\n\nSi en ese momento continúas interesado y cumples con los requisitos vigentes, podremos comenzar nuevamente con tu trámite.\n\nAgradecemos tu confianza y quedamos a tus órdenes.';
 
   const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -22,6 +22,10 @@
     try{
       const id=window.leadParaArchivar||(typeof leadParaArchivar!=='undefined'?leadParaArchivar:null);
       if(id)return String(id);
+    }catch(_){ }
+    try{
+      const active=window.cyaWhatsAppContactoActivo?.();
+      if(active?.id)return String(active.id);
     }catch(_){ }
     return '';
   }
@@ -135,7 +139,9 @@
     if(!modal?.classList.contains('open'))return;
     const retiroButton=modal.querySelector('[data-cya-wa-group="retiro_5"].active');
     if(!retiroButton)return;
-    const lead=currentLead();
+    // Al archivar se cierra el editor y editingLeadId deja de apuntar al prospecto.
+    // El centro de mensajes conserva el contacto real por su ID interno.
+    const lead=window.cyaWhatsAppContactoActivo?.()||currentLead();
     modal.querySelectorAll('textarea[id^="cya-wa-text-"]').forEach(area=>{
       const next=hydrateText(area.value,lead);
       if(next!==area.value)area.value=next;
@@ -151,7 +157,7 @@
       if(!cause.includes('5 años')&&!cause.includes('retiro'))return;
       if(!area)return;
     }
-    const lead=leadOverride||lastOutcomeLead||currentLead();
+    const lead=leadOverride||lastOutcomeLead||window.cyaWhatsAppContactoActivo?.()||currentLead();
     const next=hydrateText(area.value,lead);
     if(next!==area.value)area.value=next;
   }
