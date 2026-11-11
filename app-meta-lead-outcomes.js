@@ -110,7 +110,14 @@
     const name=firstVerifiedName(entity);
     let text=String(tpl.texto||'');
     text=text.replace(/^Hola\s+\{\{NOMBRE\}\}([,.!]?)/i,`${greeting()}${name?' '+name:''}$1`);
-    text=text.replace(/\{\{NOMBRE\}\}/g,name||'').replace(/\{\{ASESOR\}\}/g,currentAdvisorName());
+    const eligibility=entity?.elegibilidad?.porServicio?.retiro_desempleo||entity?.elegibilidad||{};
+    const rawWeeks=eligibility.semanas??entity?.elegibilidad?.semanas;
+    const weeks=rawWeeks!==undefined&&rawWeeks!==null&&String(rawWeeks).trim()!==''&&Number.isFinite(Number(rawWeeks))&&Number(rawWeeks)>=0
+      ?String(rawWeeks).trim():'pendientes de confirmar';
+    text=text.replace(/\{\{NOMBRE\}\}/g,name||'')
+      .replace(/\{\{ASESOR\}\}/g,currentAdvisorName())
+      .replace(/\{\{SALUDO\}\}/g,greeting())
+      .replace(/\{\{SEMANAS_COTIZADAS\}\}/g,weeks);
     return text.replace(/ +([,.])/g,'$1').replace(/\n{3,}/g,'\n\n').trim();
   }
 
