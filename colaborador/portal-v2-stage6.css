@@ -1,0 +1,15 @@
+.hero.ca-home-compact{padding:15px 18px!important;margin-bottom:13px!important;min-height:0!important;gap:14px!important;border-radius:14px!important}
+.ca-home-compact h1{font:700 clamp(18px,2vw,23px)/1.2 var(--display)!important;margin:4px 0!important;letter-spacing:-.02em!important}
+.ca-home-compact p{font-size:10px!important;line-height:1.5!important;margin:0!important}
+.ca-home-compact .advisor-pill{white-space:normal!important;text-align:center!important;font-size:10px!important}
+.ca-home-counter{display:inline-flex;align-items:center;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);padding:6px 9px;color:var(--text);font-size:10px;white-space:nowrap}
+.ca-home-tasks{margin-top:14px}
+.ca-home-task-list{display:grid}
+.ca-home-task{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ca-home-task:last-child{border-bottom:0}
+.ca-home-task-copy{display:grid;gap:5px;min-width:0}
+.ca-home-task-copy strong{font-size:11px;overflow-wrap:anywhere}
+.ca-home-task-copy span{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
+.ca-home-task .btn{font-size:10px;padding:8px 12px;min-width:86px;flex:none}
+.ca-home-foot{padding:12px 16px;display:flex;justify-content:center}
+@media(max-width:780px){.hero.ca-home-compact{padding:13px!important;align-items:start!important}.ca-home-compact .advisor-pill{max-width:100%}.ca-home-task{padding:11px;gap:8px}.ca-home-task .btn{min-width:70px;padding:8px;font-size:9px}.ca-home-counter{font-size:9px}}
