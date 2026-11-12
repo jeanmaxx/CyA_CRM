@@ -52,7 +52,7 @@
     const lines=stepInfo.map(([title,done])=>'<div class="ca-expediente-step"><span class="'+(done(c)?'is-complete':'')+'" aria-label="'+(done(c)?'Completado':'Pendiente')+'">'+(done(c)?'✓':'○')+'</span><strong>'+enc(title)+'</strong></div>').join('');
     return '<div class="ca-expediente-followup">'+note+
       '<div class="ca-expediente-summary"><div><small>Etapa en CRM</small><strong>'+enc(c.stage||'Pendiente')+'</strong></div><div><small>AFORE</small><strong>'+enc(c.afore||'Por confirmar')+'</strong></div><div><small>Cita en AFORE</small><strong>'+date+'</strong></div><div><small>Hora / sucursal</small><strong>'+enc([c.appointment?.time,c.appointment?.branch].filter(Boolean).join(' · ')||'Por confirmar')+'</strong></div></div>'+
-      '<div class="ca-expediente-steps">'+lines+'</div>'+(window.caV2TrackingSummary?window.caV2TrackingSummary(c):'')+
+      (window.caV2TrackingSummary?window.caV2TrackingSummary(c):'<div class="ca-expediente-steps">'+lines+'</div>')+
       '<p class="ca-expediente-help">Este resumen es informativo. La edición de actividades y la sincronización detallada se integrarán en la etapa 4.</p>'+
       '<button class="btn" type="button" id="ca-exp-view-contract">Consultar contrato</button>'+
       '</div>';
