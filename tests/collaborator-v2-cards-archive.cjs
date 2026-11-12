@@ -67,7 +67,7 @@ w.eval(prospectCode);w.eval(archiveCode);
  assert.equal($('#ca-archived-prospect-modal').hidden,false);
  assert.match($('#ca-archived-expediente-body').textContent,/CURPARCHIVADA/);
  assert.match($('#ca-archived-expediente-body').textContent,/Se notificó al cliente/);
- assert.match($('#ca-archived-expediente-body').textContent,/Solo consulta/i);
+ assert.match($('#ca-archived-expediente-body').textContent,/modo de consulta/i);
  assert.ok(!$('#ca-archived-prospect-modal').querySelector('form, [type="submit"]'));
  $('#ca-archived-close').click();
  assert.equal($('#ca-archived-prospect-modal').hidden,true);
