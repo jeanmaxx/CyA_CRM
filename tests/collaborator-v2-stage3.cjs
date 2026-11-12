@@ -10,8 +10,8 @@ const edge=fs.readFileSync('supabase/functions/collaborator-portal/index.ts','ut
 const css=fs.readFileSync('colaborador/portal-v2-stage3.css','utf8');
 
 assert.match(html,/id="p-address"/);
-assert.match(html,/portal-v2-stage3\.js\?v=20261112-s3/);
-assert.match(html,/portal-v2-stage3\.css\?v=20261112-s3/);
+assert.match(html,/portal-v2-stage3\.js\?v=20261112-sign/);
+assert.match(html,/portal-v2-stage3\.css\?v=20261112-modal/);
 assert.match(app,/expectedUpdatedAt/);
 assert.match(app,/const wasEditing=Boolean\(state\.editingId\)/);
 assert.match(app,/if\(wasEditing\)/);
@@ -25,7 +25,7 @@ assert.match(edge,/\.eq\('updated_at',expected\)/);
 assert.match(edge,/domicilio:address,historial:history/);
 assert.match(edge,/domicilio:Object\.prototype\.hasOwnProperty\.call\(body,'address'\)/);
 assert.match(edge,/return respond\(req,409/);
-assert.match(css,/\.ca-expediente-modal/);
+assert.match(css,/\.ca-expediente-modal/);assert.match(css,/#contract-view-modal\{z-index:30020!important\}/);assert.match(stage3,/caV2ConfirmSignature/);
 
 const dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'https://example.test/colaboradores/',runScripts:'outside-only'});
 const w=dom.window;
