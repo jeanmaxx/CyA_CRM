@@ -116,6 +116,8 @@
  window.caV2TrackingSummary=function(c){
   return '<div class="ca-v2-mini-activities">'+steps.map(step=>'<div class="ca-v2-mini-row"><button type="button" onclick="caV2OpenActivity(\''+esc(c.id)+'\',\''+step.key+'\')"><span class="'+(done(c,step.key)?'good':'')+'">'+(done(c,step.key)?'✓':'○')+'</span> '+esc(step.title)+'</button></div>').join('')+'</div>';
  };
+ window.caV2ActivityCompleted=done;
+ window.caV2ActivitySteps=steps.map(s=>({key:s.key,title:s.title}));
  const baseNavigate=window.navigate;
  window.navigate=function(page,silent=false){
   const output=baseNavigate(page,silent);
