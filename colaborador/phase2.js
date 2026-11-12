@@ -4,7 +4,7 @@
   window.__caCollaboratorClientsInstalled=true;
 
   const CLIENT_PHASES=[
-    {id:6,title:'Inicio de trámite',tip:'El equipo inicia el proceso operativo del cliente.'},
+    {id:6,title:'Cliente dado de alta',tip:'El equipo inicia el proceso operativo del cliente.'},
     {id:7,title:'Crear cita en AFORE',tip:'El asesor agenda la cita correspondiente y aquí podrás consultar los datos.'},
     {id:8,title:'Actualización de datos en AFORE',tip:'Seguimiento a la actualización o atención en la AFORE.'},
     {id:9,title:'Solicitud en aplicación',tip:'La solicitud de retiro se realiza cuando corresponde dentro del proceso.'},
@@ -22,7 +22,7 @@
   function visibleClients(){
     return clients().filter(c=>{
       if(c.serviceId!=='retiro_desempleo')return true;
-      return !['generando_contrato','contrato_firmas'].includes(String(c.stage||''));
+      return String(c.stage||'')!=='generando_contrato';
     });
   }
   function fmtDateTime(value){
@@ -42,9 +42,10 @@
     return `<div class="client-appointment-mini"><strong>Cita / AFORE</strong><span>${esc(client.afore||'AFORE por confirmar')}</span>${a.date?`<span>${dateMX(a.date)}${a.time?' · '+esc(a.time):''}</span>`:''}${a.branch?`<span>${esc(a.branch)}</span>`:''}</div>`;
   }
   function clientCard(client){
-    const phase=phaseInfo(client);const finished=completed(client,11);
+    const phase=phaseInfo(client);const finished=completed(client,11);const signaturePending=client.stage==='contrato_firmas';
     return `<article class="client-card">
-      <div class="client-card-top"><div><span class="client-service">${esc(serviceName(client.serviceId))}</span><h3>${esc(client.name)}</h3><p>${esc(client.curp||'CURP sin dato')}</p></div><span class="client-status ${finished?'is-finished':''}">${finished?'Concluido':esc(phase.title)}</span></div>
+      <div class="client-card-top"><div><span class="client-service">${esc(serviceName(client.serviceId))}</span><h3>${esc(client.name)}</h3><p>${esc(client.curp||'CURP sin dato')}</p></div><span class="client-status ${finished?'is-finished':''}">${finished?'Concluido':signaturePending?'Firma pendiente':esc(phase.title)}</span></div>
+      ${signaturePending?'<div class="client-warning">En firma de contrato · pendiente de confirmación oficial del asesor.</div>':''}
       ${phaseStrip(client)}
       ${client.progress?.rejected?'<div class="client-warning">Solicitud rechazada · el asesor continúa con el seguimiento.</div>':''}
       ${appointmentSummary(client)}
@@ -54,10 +55,10 @@
   function renderClients(){
     const list=visibleClients();
     const waiting=Math.max(0,clients().length-list.length);
-    return `<div class="clients-toolbar"><div><h1>Mis clientes</h1><p>Consulta el avance del trámite. Las etapas son informativas y las actualiza tu asesor o administración.</p></div></div>
+    return `<div class="clients-toolbar"><div><h1>Mis clientes</h1><p>Consulta el avance desde la firma del contrato. Las actividades operativas se habilitarán en la siguiente etapa.</p></div></div>
       <section class="client-process-guide">${CLIENT_PHASES.map(p=>`<div><span>${p.id}</span><strong>${esc(p.title)}</strong></div>`).join('')}</section>
-      ${waiting?`<div class="clients-note">${waiting} expediente${waiting===1?'':'s'} convertido${waiting===1?'':'s'} todavía no aparece${waiting===1?'':'n'} aquí porque la firma de contrato aún no ha sido confirmada.</div>`:''}
-      <section class="client-list">${list.length?list.map(clientCard).join(''):'<div class="section-card"><div class="empty-state">Todavía no tienes clientes con contrato firmado. Cuando tu asesor confirme la firma, aparecerán automáticamente aquí.</div></div>'}</section>`;
+      ${waiting?`<div class="clients-note">${waiting} expediente${waiting===1?'':'s'} sigue${waiting===1?'':'n'} en elaboración de contrato y aparecerá aquí al pasar a firma.</div>`:''}
+      <section class="client-list">${list.length?list.map(clientCard).join(''):'<div class="section-card"><div class="empty-state">Todavía no tienes clientes en firma o trámite. Aparecerán aquí cuando el expediente llegue a firma de contrato.</div></div>'}</section>`;
   }
 
   function safeTimeline(history){
