@@ -23,3 +23,15 @@ html[data-theme="light"] .ca-home-task-priority-label{color:#825100}
 html[data-theme="light"] .ca-home-task-priority-text{color:#805100}
 @media(max-width:790px){.ca-home-task{grid-template-columns:minmax(0,1fr) auto!important;gap:9px!important}.ca-home-task-copy{grid-column:1}.ca-home-task-priority{grid-column:1;grid-row:2}.ca-home-task .btn{grid-column:2;grid-row:1/span 2}}
 @media(max-width:430px){.ca-home-task-priority-text{font-size:13px}.ca-home-task-priority{padding:8px}.ca-home-task-copy strong{font-size:11px!important}.ca-home-task .btn{min-width:65px!important}}
+
+
+/* Prioridad sin contenedor decorativo: encabezado blanco y actividad ámbar. */
+.ca-home-task-priority,.ca-home-task-priority[title]{
+  background:transparent!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;padding:0!important;gap:5px!important;
+}
+.ca-home-task-priority-label{color:var(--text)!important;font-size:11px!important;letter-spacing:0!important;font-weight:700!important}
+.ca-home-task-priority-text{color:#ffc20e!important;font-size:16px!important;font-weight:750!important}
+html[data-theme="light"] .ca-home-task-priority{background:transparent!important;border:0!important}
+html[data-theme="light"] .ca-home-task-priority-label{color:#19263a!important}
+html[data-theme="light"] .ca-home-task-priority-text{color:#925c00!important}
