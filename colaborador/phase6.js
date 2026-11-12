@@ -1,102 +1,126 @@
-/* Phase 6 · Separate archived/discarded prospects from active follow-up. */
+/* Portal Colaboradores: archivo contraíble, agrupado por causa y expediente de consulta. */
 (function installCollaboratorDiscardedProspects(){
-  if(window.__caCollaboratorDiscardedProspectsInstalled)return;
-  window.__caCollaboratorDiscardedProspectsInstalled=true;
-
-  const DISCARDED_STATUSES=new Set(['archivado','descartado']);
-  let discardedRequestToken=0;
-
-  function isDiscardedProspect(p){return DISCARDED_STATUSES.has(String(p?.internalStatus||'').toLowerCase());}
-  function activeProspects(){return Array.isArray(state?.prospects)?state.prospects.filter(p=>!isDiscardedProspect(p)):[];}
-  function serviceName(id){return state?.bootstrap?.services?.find(s=>s.id===id)?.name||id||'Servicio';}
-
-  async function loadDiscarded(){
-    const {data,error}=await portalClient.functions.invoke('collaborator-discarded',{body:{action:'list',tenantSlug:window.ALVA_TENANT_ROUTE?.tenantSlug||undefined}});
-    if(error){
-      let message=error.message||'No se pudieron consultar los descartados';
-      try{if(error.context){const payload=await error.context.json();message=payload?.error||message;}}catch(_){ }
-      throw new Error(message);
-    }
-    if(data?.error)throw new Error(data.error);
-    return Array.isArray(data?.items)?data.items:[];
+ 'use strict';
+ if(window.__caCollaboratorDiscardedProspectsInstalled)return;
+ window.__caCollaboratorDiscardedProspectsInstalled=true;
+ const DISCARDED_STATUSES=new Set(['archivado','descartado']);
+ let discardedRequestToken=0,discardedItems=[],expanded=false,loaded=false;
+ const $=id=>document.getElementById(id);
+ const sanitize=v=>String(v??'').replace(/[&<>"']/g,ch=>ch==='&'?'&amp;':ch==='<'?'&lt;':ch==='>'?'&gt;':ch==='"'?'&quot;':'&#39;');
+ function isDiscardedProspect(p){return DISCARDED_STATUSES.has(String(p?.internalStatus||'').toLowerCase());}
+ function activeProspects(){return Array.isArray(state?.prospects)?state.prospects.filter(p=>!isDiscardedProspect(p)):[];}
+ function serviceName(id){return state?.bootstrap?.services?.find(s=>s.id===id)?.name||id||'Servicio';}
+ async function loadDiscarded(){
+  const {data,error}=await portalClient.functions.invoke('collaborator-discarded',{body:{action:'list',tenantSlug:window.ALVA_TENANT_ROUTE?.tenantSlug||undefined}});
+  if(error){
+   let message=error.message||'No se pudieron consultar los descartados';
+   try{if(error.context){const payload=await error.context.json();message=payload?.error||message;}}catch(_){}
+   throw new Error(message);
   }
-
-  function discardedCard(item){
-    const reason=String(item.reason||'Archivado por el asesor').trim();
-    const detail=String(item.archiveNotes||'').trim();
-    const noteText=`Motivo registrado por el asesor: ${reason}${detail?`. Detalle: ${detail}`:'.'}`;
-    const previous=String(item.originalNotes||'').trim();
-    return `<article class="discarded-card">
-      <div class="discarded-card-head"><div><span class="discarded-chip">Descartado</span><h4>${esc(item.name||'Prospecto')}</h4></div><span class="discarded-date">${dateMX(item.date)}</span></div>
-      <div class="discarded-data">
-        <div><small>CURP</small><strong>${esc(item.curp||'Sin dato')}</strong></div>
-        <div><small>Teléfono</small><strong>${esc(item.phone||'Sin dato')}</strong></div>
-        <div><small>Servicio</small><strong>${esc(serviceName(item.serviceId))}</strong></div>
-      </div>
-      <div class="discarded-reason"><small>Razón de descarte</small><strong>${esc(reason)}</strong>${detail?`<span>${esc(detail)}</span>`:''}</div>
-      <div class="discarded-notes"><small>Notas</small><p>${esc(noteText)}</p></div>
-      ${previous?`<details class="discarded-previous"><summary>Ver notas previas del prospecto</summary><p>${esc(previous)}</p></details>`:''}
-    </article>`;
+  if(data?.error)throw new Error(data.error);
+  return Array.isArray(data?.items)?data.items:[];
+ }
+ function reasonOf(item){return String(item.reason||'Sin causa especificada').trim()||'Sin causa especificada';}
+ function groupedCards(items){
+  const groups=new Map();
+  for(const item of items){
+   const label=reasonOf(item),key=label.toLocaleLowerCase('es-MX');
+   if(!groups.has(key))groups.set(key,{label,items:[]});
+   groups.get(key).items.push(item);
   }
-
-  function ensureDiscardedHost(){
-    const boardWrap=document.querySelector('.phase-board-wrap');
-    if(!boardWrap)return null;
-    let section=document.getElementById('discarded-prospects-section');
-    if(section)return section;
-    section=document.createElement('section');
-    section.id='discarded-prospects-section';section.className='discarded-section';
-    section.innerHTML='<div class="discarded-section-head"><div><span class="eyebrow">HISTORIAL</span><h2>Descartados</h2><p>Prospectos que el asesor o administración archivó. Se conservan aquí para que conozcas el resultado y la razón registrada.</p></div><span class="discarded-count">…</span></div><div class="discarded-grid"><div class="discarded-loading">Consultando descartados…</div></div>';
-    boardWrap.insertAdjacentElement('afterend',section);
-    return section;
+  return [...groups.values()].sort((a,b)=>a.label.localeCompare(b.label,'es-MX')).map(group=>
+   '<section class="ca-archive-group"><header class="ca-archive-group-head"><h3>'+sanitize(group.label)+'</h3><span>'+group.items.length+'</span></header><div class="ca-archive-group-items">'+
+   group.items.map(item=>'<button class="ca-archive-person" type="button" data-archive-id="'+sanitize(item.id)+'" aria-label="Ver expediente archivado de '+sanitize(item.name||'Prospecto')+'"><strong>'+sanitize(item.name||'Prospecto')+'</strong><span>'+sanitize(reasonOf(item))+'</span></button>').join('')+
+   '</div></section>'
+  ).join('');
+ }
+ function ensureDiscardedHost(){
+  const board=document.querySelector('.phase-board-wrap');
+  if(!board)return null;
+  let section=$('discarded-prospects-section');
+  if(section)return section;
+  section=document.createElement('section');
+  section.id='discarded-prospects-section';section.className='discarded-section';
+  section.innerHTML='<div class="discarded-section-head"><button type="button" class="ca-archive-toggle" aria-expanded="false" aria-controls="discarded-prospects-content"><span class="ca-archive-toggle-intro"><span class="eyebrow">HISTORIAL</span><strong>Descartados</strong><small>Prospectos archivados por el asesor, agrupados según la causa registrada.</small></span><span class="ca-archive-toggle-meta"><span class="discarded-count">…</span><span class="ca-archive-chevron" aria-hidden="true">▸</span></span></button></div><div id="discarded-prospects-content" class="discarded-grid" hidden></div>';
+  board.insertAdjacentElement('afterend',section);
+  section.querySelector('.ca-archive-toggle').addEventListener('click',()=>{expanded=!expanded;repaint();});
+  section.querySelector('.discarded-grid').addEventListener('click',e=>{
+   const button=e.target.closest('button[data-archive-id]');
+   if(button)window.caOpenDiscardedExpediente(button.dataset.archiveId);
+  });
+  return section;
+ }
+ function repaint(){
+  const section=$('discarded-prospects-section');if(!section)return;
+  const toggle=section.querySelector('.ca-archive-toggle'),grid=section.querySelector('.discarded-grid');
+  toggle.setAttribute('aria-expanded',String(expanded));
+  section.classList.toggle('is-expanded',expanded);
+  section.querySelector('.ca-archive-chevron').textContent=expanded?'▾':'▸';
+  grid.hidden=!expanded;
+  if(!expanded)return;
+  grid.innerHTML=!loaded?'<div class="discarded-loading">Consultando descartados…</div>':
+   discardedItems.length?groupedCards(discardedItems):'<div class="discarded-empty">No tienes prospectos descartados.</div>';
+ }
+ async function renderDiscardedSection(){
+  if(state?.page!=='prospectos')return;
+  const section=ensureDiscardedHost();if(!section)return;
+  const count=section.querySelector('.discarded-count'),token=++discardedRequestToken;
+  loaded=false;discardedItems=[];repaint();
+  try{
+   const items=await loadDiscarded();
+   if(token!==discardedRequestToken||state?.page!=='prospectos')return;
+   discardedItems=items;loaded=true;
+   count.textContent=String(items.length);
+   repaint();
+  }catch(error){
+   if(token!==discardedRequestToken||state?.page!=='prospectos')return;
+   loaded=true;discardedItems=[];count.textContent='—';
+   section.querySelector('.discarded-grid').innerHTML='<div class="discarded-error">'+sanitize(error?.message||'No se pudieron consultar los descartados.')+'</div>';
   }
-
-  async function renderDiscardedSection(){
-    if(state?.page!=='prospectos')return;
-    const section=ensureDiscardedHost();if(!section)return;
-    const grid=section.querySelector('.discarded-grid'),count=section.querySelector('.discarded-count');
-    const token=++discardedRequestToken;
-    if(grid)grid.innerHTML='<div class="discarded-loading">Consultando descartados…</div>';
-    try{
-      const items=await loadDiscarded();
-      if(token!==discardedRequestToken||state?.page!=='prospectos')return;
-      if(count)count.textContent=String(items.length);
-      if(grid)grid.innerHTML=items.length?items.map(discardedCard).join(''):'<div class="discarded-empty">No tienes prospectos descartados.</div>';
-    }catch(error){
-      if(token!==discardedRequestToken)return;
-      if(count)count.textContent='—';
-      if(grid)grid.innerHTML=`<div class="discarded-error">${esc(error.message||'No se pudieron consultar los descartados.')}</div>`;
-    }
+ }
+ function ensureArchiveModal(){
+  if($('ca-archived-prospect-modal'))return;
+  const root=document.createElement('div');root.id='ca-archived-prospect-modal';root.className='modal-overlay';root.hidden=true;
+  root.innerHTML='<section class="modal ca-archived-expediente" role="dialog" aria-modal="true" aria-labelledby="ca-archived-expediente-title"><header class="modal-head"><div><span class="eyebrow">EXPEDIENTE ARCHIVADO · SOLO CONSULTA</span><h3 id="ca-archived-expediente-title">Prospecto descartado</h3></div><button type="button" class="icon-button" id="ca-archived-close" aria-label="Cerrar expediente">×</button></header><div class="ca-archived-expediente-body" id="ca-archived-expediente-body"></div><div class="modal-actions ca-archived-expediente-actions"><button class="btn" type="button" id="ca-archived-dismiss">Cerrar</button></div></section>';
+  document.body.appendChild(root);
+  const close=()=>root.hidden=true;
+  $('ca-archived-close').addEventListener('click',close);
+  $('ca-archived-dismiss').addEventListener('click',close);
+  root.addEventListener('click',e=>{if(e.target===root)close();});
+ }
+ function info(label,value){
+  return '<div class="ca-archived-field"><small>'+sanitize(label)+'</small><strong>'+sanitize(value||'Sin dato')+'</strong></div>';
+ }
+ window.caOpenDiscardedExpediente=function(id){
+  const item=discardedItems.find(x=>String(x.id)===String(id));if(!item)return;
+  ensureArchiveModal();
+  $('ca-archived-expediente-title').textContent=item.name||'Prospecto descartado';
+  const reason=reasonOf(item);
+  $('ca-archived-expediente-body').innerHTML=
+   '<div class="ca-archived-fields">'+info('Nombre',item.name)+info('CURP',item.curp)+info('Teléfono',item.phone)+info('Servicio',serviceName(item.serviceId))+info('Fecha del archivo',typeof dateMX==='function'?dateMX(item.date):item.date)+'</div>'+
+   '<section class="ca-archived-reason"><h4>Causa de descarte</h4><p>'+sanitize(reason)+'</p></section>'+
+   (item.archiveNotes?'<section class="ca-archived-notes"><h4>Observaciones del archivo</h4><p>'+sanitize(item.archiveNotes)+'</p></section>':'')+
+   (item.originalNotes?'<section class="ca-archived-notes"><h4>Notas del prospecto</h4><p>'+sanitize(item.originalNotes)+'</p></section>':'')+
+   '<p class="ca-archived-readonly">Este expediente está archivado y se presenta en modo de consulta. Su estado no cambiará al abrirlo.</p>';
+  $('ca-archived-prospect-modal').hidden=false;
+ };
+ const baseNavigate=window.navigate;
+ window.navigate=function(page,silent=false){
+  const prevPage=state?.page;
+  let result;
+  if((page==='prospectos'||page==='inicio')&&Array.isArray(state?.prospects)){
+   const all=state.prospects;state.prospects=activeProspects();
+   try{result=baseNavigate(page,silent);}finally{state.prospects=all;}
+  }else result=baseNavigate(page,silent);
+  if(page==='prospectos'){
+   if(prevPage!=='prospectos')expanded=false;
+   requestAnimationFrame(renderDiscardedSection);
+  }else{
+   ++discardedRequestToken;
+   const archived=$('ca-archived-prospect-modal');
+   if(archived)archived.hidden=true;
   }
-
-  function installStyles(){
-    if(document.getElementById('ca-phase6-styles'))return;
-    const style=document.createElement('style');style.id='ca-phase6-styles';style.textContent=`
-      .discarded-section{margin-top:22px;border:1px solid rgba(239,107,115,.18);background:linear-gradient(180deg,rgba(239,107,115,.035),rgba(14,25,41,.75));border-radius:16px;overflow:hidden}
-      .discarded-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 18px;border-bottom:1px solid var(--border)}
-      .discarded-section-head h2{font:700 20px var(--display);margin:3px 0 2px;color:#f3c3c6}.discarded-section-head p{margin:0;color:var(--muted);font-size:9px;line-height:1.5;max-width:780px}
-      .discarded-count{min-width:32px;height:28px;border-radius:999px;padding:0 10px;display:grid;place-items:center;background:rgba(239,107,115,.1);border:1px solid rgba(239,107,115,.2);color:#f1a6ac;font-size:10px;font-weight:700}
-      .discarded-grid{padding:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-      .discarded-card{border:1px solid var(--border);background:var(--card);border-radius:12px;padding:12px;min-width:0}.discarded-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.discarded-card h4{font-size:11px;line-height:1.35;margin:5px 0 0}.discarded-chip{display:inline-flex;border-radius:999px;padding:3px 7px;background:rgba(239,107,115,.09);border:1px solid rgba(239,107,115,.2);color:#f0a0a7;font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.55px}.discarded-date{font-size:8px;color:var(--muted);white-space:nowrap}
-      .discarded-data{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.discarded-data>div:last-child{grid-column:1/-1}.discarded-data small,.discarded-reason small,.discarded-notes small{display:block;color:#74869a;font-size:7.5px;text-transform:uppercase;letter-spacing:.45px}.discarded-data strong{display:block;color:#d7dee6;font-size:8.5px;margin-top:3px;overflow-wrap:anywhere}
-      .discarded-reason{margin-top:10px;border-left:3px solid var(--danger);background:rgba(239,107,115,.055);border-radius:7px;padding:8px 9px}.discarded-reason strong{display:block;color:#f0b2b7;font-size:9px;margin-top:3px}.discarded-reason span{display:block;color:#c7aeb1;font-size:8.5px;line-height:1.45;margin-top:4px}
-      .discarded-notes{margin-top:9px}.discarded-notes p,.discarded-previous p{margin:4px 0 0;color:#b9c4cf;font-size:8.5px;line-height:1.55;white-space:pre-wrap}.discarded-previous{margin-top:8px;border-top:1px solid var(--border);padding-top:8px}.discarded-previous summary{cursor:pointer;color:var(--muted);font-size:8px}.discarded-loading,.discarded-empty,.discarded-error{grid-column:1/-1;padding:22px;text-align:center;color:var(--muted);font-size:9px}.discarded-error{color:var(--danger)}
-      @media(max-width:1050px){.discarded-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-      @media(max-width:780px){.discarded-section{margin-top:16px}.discarded-section-head{padding:13px;align-items:center}.discarded-section-head h2{font-size:18px}.discarded-grid{grid-template-columns:1fr;padding:9px}.discarded-card{padding:11px}}
-    `;document.head.appendChild(style);
-  }
-
-  installStyles();
-  const baseNavigate=window.navigate;
-  window.navigate=function(page,silent=false){
-    let result;
-    if((page==='prospectos'||page==='inicio')&&Array.isArray(state?.prospects)){
-      const all=state.prospects;state.prospects=activeProspects();
-      try{result=baseNavigate(page,silent);}finally{state.prospects=all;}
-    }else result=baseNavigate(page,silent);
-    if(page==='prospectos')requestAnimationFrame(renderDiscardedSection);
-    return result;
-  };
-
-  if(state?.page==='prospectos')window.navigate('prospectos',true);
+  return result;
+ };
+ if(state?.page==='prospectos')window.navigate('prospectos',true);
 })();
