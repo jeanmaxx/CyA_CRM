@@ -17,10 +17,10 @@
   {id:10,title:'Recepción de depósito',text:'Una vez autorizada la solicitud, el recurso se entrega por el medio aprobado y puede depositarse en la cuenta bancaria del cliente.'},
   {id:11,title:'Pago de honorarios',text:'El cliente cubre los honorarios pactados conforme al contrato una vez que corresponde el cierre financiero del servicio.'}
  ];
- let guideSteps={},open=true;
- function reset(){guideSteps={};open=true;}
+ let guideSteps={},open=false;
+ function reset(){guideSteps={};open=false;openCards.clear();}
  const checked=id=>guideSteps[String(id)]===true;
- const openCards=new Set(['retiro_desempleo','nss']);
+ const openCards=new Set();
  function guideContent(){return Array.isArray(state?.bootstrap?.guideContent)?state.bootstrap.guideContent:[];}
    function safeUrl(value){try{const u=new URL(String(value||''));return /^https?:$/.test(u.protocol)?u.href:'';}catch(_){return'';}}
 
@@ -65,26 +65,26 @@
   const done=GUIDE_STEPS.filter(s=>checked(s.id)).length;
   return `<div class="guide-toolbar"><div><h1>Información / Guía</h1><p>Guía interactiva temporal para explicar el proceso de retiro por desempleo. No se vincula a prospectos ni clientes.</p></div></div>
    <section class="guide-card process-card ${open?'open':''}">
-    <div class="guide-card-head ca-guide-heading">
+    <div class="guide-card-head ca-guide-heading"><button type="button" class="ca-guide-accordion-toggle" onclick="caToggleGuideCard(\'process\')" aria-expanded="${open}">
      <span class="guide-card-icon">✓</span><span class="guide-card-copy"><strong>Guía del proceso de retiro</strong><small>Checklist de 11 temas · Se reinicia al salir de esta sección o cambiar de pestaña</small></span>
-     <span class="guide-progress-pill">${done}/11</span>
+     <span class="guide-progress-pill">${done}/11</span><span class="guide-arrow">${open?'▾':'▸'}</span></button>
      <button type="button" class="btn guide-reset-icon" onclick="caResetGuide()" title="Reiniciar guía" aria-label="Reiniciar guía">↻</button>
     </div>
-    <div class="guide-card-body">
+    ${open?`<div class="guide-card-body">
      <div class="guide-progress" aria-label="${done} de 11 temas"><i style="width:${Math.round(done/11*100)}%"></i></div>
      <div class="guide-steps">${GUIDE_STEPS.map(step=>{
       const isDone=checked(step.id);
       return `<label class="guide-step ${isDone?'done':''}"><input type="checkbox" ${isDone?'checked':''} onchange="caToggleGuideStep(${step.id},this.checked)"><span class="guide-check">${isDone?'✓':''}</span><span class="guide-step-number">${step.id}</span><span class="guide-step-copy"><strong>${esc(step.title)}</strong><small>${esc(step.text)}</small></span></label>`;
      }).join('')}</div>
      <div class="guide-helper">Úsala durante la explicación. Las casillas son temporales: no cambian el estado de ningún expediente ni se guardan en el CRM.</div>
-    </div>
+    </div>`:''}
    </section>
    <div class="ca-guide-library"><div class="ca-guide-library-title"><h2>Biblioteca informativa de servicios</h2><p>Información de consulta para capacitación y explicación de servicios; no guarda datos en expedientes.</p></div>
      ${(()=>{const items=guideContent(),first=items.find(x=>x.slug==='retiro_desempleo'),others=items.filter(x=>x.slug!=='retiro_desempleo');return (first?knowledgeCard(first):'')+nssCard()+others.map(knowledgeCard).join('');})()}
    </div>`;
  }
  function repaint(){if(state.page==='guia'){const content=document.getElementById('page-content');if(content)content.innerHTML=renderGuide();}}
- window.caToggleGuideCard=function(slug){if(openCards.has(slug))openCards.delete(slug);else openCards.add(slug);repaint();};
+ window.caToggleGuideCard=function(slug){const wasOpen=slug==='process'?open:openCards.has(slug);openCards.clear();open=false;if(!wasOpen){if(slug==='process')open=true;else openCards.add(slug);}repaint();};
  window.caToggleGuideStep=function(step,value){
   if(state.page!=='guia'||!GUIDE_STEPS.some(s=>s.id===Number(step)))return;
   guideSteps[String(step)]=Boolean(value);repaint();
