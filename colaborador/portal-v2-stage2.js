@@ -25,7 +25,7 @@
       <div class="prospect-card-head"><div><h4><button type="button" class="portal-v2-name-link" onclick="openProspectModal(\'${id}\')">${name}</button></h4><div class="curp">${esc(p.curp||'CURP pendiente')}</div></div></div>
       <div class="prospect-meta">${prospectDetails(p)}</div>
       ${approved?'<div class="eligibility-confirmed">✓ Aprobación confirmada por el equipo.</div>':''}
-      <div class="prospect-actions"><button class="btn" type="button" onclick="openProspectModal('${id}')">Datos</button></div>
+      <div class="prospect-actions"><button class="btn" type="button" onclick="openProspectModal('${id}')">Expediente</button></div>
     </article>`;
   }
   function renderV2(){
