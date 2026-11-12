@@ -44,7 +44,7 @@ assert.equal(w.document.getElementById('ca-exp-address').value,'Domicilio de pru
 assert.equal(w.document.getElementById('ca-tab-info').getAttribute('aria-selected'),'true');
 w.document.getElementById('ca-tab-track').click();
 assert.equal(w.document.getElementById('ca-tab-track').getAttribute('aria-selected'),'true');
-assert.match(w.document.getElementById('ca-expediente-body').textContent,/Cita en Afore/);
+assert.match(w.document.getElementById('ca-expediente-body').textContent,/Cita en AFORE/i);
 w.document.getElementById('ca-tab-info').click();
 assert.equal(w.document.getElementById('ca-exp-address').value,'Domicilio de prueba');
 w.caCloseExpedienteV2();
