@@ -22,7 +22,17 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npm test
+      - name: Pruebas focalizadas del portal
+        run: |
+          node tests/collaborator-ui.cjs
+          node tests/collaborator-sidebar.cjs
+          node tests/compat-routing.cjs
+          node tests/collaborator-v2-stage2.cjs
+          node tests/collaborator-v2-stage3.cjs
+          node tests/collaborator-v2-stage4.cjs
+          node tests/collaborator-v2-stage6.cjs
+      - name: Suite completa del CRM
+        run: npm test
   edge-syntax:
     name: Comprobación TypeScript Edge
     runs-on: ubuntu-latest
@@ -33,4 +43,4 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: deno check supabase/functions/collaborator-portal/index.ts
+      - run: deno check --node-modules-dir=auto supabase/functions/collaborator-portal/index.ts
