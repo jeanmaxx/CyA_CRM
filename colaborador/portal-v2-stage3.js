@@ -53,7 +53,7 @@
     return '<div class="ca-expediente-followup">'+note+
       '<div class="ca-expediente-summary"><div><small>Etapa en CRM</small><strong>'+enc(c.stage||'Pendiente')+'</strong></div><div><small>AFORE</small><strong>'+enc(c.afore||'Por confirmar')+'</strong></div><div><small>Cita en AFORE</small><strong>'+date+'</strong></div><div><small>Hora / sucursal</small><strong>'+enc([c.appointment?.time,c.appointment?.branch].filter(Boolean).join(' · ')||'Por confirmar')+'</strong></div></div>'+
       (window.caV2TrackingSummary?window.caV2TrackingSummary(c):'<div class="ca-expediente-steps">'+lines+'</div>')+
-      '<p class="ca-expediente-help">Este resumen es informativo. La edición de actividades y la sincronización detallada se integrarán en la etapa 4.</p>'+
+      '<p class="ca-expediente-help">Selecciona una actividad para consultar su estado o registrar su realización. Los depósitos y honorarios conservan su verificación externa.</p>'+
       '<button class="btn" type="button" id="ca-exp-view-contract">Consultar contrato</button>'+
       '</div>';
   }
