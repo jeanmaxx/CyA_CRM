@@ -41,7 +41,7 @@
   '<div class="ca-v2-table-wrap" tabindex="0" role="region" aria-label="Seguimiento de clientes, desplazamiento horizontal"><table class="ca-v2-table"><thead><tr><th class="ca-v2-sticky">Cliente</th>'+
   steps.map(s=>'<th scope="col" title="'+esc(s.title)+'">'+esc(s.short)+'</th>').join('')+'</tr></thead><tbody>'+
   (clients.length?clients.map(c=>'<tr><th scope="row" class="ca-v2-sticky"><button type="button" class="client-name-link" onclick="caOpenClient(\''+esc(c.id)+'\')">'+esc(c.name)+'</button><small>'+esc(c.stage==='contrato_firmas'?'Firma pendiente':c.curp||'')+'</small></th>'+
-    steps.map(s=>'<td>'+stepButton(c,s)+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="9">Todavía no hay clientes asignados.</td></tr>')+
+    steps.map(step=>'<td>'+(c.serviceId==='retiro_desempleo'?stepButton(c,step):'<span class="ca-v2-na" title="No aplica a este servicio">—</span>')+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="9">Todavía no hay clientes asignados.</td></tr>')+
   '</tbody></table></div><div class="ca-v2-table-legend"><span><b class="good">✓</b> Completado</span><span>○ Pendiente</span><span>Depósito y honorarios requieren aprobación del asesor.</span></div>';
  }
  function ensure(){
@@ -58,7 +58,7 @@
    return '<label class="ca-v2-form-field">'+esc(label)+'<input id="'+id+'" type="'+type+'" value="'+esc(value||'')+'" '+attrs+'></label>';
  }
  function formFor(c,key){
-  if(key==='alta')return field('Fecha real de alta','ca-v2-date','date',c.registeredAt,new Date().toISOString().slice(0,10)?'required':'required');
+  if(key==='alta')return field('Fecha real de alta','ca-v2-date','date',c.registeredAt,'required');
   if(key==='app')return '<label class="ca-v2-form-field">¿La aplicación AforeMóvil está instalada?<select id="ca-v2-installed" required><option value="">Seleccionar</option><option value="si">Sí</option></select></label>';
   if(key==='banco')return field('Banco','ca-v2-bank','text',c.bank,'maxlength="100" required')+'<label class="ca-v2-form-field">Nivel de cuenta<select id="ca-v2-level" required><option value="">Seleccionar</option><option value="4">Nivel 4 confirmado</option></select></label>';
   if(key==='cita')return field('Fecha de la cita','ca-v2-date','date',c.appointment?.date,'required')+field('Hora de la cita','ca-v2-time','time',c.appointment?.time,'required')+field('Sucursal de AFORE','ca-v2-branch','text',c.appointment?.branch,'maxlength="180" required')+field('AFORE (opcional)','ca-v2-afore','text',c.afore,'maxlength="100"');
@@ -75,7 +75,7 @@
  }
  window.caV2OpenActivity=function(id,key){
   const c=find(id),step=steps.find(s=>s.key===key);
-  if(!c||!step)return;
+  if(!c||!step||c.serviceId!=='retiro_desempleo')return;
   ensure();selected={id,key};
   $('ca-v2-activity-title').textContent=step.title;
   const complete=done(c,key);
