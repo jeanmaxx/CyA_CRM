@@ -1,0 +1,46 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom');
+const html=fs.readFileSync('runtime/colaboradores.html','utf8');
+const source=fs.readFileSync('colaborador/portal-v2-signature.js','utf8');
+const stage3=fs.readFileSync('colaborador/portal-v2-stage3.js','utf8');
+const stage4=fs.readFileSync('colaborador/portal-v2-stage4.js','utf8');
+const backend=fs.readFileSync('supabase/functions/collaborator-portal/index.ts','utf8');
+const css=fs.readFileSync('colaborador/portal-v2-stage3.css','utf8');
+assert.match(html,/portal-v2-signature\.js\?v=20261112-sign/);
+assert.match(stage3,/id="ca-exp-sign"/);
+assert.match(stage4,/caV2ConfirmSignature/);
+assert.match(backend,/action==='confirm_contract_signature'/);
+assert.match(backend,/stage:'contrato_firmado'/);
+assert.match(backend,/firmaConfirmadaPorId:authData\.user!/);
+assert.match(backend,/\.eq\('advisor_id',collaborator\.advisor_id\)/);
+assert.match(backend,/\.eq\('updated_at',expected\)/);
+assert.match(css,/#contract-view-modal\{z-index:30020!important\}/);
+assert.match(css,/#ca-signature-modal\{z-index:30030!important\}/);
+const dom=new JSDOM('<div id="page-content"></div><div id="ca-expediente-v2"></div>',{url:'https://example.test',runScripts:'outside-only'});
+const w=dom.window,requests=[],calls=[];
+w.state={bootstrap:{clients:[{id:'client-1',name:'CLIENTE DE PRUEBA',stage:'contrato_firmas',updatedAt:'2026-11-12T12:00:00Z'}]},page:'clientes'};
+w.portalAction=async v=>{requests.push(v);return {client:{...w.state.bootstrap.clients[0],stage:'contrato_firmado',updatedAt:'2026-11-12T12:02:00Z'}}};
+w.refreshDashboardOnly=async()=>{};
+w.navigate=p=>calls.push('navigate:'+p);
+w.caV2RefreshExpediente=()=>calls.push('refresh-expediente');
+w.toast=()=>calls.push('toast');
+w.eval(source);
+w.caV2ConfirmSignature('client-1');
+const $=id=>w.document.getElementById(id);
+assert.equal($('ca-signature-modal').hidden,false);
+assert.equal($('ca-signature-date').value.length,10);
+$('ca-signature-note').value='Firma realizada presencialmente';
+$('ca-signature-form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+setImmediate(()=>{
+ try{
+  assert.equal(requests.length,1);
+  assert.equal(requests[0].action,'confirm_contract_signature');
+  assert.equal(requests[0].expectedUpdatedAt,'2026-11-12T12:00:00Z');
+  assert.equal(requests[0].note,'Firma realizada presencialmente');
+  assert.equal($('ca-signature-modal').hidden,true);
+  assert.equal(w.state.bootstrap.clients[0].stage,'contrato_firmado');
+  assert.ok(calls.includes('refresh-expediente'));
+  assert.equal($('ca-expediente-v2').hidden,false);
+  w.close();
+  console.log('PASS: signature date and note, authorized backend guards, modal hierarchy and expediente continuity.');
+ }catch(e){console.error(e);process.exitCode=1;w.close();}
+});
