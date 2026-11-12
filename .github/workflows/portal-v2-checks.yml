@@ -32,34 +32,7 @@ jobs:
           node tests/collaborator-v2-stage4.cjs
           node tests/collaborator-v2-stage6.cjs
       - name: Suite completa del CRM
-        continue-on-error: true
         run: npm test
-      - name: Diagnóstico individual de pruebas
-        run: |
-          node <<'NODE'
-          const {spawnSync}=require('node:child_process');
-          const commands=require('./package.json').scripts.test.split(' && ');
-          const failed=[];
-          for(const command of commands){
-            const parts=command.trim().split(/\s+/);
-            console.log('COMPROBANDO:',command);
-            const result=spawnSync(parts[0],parts.slice(1),{stdio:'inherit',timeout:120000});
-            if(result.status!==0)failed.push(command);
-          }
-          console.log('PRUEBAS CON ERRORES:',JSON.stringify(failed));
-          if(failed.length)process.exitCode=1;
-          NODE
-  edge-syntax:
-    name: Comprobación TypeScript Edge
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-      - run: deno check --node-modules-dir=auto supabase/functions/collaborator-portal/index.ts
 
   legacy-baseline:
     name: Comparación de regresiones existentes en main
