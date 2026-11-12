@@ -21,7 +21,7 @@ assert.match(backend,/portalVerificaciones/);
 assert.doesNotMatch(backend,/patch\.estadoPago\s*=/);
 assert.match(js,/¿Quién verificó el pago\?/);
 assert.match(js,/Notas \(opcional\)/);
-assert.match(js,/complete&&!\['banco','cita'\]\.includes\(key\)/);
+assert.ok(js.includes("if(complete&&!['banco','cita'].includes(key))"));
 const dom=new JSDOM('<div id="page-content"></div>',{url:'https://example.test',runScripts:'outside-only'});
 const w=dom.window;
 w.state={page:'clientes',bootstrap:{clients:[{id:'a',name:'Cliente Prueba',curp:'CURP',serviceId:'retiro_desempleo',stage:'solicitud_realizada',progress:{done:{}},appointment:{},activities:{},aforeMovil:'si'},{id:'b',name:'Otro Servicio',serviceId:'asesoria_pension',stage:'dado_alta'}]}};
