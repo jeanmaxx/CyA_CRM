@@ -25,7 +25,7 @@ assert.match(edge,/\.eq\('updated_at',expected\)/);
 assert.match(edge,/domicilio:address,historial:history/);
 assert.match(edge,/domicilio:Object\.prototype\.hasOwnProperty\.call\(body,'address'\)/);
 assert.match(edge,/return respond\(req,409/);
-assert.match(css,/\.ca-expediente-modal/);assert.match(css,/#contract-view-modal\{z-index:30020!important\}/);assert.match(stage3,/caV2ConfirmSignature/);
+assert.match(css,/\.ca-expediente-modal/);assert.match(css,/#contract-view-modal\{z-index:30020!important\}/);assert.doesNotMatch(stage3,/id="ca-exp-sign"/,'Signature belongs to first tracking milestone, not a duplicate button');
 
 const dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'https://example.test/colaboradores/',runScripts:'outside-only'});
 const w=dom.window;
