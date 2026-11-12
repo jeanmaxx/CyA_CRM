@@ -20,6 +20,47 @@
  let guideSteps={},open=true;
  function reset(){guideSteps={};open=true;}
  const checked=id=>guideSteps[String(id)]===true;
+ const openCards=new Set(['retiro_desempleo','nss']);
+ function guideContent(){return Array.isArray(state?.bootstrap?.guideContent)?state.bootstrap.guideContent:[];}
+   function safeUrl(value){try{const u=new URL(String(value||''));return /^https?:$/.test(u.protocol)?u.href:'';}catch(_){return'';}}
+
+  function bodyHTML(body){
+    const lines=String(body||'').split(/\r?\n/);let html='',inList=false;
+    const closeList=()=>{if(inList){html+='</ul>';inList=false;}};
+    for(const raw of lines){const line=raw.trim();if(!line){closeList();continue;}
+      if(line.startsWith('## ')){closeList();html+=`<h4>${esc(line.slice(3))}</h4>`;continue;}
+      if(line.startsWith('- ')){if(!inList){html+='<ul>';inList=true;}html+=`<li>${esc(line.slice(2))}</li>`;continue;}
+      if(line.startsWith('! ')){closeList();html+=`<div class="guide-warning">${esc(line.slice(2))}</div>`;continue;}
+      closeList();html+=`<p>${esc(line)}</p>`;
+    }closeList();return html;
+  }
+
+  function knowledgeCard(item){
+    const open=openCards.has(item.slug),url=safeUrl(item.source_url);
+    return `<section class="guide-card ${open?'open':''}">
+      <button class="guide-card-head" type="button" onclick="caToggleGuideCard('${esc(item.slug)}')" aria-expanded="${open}">
+        <span class="guide-card-icon">${esc(item.icon||'▤')}</span><span class="guide-card-copy"><strong>${esc(item.title)}</strong><small>${esc(item.subtitle||'')}</small></span><span class="guide-arrow">${open?'▾':'▸'}</span>
+      </button>
+      ${open?`<div class="guide-card-body"><div class="guide-richtext">${bodyHTML(item.body)}</div>${url?`<a class="guide-source" href="${esc(url)}" target="_blank" rel="noopener">Fuente de referencia: ${esc(item.source_label||'Consultar fuente oficial')} ↗</a>`:''}</div>`:''}
+    </section>`;
+  }
+
+
+ function nssCard(){
+  const open=openCards.has('nss');
+  return `<section class="guide-card ca-nss-card ${open?'open':''}">
+    <button class="guide-card-head" type="button" onclick="caToggleGuideCard('nss')" aria-expanded="${open}">
+      <span class="guide-card-icon">11</span><span class="guide-card-copy"><strong>¿Cómo se compone el NSS?</strong><small>Los 11 dígitos y el significado de cada bloque</small></span><span class="guide-arrow">${open?'▾':'▸'}</span>
+    </button>
+    ${open?`<div class="guide-card-body"><figure class="ca-nss-figure">
+      <img src="/assets/educacion/estructura-nss.svg?v=20261112-nss" alt="Diagrama de la estructura del Número de Seguridad Social: 02 subdelegación, 98 año de afiliación, 90 año de nacimiento, 0134 consecutivo y 4 dígito verificador." loading="lazy" width="1200" height="600">
+      <figcaption>Ejemplo didáctico: 02-98-90-0134-4. El NSS contiene 11 dígitos; los separadores son solo visuales.</figcaption>
+    </figure><div class="ca-nss-summary">
+      <p><strong>02 · Subdelegación:</strong> clave de registro.</p><p><strong>98 · Afiliación:</strong> año de registro.</p><p><strong>90 · Nacimiento:</strong> año de nacimiento.</p><p><strong>0134 · Consecutivo:</strong> número de control.</p><p><strong>4 · Verificador:</strong> dígito de control.</p>
+    </div><p class="ca-nss-caution">Importante: la estructura del NSS no determina por sí sola la ley pensionaria aplicable ni las semanas reconocidas. Confirma esos datos en los documentos del IMSS.</p></div>`:''}
+  </section>`;
+ }
+
  function renderGuide(){
   const done=GUIDE_STEPS.filter(s=>checked(s.id)).length;
   return `<div class="guide-toolbar"><div><h1>Información / Guía</h1><p>Guía interactiva temporal para explicar el proceso de retiro por desempleo. No se vincula a prospectos ni clientes.</p></div></div>
@@ -37,9 +78,13 @@
      }).join('')}</div>
      <div class="guide-helper">Úsala durante la explicación. Las casillas son temporales: no cambian el estado de ningún expediente ni se guardan en el CRM.</div>
     </div>
-   </section>`;
+   </section>
+   <div class="ca-guide-library"><div class="ca-guide-library-title"><h2>Biblioteca informativa de servicios</h2><p>Información de consulta para capacitación y explicación de servicios; no guarda datos en expedientes.</p></div>
+     ${(()=>{const items=guideContent(),first=items.find(x=>x.slug==='retiro_desempleo'),others=items.filter(x=>x.slug!=='retiro_desempleo');return (first?knowledgeCard(first):'')+nssCard()+others.map(knowledgeCard).join('');})()}
+   </div>`;
  }
  function repaint(){if(state.page==='guia'){const content=document.getElementById('page-content');if(content)content.innerHTML=renderGuide();}}
+ window.caToggleGuideCard=function(slug){if(openCards.has(slug))openCards.delete(slug);else openCards.add(slug);repaint();};
  window.caToggleGuideStep=function(step,value){
   if(state.page!=='guia'||!GUIDE_STEPS.some(s=>s.id===Number(step)))return;
   guideSteps[String(step)]=Boolean(value);repaint();

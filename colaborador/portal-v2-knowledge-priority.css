@@ -1,0 +1,25 @@
+/* Información / Guía: biblioteca persistente en lectura, checklist temporal en memoria. */
+.ca-guide-library{margin-top:16px;display:grid;gap:12px}
+.ca-guide-library-title{padding:6px 2px}
+.ca-guide-library-title h2{font-size:18px;line-height:1.3;color:var(--text);margin:0 0 6px;font-weight:750}
+.ca-guide-library-title p{font-size:12px;color:var(--muted);line-height:1.5;margin:0}
+.ca-guide-library>.guide-card{margin:0}
+.ca-nss-figure{margin:0;background:#eef5f5;padding:12px;border-radius:12px}
+.ca-nss-figure img{display:block;width:100%;height:auto;max-height:none;border-radius:8px;object-fit:contain}
+.ca-nss-figure figcaption{color:#354c51;font-size:11px;line-height:1.45;padding:10px 5px 2px;text-align:center}
+.ca-nss-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;margin-top:12px}
+.ca-nss-summary p{margin:0;background:var(--surface-2);border:1px solid var(--border);padding:10px 12px;border-radius:9px;font-size:11px;line-height:1.5}
+.ca-nss-summary strong{color:var(--gold)}
+.ca-nss-caution{font-size:11px;line-height:1.55;color:var(--muted);margin:12px 0 0}
+/* Nombre > próximo paso > acción: énfasis accesible en claro y oscuro. */
+.ca-home-task{display:grid!important;grid-template-columns:minmax(180px,1.2fr) minmax(220px,1.5fr) auto!important;gap:14px!important;align-items:center!important}
+.ca-home-task-copy{min-width:0}
+.ca-home-task-copy strong{font-size:12px!important;line-height:1.4}
+.ca-home-task-priority{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;border:1px solid rgba(255,194,14,.38);border-radius:10px;padding:8px 14px;background:rgba(255,194,14,.085)}
+.ca-home-task-priority-label{font-size:9px;letter-spacing:.09em;font-weight:750;color:var(--gold);line-height:1.3}
+.ca-home-task-priority-text{font-size:15px;line-height:1.35;font-weight:750;color:#ffc20e;overflow-wrap:anywhere}
+html[data-theme="light"] .ca-home-task-priority{background:#fff3d6;border-color:#bc7806}
+html[data-theme="light"] .ca-home-task-priority-label{color:#825100}
+html[data-theme="light"] .ca-home-task-priority-text{color:#805100}
+@media(max-width:790px){.ca-home-task{grid-template-columns:minmax(0,1fr) auto!important;gap:9px!important}.ca-home-task-copy{grid-column:1}.ca-home-task-priority{grid-column:1;grid-row:2}.ca-home-task .btn{grid-column:2;grid-row:1/span 2}}
+@media(max-width:430px){.ca-home-task-priority-text{font-size:13px}.ca-home-task-priority{padding:8px}.ca-home-task-copy strong{font-size:11px!important}.ca-home-task .btn{min-width:65px!important}}
