@@ -50,7 +50,7 @@ if(action==='complete_activity'){
  if(c.service_id!=='retiro_desempleo')return respond(req,400,{error:'Actividad válida solo para retiro por desempleo'});
  const p=c.payload||{},now=new Date().toISOString(),stage=String(c.stage||'');
  const input=body.data&&typeof body.data==='object'&&!Array.isArray(body.data)?body.data:{};
- const date=(v:unknown)=>{const s=text(v);if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(s))return'';const d=new Date(s+'T12:00:00Z');return !isNaN(d.getTime())&&d.toISOString().slice(0,10)===s?s:''};
+ const date=(v:unknown)=>{const s=text(v);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return'';const d=new Date(s+'T12:00:00Z');return !isNaN(d.getTime())&&d.toISOString().slice(0,10)===s?s:''};
  const patch:any={};let next=stage;
  if(key==='alta'){
    if(['generando_contrato','contrato_firmas'].includes(stage))return respond(req,409,{error:'Primero debe confirmarse la firma'});
@@ -65,7 +65,7 @@ if(action==='complete_activity'){
  }
  if(key==='cita'){
    const d=date(input.date),time=text(input.time),branch=text(input.branch).slice(0,180);
-   if(!d||!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time)||!branch)return respond(req,400,{error:'Indica fecha, hora y sucursal'});
+   if(!d||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)||!branch)return respond(req,400,{error:'Indica fecha, hora y sucursal'});
    patch.fechaBiometrica=d;patch.horaBiometrica=time;patch.sucursalAfore=branch;
    if(input.afore)patch.afore=text(input.afore).slice(0,100);
  }
