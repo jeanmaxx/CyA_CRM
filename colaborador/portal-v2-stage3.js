@@ -52,7 +52,7 @@
     const note=c.stage==='contrato_firmas'?'<p class="ca-expediente-help">Firma pendiente de confirmación del colaborador.</p>':'';
     const lines=stepInfo.map(([title,done])=>'<div class="ca-expediente-step"><span class="'+(done(c)?'is-complete':'')+'" aria-label="'+(done(c)?'Completado':'Pendiente')+'">'+(done(c)?'✓':'○')+'</span><strong>'+enc(title)+'</strong></div>').join('');
     return '<div class="ca-expediente-followup">'+note+
-      '<div class="ca-expediente-summary"><button type="button" class="ca-expediente-summary-edit" data-activity="cita" aria-label="Editar AFORE"><small>AFORE · Editar</small><strong>'+enc(c.afore||'Por confirmar')+'</strong></button><button type="button" class="ca-expediente-summary-edit" data-activity="cita" aria-label="Editar cita en AFORE"><small>Cita en AFORE · Editar</small><strong>'+date+'</strong></button><button type="button" class="ca-expediente-summary-edit" data-activity="cita" aria-label="Editar hora o sucursal"><small>Hora / sucursal · Editar</small><strong>'+enc([c.appointment?.time,c.appointment?.branch].filter(Boolean).join(' · ')||'Por confirmar')+'</strong></button><button type="button" class="ca-expediente-summary-edit" data-activity="banco" aria-label="Editar banco"><small>Banco · Editar</small><strong>'+enc(c.bank||'Por confirmar')+'</strong></button></div>'+
+      '<div class="ca-expediente-summary"><button type="button" class="ca-expediente-summary-edit" data-activity="afore" aria-label="Editar AFORE"><small>AFORE · Editar</small><strong>'+enc(c.afore||'Por confirmar')+'</strong></button><button type="button" class="ca-expediente-summary-edit" data-activity="cita" aria-label="Editar cita en AFORE"><small>Cita en AFORE · Editar</small><strong>'+date+'</strong></button><button type="button" class="ca-expediente-summary-edit" data-activity="cita" aria-label="Editar hora o sucursal"><small>Hora / sucursal · Editar</small><strong>'+enc([c.appointment?.time,c.appointment?.branch].filter(Boolean).join(' · ')||'Por confirmar')+'</strong></button><button type="button" class="ca-expediente-summary-edit" data-activity="banco" aria-label="Editar banco"><small>Banco · Editar</small><strong>'+enc(c.bank||'Por confirmar')+'</strong></button></div>'+
       (window.caV2TrackingSummary?window.caV2TrackingSummary(c):'<div class="ca-expediente-steps">'+lines+'</div>')+
       '<p class="ca-expediente-help">Selecciona una actividad para consultar su estado o registrar su realización. Los depósitos y honorarios conservan su verificación externa.</p>'+
       '<div class="modal-actions"><button class="btn" type="button" id="ca-exp-view-contract">Consultar contrato</button></div>'+
@@ -66,7 +66,38 @@
     byId('ca-tab-info').tabIndex=info?0:-1;byId('ca-tab-track').tabIndex=info?-1:0;
     byId('ca-expediente-body').innerHTML=info?infoMarkup(c):trackingMarkup(c);
     if(info){byId('ca-expediente-form').addEventListener('submit',save);byId('ca-wa-client')?.addEventListener('click',()=>window.caV2OpenWhatsApp?.('client',activeClientId));}
-    else {byId('ca-exp-view-contract').addEventListener('click',()=>window.caViewContract?.(activeClientId));byId('ca-expediente-body').querySelectorAll('.ca-expediente-summary-edit').forEach(button=>button.addEventListener('click',()=>window.caV2OpenActivity?.(activeClientId,button.dataset.activity)));}
+    else {byId('ca-exp-view-contract').addEventListener('click',()=>window.caViewContract?.(activeClientId));byId('ca-expediente-body').querySelectorAll('.ca-expediente-summary-edit').forEach(button=>button.addEventListener('click',()=>button.dataset.activity==='afore'?editAfore():window.caV2OpenActivity?.(activeClientId,button.dataset.activity)));}
+  }
+  function editAfore(){
+    const c=clientById(activeClientId);if(!c)return;
+    let overlay=byId('ca-exp-afore-modal');
+    if(!overlay){
+      overlay=document.createElement('div');overlay.id='ca-exp-afore-modal';overlay.className='modal-overlay';overlay.hidden=true;
+      overlay.innerHTML='<section class="modal ca-exp-afore-dialog" role="dialog" aria-modal="true" aria-labelledby="ca-exp-afore-title"><header class="modal-head"><h3 id="ca-exp-afore-title">Editar AFORE del cliente</h3><button class="icon-button" type="button" id="ca-exp-afore-close" aria-label="Cerrar">×</button></header><form class="ca-exp-afore-form" id="ca-exp-afore-form"><label>AFORE registrada<input id="ca-exp-afore-name" maxlength="100" required placeholder="Nombre de la AFORE"></label><p id="ca-exp-afore-feedback" role="status"></p><div class="modal-actions"><button type="button" class="btn" id="ca-exp-afore-cancel">Cancelar</button><button type="submit" class="btn btn-primary" id="ca-exp-afore-save">Guardar AFORE</button></div></form></section>';
+      document.body.appendChild(overlay);
+      const hide=()=>{overlay.hidden=true;};
+      byId('ca-exp-afore-close').addEventListener('click',hide);
+      byId('ca-exp-afore-cancel').addEventListener('click',hide);
+      overlay.addEventListener('click',event=>{if(event.target===overlay)hide();});
+      byId('ca-exp-afore-form').addEventListener('submit',async event=>{
+        event.preventDefault();
+        const client=clientById(activeClientId),value=byId('ca-exp-afore-name').value.trim(),btn=byId('ca-exp-afore-save'),msg=byId('ca-exp-afore-feedback');
+        if(!client||!value)return;
+        btn.disabled=true;msg.textContent='Guardando…';
+        try{
+          const reply=await portalAction({action:'update_client_info',clientId:client.id,expectedUpdatedAt:client.updatedAt,afore:value});
+          const list=state.bootstrap?.clients||[],index=list.findIndex(x=>x.id===client.id);
+          if(index>=0&&reply.client)list[index]=reply.client;
+          await refreshDashboardOnly();
+          overlay.hidden=true;switchTab('seguimiento');
+          msg.textContent='';toast('AFORE actualizada en el expediente','success');
+        }catch(err){msg.textContent=err?.message||'No se pudo guardar la AFORE';}
+        finally{btn.disabled=false;}
+      });
+    }
+    byId('ca-exp-afore-name').value=c.afore||'';
+    byId('ca-exp-afore-feedback').textContent='';
+    overlay.hidden=false;byId('ca-exp-afore-name').focus();
   }
   function close(){const el=byId('ca-expediente-v2');if(el)el.hidden=true;activeClientId='';}
   async function save(event){
