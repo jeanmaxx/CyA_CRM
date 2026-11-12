@@ -1,0 +1,68 @@
+name: Portal de Colaboradores v2 — verificaciones
+on:
+  pull_request:
+    paths:
+      - "colaborador/**"
+      - "runtime/colaboradores.html"
+      - "supabase/functions/collaborator-portal/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/portal-v2-checks.yml"
+jobs:
+  regressions:
+    name: Suite de regresión CRM
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Pruebas focalizadas del portal
+        run: |
+          node tests/collaborator-ui.cjs
+          node tests/collaborator-sidebar.cjs
+          node tests/compat-routing.cjs
+          node tests/collaborator-v2-stage2.cjs
+          node tests/collaborator-v2-stage3.cjs
+          node tests/collaborator-v2-stage4.cjs
+          node tests/collaborator-v2-stage6.cjs
+          node tests/collaborator-v2-whatsapp.cjs
+      - name: Suite completa del CRM
+        run: npm test
+
+  legacy-baseline:
+    name: Comparación de regresiones existentes en main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Diagnóstico de tres pruebas en main (solo lectura)
+        run: |
+          node tests/operations.cjs || echo "BASELINE_FAIL: operations.cjs"
+          node tests/whatsapp-approval-recontact.cjs || echo "BASELINE_FAIL: whatsapp-approval-recontact.cjs"
+          node tests/dom.cjs || echo "BASELINE_FAIL: dom.cjs"
+
+  edge-syntax:
+    name: Comprobación TypeScript Edge
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check --node-modules-dir=auto supabase/functions/collaborator-portal/index.ts

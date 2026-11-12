@@ -1,0 +1,9 @@
+.ca-wa-dialog{width:min(650px,95vw);max-height:92vh;overflow:auto}
+.ca-wa-body{display:grid;gap:14px;padding:16px 20px 22px}
+.ca-wa-body>p{font-size:12px;color:var(--muted);margin:0}
+.ca-wa-body label{display:grid;gap:7px;font-size:12px;font-weight:600}
+.ca-wa-body select,.ca-wa-body textarea{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-3);color:var(--text);font:inherit}
+.ca-wa-body textarea{resize:vertical;line-height:1.6;min-height:180px}
+.ca-wa-body .modal-actions{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+.ca-wa-button{display:inline-flex;align-items:center;gap:6px}
+@media(max-width:600px){.ca-wa-body{padding:12px}.ca-wa-body .modal-actions .btn{flex:1;min-width:140px}}

@@ -1,0 +1,22 @@
+.ca-expediente-modal{width:min(760px,100%);max-height:min(90vh,880px);overflow-y:auto}
+.ca-expediente-tabs{display:flex;gap:8px;padding:12px 20px;border-bottom:1px solid var(--border)}
+.ca-expediente-tabs button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 16px;font:600 12px var(--font);cursor:pointer}
+.ca-expediente-tabs button[aria-selected="true"]{border-color:var(--gold);color:var(--gold);background:rgba(255,194,14,.09)}
+.ca-expediente-modal #ca-expediente-message{margin:0 20px;padding-top:10px;font-size:12px;color:var(--success);min-height:16px}
+.ca-expediente-form,.ca-expediente-followup{display:grid;gap:15px;padding:15px 20px 22px}
+.ca-expediente-form label{display:grid;gap:7px;font-size:11px;color:var(--text);font-weight:600}
+.ca-expediente-form input,.ca-expediente-form textarea{display:block;width:100%;max-width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-3);color:var(--text);font:400 13px var(--font)}
+.ca-expediente-form input[readonly]{opacity:.8;cursor:default}
+.ca-expediente-form textarea{resize:vertical;line-height:1.5}
+.ca-expediente-help{margin:0;font-size:11px;color:var(--muted);line-height:1.6}
+.ca-expediente-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ca-expediente-summary>div{padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;min-width:0}
+.ca-expediente-summary small{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}
+.ca-expediente-summary strong{display:block;overflow-wrap:anywhere;font-size:12px}
+.ca-expediente-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ca-expediente-step{display:flex;gap:9px;align-items:center;padding:11px;border:1px solid var(--border);border-radius:11px;font-size:11px}
+.ca-expediente-step span{display:grid;place-items:center;width:22px;height:22px;flex:none;border:1px solid var(--border);border-radius:50%;color:var(--muted)}
+.ca-expediente-step span.is-complete{border-color:var(--success);background:rgba(83,214,162,.12);color:var(--success)}
+.client-name-link,.portal-v2-name-link{font:inherit;color:inherit;text-align:left;padding:0;border:0;background:none;cursor:pointer;overflow-wrap:anywhere}
+.client-name-link:hover,.portal-v2-name-link:hover{text-decoration:underline;text-decoration-color:var(--gold)}
+@media(max-width:780px){.ca-expediente-modal{max-height:94vh}.ca-expediente-tabs{padding:11px}.ca-expediente-form,.ca-expediente-followup{padding:12px}.ca-expediente-steps,.ca-expediente-summary{grid-template-columns:1fr}}

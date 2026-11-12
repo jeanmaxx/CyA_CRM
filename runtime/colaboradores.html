@@ -24,6 +24,11 @@
   <link rel="stylesheet" href="/colaborador/phase4.css?v=20260914-1">
   <link rel="stylesheet" href="/colaborador/alva-ui.css?v=20260918-brand8">
   <link rel="stylesheet" href="/colaborador/alva-phase-d.css?v=phase-d2-sidebar1">
+  <link rel="stylesheet" href="/colaborador/portal-v2-stage2.css?v=20261112-s2">
+  <link rel="stylesheet" href="/colaborador/portal-v2-stage3.css?v=20261112-s3">
+  <link rel="stylesheet" href="/colaborador/portal-v2-stage4.css?v=20261112-s4">
+  <link rel="stylesheet" href="/colaborador/portal-v2-stage6.css?v=20261112-s6">
+  <link rel="stylesheet" href="/colaborador/portal-v2-whatsapp.css?v=20261112-wa">
 </head>
 <body>
   <div id="login-view" class="login-shell">
@@ -117,8 +122,9 @@
           <label>Banco<input id="p-bank" placeholder="Opcional"></label>
           <label>¿Cuenta Nivel 4?<select id="p-bank-level"><option value="">Sin dato</option><option value="si">Sí</option><option value="no">No</option><option value="no_sabe">No sabe</option></select></label>
         </div>
+        <label>Domicilio completo<textarea id="p-address" rows="2" maxlength="1000" placeholder="Calle, número, colonia, C.P., municipio y estado"></textarea></label>
         <label>Notas<textarea id="p-notes" rows="4" placeholder="Cualquier información adicional que ya conozcas"></textarea></label>
-        <div class="modal-actions"><button id="cancel-prospect" class="btn" type="button">Cancelar</button><button id="save-prospect" class="btn btn-primary" type="submit">Guardar prospecto</button></div>
+        <div class="modal-actions"><button id="ca-wa-prospect" class="btn ca-wa-button" type="button" hidden>WhatsApp</button><button id="cancel-prospect" class="btn" type="button">Cancelar</button><button id="save-prospect" class="btn btn-primary" type="submit">Guardar prospecto</button></div>
         <div id="prospect-form-message" class="form-message" role="alert"></div>
       </form>
     </section>
@@ -141,5 +147,10 @@
   <script src="/colaborador/alva-ui.js?v=20260918-brand8"></script>
   <script src="/colaborador/phase-d-finalize.js?v=phase-d1"></script>
   <script src="/colaborador/sidebar.js?v=20260921-1"></script>
+  <script src="/colaborador/portal-v2-stage2.js?v=20261112-s2"></script>
+  <script src="/colaborador/portal-v2-stage3.js?v=20261112-s3"></script>
+  <script src="/colaborador/portal-v2-stage4.js?v=20261112-s4"></script>
+  <script src="/colaborador/portal-v2-stage6.js?v=20261112-s6"></script>
+  <script src="/colaborador/portal-v2-whatsapp.js?v=20261112-wa"></script>
 </body>
 </html>
