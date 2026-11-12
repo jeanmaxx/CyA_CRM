@@ -7,7 +7,7 @@ const stage4=fs.readFileSync('colaborador/portal-v2-stage4.js','utf8');
 const backend=fs.readFileSync('supabase/functions/collaborator-portal/index.ts','utf8');
 const css=fs.readFileSync('colaborador/portal-v2-stage3.css','utf8');
 assert.match(html,/portal-v2-signature\.js\?v=20261112-mx/);
-assert.match(stage3,/id="ca-exp-sign"/);
+assert.doesNotMatch(stage3,/id="ca-exp-sign"/,'Signature now appears only as the first milestone');
 assert.match(stage4,/caV2ConfirmSignature/);
 assert.match(backend,/action==='confirm_contract_signature'/);
 assert.match(backend,/stage:'contrato_firmado'/);
