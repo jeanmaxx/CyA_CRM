@@ -21,3 +21,7 @@
 .ca-v2-mini-activities{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .ca-v2-mini-row button{width:100%;text-align:left;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:9px;padding:10px;font-size:11px;cursor:pointer}
 @media(max-width:780px){.ca-v2-table th.ca-v2-sticky{min-width:170px;max-width:190px}.ca-v2-mini-activities{grid-template-columns:1fr}.ca-v2-table{min-width:960px}}
+
+/* Verificación externa: notas amplias y legibles en el modal. */
+.ca-v2-form-field textarea{display:block;width:100%;min-height:96px;resize:vertical;padding:11px;border:1px solid var(--border);border-radius:9px;background:var(--surface-3);color:var(--text);font:inherit;line-height:1.5}
+.ca-v2-form-field textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
