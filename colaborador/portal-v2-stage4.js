@@ -110,7 +110,7 @@
    await refreshDashboardOnly();
    const prior=selected.key;close();
    if(state.page==='clientes')window.navigate('clientes',true);
-   toast('Actividad registrada: '+steps.find(s=>s.key===prior)?.title,'success');
+   toast(result.warning||('Actividad registrada: '+steps.find(s=>s.key===prior)?.title),result.warning?'error':'success');
   }catch(ex){error.textContent=ex?.message||'No se pudo guardar la actividad.';button.disabled=false;}
  }
  window.caV2TrackingSummary=function(c){
