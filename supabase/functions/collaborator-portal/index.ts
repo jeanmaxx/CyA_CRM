@@ -44,7 +44,7 @@ if(action==='get_contract'||action==='record_contract_download'){const clientId=
 
 if(action==='complete_activity'){
  const clientId=text(body.clientId),key=text(body.activity),expected=text(body.expectedUpdatedAt);
- if(!clientId||!expected||!['alta','app','banco','cita','expediente','solicitud'].includes(key))return respond(req,400,{error:'Actividad o expediente inválido'});
+ if(!clientId||!expected||!['alta','app','banco','cita','expediente','solicitud','deposito','honorarios'].includes(key))return respond(req,400,{error:'Actividad o expediente inválido'});
  const c=await getOwnClient(clientId);
  if(!c||c.discarded)return respond(req,404,{error:'Expediente no disponible'});
  if(c.service_id!=='retiro_desempleo')return respond(req,400,{error:'Actividad válida solo para retiro por desempleo'});
@@ -78,14 +78,34 @@ if(action==='complete_activity'){
    if(!date(input.date))return respond(req,400,{error:'Registra fecha de solicitud'});
    patch.fechaSolicitudRealizada=date(input.date);if(stage==='afore_actualizada')next='solicitud_realizada';
  }
- const titles:any={alta:'Cliente dado de alta',app:'App AforeMóvil instalada',banco:'Cuenta bancaria nivel 4',cita:'Cita AFORE',expediente:'Expediente AFORE actualizado',solicitud:'Solicitud en aplicación'};
+ if(key==='deposito'||key==='honorarios'){
+   const verifier=text(input.verifier),notes=text(input.notes);
+   if(!['advisor','jorge_casillas','fernanda_massiel'].includes(verifier))return respond(req,400,{error:'Selecciona quién verificó el pago'});
+   if(notes.length>1000)return respond(req,400,{error:'Las notas no pueden superar los 1000 caracteres'});
+   if(key==='deposito'&&!['solicitud_realizada','deposito_recibido','honorarios_recibidos','concluido'].includes(stage))return respond(req,409,{error:'Primero debe registrarse la solicitud en aplicación'});
+   if(key==='honorarios'&&!['deposito_recibido','honorarios_recibidos','concluido'].includes(stage))return respond(req,409,{error:'Primero debe constar la recepción de depósito'});
+   const prev=p.portalActividades?.[key];
+   if(prev?.done)return respond(req,409,{error:'La verificación ya fue registrada. Actualiza el expediente.'});
+   let verifierName=verifier==='jorge_casillas'?'Jorge Casillas':verifier==='fernanda_massiel'?'Fernanda Massiel':'';
+   if(verifier==='advisor'){
+     const {data:advisor,error:advisorError}=await admin.from('profiles').select('full_name').eq('id',collaborator.advisor_id).single();
+     if(advisorError||!advisor)throw advisorError||new Error('No se encontró al asesor asignado');
+     verifierName=String(advisor.full_name||'Asesor asignado');
+   }
+   // Es una constancia de verificación externa, no una aprobación hecha desde el CRM.
+   patch.portalVerificaciones={...(p.portalVerificaciones||{}),[key]:{verifier,verifierName,notes,recordedBy:collaborator.name,recordedByUserId:authData.user!.id,recordedAt:now,source:'external_confirmation'}};
+   if(key==='deposito'&&stage==='solicitud_realizada')next='deposito_recibido';
+   if(key==='honorarios'&&stage==='deposito_recibido')next='honorarios_recibidos';
+ }
+ const titles:any={alta:'Cliente dado de alta',app:'App AforeMóvil instalada',banco:'Cuenta bancaria nivel 4',cita:'Cita AFORE',expediente:'Expediente AFORE actualizado',solicitud:'Solicitud en aplicación',deposito:'Recepción de depósito (verificación externa)',honorarios:'Pago de honorarios (verificación externa)'};
  const history=Array.isArray(p.historial)?[...p.historial]:[];
- history.push({tipo:'colaborador',texto:collaborator.name+' completó: '+titles[key],fecha:now,usuario:'Colaborador: '+collaborator.name,usuarioId:authData.user!.id});
+ const verifierMessage=(key==='deposito'||key==='honorarios')?' · Verificó: '+patch.portalVerificaciones[key].verifierName+(patch.portalVerificaciones[key].notes?' · Nota: '+patch.portalVerificaciones[key].notes:''):'';
+ history.push({tipo:'colaborador',texto:collaborator.name+' registró: '+titles[key]+verifierMessage,fecha:now,usuario:'Colaborador: '+collaborator.name,usuarioId:authData.user!.id});
  const payload={...p,...patch,portalActividades:{...(p.portalActividades||{}),[key]:{done:true,at:now,by:collaborator.name}},historial:history};
  const {data:updated,error}=await admin.from('clients').update({stage:next,payload,updated_at:now}).eq('organization_id',account.organization_id).eq('id',clientId).eq('collaborator_id',collaborator.id).eq('advisor_id',collaborator.advisor_id).eq('updated_at',expected).select('id,name,phone,curp,service_id,stage,archived,discarded,payload,created_at,updated_at,collaborator_id').maybeSingle();
  if(error)throw error;
  if(!updated)return respond(req,409,{error:'El expediente cambió. Actualiza antes de guardar.'});
- await appendActivity('client_activity_completed',null,{clientId,activity:key});
+ await appendActivity('client_activity_completed',null,{clientId,activity:key,verifier:key==='deposito'||key==='honorarios'?patch.portalVerificaciones[key].verifierName:null});
  return respond(req,200,{ok:true,client:serializeClient(updated,collaborator)});
 }
 if(action==='update_client_info'){
