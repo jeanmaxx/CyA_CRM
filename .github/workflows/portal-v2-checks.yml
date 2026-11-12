@@ -60,3 +60,23 @@ jobs:
         with:
           deno-version: v2.x
       - run: deno check --node-modules-dir=auto supabase/functions/collaborator-portal/index.ts
+
+  legacy-baseline:
+    name: Comparación de regresiones existentes en main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Diagnóstico de tres pruebas en main (solo lectura)
+        run: |
+          node tests/operations.cjs || echo "BASELINE_FAIL: operations.cjs"
+          node tests/whatsapp-approval-recontact.cjs || echo "BASELINE_FAIL: whatsapp-approval-recontact.cjs"
+          node tests/dom.cjs || echo "BASELINE_FAIL: dom.cjs"
