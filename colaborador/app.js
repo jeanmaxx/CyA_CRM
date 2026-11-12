@@ -129,7 +129,7 @@ function openProspectModal(id=''){
   $('prospect-modal-title').textContent=p?'Editar prospecto':'Nuevo prospecto';$('prospect-id').value=p?.id||'';
   $('p-name').value=p?.name||'';$('p-phone').value=p?.phone||'';$('p-curp').value=p?.curp||'';$('p-service').value=p?.serviceId||'retiro_desempleo';
   $('p-fees').value=p?.honorariosManejados??'';$('p-city').value=p?.city||'';$('p-afore').value=p?.afore||'';$('p-afore-mobile').value=p?.aforeMovil||'';$('p-bank').value=p?.bank||'';$('p-bank-level').value=p?.bankLevel4||'';$('p-address').value=p?.address||'';$('p-notes').value=p?.notes||'';
-  $('prospect-form-message').textContent='';updateCurpHelper();$('prospect-modal').hidden=false;setTimeout(()=>$('p-name').focus(),30);
+  $('prospect-form-message').textContent='';const waBtn=$('ca-wa-prospect');if(waBtn){waBtn.hidden=!p;waBtn.onclick=p?()=>window.caV2OpenWhatsApp?.('lead',p.id):null;}updateCurpHelper();$('prospect-modal').hidden=false;setTimeout(()=>$('p-name').focus(),30);
 }
 window.openProspectModal=openProspectModal;
 function closeProspectModal(){$('prospect-modal').hidden=true;state.editingId=null;}
