@@ -9,7 +9,7 @@ assert.match(html,/portal-v2-final-layout\.css\?v=20261112-final/);
 assert.match(html,/portal-v2-stage3\.js\?v=20261112-final/);
 assert.match(html,/portal-v2-stage4\.js\?v=20261112-final/);
 assert.match(css,/\.portal-v2-lane \.phase-head[\s\S]{0,200}min-height:0!important/);
-assert.match(css,/\.finance-row>\\*/);
+assert.ok(css.includes('.finance-row>*'));
 assert.match(css,/\.ca-guide-accordion-toggle/);
 assert.match(priorityCss,/\.ca-home-task-priority,\s*\.ca-home-task-priority\[title\]/);
 assert.match(priorityCss,/background:transparent!important;border:0!important/);
@@ -18,7 +18,7 @@ assert.match(priorityCss,/html\[data-theme="light"\] \.ca-home-task-priority-tex
 assert.match(stage3,/data-activity="afore"/);
 assert.match(stage3,/data-activity="banco"/);
 assert.match(stage3,/data-activity="cita"/);
-assert.match(stage4,/complete&&!\\['banco','cita'\\]\.includes\(key\)/);
+assert.ok(stage4.includes("if(complete&&!['banco','cita'].includes(key))"));
 assert.match(edge,/allowed=\['name','phone','address','afore'\]/);
 assert.match(edge,/afore,historial:history/);
 assert.match(edge,/\.eq\('updated_at',expected\)/);
