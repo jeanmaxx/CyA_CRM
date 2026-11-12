@@ -22,7 +22,7 @@
     const approved=laneKey(p)==='aprobado';
     const name=esc(p.name||'Prospecto'),id=esc(p.id||'');
     return `<article class="prospect-card portal-v2-prospect-card ${approved?'portal-v2-approved-card':''}">
-      <div class="prospect-card-head"><div><h4>${name}</h4><div class="curp">${esc(p.curp||'CURP pendiente')}</div></div></div>
+      <div class="prospect-card-head"><div><h4><button type="button" class="portal-v2-name-link" onclick="openProspectModal(\'${id}\')">${name}</button></h4><div class="curp">${esc(p.curp||'CURP pendiente')}</div></div></div>
       <div class="prospect-meta">${prospectDetails(p)}</div>
       ${approved?'<div class="eligibility-confirmed">✓ Aprobación confirmada por el equipo.</div>':''}
       <div class="prospect-actions"><button class="btn" type="button" onclick="openProspectModal('${id}')">Datos</button></div>
