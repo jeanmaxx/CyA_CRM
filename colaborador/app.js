@@ -141,7 +141,7 @@ async function saveProspect(event){
   event.preventDefault();if(state.loading)return;
   const wasEditing=Boolean(state.editingId);const payload=payloadFromForm();
   if(!payload.name.trim()||!payload.phone.trim()||!payload.curp.trim()){$('prospect-form-message').textContent='Nombre, teléfono y CURP son los únicos datos obligatorios.';return;}
-  try{setBusy(true);$('save-prospect').disabled=true;const action=state.editingId?'update_prospect':'create_prospect';const data=await portalAction({...payload,action,leadId:state.editingId||undefined});
+  try{setBusy(true);$('save-prospect').disabled=true;const action=state.editingId?'update_prospect':'create_prospect';const expectedUpdatedAt=state.editingId?state.prospects.find(p=>p.id===state.editingId)?.updatedAt:undefined;const data=await portalAction({...payload,action,leadId:state.editingId||undefined,expectedUpdatedAt});
     const prospect=data.prospect;if(state.editingId){const i=state.prospects.findIndex(x=>x.id===state.editingId);if(i>=0)state.prospects[i]=prospect;}else state.prospects.unshift(prospect);
     await refreshDashboardOnly();navigate('prospectos',true);if(wasEditing){$('prospect-modal-title').textContent='Expediente · Prospecto';$('prospect-form-message').textContent='Cambios guardados. Puedes continuar editando.';}else closeProspectModal();toast(wasEditing?'Prospecto actualizado':'Prospecto enviado a tu asesor','success');
   }catch(error){$('prospect-form-message').textContent=error.message;toast(error.message,'error');}finally{setBusy(false);$('save-prospect').disabled=false;}
