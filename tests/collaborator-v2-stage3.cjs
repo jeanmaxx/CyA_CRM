@@ -10,7 +10,7 @@ const edge=fs.readFileSync('supabase/functions/collaborator-portal/index.ts','ut
 const css=fs.readFileSync('colaborador/portal-v2-stage3.css','utf8');
 
 assert.match(html,/id="p-address"/);
-assert.match(html,/portal-v2-stage3\.js\?v=20261112-sign/);
+assert.match(html,/portal-v2-stage3\.js\?v=20261112-mx/);
 assert.match(html,/portal-v2-stage3\.css\?v=20261112-modal/);
 assert.match(app,/expectedUpdatedAt/);
 assert.match(app,/const wasEditing=Boolean\(state\.editingId\)/);
