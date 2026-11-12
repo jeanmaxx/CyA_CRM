@@ -7,7 +7,7 @@ const stage4=fs.readFileSync('colaborador/portal-v2-stage4.js','utf8');
 const edge=fs.readFileSync('supabase/functions/collaborator-portal/index.ts','utf8');
 assert.match(html,/portal-v2-final-layout\.css\?v=20261112-overlay/);
 assert.match(html,/portal-v2-stage3\.js\?v=20261112-final/);
-assert.match(html,/portal-v2-stage4\.js\?v=20261112-final/);
+assert.match(html,/portal-v2-stage4\.js\?v=20261112-cards/);
 assert.match(css,/\.portal-v2-lane \.phase-head[\s\S]{0,200}min-height:0!important/);
 assert.ok(css.includes('#ca-v2-activity-modal{z-index:30050!important'));
 assert.ok(css.includes('#ca-v2-activity-modal[hidden]{display:none!important'));
