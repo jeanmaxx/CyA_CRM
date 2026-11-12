@@ -10,7 +10,7 @@
   {id:'deposito',title:'Confirmación de depósito',message:'{{SALUDO}}, {{NOMBRE}}. Soy {{COLABORADOR}} de Casillas & Asociados. ¿Podrías confirmarme si ya recibiste el depósito de tu AFORE? Por favor no envíes contraseñas ni información bancaria sensible por este medio.'}
  ];
  const $=id=>document.getElementById(id);
- const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;':'&quot;',"'":'&#39;'}[ch]));
+ const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>ch==='&'?'&amp;':ch==='<'?'&lt;':ch==='>'?'&gt;':ch==='"'?'&quot;':'&#39;');
  const shortName=v=>String(v||'').trim().split(/\s+/)[0].toLocaleLowerCase('es-MX').replace(/^./,c=>c.toLocaleUpperCase('es-MX'));
  const cleanNumber=v=>{
    let digits=String(v||'').replace(/\D/g,'');
