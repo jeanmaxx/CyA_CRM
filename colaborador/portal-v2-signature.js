@@ -37,8 +37,9 @@
   if(!c||c.stage!=='contrato_firmas')return;
   ensure();id=c.id;
   $('ca-signature-person').textContent=c.name+' · Colaborador responsable de la firma';
-  $('ca-signature-date').value=new Date().toLocaleDateString('en-CA');
-  $('ca-signature-date').max=new Date().toLocaleDateString('en-CA');
+  const now=new Date(),today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+  $('ca-signature-date').value=today;
+  $('ca-signature-date').max=today;
   $('ca-signature-note').value='';$('ca-signature-error').textContent='';$('ca-signature-submit').disabled=false;
   $('ca-signature-modal').hidden=false;
  };
