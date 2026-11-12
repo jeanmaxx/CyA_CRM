@@ -10,7 +10,7 @@
     {key:'reconsulta',title:'Pendientes en segunda revisión',tip:'El asesor está revisando nuevamente la información. Conserva el seguimiento hasta recibir una resolución.',num:'1'},
     {key:'curp',title:'Revisión de elegibilidad (CURP)',tip:'La CURP y los criterios del servicio están pendientes de validación por el equipo.',num:'2'},
     {key:'sindos',title:'Revisión de SINDOS',tip:'El equipo verifica la información de SINDOS antes de aprobar la continuación.',num:'3'},
-    {key:'aprobado',title:'Aprobado',tip:'Validación confirmada por Líder de equipo. Ya puedes contactar al prospecto para solicitar INE y elaborar contrato.',num:'✓'}
+    {key:'aprobado',title:'Aprobado',tip:'Ya puedes contactar al prospecto para solicitar INE y elaborar contrato.',num:'✓'}
   ];
   const STATUS_LABELS={reconsulta:'Segunda revisión',sindos:'Revisión de SINDOS',aprobado:'Aprobado',semanas:'Revisión de elegibilidad (CURP)',pensiones:'Revisión de elegibilidad (CURP)',correccion_imss:'Revisión de elegibilidad (CURP)'};
   function laneKey(p){
