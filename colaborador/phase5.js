@@ -26,6 +26,8 @@
 
   function injectEligibleLane(){
     const board=document.querySelector('.phase-board');
+    // Portal v2 renders the approved lane natively. Keep this legacy injector disabled.
+    return;
     if(!board||board.querySelector('[data-eligible-column]'))return;
     const columns=board.querySelectorAll(':scope > .phase-column');
     const first=columns[0];if(!first)return;
