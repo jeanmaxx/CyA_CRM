@@ -38,5 +38,5 @@ assert.match(clientJs,/String\(c\.stage\|\|''\)!=='generando_contrato'/);
 assert.match(clientJs,/signaturePending=client\.stage==='contrato_firmas'/);
 assert.match(eligibleJs,/Portal v2 renders the approved lane natively/);
 assert.match(html,/portal-v2-stage2\.css\?v=20261112-compact/);
-assert.match(html,/portal-v2-stage2\.js\?v=20261112-approved/);
+assert.match(html,/portal-v2-stage2\.js\?v=20261112-cards/);
 console.log('PASS: portal v2 stage 2 lanes, signing visibility, no legacy approved lane duplication, and layout hooks.');
