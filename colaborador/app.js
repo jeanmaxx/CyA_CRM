@@ -128,22 +128,22 @@ function openProspectModal(id=''){
   const p=id?state.prospects.find(x=>x.id===id):null;
   $('prospect-modal-title').textContent=p?'Editar prospecto':'Nuevo prospecto';$('prospect-id').value=p?.id||'';
   $('p-name').value=p?.name||'';$('p-phone').value=p?.phone||'';$('p-curp').value=p?.curp||'';$('p-service').value=p?.serviceId||'retiro_desempleo';
-  $('p-fees').value=p?.honorariosManejados??'';$('p-city').value=p?.city||'';$('p-afore').value=p?.afore||'';$('p-afore-mobile').value=p?.aforeMovil||'';$('p-bank').value=p?.bank||'';$('p-bank-level').value=p?.bankLevel4||'';$('p-notes').value=p?.notes||'';
+  $('p-fees').value=p?.honorariosManejados??'';$('p-city').value=p?.city||'';$('p-afore').value=p?.afore||'';$('p-afore-mobile').value=p?.aforeMovil||'';$('p-bank').value=p?.bank||'';$('p-bank-level').value=p?.bankLevel4||'';$('p-address').value=p?.address||'';$('p-notes').value=p?.notes||'';
   $('prospect-form-message').textContent='';updateCurpHelper();$('prospect-modal').hidden=false;setTimeout(()=>$('p-name').focus(),30);
 }
 window.openProspectModal=openProspectModal;
 function closeProspectModal(){$('prospect-modal').hidden=true;state.editingId=null;}
 
-function payloadFromForm(){return {name:$('p-name').value,phone:$('p-phone').value,curp:$('p-curp').value,serviceId:$('p-service').value,honorariosManejados:$('p-fees').value,city:$('p-city').value,afore:$('p-afore').value,aforeMovil:$('p-afore-mobile').value,bank:$('p-bank').value,bankLevel4:$('p-bank-level').value,notes:$('p-notes').value};}
+function payloadFromForm(){return {name:$('p-name').value,phone:$('p-phone').value,curp:$('p-curp').value,serviceId:$('p-service').value,honorariosManejados:$('p-fees').value,city:$('p-city').value,afore:$('p-afore').value,aforeMovil:$('p-afore-mobile').value,bank:$('p-bank').value,bankLevel4:$('p-bank-level').value,address:$('p-address').value,notes:$('p-notes').value};}
 function updateCurpHelper(){const value=$('p-curp').value.trim().toUpperCase();const helper=$('curp-helper');if(!value){helper.textContent='Puedes guardar aunque el formato requiera revisión.';helper.style.color='';return;}if(value.length===18){helper.textContent='18 caracteres capturados.';helper.style.color='var(--success)';}else{helper.textContent=`${value.length}/18 caracteres. No bloquearemos el guardado.`;helper.style.color='var(--warning)';}}
 
 async function saveProspect(event){
   event.preventDefault();if(state.loading)return;
-  const payload=payloadFromForm();
+  const wasEditing=Boolean(state.editingId);const payload=payloadFromForm();
   if(!payload.name.trim()||!payload.phone.trim()||!payload.curp.trim()){$('prospect-form-message').textContent='Nombre, teléfono y CURP son los únicos datos obligatorios.';return;}
   try{setBusy(true);$('save-prospect').disabled=true;const action=state.editingId?'update_prospect':'create_prospect';const data=await portalAction({...payload,action,leadId:state.editingId||undefined});
     const prospect=data.prospect;if(state.editingId){const i=state.prospects.findIndex(x=>x.id===state.editingId);if(i>=0)state.prospects[i]=prospect;}else state.prospects.unshift(prospect);
-    closeProspectModal();await refreshDashboardOnly();navigate('prospectos',true);toast(state.editingId?'Prospecto actualizado':'Prospecto enviado a tu asesor','success');
+    await refreshDashboardOnly();navigate('prospectos',true);if(wasEditing){$('prospect-modal-title').textContent='Expediente · Prospecto';$('prospect-form-message').textContent='Cambios guardados. Puedes continuar editando.';}else closeProspectModal();toast(wasEditing?'Prospecto actualizado':'Prospecto enviado a tu asesor','success');
   }catch(error){$('prospect-form-message').textContent=error.message;toast(error.message,'error');}finally{setBusy(false);$('save-prospect').disabled=false;}
 }
 
