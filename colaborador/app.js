@@ -59,7 +59,7 @@ async function bootstrap(){
     state.bootstrap=data;state.prospects=data.prospects||[];
     const c=data.collaborator||{},a=data.advisor||{};
     $('sidebar-name').textContent=c.name||'Colaborador';$('sidebar-avatar').textContent=initials(c.name);$('sidebar-advisor').textContent=`Asesor: ${a.name||'Asignado'}`;
-    fillServices();showPortal();navigate(state.page,true);
+    fillServices();showPortal();window.navigate(state.page,true);
   }catch(error){
     await portalClient.auth.signOut();showLogin(error.message||'No fue posible validar tu acceso.');
   }finally{setBusy(false);}
@@ -81,7 +81,7 @@ function renderHome(){
     <article class="kpi-card"><span>Efectividad</span><strong>${Number(d.effectiveness||0).toFixed(Number(d.effectiveness||0)%1?1:0)}%</strong><small>Clientes / oportunidades</small></article>
     <article class="kpi-card money"><span>Comisiones pendientes</span><strong>${money(d.pending||0)}</strong><small>Cobrado: ${money(d.collected||0)}</small></article>
   </section>
-  <section class="section-card"><div class="section-head"><div><h3>Prospectos recientes</h3><p>Últimas oportunidades que continúan en seguimiento</p></div><button class="btn" onclick="navigate('prospectos')">Ver todos</button></div>
+  <section class="section-card"><div class="section-head"><div><h3>Prospectos recientes</h3><p>Últimas oportunidades que continúan en seguimiento</p></div><button class="btn" onclick="window.navigate('prospectos')">Ver todos</button></div>
     ${recent.length?`<div class="quick-list">${recent.map(p=>`<div class="quick-row"><div><strong>${esc(p.name)}</strong><span>${esc(p.curp||'')}</span></div><span class="quick-stage">${esc(PHASES.find(x=>x.id===p.phase)?.title||'Seguimiento')}</span><span>${dateMX(p.updatedAt||p.createdAt)}</span></div>`).join('')}</div>`:'<div class="empty-state">Todavía no tienes prospectos activos. Usa “+ Prospecto” para enviar el primero.</div>'}
   </section>`;
 }
@@ -143,7 +143,7 @@ async function saveProspect(event){
   if(!payload.name.trim()||!payload.phone.trim()||!payload.curp.trim()){$('prospect-form-message').textContent='Nombre, teléfono y CURP son los únicos datos obligatorios.';return;}
   try{setBusy(true);$('save-prospect').disabled=true;const action=state.editingId?'update_prospect':'create_prospect';const expectedUpdatedAt=state.editingId?state.prospects.find(p=>p.id===state.editingId)?.updatedAt:undefined;const data=await portalAction({...payload,action,leadId:state.editingId||undefined,expectedUpdatedAt});
     const prospect=data.prospect;if(state.editingId){const i=state.prospects.findIndex(x=>x.id===state.editingId);if(i>=0)state.prospects[i]=prospect;}else state.prospects.unshift(prospect);
-    await refreshDashboardOnly();navigate('prospectos',true);if(wasEditing){$('prospect-modal-title').textContent='Expediente · Prospecto';$('prospect-form-message').textContent='Cambios guardados. Puedes continuar editando.';}else closeProspectModal();toast(wasEditing?'Prospecto actualizado':'Prospecto enviado a tu asesor','success');
+    await refreshDashboardOnly();window.navigate('prospectos',true);if(wasEditing){$('prospect-modal-title').textContent='Expediente · Prospecto';$('prospect-form-message').textContent='Cambios guardados. Puedes continuar editando.';}else closeProspectModal();toast(wasEditing?'Prospecto actualizado':'Prospecto enviado a tu asesor','success');
   }catch(error){$('prospect-form-message').textContent=error.message;toast(error.message,'error');}finally{setBusy(false);$('save-prospect').disabled=false;}
 }
 
@@ -154,7 +154,7 @@ async function refreshDashboardOnly(){
 async function completePhase(id,step){
   const phase=PHASES.find(x=>x.id===step);if(!phase)return;
   if(!confirm(`¿Marcar como realizada tu parte de “${phase.title}”?`))return;
-  try{setBusy(true);const data=await portalAction({action:'complete_step',leadId:id,step});const i=state.prospects.findIndex(x=>x.id===id);if(i>=0)state.prospects[i]=data.prospect;await refreshDashboardOnly();navigate('prospectos',true);toast('Fase actualizada','success');}catch(error){toast(error.message,'error');}finally{setBusy(false);}
+  try{setBusy(true);const data=await portalAction({action:'complete_step',leadId:id,step});const i=state.prospects.findIndex(x=>x.id===id);if(i>=0)state.prospects[i]=data.prospect;await refreshDashboardOnly();window.navigate('prospectos',true);toast('Fase actualizada','success');}catch(error){toast(error.message,'error');}finally{setBusy(false);}
 }
 window.completePhase=completePhase;
 
@@ -163,7 +163,7 @@ $('logout-btn').addEventListener('click',async()=>{await portalClient.auth.signO
 $('new-prospect-top').addEventListener('click',()=>openProspectModal());$('close-prospect-modal').addEventListener('click',closeProspectModal);$('cancel-prospect').addEventListener('click',closeProspectModal);$('prospect-form').addEventListener('submit',saveProspect);$('p-curp').addEventListener('input',event=>{event.target.value=event.target.value.toUpperCase();updateCurpHelper();});
 ['p-name','p-city','p-afore','p-bank'].forEach(id=>$(id).addEventListener('input',event=>event.target.value=event.target.value.toLocaleUpperCase('es-MX')));
 $('prospect-modal').addEventListener('click',event=>{if(event.target===$('prospect-modal'))closeProspectModal();});
-document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',()=>navigate(el.dataset.page)));
+document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',()=>window.navigate(el.dataset.page)));
 
 (async function init(){
   const {data:{session}}=await portalClient.auth.getSession();
