@@ -6,7 +6,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node tests/sync.cjs && node tests/workflow.cjs && node tests/operations.cjs && node tests/tarifas-2026.cjs && node tests/whatsapp-clients.cjs && node tests/whatsapp-approval-recontact.cjs && node tests/birthdays.cjs && node tests/dom.cjs && node tests/docx.cjs && node tests/edge.cjs && node tests/platform.cjs && node tests/routing.cjs && node tests/tenant-routing.cjs && node tests/collaborator-ui.cjs && node tests/collaborator-sidebar.cjs && node tests/compat-routing.cjs && node tests/collaborator-v2-stage2.cjs && node tests/collaborator-v2-stage3.cjs && node tests/collaborator-v2-stage4.cjs"
+    "test": "node tests/sync.cjs && node tests/workflow.cjs && node tests/operations.cjs && node tests/tarifas-2026.cjs && node tests/whatsapp-clients.cjs && node tests/whatsapp-approval-recontact.cjs && node tests/birthdays.cjs && node tests/dom.cjs && node tests/docx.cjs && node tests/edge.cjs && node tests/platform.cjs && node tests/routing.cjs && node tests/tenant-routing.cjs && node tests/collaborator-ui.cjs && node tests/collaborator-sidebar.cjs && node tests/compat-routing.cjs && node tests/collaborator-v2-stage2.cjs && node tests/collaborator-v2-stage3.cjs && node tests/collaborator-v2-stage4.cjs && node tests/collaborator-v2-stage6.cjs"
   },
   "devDependencies": {
     "jsdom": "26.1.0",
