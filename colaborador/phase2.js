@@ -44,12 +44,12 @@
   function clientCard(client){
     const phase=phaseInfo(client);const finished=completed(client,11);const signaturePending=client.stage==='contrato_firmas';
     return `<article class="client-card">
-      <div class="client-card-top"><div><span class="client-service">${esc(serviceName(client.serviceId))}</span><h3>${esc(client.name)}</h3><p>${esc(client.curp||'CURP sin dato')}</p></div><span class="client-status ${finished?'is-finished':''}">${finished?'Concluido':signaturePending?'Firma pendiente':esc(phase.title)}</span></div>
+      <div class="client-card-top"><div><span class="client-service">${esc(serviceName(client.serviceId))}</span><h3><button type="button" class="client-name-link" onclick="caOpenClient(\'${esc(client.id)}\')">${esc(client.name)}</button></h3><p>${esc(client.curp||'CURP sin dato')}</p></div><span class="client-status ${finished?'is-finished':''}">${finished?'Concluido':signaturePending?'Firma pendiente':esc(phase.title)}</span></div>
       ${signaturePending?'<div class="client-warning">En firma de contrato · pendiente de confirmación oficial del asesor.</div>':''}
       ${phaseStrip(client)}
       ${client.progress?.rejected?'<div class="client-warning">Solicitud rechazada · el asesor continúa con el seguimiento.</div>':''}
       ${appointmentSummary(client)}
-      <div class="client-card-foot"><span>Actualizado ${dateMX(client.updatedAt||client.createdAt)}</span><button class="btn" type="button" onclick="caOpenClient('${esc(client.id)}')">Ver seguimiento</button></div>
+      <div class="client-card-foot"><span>Actualizado ${dateMX(client.updatedAt||client.createdAt)}</span><button class="btn" type="button" onclick="caOpenClient('${esc(client.id)}')">Expediente</button></div>
     </article>`;
   }
   function renderClients(){
