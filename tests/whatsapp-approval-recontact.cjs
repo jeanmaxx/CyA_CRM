@@ -89,7 +89,7 @@ vm.runInContext(code,ctx);
   const renderEnd=center.indexOf('\n  async function copyText(',renderStart);
   assert(renderStart>0&&renderEnd>renderStart,'Render WhatsApp localizable');
   const renderCtx=vm.createContext({
-    window:{},messageContactType:'lead',
+    window:{},messageContactType:'lead',archivedMessageMode:false,currentLead:()=>({id:'lead-demo'}),
     document:{getElementById:()=>null},
     firstName:value=>String(value).split(/\s+/)[0],
     advisorName:()=> 'Emmanuel Alvarez',greeting:()=> 'Buen día',
