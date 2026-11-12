@@ -56,3 +56,13 @@
 .ca-exp-afore-form label{display:grid;gap:7px;font-size:12px;font-weight:600}
 .ca-exp-afore-form input{border:1px solid var(--border);border-radius:10px;background:var(--surface-3);color:var(--text);padding:11px;font:inherit}
 #ca-exp-afore-feedback{font-size:11px;color:var(--muted);min-height:12px;margin:0}
+
+
+/* Overlay de seguimiento: banco y cita se editan sobre el expediente, nunca detrás. */
+#ca-v2-activity-modal{z-index:30050!important;position:fixed!important;inset:0!important}
+#ca-v2-activity-modal[hidden]{display:none!important}
+/* Los encabezados parten de una misma línea, sin altura artificial ni texto solapado. */
+.portal-v2-board .portal-v2-lane .phase-head{display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:stretch!important}
+.portal-v2-board .portal-v2-lane .phase-title-row{width:100%!important;align-items:flex-start!important}
+.portal-v2-board .portal-v2-lane .portal-v2-heading{min-width:0!important;align-self:flex-start!important}
+.portal-v2-board .portal-v2-lane .portal-v2-heading h3{margin-top:0!important}
