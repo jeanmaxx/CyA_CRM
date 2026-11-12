@@ -32,8 +32,8 @@
  function renderTasks(){
   const existing=$('ca-home-tasks');
   if(existing)existing.remove();
-  const root=$('page-content'),recent=root?.querySelector('.section-card');
-  if(!recent)return;
+  const root=$('page-content'),metrics=root?.querySelector('.kpi-grid');
+  if(!root||!metrics)return;
   const list=tasks(),show=list.slice(0,8);
   const section=document.createElement('section');
   section.className='section-card ca-home-tasks';section.id='ca-home-tasks';
@@ -42,25 +42,16 @@
     '<div class="ca-home-task"><div class="ca-home-task-copy"><strong>'+esc(item.client.name)+'</strong><span>'+esc(item.step.title)+'</span></div><button class="btn" type="button" data-client="'+esc(item.client.id)+'" data-activity="'+esc(item.step.key)+'" aria-label="Abrir actividad de '+esc(item.client.name)+'">Revisar</button></div>'
    ).join('')+'</div>':'<div class="empty-state">No tienes actividades pendientes en los expedientes de retiro por desempleo.</div>')+
    (list.length>8?'<div class="ca-home-foot"><button class="btn" type="button" data-page-clients>Ver los '+list.length+' pendientes en Mis clientes</button></div>':'');
-  recent.insertAdjacentElement('afterend',section);
+  metrics.insertAdjacentElement('afterend',section);
   section.querySelectorAll('[data-client]').forEach(button=>button.addEventListener('click',()=>window.caV2OpenActivity?.(button.dataset.client,button.dataset.activity)));
   section.querySelector('[data-page-clients]')?.addEventListener('click',()=>window.navigate('clientes'));
- }
- function updateRecent(){
-  const root=$('page-content');if(!root)return;
-  const recent=root.querySelector('.section-card:not(#ca-home-tasks)');
-  if(!recent)return;
-  const eligible=(state.prospects||[]).filter(p=>!['archivado','descartado'].includes(String(p.internalStatus||'').toLowerCase())).sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt))).slice(0,5);
-  const list=recent.querySelector('.quick-list');
-  const empty=recent.querySelector('.empty-state');
-  const content=eligible.length?'<div class="quick-list">'+eligible.map(p=>'<div class="quick-row"><div><strong>'+esc(p.name)+'</strong><span>'+esc(p.curp||'')+'</span></div><span class="quick-stage">'+esc(window.caPortalLeadStatusLabel?.(p)||goodStatus[p.internalStatus]||'Seguimiento')+'</span><span>'+dateMX(p.updatedAt||p.createdAt)+'</span></div>').join('')+'</div>':'<div class="empty-state">Todavía no hay prospectos activos en seguimiento.</div>';
-  (list||empty)?.remove();
-  recent.insertAdjacentHTML('beforeend',content);
  }
  function refresh(){
   if(state.page!=='inicio')return;
   compactHeader();
-  updateRecent();
+  const root=$('page-content');
+  const recent=[...root.querySelectorAll('.section-card')].find(el=>el.querySelector('.quick-list')||el.querySelector('.section-head h3')?.textContent?.includes('Prospectos recientes'));
+  if(recent)recent.remove();
   renderTasks();
  }
  const previousNavigate=window.navigate;

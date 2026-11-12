@@ -1,0 +1,46 @@
+/* Ajustes finales del portal: reglas definitivas después de todos los estilos legacy. */
+@media(min-width:980px){
+  .phase-board-wrap.portal-v2-board-wrap{width:100%!important;max-width:100%!important;overflow-x:hidden!important;scrollbar-gutter:auto!important;padding-bottom:4px!important}
+  .phase-board-wrap.portal-v2-board-wrap > .phase-board.portal-v2-board{
+    display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    width:100%!important;min-width:0!important;max-width:100%!important;gap:9px!important;
+  }
+  .phase-board.portal-v2-board > .phase-column.portal-v2-lane{
+    display:flex!important;flex-direction:column!important;min-width:0!important;
+    width:100%!important;max-width:100%!important;margin:0!important;
+    transform:none!important;box-sizing:border-box!important;
+    overflow:hidden!important;border-radius:13px!important;
+  }
+  .portal-v2-lane .phase-head{padding:10px!important;height:auto!important;min-height:137px!important}
+  .portal-v2-lane .phase-cards{min-width:0!important;width:100%!important;padding:7px!important}
+  .portal-v2-prospect-card{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+}
+@media(min-width:760px) and (max-width:979px){
+  .phase-board-wrap.portal-v2-board-wrap{overflow-x:hidden!important}
+  .phase-board-wrap.portal-v2-board-wrap>.phase-board.portal-v2-board{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important;min-width:0!important;gap:10px!important}
+  .phase-board.portal-v2-board>.phase-column.portal-v2-lane{width:100%!important;min-width:0!important;max-width:100%!important}
+}
+/* Tablero operativo: nueve hitos caben sin scroll horizontal en escritorio. */
+@media(min-width:980px){
+  .ca-v2-table-wrap{overflow-x:hidden!important;scrollbar-gutter:auto!important}
+  .ca-v2-table{width:100%!important;min-width:0!important;table-layout:fixed!important;border-spacing:0!important}
+  .ca-v2-table th,.ca-v2-table td{min-width:0!important;max-width:none!important;padding:10px 4px!important;box-sizing:border-box!important;overflow-wrap:anywhere!important}
+  .ca-v2-table thead th{font-size:10px!important;line-height:1.35!important;vertical-align:middle!important}
+  .ca-v2-table th.ca-v2-sticky{width:19%!important;min-width:0!important;max-width:none!important;padding-left:12px!important}
+  .ca-v2-table th:not(.ca-v2-sticky),.ca-v2-table td{width:9%!important}
+  .ca-v2-step{width:28px!important;height:28px!important;font-size:20px!important}
+}
+@media(max-width:979px){
+  .ca-v2-table-wrap{overflow-x:auto!important}
+  .ca-v2-table{min-width:940px!important}
+}
+.ca-v2-mini-activities{gap:6px!important}
+.ca-v2-mini-row button{padding:8px 10px!important;min-height:35px!important;line-height:1.35!important}
+.ca-expediente-followup{gap:11px!important}
+.ca-expediente-summary{gap:8px!important}
+.ca-expediente-summary>div{padding:10px!important}
+/* La guía es interactiva, independiente y temporal; reiniciar ocupa solo un ícono. */
+.guide-card-head.ca-guide-heading{cursor:default!important}
+.guide-reset-icon{display:inline-grid!important;place-items:center!important;font-size:21px!important;font-weight:600!important;line-height:1!important;width:34px!important;min-width:34px!important;height:34px!important;padding:0!important;border-radius:10px!important;color:var(--gold-2)!important}
+.guide-reset-icon:hover{background:rgba(201,169,110,.12)!important}
+@media(max-width:620px){.guide-card-head.ca-guide-heading{gap:7px!important;padding:11px!important}.guide-reset-icon{width:30px!important;min-width:30px!important;height:30px!important}.guide-card-copy small{font-size:8px!important}}
