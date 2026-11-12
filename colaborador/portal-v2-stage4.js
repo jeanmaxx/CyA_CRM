@@ -42,7 +42,7 @@
   return '<section class="clients-toolbar"><div><h1>Mis clientes</h1><p>Consulta y registra cada actividad en el expediente compartido con tu asesor.</p></div></section>'+
   '<div class="ca-v2-table-wrap" tabindex="0" role="region" aria-label="Seguimiento de clientes, desplazamiento horizontal"><table class="ca-v2-table"><thead><tr><th class="ca-v2-sticky">Cliente</th>'+
   steps.map(s=>'<th scope="col" title="'+esc(s.title)+'">'+esc(s.short)+'</th>').join('')+'</tr></thead><tbody>'+
-  (clients.length?clients.map(c=>'<tr><th scope="row" class="ca-v2-sticky"><button type="button" class="client-name-link" onclick="caOpenClient(\''+esc(c.id)+'\')">'+esc(c.name)+'</button><small>'+esc(c.stage==='contrato_firmas'?'Firma pendiente':c.curp||'')+'</small>'+(c.stage==='contrato_firmas'?'':'')+'</th>'+
+  (clients.length?clients.map(c=>'<tr><th scope="row" class="ca-v2-sticky"><button type="button" class="client-name-link" onclick="caOpenClient(\''+esc(c.id)+'\')">'+esc(c.name)+'</button><small>'+esc(c.stage==='contrato_firmas'?'Firma pendiente':c.curp||'')+'</small>'+'</th>'+
     steps.map(step=>'<td>'+(c.serviceId==='retiro_desempleo'?stepButton(c,step):'<span class="ca-v2-na" title="No aplica a este servicio">—</span>')+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="10">Todavía no hay clientes asignados.</td></tr>')+
   '</tbody></table></div><div class="ca-v2-table-legend"><span><b class="good">✓</b> Completado</span><span>○ Pendiente</span><span>Para depósito y honorarios se registra quién realizó la verificación externa. El cobro de comisiones se controla en Finanzas.</span></div>';
  }
@@ -86,15 +86,16 @@
  window.caV2OpenActivity=function(id,key){
   const c=find(id),step=steps.find(s=>s.key===key);
   if(!c||!step||c.serviceId!=='retiro_desempleo')return;
-  if(key==='firma'){window.caV2ConfirmSignature?.(c.id);return;}
+  if(key==='firma'&&!done(c,key)){window.caV2ConfirmSignature?.(c.id);return;}
   ensure();selected={id,key};
   $('ca-v2-activity-title').textContent=step.title;
   const complete=done(c,key);
   if(complete){
    const verification=c.verifications?.[key];
+   const signatureDetail=key==='firma'&&c.signature?.date?'<p>Fecha de firma: '+esc(window.caV2Dates.toMX(c.signature.date))+(c.signature.confirmedBy?' · Confirmó: '+esc(c.signature.confirmedBy):'')+'</p>':'';
    const verifiedBy=verification?.verifierName?'<p>Verificado externamente por: <strong>'+esc(verification.verifierName)+'</strong></p>':'';
    const note=verification?.notes?'<p>Notas: '+esc(verification.notes)+'</p>':'';
-   $('ca-v2-activity-content').innerHTML='<div class="ca-v2-activity-inner"><strong>'+esc(c.name)+'</strong><p>✓ Actividad completada en el expediente del CRM.</p>'+verifiedBy+note+'<button type="button" class="btn" id="ca-v2-dismiss">Cerrar</button></div>';
+   $('ca-v2-activity-content').innerHTML='<div class="ca-v2-activity-inner"><strong>'+esc(c.name)+'</strong><p>✓ Actividad completada en el expediente del CRM.</p>'+signatureDetail+verifiedBy+note+'<button type="button" class="btn" id="ca-v2-dismiss">Cerrar</button></div>';
    $('ca-v2-dismiss').addEventListener('click',close);
   }else{
    $('ca-v2-activity-content').innerHTML='<form class="ca-v2-activity-inner" id="ca-v2-activity-form"><strong>'+esc(c.name)+'</strong>'+formFor(c,key)+'<p class="ca-expediente-help">Este registro actualizará el expediente que consulta el asesor.</p><div id="ca-v2-activity-error" role="alert"></div><div class="modal-actions"><button type="submit" class="btn btn-primary" id="ca-v2-activity-save">Guardar actividad</button></div></form>';
