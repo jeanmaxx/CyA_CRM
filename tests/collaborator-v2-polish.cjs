@@ -17,7 +17,7 @@ assert.match(polish,/\.ca-v2-table\{width:100%!important;min-width:0!important;t
 assert.match(polish,/@media\(max-width:979px\)/);
 assert.match(html,/portal-v2-polish\.css\?v=20261112-layout/);
 assert.match(html,/phase4\.js\?v=20261112-final/);
-assert.match(expediente,/<small>Banco<\/small>/);
+assert.match(expediente,/<small>Banco · Editar<\/small>/);
 assert.doesNotMatch(expediente,/<small>Etapa en CRM<\/small>/);
 const dom=new JSDOM('<nav><button type="button" data-page="guia"></button></nav><div id="page-title"></div><button id="new-prospect-top"></button><div id="page-content"></div>',{url:'https://example.test',runScripts:'outside-only'});
 const w=dom.window;
