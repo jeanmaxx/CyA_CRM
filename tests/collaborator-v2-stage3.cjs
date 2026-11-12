@@ -10,7 +10,7 @@ const edge=fs.readFileSync('supabase/functions/collaborator-portal/index.ts','ut
 const css=fs.readFileSync('colaborador/portal-v2-stage3.css','utf8');
 
 assert.match(html,/id="p-address"/);
-assert.match(html,/portal-v2-stage3\.js\?v=20261112-summary/);
+assert.match(html,/portal-v2-stage3\.js\?v=20261112-final/);
 assert.match(html,/portal-v2-stage3\.css\?v=20261112-modal/);
 assert.match(app,/expectedUpdatedAt/);
 assert.match(app,/const wasEditing=Boolean\(state\.editingId\)/);
@@ -22,9 +22,11 @@ assert.match(stage3,/switchTab\('informacion'\)/);
 assert.match(edge,/action==='update_client_info'/);
 assert.match(edge,/\.eq\('advisor_id',collaborator\.advisor_id\)/);
 assert.match(edge,/\.eq\('updated_at',expected\)/);
-assert.match(edge,/domicilio:address,historial:history/);
+assert.match(edge,/domicilio:address,afore,historial:history/);
 assert.match(edge,/domicilio:Object\.prototype\.hasOwnProperty\.call\(body,'address'\)/);
 assert.match(edge,/return respond\(req,409/);
+assert.match(stage3,/ca-expediente-summary-edit/);
+assert.match(stage3,/function editAfore\(/);
 assert.match(css,/\.ca-expediente-modal/);assert.match(css,/#contract-view-modal\{z-index:30020!important\}/);assert.doesNotMatch(stage3,/id="ca-exp-sign"/,'Signature belongs to first tracking milestone, not a duplicate button');
 
 const dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'https://example.test/colaboradores/',runScripts:'outside-only'});

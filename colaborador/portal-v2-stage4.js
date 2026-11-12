@@ -90,7 +90,7 @@
   ensure();selected={id,key};
   $('ca-v2-activity-title').textContent=step.title;
   const complete=done(c,key);
-  if(complete){
+  if(complete&&!['banco','cita'].includes(key)){
    const verification=c.verifications?.[key];
    const signatureDetail=key==='firma'&&c.signature?.date?'<p>Fecha de firma: '+esc(window.caV2Dates.toMX(c.signature.date))+(c.signature.confirmedBy?' · Confirmó: '+esc(c.signature.confirmedBy):'')+'</p>':'';
    const verifiedBy=verification?.verifierName?'<p>Verificado externamente por: <strong>'+esc(verification.verifierName)+'</strong></p>':'';
@@ -117,6 +117,7 @@
    await refreshDashboardOnly();
    const prior=selected.key;close();
    if(state.page==='clientes')window.navigate('clientes',true);
+   window.caV2RefreshExpediente?.();
    toast(result.warning||('Actividad registrada: '+steps.find(s=>s.key===prior)?.title),result.warning?'error':'success');
   }catch(ex){error.textContent=ex?.message||'No se pudo guardar la actividad.';button.disabled=false;}
  }
