@@ -32,6 +32,7 @@ jobs:
           node tests/collaborator-v2-stage4.cjs
           node tests/collaborator-v2-stage6.cjs
           node tests/collaborator-v2-whatsapp.cjs
+          node tests/collaborator-v2-signature.cjs
       - name: Suite completa del CRM
         run: npm test
 
