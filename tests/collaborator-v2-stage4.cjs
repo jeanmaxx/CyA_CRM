@@ -7,7 +7,7 @@ const css=fs.readFileSync('colaborador/portal-v2-stage4.css','utf8');
 const backend=fs.readFileSync('supabase/functions/collaborator-portal/index.ts','utf8');
 for(const name of ['Cliente dado de alta','App AforeMóvil instalada','Revisión de cuenta bancaria nivel 4','Crear cita en AFORE','Expediente AFORE actualizado','Solicitud en aplicación','Recepción de depósito','Pago de honorarios'])
  assert.ok(js.includes(name),'Missing activity: '+name);
-assert.match(html,/portal-v2-stage4\.js\?v=20261112-final/);
+assert.match(html,/portal-v2-stage4\.js\?v=20261112-cards/);
 assert.match(html,/portal-v2-stage4\.css\?v=20261112-mx/);
 assert.match(css,/position:sticky/);
 assert.match(backend,/action==='complete_activity'/);
