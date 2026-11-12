@@ -7,3 +7,18 @@
 .ca-wa-body .modal-actions{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
 .ca-wa-button{display:inline-flex;align-items:center;gap:6px}
 @media(max-width:600px){.ca-wa-body{padding:12px}.ca-wa-body .modal-actions .btn{flex:1;min-width:140px}}
+
+
+/* Shared institutional templates: six columns x two rows on wide screens. */
+.ca-wa-dialog{width:min(1120px,96vw)!important;max-width:none!important;max-height:94vh!important;overflow:auto}
+.ca-wa-group-list{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.ca-wa-category{min-width:0;min-height:42px;padding:9px 7px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:11px;font-weight:650;cursor:pointer;white-space:normal;overflow-wrap:anywhere}
+.ca-wa-category.selected{border-color:var(--success);background:rgba(83,214,162,.12);color:var(--success)}
+.ca-wa-caption{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.ca-wa-parts{display:flex;flex-wrap:wrap;gap:8px}
+.ca-wa-part{font-size:11px;border:1px solid var(--border);border-radius:9px;padding:8px 12px;background:var(--surface-2);color:var(--text);cursor:pointer}
+.ca-wa-part.selected{border-color:var(--gold);color:var(--gold)}
+#ca-wa-modal{z-index:30010!important}
+#ca-wa-modal[hidden]{display:none!important}
+@media(max-width:950px){.ca-wa-group-list{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:600px){.ca-wa-group-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
