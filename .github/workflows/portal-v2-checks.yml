@@ -1,0 +1,36 @@
+name: Portal de Colaboradores v2 — verificaciones
+on:
+  pull_request:
+    paths:
+      - "colaborador/**"
+      - "runtime/colaboradores.html"
+      - "supabase/functions/collaborator-portal/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/portal-v2-checks.yml"
+jobs:
+  regressions:
+    name: Suite de regresión CRM
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
+  edge-syntax:
+    name: Comprobación TypeScript Edge
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check supabase/functions/collaborator-portal/index.ts
