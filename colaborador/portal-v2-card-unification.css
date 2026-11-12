@@ -1,0 +1,52 @@
+/* Fichas de prospectos: una sola superficie clicable, sin botones duplicados. */
+.portal-v2-prospect-card{padding:0!important;overflow:hidden!important}
+.portal-v2-prospect-open{display:flex;flex-direction:column;align-items:flex-start;gap:7px;width:100%;min-height:74px;padding:12px 11px;text-align:left;font:inherit;color:var(--text);background:transparent;border:0;border-radius:inherit;cursor:pointer}
+.portal-v2-prospect-open .portal-v2-prospect-card-name{display:block;max-width:100%;font-size:11px;font-weight:750;line-height:1.4;overflow-wrap:anywhere}
+.portal-v2-prospect-open .curp{font-size:9px;max-width:100%;overflow-wrap:anywhere;color:var(--muted)}
+.portal-v2-prospect-card:hover{border-color:var(--gold)!important;background:var(--surface-2)}
+.portal-v2-prospect-open:focus-visible{outline:2px solid var(--gold);outline-offset:-3px}
+/* Clientes: tarjeta completa de nombre y CURP dentro de la primera columna. */
+.ca-v2-client-card{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:10px 11px;min-width:0;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font:inherit;color:var(--text);text-align:left;cursor:pointer}
+.ca-v2-client-card strong{font-size:11px;line-height:1.4;font-weight:750;overflow-wrap:anywhere}
+.ca-v2-client-card small{font-size:9px!important;font-weight:400!important;margin:0!important;color:var(--muted);overflow-wrap:anywhere}
+.ca-v2-client-card:hover{border-color:var(--gold);background:var(--surface-3)}
+.ca-v2-client-card:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* Archivo de prospectos: contraído inicialmente, grupos por motivo. */
+.discarded-section{margin-top:22px;border:1px solid rgba(239,107,115,.2);border-radius:16px;background:var(--surface);overflow:hidden}
+.discarded-section-head{padding:0!important;border-bottom:0!important}
+.ca-archive-toggle{display:flex;justify-content:space-between;align-items:center;gap:18px;width:100%;padding:17px 18px;border:0;color:var(--text);background:transparent;text-align:left;font:inherit;cursor:pointer}
+.ca-archive-toggle-intro{display:grid;gap:4px;min-width:0}
+.ca-archive-toggle-intro strong{font-size:18px;font-weight:750;color:var(--text)}
+.ca-archive-toggle-intro small{font-size:10px;line-height:1.4;color:var(--muted)}
+.ca-archive-toggle-meta{display:flex;gap:12px;align-items:center;flex:none}
+.ca-archive-chevron{font-size:19px;color:var(--muted)}
+.ca-archive-toggle:hover{background:var(--surface-2)}
+.ca-archive-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:-3px}
+#discarded-prospects-content.discarded-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:12px;padding:14px;border-top:1px solid var(--border)}
+#discarded-prospects-content[hidden]{display:none!important}
+.ca-archive-group{display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);border-radius:12px;padding:11px;min-width:0;background:var(--surface-2)}
+.ca-archive-group-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.ca-archive-group-head h3{font-size:12px;line-height:1.4;margin:0;color:var(--text);overflow-wrap:anywhere}
+.ca-archive-group-head span{flex:none;padding:3px 7px;border-radius:999px;background:rgba(239,107,115,.1);color:var(--danger);font-size:10px;font-weight:700}
+.ca-archive-group-items{display:grid;gap:7px}
+.ca-archive-person{width:100%;padding:11px 12px;display:grid;gap:7px;text-align:left;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);cursor:pointer;font:inherit}
+.ca-archive-person strong{font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.ca-archive-person span{font-size:10px;line-height:1.4;color:var(--muted);overflow-wrap:anywhere}
+.ca-archive-person:hover,.ca-archive-person:focus-visible{border-color:var(--gold);outline-offset:2px}
+/* Expediente archivado, solo consulta y superpuesto al tablero. */
+#ca-archived-prospect-modal{z-index:30060!important;position:fixed!important;inset:0!important}
+#ca-archived-prospect-modal[hidden]{display:none!important}
+.ca-archived-expediente{width:min(700px,96vw);max-height:90vh;overflow-y:auto}
+.ca-archived-expediente-body{padding:18px;display:grid;gap:13px}
+.ca-archived-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.ca-archived-field{border:1px solid var(--border);border-radius:10px;background:var(--surface-2);padding:10px;min-width:0;display:grid;gap:5px}
+.ca-archived-field small{font-size:10px;color:var(--muted)}
+.ca-archived-field strong{font-size:12px;overflow-wrap:anywhere}
+.ca-archived-reason,.ca-archived-notes{border:1px solid var(--border);border-radius:10px;padding:12px}
+.ca-archived-reason{border-left:3px solid var(--danger)}
+.ca-archived-reason h4,.ca-archived-notes h4{margin:0 0 7px;font-size:11px;color:var(--muted)}
+.ca-archived-reason p,.ca-archived-notes p{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font-size:12px;line-height:1.5}
+.ca-archived-readonly{margin:0;font-size:10px;color:var(--muted)}
+.ca-archived-expediente-actions{padding:0 18px 18px;display:flex;justify-content:flex-end}
+@media(max-width:1000px){#discarded-prospects-content.discarded-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){#discarded-prospects-content.discarded-grid{grid-template-columns:1fr;padding:10px}.ca-archive-toggle{padding:13px}.ca-archived-fields{grid-template-columns:1fr}.ca-v2-client-card{padding:8px}}
