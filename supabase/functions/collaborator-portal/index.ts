@@ -156,20 +156,21 @@ if(action==='update_client_info'){
  const client=await getOwnClient(clientId);
  if(!client)return respond(req,404,{error:'El expediente no pertenece a tu cartera'});
  if(client.discarded===true)return respond(req,409,{error:'El expediente está descartado'});
- const allowed=['name','phone','address'],sent=allowed.filter(k=>Object.prototype.hasOwnProperty.call(body,k));
+ const allowed=['name','phone','address','afore'],sent=allowed.filter(k=>Object.prototype.hasOwnProperty.call(body,k));
  if(!sent.length)return respond(req,400,{error:'No hay datos que actualizar'});
  const name=Object.prototype.hasOwnProperty.call(body,'name')?upper(body.name):client.name;
  const phone=Object.prototype.hasOwnProperty.call(body,'phone')?text(body.phone):client.phone||'';
  const address=Object.prototype.hasOwnProperty.call(body,'address')?text(body.address):String(client.payload?.domicilio||'');
- if(!name||!phone||name.length>220||phone.length>40||address.length>1000)return respond(req,400,{error:'Revisa nombre, teléfono y domicilio (máximo 1000 caracteres)'});
+ const afore=Object.prototype.hasOwnProperty.call(body,'afore')?text(body.afore):String(client.payload?.afore||'');
+ if(!name||!phone||name.length>220||phone.length>40||(address.length>1000||afore.length>100))return respond(req,400,{error:'Revisa nombre, teléfono, domicilio y AFORE'} );
  const existing=client.payload||{},changed=sent.filter(k=>{
-   const old=k==='address'?String(existing.domicilio||''):String(k==='name'?client.name:(client.phone||''));
-   const next=k==='address'?address:(k==='name'?name:phone);return old!==next;
+   const old=k==='address'?String(existing.domicilio||''):k==='afore'?String(existing.afore||''):String(k==='name'?client.name:(client.phone||''));
+   const next=k==='address'?address:k==='afore'?afore:(k==='name'?name:phone);return old!==next;
  });
  if(!changed.length)return respond(req,200,{ok:true,client:serializeClient(client,collaborator)});
  const now=new Date().toISOString(),history=Array.isArray(existing.historial)?[...existing.historial]:[];
- history.push({tipo:'colaborador',texto:collaborator.name+' actualizó información del expediente: '+changed.map(k=>({name:'nombre',phone:'teléfono',address:'domicilio'}[k])).join(', '),fecha:now,usuario:'Colaborador: '+collaborator.name,usuarioId:authData.user!.id});
- const payload={...existing,nombre:name,telefono:phone,domicilio:address,historial:history};
+ history.push({tipo:'colaborador',texto:collaborator.name+' actualizó información del expediente: '+changed.map(k=>({name:'nombre',phone:'teléfono',address:'domicilio',afore:'AFORE'}[k])).join(', '),fecha:now,usuario:'Colaborador: '+collaborator.name,usuarioId:authData.user!.id});
+ const payload={...existing,nombre:name,telefono:phone,domicilio:address,afore,historial:history};
  const {data,error}=await admin.from('clients').update({name,phone,payload,updated_at:now})
    .eq('organization_id',account.organization_id).eq('id',clientId)
    .eq('collaborator_id',collaborator.id).eq('advisor_id',collaborator.advisor_id)
