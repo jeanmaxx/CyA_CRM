@@ -1,0 +1,23 @@
+.ca-v2-table-wrap{width:100%;overflow-x:auto;max-width:100%;border:1px solid var(--border);border-radius:14px;background:var(--surface);scrollbar-gutter:stable}
+.ca-v2-table{border-collapse:separate;border-spacing:0;min-width:1070px;width:100%;font-size:12px}
+.ca-v2-table th,.ca-v2-table td{padding:13px 11px;border-bottom:1px solid var(--border);text-align:center}
+.ca-v2-table thead th{background:var(--surface-2);font-weight:700;white-space:normal;min-width:105px}
+.ca-v2-table th.ca-v2-sticky{position:sticky;left:0;z-index:2;text-align:left;min-width:220px;max-width:280px;background:var(--surface)}
+.ca-v2-table thead th.ca-v2-sticky{z-index:3;background:var(--surface-2)}
+.ca-v2-table tbody th small{display:block;font-size:9px;color:var(--muted);margin-top:5px;font-weight:400;overflow-wrap:anywhere}
+.ca-v2-table tbody tr:last-child th,.ca-v2-table tbody tr:last-child td{border-bottom:0}
+.ca-v2-table tbody tr:hover td,.ca-v2-table tbody tr:hover th{background:var(--surface-2)}
+.ca-v2-step{width:31px;height:31px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:22px;display:inline-grid;place-items:center;line-height:1}
+.ca-v2-step.is-done{border-color:var(--success);background:rgba(83,214,162,.12);color:var(--success);font-size:17px}
+.ca-v2-step:hover{outline:2px solid var(--gold);outline-offset:2px}
+.ca-v2-table-legend{display:flex;flex-wrap:wrap;gap:16px;font-size:11px;color:var(--muted);margin:12px 0}
+.ca-v2-table-legend .good,.ca-v2-mini-row .good{color:var(--success)}
+.ca-v2-activity-dialog{max-width:560px}
+.ca-v2-activity-inner{display:grid;gap:14px;padding:20px}
+.ca-v2-activity-inner p{font-size:12px;line-height:1.5;color:var(--muted);margin:0}
+.ca-v2-form-field{display:grid;gap:7px;font-size:12px;font-weight:600}
+.ca-v2-form-field input,.ca-v2-form-field select{width:100%;padding:11px;border:1px solid var(--border);border-radius:9px;background:var(--surface-3);color:var(--text);font:inherit}
+#ca-v2-activity-error{color:var(--danger);font-size:12px}
+.ca-v2-mini-activities{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ca-v2-mini-row button{width:100%;text-align:left;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:9px;padding:10px;font-size:11px;cursor:pointer}
+@media(max-width:780px){.ca-v2-table th.ca-v2-sticky{min-width:170px;max-width:190px}.ca-v2-mini-activities{grid-template-columns:1fr}.ca-v2-table{min-width:960px}}
