@@ -3,6 +3,7 @@
  'use strict';
  if(window.__caActivitiesV2)return;window.__caActivitiesV2=true;
  const steps=[
+  {key:'firma',short:'Firma',title:'Contrato firmado'},
   {key:'alta',short:'Alta',title:'Cliente dado de alta'},
   {key:'app',short:'App AforeMóvil',title:'App AforeMóvil instalada'},
   {key:'banco',short:'Banco N4',title:'Revisión de cuenta bancaria nivel 4'},
@@ -21,6 +22,7 @@
   const activities=c.activities||{},record=activities[key];
   if(record?.done===true)return true;
   const stage=rank(c.stage);
+  if(key==='firma')return Boolean(c.signature?.signed)||stage>=2;
   if(key==='alta')return stage>=3;
   if(key==='app')return String(c.aforeMovil||'').toLowerCase()==='si';
   if(key==='banco')return c.bankLevel4==='si'||c.bankLevel4==='4';
@@ -40,8 +42,8 @@
   return '<section class="clients-toolbar"><div><h1>Mis clientes</h1><p>Consulta y registra cada actividad en el expediente compartido con tu asesor.</p></div></section>'+
   '<div class="ca-v2-table-wrap" tabindex="0" role="region" aria-label="Seguimiento de clientes, desplazamiento horizontal"><table class="ca-v2-table"><thead><tr><th class="ca-v2-sticky">Cliente</th>'+
   steps.map(s=>'<th scope="col" title="'+esc(s.title)+'">'+esc(s.short)+'</th>').join('')+'</tr></thead><tbody>'+
-  (clients.length?clients.map(c=>'<tr><th scope="row" class="ca-v2-sticky"><button type="button" class="client-name-link" onclick="caOpenClient(\''+esc(c.id)+'\')">'+esc(c.name)+'</button><small>'+esc(c.stage==='contrato_firmas'?'Firma pendiente':c.curp||'')+'</small>'+(c.stage==='contrato_firmas'?'<button class="btn ca-v2-sign-btn" type="button" onclick="caV2ConfirmSignature(\''+esc(c.id)+'\')">Contrato firmado</button>':'')+'</th>'+
-    steps.map(step=>'<td>'+(c.serviceId==='retiro_desempleo'?stepButton(c,step):'<span class="ca-v2-na" title="No aplica a este servicio">—</span>')+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="9">Todavía no hay clientes asignados.</td></tr>')+
+  (clients.length?clients.map(c=>'<tr><th scope="row" class="ca-v2-sticky"><button type="button" class="client-name-link" onclick="caOpenClient(\''+esc(c.id)+'\')">'+esc(c.name)+'</button><small>'+esc(c.stage==='contrato_firmas'?'Firma pendiente':c.curp||'')+'</small>'+'</th>'+
+    steps.map(step=>'<td>'+(c.serviceId==='retiro_desempleo'?stepButton(c,step):'<span class="ca-v2-na" title="No aplica a este servicio">—</span>')+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="10">Todavía no hay clientes asignados.</td></tr>')+
   '</tbody></table></div><div class="ca-v2-table-legend"><span><b class="good">✓</b> Completado</span><span>○ Pendiente</span><span>Para depósito y honorarios se registra quién realizó la verificación externa. El cobro de comisiones se controla en Finanzas.</span></div>';
  }
  function ensure(){
@@ -55,6 +57,7 @@
  let selected=null;
  function close(){$('ca-v2-activity-modal').hidden=true;selected=null;}
  function field(label,id,type='text',value='',attrs=''){
+   if(type==='date')return '<label class="ca-v2-form-field">'+esc(label)+' <small>(dd/mm/aaaa)</small><input id="'+id+'" type="text" inputmode="numeric" data-mx-date maxlength="10" pattern="\\d{2}/\\d{2}/\\d{4}" placeholder="dd/mm/aaaa" autocomplete="off" value="'+esc(window.caV2Dates?.toMX(value)||'')+'" '+attrs+'></label>';
    return '<label class="ca-v2-form-field">'+esc(label)+'<input id="'+id+'" type="'+type+'" value="'+esc(value||'')+'" '+attrs+'></label>';
  }
  function formFor(c,key){
@@ -74,27 +77,30 @@
  function dataFor(key){
   const get=id=>$(id)?.value?.trim()||'';
   if(key==='deposito'||key==='honorarios')return {verifier:get('ca-v2-verifier'),notes:get('ca-v2-verification-notes')};
-  if(key==='alta'||key==='solicitud')return {date:get('ca-v2-date')};
+  if(key==='alta'||key==='solicitud')return {date:window.caV2Dates.toISO(get('ca-v2-date'))};
   if(key==='app')return {installed:get('ca-v2-installed')};
   if(key==='banco')return {bank:get('ca-v2-bank'),level:get('ca-v2-level')};
-  if(key==='cita')return {date:get('ca-v2-date'),time:get('ca-v2-time'),branch:get('ca-v2-branch'),afore:get('ca-v2-afore')};
+  if(key==='cita')return {date:window.caV2Dates.toISO(get('ca-v2-date')),time:get('ca-v2-time'),branch:get('ca-v2-branch'),afore:get('ca-v2-afore')};
   return {};
  }
  window.caV2OpenActivity=function(id,key){
   const c=find(id),step=steps.find(s=>s.key===key);
   if(!c||!step||c.serviceId!=='retiro_desempleo')return;
+  if(key==='firma'&&!done(c,key)){window.caV2ConfirmSignature?.(c.id);return;}
   ensure();selected={id,key};
   $('ca-v2-activity-title').textContent=step.title;
   const complete=done(c,key);
   if(complete){
    const verification=c.verifications?.[key];
+   const signatureDetail=key==='firma'&&c.signature?.date?'<p>Fecha de firma: '+esc(window.caV2Dates.toMX(c.signature.date))+(c.signature.confirmedBy?' · Confirmó: '+esc(c.signature.confirmedBy):'')+'</p>':'';
    const verifiedBy=verification?.verifierName?'<p>Verificado externamente por: <strong>'+esc(verification.verifierName)+'</strong></p>':'';
    const note=verification?.notes?'<p>Notas: '+esc(verification.notes)+'</p>':'';
-   $('ca-v2-activity-content').innerHTML='<div class="ca-v2-activity-inner"><strong>'+esc(c.name)+'</strong><p>✓ Actividad completada en el expediente del CRM.</p>'+verifiedBy+note+'<button type="button" class="btn" id="ca-v2-dismiss">Cerrar</button></div>';
+   $('ca-v2-activity-content').innerHTML='<div class="ca-v2-activity-inner"><strong>'+esc(c.name)+'</strong><p>✓ Actividad completada en el expediente del CRM.</p>'+signatureDetail+verifiedBy+note+'<button type="button" class="btn" id="ca-v2-dismiss">Cerrar</button></div>';
    $('ca-v2-dismiss').addEventListener('click',close);
   }else{
    $('ca-v2-activity-content').innerHTML='<form class="ca-v2-activity-inner" id="ca-v2-activity-form"><strong>'+esc(c.name)+'</strong>'+formFor(c,key)+'<p class="ca-expediente-help">Este registro actualizará el expediente que consulta el asesor.</p><div id="ca-v2-activity-error" role="alert"></div><div class="modal-actions"><button type="submit" class="btn btn-primary" id="ca-v2-activity-save">Guardar actividad</button></div></form>';
    $('ca-v2-activity-form').addEventListener('submit',save);
+   window.caV2Dates?.bind($('ca-v2-activity-form'));
   }
   $('ca-v2-activity-modal').hidden=false;
  };
@@ -104,6 +110,7 @@
   const button=$('ca-v2-activity-save');button.disabled=true;
   const error=$('ca-v2-activity-error');error.textContent='';
   try{
+   if(['alta','cita','solicitud'].includes(selected.key)&&!window.caV2Dates.toISO($('ca-v2-date')?.value)){error.textContent='Introduce una fecha válida en formato dd/mm/aaaa.';button.disabled=false;return;}
    const result=await portalAction({action:'complete_activity',clientId:c.id,activity:selected.key,expectedUpdatedAt:c.updatedAt,data:dataFor(selected.key)});
    const ix=(state.bootstrap?.clients||[]).findIndex(x=>x.id===c.id);
    if(ix>=0&&result.client)state.bootstrap.clients[ix]=result.client;

@@ -10,6 +10,7 @@
   const clientById=id=>(state.bootstrap?.clients||[]).find(c=>String(c.id)===String(id));
   const serviceName=id=>(state.bootstrap?.services||[]).find(s=>s.id===id)?.name||id||'Servicio';
   const stepInfo=[
+    ['Contrato firmado',c=>c.stage!=='contrato_firmas'&&Boolean(c.signature?.signed||c.signature?.date||c.progress?.done?.[6])],
     ['Cliente dado de alta',c=>Boolean(c.progress?.done?.[6])],
     ['App AforeMóvil instalada',c=>Boolean(c.aforeMovil==='si')],
     ['Revisión de cuenta bancaria nivel 4',c=>Boolean(c.bankLevel4==='si')],
@@ -43,7 +44,7 @@
         '<label>Servicio<input value="'+enc(serviceName(c.serviceId))+'" readonly aria-readonly="true"></label>'+
       '</div>'+
       '<label>Domicilio completo<textarea id="ca-exp-address" maxlength="1000" rows="4" placeholder="Calle y número, colonia, código postal, municipio y estado">'+enc(c.address)+'</textarea></label>'+
-      '<div class="modal-actions"><button class="btn ca-wa-button" type="button" id="ca-wa-client">WhatsApp</button>'+(c.stage==='contrato_firmas'?'<button class="btn" type="button" id="ca-exp-sign">Contrato firmado</button>':'')+'<button class="btn btn-primary" type="submit" id="ca-exp-save">Guardar cambios</button></div>'+
+      '<div class="modal-actions"><button class="btn ca-wa-button" type="button" id="ca-wa-client">WhatsApp</button><button class="btn btn-primary" type="submit" id="ca-exp-save">Guardar cambios</button></div>'+
       '</form>';
   }
   function trackingMarkup(c){
@@ -54,7 +55,7 @@
       '<div class="ca-expediente-summary"><div><small>Etapa en CRM</small><strong>'+enc(c.stage||'Pendiente')+'</strong></div><div><small>AFORE</small><strong>'+enc(c.afore||'Por confirmar')+'</strong></div><div><small>Cita en AFORE</small><strong>'+date+'</strong></div><div><small>Hora / sucursal</small><strong>'+enc([c.appointment?.time,c.appointment?.branch].filter(Boolean).join(' · ')||'Por confirmar')+'</strong></div></div>'+
       (window.caV2TrackingSummary?window.caV2TrackingSummary(c):'<div class="ca-expediente-steps">'+lines+'</div>')+
       '<p class="ca-expediente-help">Selecciona una actividad para consultar su estado o registrar su realización. Los depósitos y honorarios conservan su verificación externa.</p>'+
-      '<div class="modal-actions"><button class="btn" type="button" id="ca-exp-view-contract">Consultar contrato</button>'+(c.stage==='contrato_firmas'?'<button class="btn btn-primary" type="button" id="ca-exp-sign">Contrato firmado</button>':'')+'</div>'+
+      '<div class="modal-actions"><button class="btn" type="button" id="ca-exp-view-contract">Consultar contrato</button></div>'+
       '</div>';
   }
   function switchTab(tab){
@@ -66,7 +67,6 @@
     byId('ca-expediente-body').innerHTML=info?infoMarkup(c):trackingMarkup(c);
     if(info){byId('ca-expediente-form').addEventListener('submit',save);byId('ca-wa-client')?.addEventListener('click',()=>window.caV2OpenWhatsApp?.('client',activeClientId));}
     else byId('ca-exp-view-contract').addEventListener('click',()=>window.caViewContract?.(activeClientId));
-    byId('ca-exp-sign')?.addEventListener('click',()=>window.caV2ConfirmSignature?.(activeClientId));
   }
   function close(){const el=byId('ca-expediente-v2');if(el)el.hidden=true;activeClientId='';}
   async function save(event){
