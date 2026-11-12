@@ -20,3 +20,19 @@
 .client-name-link,.portal-v2-name-link{font:inherit;color:inherit;text-align:left;padding:0;border:0;background:none;cursor:pointer;overflow-wrap:anywhere}
 .client-name-link:hover,.portal-v2-name-link:hover{text-decoration:underline;text-decoration-color:var(--gold)}
 @media(max-width:780px){.ca-expediente-modal{max-height:94vh}.ca-expediente-tabs{padding:11px}.ca-expediente-form,.ca-expediente-followup{padding:12px}.ca-expediente-steps,.ca-expediente-summary{grid-template-columns:1fr}}
+
+
+/* Subdialogs sit in front of the open expediente; closing restores the expediente. */
+#ca-expediente-v2{z-index:30000!important}
+#ca-expediente-v2[hidden]{display:none!important}
+#contract-view-modal{z-index:30020!important}
+#contract-view-modal[hidden]{display:none!important}
+#ca-signature-modal{z-index:30030!important}
+#ca-signature-modal[hidden]{display:none!important}
+.ca-signature-body{display:grid;gap:13px;padding:16px}
+.ca-signature-body label{display:grid;gap:6px;font-size:11px;font-weight:600}
+.ca-signature-body input,.ca-signature-body textarea{width:100%;padding:11px;border:1px solid var(--border);border-radius:10px;background:var(--surface-3);color:var(--text)}
+.ca-signature-body textarea{resize:vertical}
+.ca-signature-error{color:var(--danger);font-size:11px}
+.ca-signature-actions{display:flex;gap:9px;flex-wrap:wrap}
+.ca-signature-actions .btn{flex:1}

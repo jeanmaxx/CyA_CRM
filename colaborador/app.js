@@ -104,7 +104,7 @@ function phaseCard(p,phase){
     <div class="prospect-meta">${prospectDetails(p)}</div>
     ${done?`<div class="phase-done">✓ Tu parte en esta fase está marcada como realizada.</div>`:''}
     ${waiting?`<div class="phase-waiting">Pendiente de confirmación oficial del asesor.</div>`:''}
-    <div class="prospect-actions"><button class="btn" onclick="openProspectModal('${esc(p.id)}')">Ver datos</button>${canComplete?`<button class="btn btn-primary" onclick="completePhase('${esc(p.id)}',${phase.id})">Marcar realizada</button>`:''}</div>
+    <div class="prospect-actions"><button class="btn" onclick="openProspectModal('${esc(p.id)}')">Expediente</button>${canComplete?`<button class="btn btn-primary" onclick="completePhase('${esc(p.id)}',${phase.id})">Marcar realizada</button>`:''}</div>
   </article>`;
 }
 function renderProspects(){

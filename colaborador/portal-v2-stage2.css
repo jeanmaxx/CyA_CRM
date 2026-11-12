@@ -33,3 +33,25 @@
   .portal-v2-lane .phase-head{min-height:145px!important}
 }
 @media(max-width:430px){.phase-board.portal-v2-board{grid-template-columns:repeat(4,86vw)!important}.portal-v2-lane{min-width:86vw!important}}
+
+
+/* Desktop: four compact lanes fit the available CRM content region. */
+@media(min-width:1100px){
+ .phase-board-wrap.portal-v2-board-wrap{overflow-x:visible!important;scrollbar-gutter:auto!important}
+ .phase-board.portal-v2-board{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;min-width:0!important;width:100%!important;gap:9px!important}
+ .portal-v2-lane .phase-head{min-height:136px!important;padding:10px!important}
+ .portal-v2-lane .phase-cards{padding:7px!important}
+ .portal-v2-lane .phase-title-row{gap:6px!important}
+ .portal-v2-lane .phase-num{flex:0 0 19px!important;width:19px!important;height:19px!important}
+ .portal-v2-lane .phase-head h3{font-size:10px!important;line-height:1.32!important}
+ .portal-v2-lane .phase-head p{font-size:8px!important;line-height:1.4!important}
+ .portal-v2-lane .phase-count{font-size:9px!important;padding:3px 5px!important}
+ .portal-v2-prospect-card{padding:9px!important}
+}
+@media(min-width:780px) and (max-width:1099px){
+ .phase-board.portal-v2-board{grid-template-columns:repeat(4,minmax(0,1fr))!important;min-width:0!important;width:100%!important;gap:7px!important}
+ .portal-v2-lane .phase-head{padding:8px!important;min-height:154px!important}
+ .portal-v2-lane .phase-cards{padding:6px!important}
+ .portal-v2-lane .phase-head h3{font-size:9px!important}
+ .portal-v2-lane .phase-head p{font-size:8px!important}
+}

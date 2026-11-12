@@ -25,3 +25,5 @@
 /* Verificación externa: notas amplias y legibles en el modal. */
 .ca-v2-form-field textarea{display:block;width:100%;min-height:96px;resize:vertical;padding:11px;border:1px solid var(--border);border-radius:9px;background:var(--surface-3);color:var(--text);font:inherit;line-height:1.5}
 .ca-v2-form-field textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
+
+.ca-v2-sign-btn{margin-top:8px!important;min-height:29px!important;padding:5px 9px!important;font-size:10px!important;white-space:normal!important;line-height:1.35!important;border-color:var(--gold)!important;color:var(--gold)!important}
