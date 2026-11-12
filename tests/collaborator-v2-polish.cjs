@@ -37,8 +37,8 @@ assert.equal(w.document.querySelector('.ca-nss-figure img'),null,'NSS starts col
 w.caToggleGuideCard('nss');
 assert.ok(w.document.querySelector('.ca-nss-figure img'));
 assert.equal(w.document.querySelectorAll('.guide-step').length,0,'Only one accordion stays open');
-w.caToggleGuideCard('process');
 assert.match(w.document.querySelector('.ca-nss-figure img').getAttribute('src'),/estructura-nss.svg/);
+w.caToggleGuideCard('process');
 assert.equal(w.document.querySelectorAll('select').length,0);
 assert.equal(w.document.querySelectorAll('button.guide-reset-icon').length,1);
 assert.equal(w.document.querySelector('.guide-progress-pill').textContent,'0/11');
