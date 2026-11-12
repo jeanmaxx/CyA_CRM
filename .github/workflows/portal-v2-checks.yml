@@ -31,6 +31,7 @@ jobs:
           node tests/collaborator-v2-stage3.cjs
           node tests/collaborator-v2-stage4.cjs
           node tests/collaborator-v2-stage6.cjs
+          node tests/collaborator-v2-whatsapp.cjs
       - name: Suite completa del CRM
         run: npm test
 
@@ -53,3 +54,15 @@ jobs:
           node tests/operations.cjs || echo "BASELINE_FAIL: operations.cjs"
           node tests/whatsapp-approval-recontact.cjs || echo "BASELINE_FAIL: whatsapp-approval-recontact.cjs"
           node tests/dom.cjs || echo "BASELINE_FAIL: dom.cjs"
+
+  edge-syntax:
+    name: Comprobación TypeScript Edge
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check --node-modules-dir=auto supabase/functions/collaborator-portal/index.ts
