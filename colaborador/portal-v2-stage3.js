@@ -43,7 +43,7 @@
         '<label>Servicio<input value="'+enc(serviceName(c.serviceId))+'" readonly aria-readonly="true"></label>'+
       '</div>'+
       '<label>Domicilio completo<textarea id="ca-exp-address" maxlength="1000" rows="4" placeholder="Calle y número, colonia, código postal, municipio y estado">'+enc(c.address)+'</textarea></label>'+
-      '<div class="modal-actions"><button class="btn btn-primary" type="submit" id="ca-exp-save">Guardar cambios</button></div>'+
+      '<div class="modal-actions"><button class="btn ca-wa-button" type="button" id="ca-wa-client">WhatsApp</button><button class="btn btn-primary" type="submit" id="ca-exp-save">Guardar cambios</button></div>'+
       '</form>';
   }
   function trackingMarkup(c){
@@ -64,7 +64,7 @@
     byId('ca-tab-track').setAttribute('aria-selected',String(!info));
     byId('ca-tab-info').tabIndex=info?0:-1;byId('ca-tab-track').tabIndex=info?-1:0;
     byId('ca-expediente-body').innerHTML=info?infoMarkup(c):trackingMarkup(c);
-    if(info)byId('ca-expediente-form').addEventListener('submit',save);
+    if(info){byId('ca-expediente-form').addEventListener('submit',save);byId('ca-wa-client')?.addEventListener('click',()=>window.caV2OpenWhatsApp?.('client',activeClientId));}
     else byId('ca-exp-view-contract').addEventListener('click',()=>window.caViewContract?.(activeClientId));
   }
   function close(){const el=byId('ca-expediente-v2');if(el)el.hidden=true;activeClientId='';}
