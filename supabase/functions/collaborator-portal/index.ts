@@ -105,8 +105,22 @@ if(action==='complete_activity'){
  const {data:updated,error}=await admin.from('clients').update({stage:next,payload,updated_at:now}).eq('organization_id',account.organization_id).eq('id',clientId).eq('collaborator_id',collaborator.id).eq('advisor_id',collaborator.advisor_id).eq('updated_at',expected).select('id,name,phone,curp,service_id,stage,archived,discarded,payload,created_at,updated_at,collaborator_id').maybeSingle();
  if(error)throw error;
  if(!updated)return respond(req,409,{error:'El expediente cambió. Actualiza antes de guardar.'});
+ let agendaWarning='';
+ if(key==='cita'){
+   const eventId='ev_cita_afore_'+clientId;
+   const {data:oldEvent,error:lookupError}=await admin.from('agenda_events').select('id,event_date,event_time,completed,payload').eq('organization_id',account.organization_id).eq('id',eventId).maybeSingle();
+   if(lookupError){agendaWarning='La cita se guardó en el expediente, pero no se pudo consultar la agenda del asesor.';}
+   else{
+     const dateStr=String(patch.fechaBiometrica),timeStr=String(patch.horaBiometrica),afore=String(patch.afore||p.afore||'');
+     const changed=String(oldEvent?.event_date||'')!==dateStr||String(oldEvent?.event_time||'').slice(0,5)!==timeStr;
+     const completed=oldEvent&&!changed?oldEvent.completed===true:false;
+     const eventPayload={...(oldEvent?.payload||{}),id:eventId,regla:'cita_afore',titulo:'Cita AFORE'+(afore?' '+afore:'')+' — '+updated.name,tipo:'cita',fecha:dateStr,hora:timeStr,notas:String(patch.sucursalAfore),clienteId:clientId,asesorId:collaborator.advisor_id,autoGenerado:true,completado:completed,cancelarRecordatorio:false};
+     const {error:eventError}=await admin.from('agenda_events').upsert({organization_id:account.organization_id,id:eventId,advisor_id:collaborator.advisor_id,client_id:clientId,title:eventPayload.titulo,event_type:'cita',event_date:dateStr,event_time:timeStr,completed,payload:eventPayload,updated_at:now},{onConflict:'organization_id,id'});
+     if(eventError){console.error('collaborator agenda',eventError.message);agendaWarning='La cita se guardó en el expediente, pero no se pudo actualizar la agenda del asesor. Solicita revisión antes de programar otra cita.';}
+   }
+ }
  await appendActivity('client_activity_completed',null,{clientId,activity:key,verifier:key==='deposito'||key==='honorarios'?patch.portalVerificaciones[key].verifierName:null});
- return respond(req,200,{ok:true,client:serializeClient(updated,collaborator)});
+ return respond(req,200,{ok:true,client:serializeClient(updated,collaborator),warning:agendaWarning||undefined});
 }
 if(action==='update_client_info'){
  const clientId=text(body.clientId),expected=text(body.expectedUpdatedAt);
