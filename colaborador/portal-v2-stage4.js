@@ -1,4 +1,4 @@
-/* Etapa 4 · Tabla operativa de clientes. No autoriza depósito ni honorarios. */
+/* Portal v2 · Seguimiento y constancia de verificación externa de depósitos y honorarios. */
 (function installCollaboratorActivitiesV2(){
  'use strict';
  if(window.__caActivitiesV2)return;window.__caActivitiesV2=true;
@@ -9,8 +9,8 @@
   {key:'cita',short:'Cita AFORE',title:'Crear cita en AFORE'},
   {key:'expediente',short:'Expediente',title:'Expediente AFORE actualizado'},
   {key:'solicitud',short:'Solicitud',title:'Solicitud en aplicación'},
-  {key:'deposito',short:'Depósito',title:'Recepción de depósito',approval:true},
-  {key:'honorarios',short:'Honorarios',title:'Pago de honorarios',approval:true}
+  {key:'deposito',short:'Depósito',title:'Recepción de depósito',external:true},
+  {key:'honorarios',short:'Honorarios',title:'Pago de honorarios',external:true}
  ];
  const $=id=>document.getElementById(id);
  const items=()=>Array.isArray(state?.bootstrap?.clients)?state.bootstrap.clients.filter(c=>!c.discarded&&!(c.serviceId==='retiro_desempleo'&&c.stage==='generando_contrato')):[];
@@ -42,7 +42,7 @@
   steps.map(s=>'<th scope="col" title="'+esc(s.title)+'">'+esc(s.short)+'</th>').join('')+'</tr></thead><tbody>'+
   (clients.length?clients.map(c=>'<tr><th scope="row" class="ca-v2-sticky"><button type="button" class="client-name-link" onclick="caOpenClient(\''+esc(c.id)+'\')">'+esc(c.name)+'</button><small>'+esc(c.stage==='contrato_firmas'?'Firma pendiente':c.curp||'')+'</small></th>'+
     steps.map(step=>'<td>'+(c.serviceId==='retiro_desempleo'?stepButton(c,step):'<span class="ca-v2-na" title="No aplica a este servicio">—</span>')+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="9">Todavía no hay clientes asignados.</td></tr>')+
-  '</tbody></table></div><div class="ca-v2-table-legend"><span><b class="good">✓</b> Completado</span><span>○ Pendiente</span><span>Depósito y honorarios requieren aprobación del asesor.</span></div>';
+  '</tbody></table></div><div class="ca-v2-table-legend"><span><b class="good">✓</b> Completado</span><span>○ Pendiente</span><span>Para depósito y honorarios se registra quién realizó la verificación externa. El cobro de comisiones se controla en Finanzas.</span></div>';
  }
  function ensure(){
   if($('ca-v2-activity-modal'))return;
@@ -58,6 +58,12 @@
    return '<label class="ca-v2-form-field">'+esc(label)+'<input id="'+id+'" type="'+type+'" value="'+esc(value||'')+'" '+attrs+'></label>';
  }
  function formFor(c,key){
+  if(key==='deposito'||key==='honorarios'){
+    const advisor=state.bootstrap?.advisor?.name||'Asesor asignado';
+    return '<p class="ca-expediente-help">Registra quién verificó externamente la información, por ejemplo mediante WhatsApp o Finanzas. Esta constancia no envía una aprobación interna ni modifica por sí sola una comisión cobrada.</p>'+
+      '<label class="ca-v2-form-field">¿Quién verificó el pago?<select id="ca-v2-verifier" required><option value="">Seleccionar persona</option><option value="advisor">'+esc(advisor)+' (asesor asignado)</option><option value="jorge_casillas">Jorge Casillas</option><option value="fernanda_massiel">Fernanda Massiel</option></select></label>'+
+      '<label class="ca-v2-form-field">Notas (opcional)<textarea id="ca-v2-verification-notes" rows="4" maxlength="1000" placeholder="Observaciones de la verificación, medio o detalle relevante"></textarea></label>';
+  }
   if(key==='alta')return field('Fecha real de alta','ca-v2-date','date',c.registeredAt,'required');
   if(key==='app')return '<label class="ca-v2-form-field">¿La aplicación AforeMóvil está instalada?<select id="ca-v2-installed" required><option value="">Seleccionar</option><option value="si">Sí</option></select></label>';
   if(key==='banco')return field('Banco','ca-v2-bank','text',c.bank,'maxlength="100" required')+'<label class="ca-v2-form-field">Nivel de cuenta<select id="ca-v2-level" required><option value="">Seleccionar</option><option value="4">Nivel 4 confirmado</option></select></label>';
@@ -67,6 +73,7 @@
  }
  function dataFor(key){
   const get=id=>$(id)?.value?.trim()||'';
+  if(key==='deposito'||key==='honorarios')return {verifier:get('ca-v2-verifier'),notes:get('ca-v2-verification-notes')};
   if(key==='alta'||key==='solicitud')return {date:get('ca-v2-date')};
   if(key==='app')return {installed:get('ca-v2-installed')};
   if(key==='banco')return {bank:get('ca-v2-bank'),level:get('ca-v2-level')};
@@ -79,11 +86,11 @@
   ensure();selected={id,key};
   $('ca-v2-activity-title').textContent=step.title;
   const complete=done(c,key);
-  if(step.approval){
-   $('ca-v2-activity-content').innerHTML='<div class="ca-v2-activity-inner"><strong>'+esc(c.name)+'</strong><p>'+(complete?'Actividad confirmada en el CRM.':'Esta actividad requiere aprobación del asesor. En la etapa 5 se habilitará la solicitud de confirmación.')+'</p><button type="button" class="btn" id="ca-v2-dismiss">Cerrar</button></div>';
-   $('ca-v2-dismiss').addEventListener('click',close);
-  }else if(complete){
-   $('ca-v2-activity-content').innerHTML='<div class="ca-v2-activity-inner"><strong>'+esc(c.name)+'</strong><p>✓ Actividad completada en el expediente del CRM.</p><button type="button" class="btn" id="ca-v2-dismiss">Cerrar</button></div>';
+  if(complete){
+   const verification=c.verifications?.[key];
+   const verifiedBy=verification?.verifierName?'<p>Verificado externamente por: <strong>'+esc(verification.verifierName)+'</strong></p>':'';
+   const note=verification?.notes?'<p>Notas: '+esc(verification.notes)+'</p>':'';
+   $('ca-v2-activity-content').innerHTML='<div class="ca-v2-activity-inner"><strong>'+esc(c.name)+'</strong><p>✓ Actividad completada en el expediente del CRM.</p>'+verifiedBy+note+'<button type="button" class="btn" id="ca-v2-dismiss">Cerrar</button></div>';
    $('ca-v2-dismiss').addEventListener('click',close);
   }else{
    $('ca-v2-activity-content').innerHTML='<form class="ca-v2-activity-inner" id="ca-v2-activity-form"><strong>'+esc(c.name)+'</strong>'+formFor(c,key)+'<p class="ca-expediente-help">Este registro actualizará el expediente que consulta el asesor.</p><div id="ca-v2-activity-error" role="alert"></div><div class="modal-actions"><button type="submit" class="btn btn-primary" id="ca-v2-activity-save">Guardar actividad</button></div></form>';
