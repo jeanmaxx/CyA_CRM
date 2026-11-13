@@ -15,7 +15,7 @@
   function loadStage2(){
     if(document.querySelector('script[data-cya-client-profile-stage2]')){loadCompact();return;}
     const script=document.createElement('script');
-    script.src='/app-client-profile-stage2.js?v=20261113-polish1';
+    script.src='/app-client-profile-stage2.js?v=20261113-polish2';
     script.async=false;
     script.dataset.cyaClientProfileStage2='1';
     script.onload=loadCompact;
@@ -39,7 +39,7 @@
   }
 
   const core=document.createElement('script');
-  core.src='/app-ui-profile-polish-core.js?v=20261113-polish1';
+  core.src='/app-ui-profile-polish-core.js?v=20261113-polish2';
   core.async=false;
   core.dataset.cyaProfilePolishCore='1';
   core.onload=waitForStage1ThenLoadStage2;

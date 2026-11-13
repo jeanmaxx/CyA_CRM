@@ -170,7 +170,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-meta-leads-workflow]'))return;
     const script=document.createElement('script');
-    script.src='/app-meta-leads-workflow.js?v=20261113-polish1';
+    script.src='/app-meta-leads-workflow.js?v=20261113-polish2';
     script.async=false;
     script.dataset.cyaMetaLeadsWorkflow='1';
     document.head.appendChild(script);
@@ -245,7 +245,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-prospect-manual-fields-fix]'))return;
     const script=document.createElement('script');
-    script.src='/app-prospect-manual-fields-fix.js?v=20261113-polish1';
+    script.src='/app-prospect-manual-fields-fix.js?v=20261113-polish2';
     script.async=false;
     script.dataset.cyaProspectManualFieldsFix='1';
     document.head.appendChild(script);
