@@ -5,7 +5,7 @@
 **Base congelada:** `abf31a954c1487e594836a2c2c28a37e98b83d90` (`main`)  
 **Rama aislada:** `feat/crm-hibrido-etapa1-20261112`  
 **Proyecto Supabase verificado, solo lectura:** `ibhgisndtaclvwznqugu` (CyA CRM).  
-**Estado:** etapa 1 iniciada; ninguna modificación funcional, migración, Edge Function o dato operativo autorizada por este documento.
+**Estado:** etapa 1 documentada; inicio de etapa 2 autorizado el 12/11/2026. Ninguna modificación funcional, migración, Edge Function o dato operativo autorizada por este documento.
 
 ## 1. Objetivo aprobado
 
@@ -54,7 +54,7 @@ Verde = hecho confirmado; **amarillo canario** = hito anterior saltado que sigue
 
 ## 5. Fechas operativas, fuente y ajustes
 
-**Solicitud probable:** priorizar `fechaAltaAfore + 46 días naturales` cuando alta real esté confirmada. Si no, `fechaFirmaContrato + 46 días naturales` como estimación provisional, sin pedir hora; ajuste manual prevalece hasta que el asesor lo cambie o reactive el cálculo. La regla de las 14:00 es una orientación interna, **no calcular alta automáticamente por una hora desconocida**. Conservar todas las estimaciones históricas actuales sin recalcular masivamente.  
+**Solicitud probable — decisión definitiva 12/11/2026:** **CONSERVAR SIN CAMBIOS EL CÁLCULO EXISTENTE DESDE LA FECHA DE FIRMA + 46 DÍAS NATURALES**, con ajuste manual como funciona hoy. No sustituir la base por fecha de alta, no implementar reglas de horario 14:00 y no recalcular registros históricos. Esta decisión posterior prevalece sobre las propuestas previas de cálculo desde alta.  
 **Cobro probable (fecha):** +2 días **hábiles** desde fecha real de solicitud si está disponible; en su defecto fecha probable de solicitud. Lunes→miércoles; viernes→martes; especificar calendario de inhábiles antes de automatizar festividades. Monto estimado en Finanzas, no cabecera.  
 **Importante en Etapa 1:** El repositorio usa `fechaRetiroEstimada`, `fechaFirmaContrato`, `fechaAltaAfore` y `fechaSolicitudManual` en distintos módulos. Auditar la semántica exacta de cada fecha y sus disparadores **antes** de cambiar cálculo o etiquetas.
 
@@ -68,7 +68,7 @@ El asesor opera clientes y Finanzas según permisos actuales; el colaborador pue
 - GitHub `main` base `abf31a954c1487e594836a2c2c28a37e98b83d90`; frontend JS modular y tests Node en `package.json`.
 - En Supabase `public.clients` (331 filas al corte): campos canónicos `organization_id,id,advisor_id,collaborator_id,name,phone,curp,service_id,stage,archived,discarded,payload JSONB,created_at,updated_at`. `public.leads` (245): `status,archive_type,recontact_date,payload JSONB`. `agenda_events` (364) relaciona citas; `message_templates` (27); `record_audit` (874); `collaborator_portal_activity` (22). Todas estas tablas con RLS habilitada.
 - `app-core-02a.js`, `app-core-02b.js`, `app-core-03.js`, `app-workflow.js`, `app-finance-ui.js`, `app-meta-leads-workflow.js` contienen flujos y datos a preservar. `app-whatsapp-message-center.js` contiene plantillas/acciones. `cloud-adapter.js` gestiona persistencia. `colaborador/portal-v2-stage4.js` y `supabase/functions/collaborator-portal/index.ts` contienen hitos y controles del colaborador.
-- Verificación puntual: `app-core-03.js` calcula actualmente `fechaRetiroEstimada` desde firma salvo marca de cálculo manual; la regla alta>firma acordada requiere revisión cruzada de toda la cadena y tests de migración.
+- Verificación puntual: `app-core-03.js` calcula actualmente `fechaRetiroEstimada` desde firma salvo marca de cálculo manual; el cálculo desde firma se debe **preservar exactamente**; no introducir un recálculo desde alta ni alterar ajustes manuales.
 - Hay etapas canónicas `generando_contrato, contrato_firmas, contrato_firmado, dado_alta, afore_actualizada, solicitud_realizada, solicitud_rechazada, deposito_recibido, honorarios_recibidos, concluido`. **Las 12 actividades nuevas NO deben reemplazar estos estados sin matriz de compatibilidad**.
 - `record_audit` dispone de `record_type, record_id, actor_id, actor_name, occurred_at, changes`; verificar las escrituras reales antes de asumir cobertura total.
 - Tablas tienen ámbito organizacional y RLS; toda nueva acción deberá respetar aislamiento por organización/asesor/colaborador. Nunca introducir service-role en frontend.
@@ -79,7 +79,7 @@ Documentar para cada actividad: campos fuente en JSONB/columna, evento de escrit
 
 ## 9. Etapas y puertas de validación
 
-1. **Auditoría, respaldo lógico (rama GitHub) y diseño técnico**: inventario, plan maestro, matriz de campos, riesgos, seguridad; solo lectura en Supabase, sin alterar datos. Estado: EN CURSO.
+1. **Auditoría, respaldo lógico (rama GitHub) y diseño técnico**: inventario, plan maestro, matriz de campos, riesgos, seguridad; solo lectura en Supabase, sin alterar datos. Estado: DOCUMENTADO; iniciar etapa 2 en rama separada.
 2. **Prospectos**: expediente híbrido, CURP/RENAPO, elegibilidad y Meta Ads, fuente y colaborador, retirar botones/código obsoleto. Pruebas visuales y RLS.
 3. **Clientes**: cabecera compacta, 9 tarjetas, orden dinámico contratos, notas, administración, paneles internos, fechas.
 4. **Seguimiento**: 12 hitos, dependencias, amarillo, documentos, citas, fecha real/probable, compatibilidad histórica y auditoría.
