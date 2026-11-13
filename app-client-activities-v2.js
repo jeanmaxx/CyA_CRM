@@ -146,7 +146,7 @@
    return msg('Primero confirma el cobro en Finanzas; el indicador no sustituye ese registro');
   }
   const note=String($('cya-op-note')?.value||'').trim(),date=readDate('cya-op-date');
-  if(!date||date>isoToday())return msg('Registra una fecha real válida en formato dd/mm/aaaa');
+  if(!date||(stepId!=='cita'&&date>isoToday()))return msg('Registra una fecha válida en formato dd/mm/aaaa; las actividades realizadas no pueden tener fecha futura');
   if(step.done&&note.length<3)return msg('Escribe un motivo de corrección de al menos tres caracteres');
   const docChecks={curp:Boolean($('cya-op-doc-curp')?.checked),csf:Boolean($('cya-op-doc-csf')?.checked),acta:Boolean($('cya-op-doc-acta')?.checked)};
   if(stepId==='documentos'&&!Object.values(docChecks).every(Boolean))return msg('Marca CURP, Constancia de Situación Fiscal y Acta de Nacimiento');
