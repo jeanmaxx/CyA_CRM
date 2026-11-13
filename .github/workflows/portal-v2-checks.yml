@@ -1,5 +1,7 @@
 name: Portal de Colaboradores v2 — verificaciones
 on:
+  push:
+    branches: [main]
   pull_request:
     paths:
       - "colaborador/**"
