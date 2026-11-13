@@ -1,0 +1,37 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const {JSDOM}=require('jsdom'),vm=require('node:vm');
+const html=fs.readFileSync('app/index.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
+const dom=new JSDOM(html,{url:'https://crm.example.invalid/',runScripts:'dangerously',pretendToBeVisual:true});
+const w=dom.window,d=w.document;
+w.matchMedia=()=>({matches:false,addEventListener(){},addListener(){}});
+w.confirm=()=>true;w.alert=()=>{};
+w.HTMLElement.prototype.scrollIntoView=function(){};
+w.HTMLElement.prototype.scrollTo=function(){};w.scrollTo=()=>{};
+w.Chart=function(){this.destroy=()=>{}};
+const run=s=>vm.runInContext(s,dom.getInternalVMContext());
+for(const f of ['app-core-01.js','app-core-02a.js','app-core-02b.js','app-core-03.js','app-core-04.js','app-core-05.js','app-core-06.js','app-core-07.js'])
+ run(fs.readFileSync(f,'utf8').replace('\ninitResponsiveShell();','\n'));
+run(fs.readFileSync('tests/fixtures.js','utf8').replace('__ROLE__','admin').replace("actualizarSidebarSesion();updateRolUI();navigate('clientes');",''));
+for(const f of ['app-workflow.js','app-prospect-workflow.js','app-contract-word.js','app-operations.js'])run(fs.readFileSync(f,'utf8'));
+run(fs.readFileSync('app-client-hybrid-v2.js','utf8'));
+run(fs.readFileSync('app-client-activities-v2.js','utf8'));
+(async()=>{
+ run("navigate('clientes')");
+ assert.equal(d.querySelectorAll('#tbody-cl [data-cya-activity]').length,12,'Exactly 12 indicators in active client row');
+ assert.equal(d.querySelectorAll('#clientes-mobile-list [data-cya-activity]').length,12,'Exactly 12 indicators on mobile');
+ const mini=d.querySelector('#tbody-cl .cya-operational-track');
+ assert(mini);
+ assert(mini.outerHTML.includes('is-compact'));
+ run("openPerfil('test-client')");
+ await new Promise(resolve=>setTimeout(resolve,0));
+ assert.equal(d.querySelectorAll('#cya-operational-profile [data-cya-activity]').length,12,'Exactly 12 milestones outside the client cards');
+ assert.equal(d.querySelectorAll('#cya-hybrid-client-root .cya-hybrid-client-card').length,9,'Keep nine client cards');
+ assert(d.getElementById('cya-operational-profile').compareDocumentPosition(d.querySelector('.cya-hybrid-client-cards')) & w.Node.DOCUMENT_POSITION_FOLLOWING,'Activities appear before cards');
+ const old=w.store?.clientes?.[0]?.etapa;
+ d.querySelector('#cya-operational-profile [data-cya-activity="app"]').click();
+ assert(d.getElementById('cya-operational-modal'),'Milestone click opens detail modal');
+ assert.equal(w.store?.clientes?.[0]?.etapa,old,'Merely inspecting milestone cannot change legacy stage');
+ d.querySelector('#cya-operational-modal [data-op-close]').click();
+ assert(!d.getElementById('cya-operational-modal'),'Close does not change customer');
+ dom.window.close();console.log('PASS: 12 indicators desktop/mobile/profile, nine original cards, safe click detail.');
+})().catch(err=>{console.error(err);dom.window.close();process.exitCode=1});

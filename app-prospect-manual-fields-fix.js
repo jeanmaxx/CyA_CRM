@@ -202,3 +202,15 @@
  script.dataset.cyaHybridClient='1';
  document.head.appendChild(script);
 })();
+
+
+/* Stage 4: milestones use existing CRM client records and native sync. */
+(function loadOperationalActivitiesV2(){
+ if(window.__cyaClientActivitiesV2LoaderStarted)return;
+ window.__cyaClientActivitiesV2LoaderStarted=true;
+ const script=document.createElement('script');
+ script.src='/app-client-activities-v2.js?v=20261112-stage4';
+ script.async=false;
+ script.dataset.cyaClientActivities='1';
+ document.head.appendChild(script);
+})();
