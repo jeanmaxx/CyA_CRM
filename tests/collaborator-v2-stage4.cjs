@@ -11,7 +11,7 @@ assert.match(html,/portal-v2-stage4\.js\?v=20261112-cards/);
 assert.match(html,/portal-v2-stage4\.css\?v=20261112-mx/);
 assert.match(css,/position:sticky/);
 assert.match(backend,/action==='complete_activity'/);
-assert.match(backend,/!\['alta','app','banco','cita','expediente','solicitud','deposito','honorarios'\]\.includes\(key\)/);
+assert.match(backend,/!\['contrato','firmas','alta','app','banco','cita','documentos','expediente','solicitud','deposito','honorarios'\]\.includes\(key\)/);
 assert.match(backend,/\.eq\('advisor_id',collaborator\.advisor_id\)/);
 assert.match(backend,/\.eq\('updated_at',expected\)/);
 assert.match(backend,/verifier==='jorge_casillas'/);
