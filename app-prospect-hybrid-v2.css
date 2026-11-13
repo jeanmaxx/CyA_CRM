@@ -151,3 +151,186 @@
  #modal-lead .cya-hybrid-section-fields .form-group:has(#lead-fuente){grid-column:1/-1}
  #modal-lead #lead-curp-actions{flex-wrap:wrap!important}
 }
+
+
+/* Aprobado 13/11/2026 · SOLO Prospectos / Identidad y contacto.
+   Una única rejilla de dos filas; no se copian inputs ni eventos. */
+#modal-lead:has(#cya-hybrid-lead-root) .modal.modal-lg{
+  width:min(980px,calc(100vw - 32px))!important;
+  max-width:980px!important;
+  max-height:92dvh!important;
+}
+#modal-lead #cya-hybrid-lead-root{
+  gap:10px!important;min-width:0;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  column-gap:18px!important;
+  padding:10px 13px!important;
+  min-height:0!important;
+  flex-wrap:nowrap!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-person{
+  min-width:0!important;display:grid!important;gap:5px!important;
+}
+#modal-lead .cya-hybrid-kicker{
+  font-size:9px!important;line-height:1.15!important;letter-spacing:.03em!important;
+}
+#modal-lead .cya-hybrid-name-line{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0;
+}
+#modal-lead #cya-hybrid-lead-name{
+  font-size:16px!important;line-height:1.2!important;flex:0 1 auto;
+}
+#modal-lead .cya-hybrid-lead-context{
+  display:flex!important;align-items:center;gap:4px!important;
+  flex-wrap:wrap;min-width:0;
+}
+#modal-lead .cya-hybrid-lead-context span{
+  padding:2px 7px!important;border-radius:99px!important;
+  font-size:9px!important;line-height:1.4!important;
+}
+#modal-lead .cya-hybrid-header-meta{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;
+}
+#modal-lead .cya-hybrid-lead-contact{font-size:10px!important}
+#modal-lead .cya-hybrid-registration-label{
+  color:var(--text-muted,var(--muted));font-size:9px;font-weight:700;
+  line-height:1.2;letter-spacing:.025em;
+}
+#modal-lead #cya-hybrid-registration-slot{min-width:0;display:inline-flex;align-items:center}
+#modal-lead #lead-registration-wrap{width:auto!important;max-width:none!important;min-width:0!important;margin:0!important}
+#modal-lead #lead-registration-wrap .form-group{margin:0!important;min-width:0!important}
+#modal-lead #lead-registration-wrap .form-label{display:none!important}
+#modal-lead #lead-registration-wrap #lead-fecha-registro{
+  display:block;width:100px!important;min-width:0!important;max-width:110px!important;
+  height:28px!important;min-height:28px!important;
+  padding:4px 6px!important;text-align:left!important;
+  font-size:11px!important;font-weight:650;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-wa{
+  justify-self:end;align-self:center;flex:0 0 auto!important;
+  margin-right:25px!important;
+  height:37px!important;min-height:37px!important;
+  padding:7px 14px!important;border-radius:8px!important;
+  color:white!important;font-weight:700!important;
+  background:#168652!important;border:1px solid #168652!important;
+  box-sizing:border-box;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-wa:hover{
+  background:#137346!important;border-color:#137346!important;
+}
+#modal-lead .cya-hybrid-lead-cards{gap:7px!important}
+#modal-lead .cya-hybrid-lead-card{min-height:47px!important;padding:8px 10px!important;gap:3px!important}
+#modal-lead .cya-hybrid-lead-section{padding:11px 12px!important}
+#modal-lead #cya-hybrid-fields-identidad{
+  display:grid!important;
+  grid-template-columns:repeat(12,minmax(0,1fr))!important;
+  column-gap:9px!important;
+  row-gap:10px!important;
+  align-items:start!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group{
+  min-width:0!important;max-width:100%!important;
+  margin:0!important;padding:0!important;
+  grid-column:auto;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-nombre){grid-column:span 4!important;grid-row:1}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-curp){grid-column:span 5!important;grid-row:1}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-colaborador){grid-column:span 3!important;grid-row:1}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-tel){grid-column:span 3!important;grid-row:2}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-email){grid-column:span 4!important;grid-row:2}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-domicilio){grid-column:span 3!important;grid-row:2}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-ciudad){grid-column:span 2!important;grid-row:2}
+#modal-lead #cya-hybrid-fields-identidad .form-group .form-label{
+  display:block!important;margin:0 0 4px!important;
+  font-size:10px!important;line-height:1.25!important;
+}
+#modal-lead #cya-hybrid-fields-identidad .form-group input.form-input,
+#modal-lead #cya-hybrid-fields-identidad .form-group select.form-select{
+  display:block;min-width:0!important;max-width:100%!important;
+  width:100%!important;height:38px!important;min-height:38px!important;
+  padding:6px 9px!important;box-sizing:border-box!important;
+  font-size:11px!important;line-height:1.25!important;
+}
+#modal-lead #cya-hybrid-curp-line{
+  display:flex!important;align-items:center!important;
+  flex-wrap:nowrap!important;gap:5px!important;min-width:0;
+}
+#modal-lead #cya-hybrid-fields-identidad #cya-hybrid-curp-line #lead-curp{
+  flex:1 1 0!important;width:0!important;min-width:0!important;max-width:none!important;
+  padding:5px 7px!important;font-size:10px!important;
+}
+#modal-lead #cya-hybrid-curp-line #lead-curp-actions{
+  display:flex!important;align-items:center!important;
+  flex:0 0 auto!important;gap:5px!important;
+  width:auto!important;margin:0!important;flex-wrap:nowrap!important;
+}
+#modal-lead #cya-hybrid-curp-line #lead-curp-actions .btn{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 auto!important;height:38px!important;min-height:38px!important;
+  padding:5px 9px!important;box-sizing:border-box!important;
+  font-size:10px!important;white-space:nowrap!important;
+}
+#modal-lead #cya-hybrid-curp-line #lead-curp-actions .cya-curp-copy-icon{
+  width:34px!important;min-width:34px!important;max-width:34px!important;padding:0!important;
+}
+#modal-lead #cya-hybrid-fields-identidad #cya-hybrid-review-row{
+  grid-column:1/-1!important;grid-row:3;
+  display:flex;align-items:center;min-height:24px;padding:0 0 2px;
+}
+#modal-lead #cya-hybrid-review-row #cya-mark-review-sent{
+  display:inline-flex;align-items:center;justify-content:flex-start;min-height:28px;
+  font-size:11px!important;line-height:1.25;white-space:normal!important;
+}
+#modal-lead #cya-hybrid-review-row #cya-mark-review-sent:disabled{
+  background:none!important;color:#20bf74!important;
+  border-color:transparent!important;opacity:1!important;
+  padding:2px 0!important;cursor:default;
+}
+#modal-lead:has(#cya-hybrid-lead-root) #cya-client-message-actions,
+#modal-lead:has(#cya-hybrid-lead-root) #cya-wa-center-actions{
+  display:none!important;
+}
+#modal-lead #cya-hybrid-fields-identidad #cya-meta-name-helper,
+#modal-lead #cya-hybrid-fields-identidad #lead-curp-warning{
+  font-size:9px!important;line-height:1.25!important;margin-top:3px!important;
+}
+@media(max-width:900px){
+  #modal-lead #cya-hybrid-fields-identidad{
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  }
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-nombre){grid-column:span 3!important;grid-row:auto}
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-curp){grid-column:span 3!important;grid-row:auto}
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-colaborador){grid-column:span 2!important;grid-row:auto}
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-tel){grid-column:span 2!important;grid-row:auto}
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-email){grid-column:span 2!important;grid-row:auto}
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-domicilio){grid-column:span 4!important;grid-row:auto}
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-ciudad){grid-column:span 2!important;grid-row:auto}
+  #modal-lead #cya-hybrid-fields-identidad #cya-hybrid-review-row{grid-row:auto}
+  #modal-lead #cya-hybrid-lead-root .cya-hybrid-wa{margin-right:12px!important}
+}
+@media(max-width:640px){
+  #modal-lead:has(#cya-hybrid-lead-root) .modal.modal-lg{
+    width:100%!important;max-width:100%!important;max-height:100dvh!important;
+  }
+  #modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading{
+    grid-template-columns:1fr!important;
+    row-gap:10px!important;
+  }
+  #modal-lead #cya-hybrid-lead-root .cya-hybrid-wa{justify-self:start!important;margin-right:0!important}
+  #modal-lead #cya-hybrid-fields-identidad{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-nombre),
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-curp),
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-colaborador),
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-email),
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-domicilio){
+    grid-column:1/-1!important;grid-row:auto!important;
+  }
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-tel),
+  #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-ciudad){grid-column:span 1!important;grid-row:auto!important}
+}
