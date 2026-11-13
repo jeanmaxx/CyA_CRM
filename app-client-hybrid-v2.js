@@ -110,6 +110,10 @@ const inlineFields={
 let editorHome=null,editorActive=false,editorSection='';
 function stopInlineEditor(){
  const modal=$('modal-cliente');if(!modal||!editorActive)return;
+ // Restore the native ISO date input before returning the original editor.
+ const nativeDate=$('el-fecha');
+ if(nativeDate?.dataset.cyaHybridDateHidden==='1'){nativeDate.hidden=false;delete nativeDate.dataset.cyaHybridDateHidden;}
+ $('cya-last-withdrawal-mx')?.remove();
  modal.classList.remove('cya-hybrid-inline-editor','open');
  modal.removeAttribute('data-hybrid-section');
  modal.querySelectorAll('.form-group[hidden],.form-row[hidden],.tab-panel[hidden],details[hidden],.cya-next-action-heading[hidden]').forEach(el=>{el.hidden=false;});
@@ -154,6 +158,37 @@ function showEditorFields(section){
  const eligibility=$('tab-elegibilidad');
  if(eligibility)eligibility.hidden=section!=='previsional';
 }
+// Display the last-withdrawal date in Mexican format while preserving the
+// underlying ISO field required by eligibility calculations and persistence.
+function setupMxLastWithdrawal(section){
+ if(section!=='previsional')return;
+ const native=$('el-fecha');
+ if(!native||native.type!=='date')return;
+ let proxy=$('cya-last-withdrawal-mx');
+ if(!proxy){
+  proxy=document.createElement('input');
+  proxy.id='cya-last-withdrawal-mx';proxy.type='text';proxy.className='form-input input-fecha-mx';
+  proxy.inputMode='numeric';proxy.maxLength=10;proxy.placeholder='dd/mm/aaaa';
+  proxy.setAttribute('aria-label','Fecha del último retiro en formato día mes año');
+  native.insertAdjacentElement('afterend',proxy);
+  proxy.addEventListener('input',()=>{
+   const text=String(proxy.value||'').trim(),m=/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/.exec(text);
+   let iso='';
+   if(m){
+    const date=new Date(Date.UTC(+m[3],+m[2]-1,+m[1]));
+    if(date.getUTCFullYear()===+m[3]&&date.getUTCMonth()+1===+m[2]&&date.getUTCDate()===+m[1])
+     iso=m[3]+'-'+m[2]+'-'+m[1];
+   }
+   native.value=iso;
+   proxy.setCustomValidity(text&&!iso?'Fecha inválida. Usa dd/mm/aaaa':'');
+   native.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+ }
+ const m=/^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(String(native.value||''));
+ proxy.value=m?m[3]+'/'+m[2]+'/'+m[1]:'';
+ proxy.setCustomValidity('');
+ native.hidden=true;native.dataset.cyaHybridDateHidden='1';
+}
 function mountInlineEditor(c,section){
  const area=$('cya-hybrid-client-content'),editor=$('modal-cliente');
  if(!area||!editor||typeof window.editCliente!=='function'||!canAccessClient(c))return false;
@@ -168,6 +203,7 @@ function mountInlineEditor(c,section){
  window.__cyaHybridClientEditSection=section;
  editorActive=true;
  showEditorFields(section);
+ setupMxLastWithdrawal(section);
  const originalCancel=editor.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(originalCancel){originalCancel.dataset.cyaHybridCancel='1';originalCancel.onclick=()=>{
   stopInlineEditor();selected='';selection(c);
