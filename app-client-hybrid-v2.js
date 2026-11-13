@@ -238,6 +238,17 @@ if(typeof nativeSave==='function')window.guardarCliente=async function(...args){
  }
  return result;
 };
+// Confirm pending edits before navigation and destructive actions.
+for(const id of ['perfil-regresar-prospecto-btn','perfil-descartar-btn']){
+ const action=$(id);
+ if(action&&!action.dataset.cyaHybridDirtyGuard){
+  action.dataset.cyaHybridDirtyGuard='1';
+  action.addEventListener('click',event=>{
+   if(editorActive&&!confirmSwitch()){event.preventDefault();event.stopImmediatePropagation();}
+   else if(editorActive)stopInlineEditor();
+  },true);
+ }
+}
 // Always restore the native modal before closing the parent profile.
 $('modal-perfil')?.querySelector('.profile-close')?.addEventListener('click',event=>{
  if(editorActive&&!confirmSwitch()){event.preventDefault();event.stopImmediatePropagation();return;}
