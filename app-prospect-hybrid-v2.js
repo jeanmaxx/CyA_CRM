@@ -48,31 +48,58 @@
   const target=$('cya-hybrid-fields-'+section);if(!target||!element)return;
   if(!target.contains(element))target.appendChild(element);
  }
+ function normalizeIdentityControls(){
+  // Keep the original registered input and its official copy/RENAPO handlers.
+  const input=$('lead-curp'),actions=$('lead-curp-actions'),group=input?.closest('.form-group');
+  if(input&&group){
+   let row=$('cya-curp-inline');
+   if(!row){
+    row=document.createElement('div');row.id='cya-curp-inline';row.className='cya-curp-inline';
+    input.insertAdjacentElement('beforebegin',row);
+   }
+   if(input.parentElement!==row)row.appendChild(input);
+   if(actions&&actions.parentElement!==row)row.appendChild(actions);
+   if(actions){
+    const renapo=[...actions.querySelectorAll('button')].find(b=>/renapo/i.test(b.textContent||''));
+    if(renapo){renapo.textContent='RENAPO';renapo.setAttribute('aria-label','Verificar CURP en RENAPO');}
+   }
+  }
+  // The existing Meta workflow inserts a second WhatsApp button below phone.
+  // Only the approved top-right WhatsApp entry remains visible.
+  for(const id of ['cya-client-message-actions','cya-wa-center-actions']){
+   const duplicate=$(id);if(duplicate)duplicate.hidden=true;
+  }
+ }
  function routeFields(){
   const container=body();if(!container)return;
-  const rowFor=id=>$(id)?.closest('.form-row');
   const groupFor=id=>$(id)?.closest('.form-group');
-  appendTo('identidad',rowFor('lead-nombre'));
-  appendTo('identidad',rowFor('lead-curp'));
+  // Move original form controls, not copies. Native validation and save remain intact.
   appendTo('identidad',$('lead-registration-wrap'));
-  appendTo('identidad',groupFor('lead-email'));
-  appendTo('identidad',groupFor('lead-ciudad'));
-  appendTo('identidad',groupFor('lead-domicilio'));
+  for(const id of ['lead-nombre','lead-curp','lead-tel','lead-colaborador','lead-email','lead-ciudad','lead-domicilio'])
+   appendTo('identidad',groupFor(id));
+  normalizeIdentityControls();
   appendTo('elegibilidad',container.querySelector('.form-section'));
   appendTo('elegibilidad',$('lead-elegibilidad-container'));
   appendTo('elegibilidad',groupFor('lead-nss'));
   appendTo('elegibilidad',groupFor('lead-afore'));
-  appendTo('origen',groupFor('lead-fuente'));
+  // Precisely ordered: stages, state, service, notes.
   appendTo('seguimiento',$('cya-prospect-stage-stepper'));
-  appendTo('seguimiento',rowFor('lead-servicio'));
+  appendTo('seguimiento',groupFor('lead-estado'));
+  appendTo('seguimiento',groupFor('lead-servicio'));
   appendTo('seguimiento',groupFor('lead-notas'));
-  // The legacy Meta Ads tab remains hidden; its read-only content is displayed
-  // in Origen. Do not recreate the original answers or write to them.
+  const follow=$('cya-hybrid-fields-seguimiento');
+  const stepper=$('cya-prospect-stage-stepper');
+  if(follow&&stepper&&follow.firstElementChild!==stepper)follow.prepend(stepper);
+  // Meta's legacy tab is for its own old modal. Our hybrid shows one
+  // read-only answers section in the exact user-approved position.
   const questionnaire=$('cya-meta-questionnaire-panel');
-  if(questionnaire){appendTo('origen',questionnaire);const l=currentLead();questionnaire.hidden=!Boolean(l?.metaLead||l?.origenMeta||l?.metaAds);}
-  const extra=$('cya-lead-extra-fields');
-  if(extra){extra.hidden=true;}
-  const tabs=$('cya-meta-lead-tabs');if(tabs)tabs.hidden=true;
+  if(questionnaire)questionnaire.hidden=true;
+  const extras=$('cya-lead-extra-fields');
+  if(extras)extras.hidden=true;
+  const tabs=$('cya-meta-lead-tabs');
+  if(tabs)tabs.hidden=true;
+  // Source belongs after answers, before the folded campaign information.
+  appendTo('origen',groupFor('lead-fuente'));
  }
  function makeHistory(lead){
   const target=$('cya-hybrid-fields-historial');if(!target)return;
@@ -104,43 +131,67 @@
    historial:(Array.isArray(l?.historial)?l.historial.length:0)+' registros'
   };
   for(const [key,value] of Object.entries(descriptions)){const el=root.querySelector('[data-hybrid-summary="'+key+'"]');if(el)el.textContent=value;}
-  // Interpretación humana de Meta Ads: no mostrar IDs técnicos, valores de API ni
-  // cuestionarios duplicados. La fuente original sigue disponible en el registro.
+  // Stable order, independent from Meta's old tab MutationObserver:
+  // precalificación -> three answers -> editable source -> folded Meta provenance.
   const meta=l?.metaLead||l?.origenMeta||null;
-  const sourceBox=$('cya-hybrid-origin-overview')||document.createElement('details');
-  if(!sourceBox.id){sourceBox.id='cya-hybrid-origin-overview';sourceBox.className='cya-hybrid-origin-overview';$('cya-hybrid-fields-origen')?.appendChild(sourceBox);}
-  const wasExpanded=sourceBox.open===true;
-  const clean=x=>String(x??'').trim();
-  const sourceRows=[
-   ['Campaña',meta?.campaignName||meta?.campaign_name],
-   ['Conjunto',meta?.adsetName||meta?.adset_name],['Anuncio',meta?.adName||meta?.ad_name],
-   ['Formulario',meta?.formName||meta?.form_name]
-  ].filter(([k,v])=>clean(v)&&clean(v)!=='—'&&!(k==='Fuente'&&clean(v)==='Origen pendiente'));
-  sourceBox.innerHTML='<summary class="cya-hybrid-source-title">Detalles de Meta Ads <span aria-hidden="true">▾</span></summary><div class="cya-hybrid-source-grid">'+
-    (sourceRows.length?sourceRows.map(([label,value])=>'<div class="cya-hybrid-source-row"><small>'+safe(label)+'</small><strong>'+safe(value)+'</strong></div>').join(''):'<span class="cya-hybrid-empty">Fuente sin confirmar</span>')+
-    '</div><p class="cya-hybrid-source-note">Datos de procedencia de la solicitud. Los identificadores técnicos permanecen ocultos.</p>';
-  sourceBox.open=wasExpanded;
-  const qualify=$('cya-hybrid-qualification')||document.createElement('div');
-  if(!qualify.id){qualify.id='cya-hybrid-qualification';$('cya-hybrid-fields-origen')?.prepend(qualify);}
-  const result=l&&typeof window.cyaMetaQualification==='function'?window.cyaMetaQualification(l):null;
-  qualify.className='cya-hybrid-qualification '+(result?'is-'+result.tone:'is-orange');
-  qualify.innerHTML='<strong>'+safe(result?.label||'Precalificación pendiente de revisión')+'</strong><small>'+
-    safe(result?.reason||'Sin respuestas suficientes para clasificar')+
-    (result?.needsBalanceReview?' · Consultar saldo directamente en AFORE':'')+
-    '</small><span>Resultado orientativo; no sustituye la validación IMSS/AFORE.</span>';
-  // Operational priority: eligibility result, human answers, editable source,
-  // then optional collapsed campaign metadata.
   const origin=$('cya-hybrid-fields-origen');
   if(origin){
-   origin.prepend(qualify);
-   const questionnaire=$('cya-meta-questionnaire-panel');
-   if(questionnaire)qualify.insertAdjacentElement('afterend',questionnaire);
+   const qualify=$('cya-hybrid-qualification')||document.createElement('div');
+   qualify.id='cya-hybrid-qualification';
+   const result=l&&typeof window.cyaMetaQualification==='function'?window.cyaMetaQualification(l):null;
+   qualify.className='cya-hybrid-qualification '+(result?'is-'+result.tone:'is-orange');
+   qualify.innerHTML='<strong>'+safe(result?.label||'Precalificación pendiente de revisión')+'</strong><small>'+
+     safe(result?.reason||'Sin respuestas suficientes para clasificar')+
+     (result?.needsBalanceReview?' · Consultar saldo directamente en AFORE':'')+
+     '</small><span>Resultado orientativo. Confirmar criterios en IMSS/AFORE.</span>';
+   const answers=$('cya-hybrid-answers')||document.createElement('section');
+   answers.id='cya-hybrid-answers';answers.className='cya-hybrid-answer-list';
+   answers.setAttribute('aria-label','Respuestas del formulario');
+   const rawAnswers=meta?.answers||{};
+   const questionMarkup=typeof window.cyaMetaHumanQuestions==='function'
+    ?window.cyaMetaHumanQuestions(l):'';
+   const raw=rawAnswers.raw||{};
+   const fallbackKeys=[
+     ['Situación ante IMSS',rawAnswers.imss_status_declared,/imss|cotiz|empleo/i],
+     ['Retiro por desempleo anterior',rawAnswers.previous_withdrawal_declared,/retiro|desempleo/i],
+     ['Semanas cotizadas',rawAnswers.weeks_declared,/semana|cotizad/i]
+   ];
+   const fallback=fallbackKeys.map(([label,value,matcher])=>{
+    const found=value||Object.entries(raw).find(([k])=>matcher.test(k))?.[1]||'Pendiente de confirmar';
+    return '<div class="cya-meta-answer"><strong>'+safe(label)+'</strong><span>'+
+      safe(String(found).replace(/_/g,' '))+'</span></div>';
+   }).join('');
+   answers.innerHTML='<div class="cya-meta-questionnaire-list">'+(questionMarkup||fallback)+'</div>';
+   answers.hidden=!Boolean(l&&(meta||l.metaAds));
+   const sourceBox=$('cya-hybrid-origin-overview')||document.createElement('details');
+   const wasExpanded=sourceBox.open===true;
+   sourceBox.id='cya-hybrid-origin-overview';sourceBox.className='cya-hybrid-origin-overview';
+   const clean=x=>String(x??'').trim();
+   const rows=[
+    ['Campaña',meta?.campaignName||meta?.campaign_name],
+    ['Conjunto',meta?.adsetName||meta?.adset_name],
+    ['Anuncio',meta?.adName||meta?.ad_name],
+    ['Formulario',meta?.formName||meta?.form_name]
+   ].filter(([,v])=>clean(v)&&clean(v)!=='—');
+   sourceBox.innerHTML='<summary class="cya-hybrid-source-title">Información de Meta Ads <span aria-hidden="true">▾</span></summary>'+
+     '<div class="cya-hybrid-source-grid">'+(rows.length
+       ?rows.map(([label,value])=>'<div class="cya-hybrid-source-row"><small>'+safe(label)+'</small><strong>'+safe(value)+'</strong></div>').join('')
+       :'<span class="cya-hybrid-empty">Sin información adicional de campaña.</span>')+
+     '</div>';
+   sourceBox.open=wasExpanded;
+   sourceBox.hidden=!Boolean(l&&(meta||l.metaAds));
    const sourceControl=$('lead-fuente')?.closest('.form-group');
-   if(sourceControl)origin.appendChild(sourceControl);
-   origin.appendChild(sourceBox);
+   // Replace only presentation nodes; the native source selector is preserved.
+   if(qualify.parentElement!==origin)origin.appendChild(qualify);
+   if(answers.parentElement!==origin)origin.appendChild(answers);
+   if(sourceControl&&sourceControl.parentElement!==origin)origin.appendChild(sourceControl);
+   if(sourceBox.parentElement!==origin)origin.appendChild(sourceBox);
+   for(const child of [qualify,answers,sourceControl,sourceBox]){
+    if(child&&child.parentElement===origin)origin.appendChild(child);
+   }
+   const eligibility=root.querySelector('[data-hybrid-summary="elegibilidad"]');
+   if(eligibility&&result)eligibility.textContent=result.label;
   }
-  const status=root.querySelector('[data-hybrid-summary="elegibilidad"]');
-  if(status&&result)status.textContent=result.label;
   makeHistory(l);
  }
  function showSelected(){
@@ -172,7 +223,9 @@
  if(typeof baseOpen==='function')window.openModalLead=function(...args){
   const result=baseOpen.apply(this,args);
   const key=args[0]||'new';lastLeadKey=key;current='identidad';dirty=false;
-  setTimeout(refresh,120);
+  setTimeout(refresh,80);
+  setTimeout(refresh,220);
+  setTimeout(refresh,460);
   return result;
  };
  // Maintain the approved continuity rule: after a successful save, keep the
