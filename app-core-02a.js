@@ -490,10 +490,10 @@ function renderClientes(){
     <div class="table-wrap clients-table-wrap">
       <table>
         <thead><tr>
-          <th class="cya-client-date-col" onclick="ordenarClientes('fechaRegistro')" style="cursor:pointer">Fecha de alta${flechaOrden('fechaRegistro')}</th>
+          <th class="cya-client-date-col" onclick="ordenarClientes('fechaRegistro')" style="cursor:pointer">Registro${flechaOrden('fechaRegistro')}</th>
           <th class="cya-client-name-col" onclick="ordenarClientes('nombre')" style="cursor:pointer">Nombre${flechaOrden('nombre')}</th>
           ${cyaClientesEtapasEncabezados()}
-          <th class="cya-client-request-col" onclick="ordenarClientes('fechaSolicitud')" style="cursor:pointer">Fecha de solicitud${flechaOrden('fechaSolicitud')}</th>
+          <th class="cya-client-request-col" onclick="ordenarClientes('fechaSolicitud')" style="cursor:pointer">Solicitud${flechaOrden('fechaSolicitud')}</th>
         </tr></thead>
         <tbody id="tbody-cl">${renderClientesRows(aplicarOrden(cl))}</tbody>
       </table>
@@ -507,12 +507,12 @@ function renderClientes(){
     </div>
     <div class="clients-mobile-list" id="clientes-mobile-list">${renderClientesCards(aplicarOrden(cl))}</div>
   </div>
-  ${atendidos.length?`<details class="archivados-section clients-attended-section" style="margin-top:16px;">
-    <summary class="archivados-header" style="cursor:pointer;">CLIENTES ATENDIDOS (${atendidos.length})</summary>
+  ${atendidos.length?`<details class="archivados-section clients-attended-section" style="margin-top:16px;width:100%;">
+    <summary class="archivados-header cya-clients-attended-bar" style="cursor:pointer;">▸ CLIENTES ATENDIDOS (${atendidos.length})</summary>
     <div style="padding:0 14px 14px;">
       <div class="card clients-list-card" style="overflow:hidden;">
         <div class="table-wrap clients-table-wrap"><table>
-          <thead><tr><th>Fecha de alta</th><th>Nombre</th>${cyaClientesEtapasEncabezados()}<th>Fecha de solicitud</th></tr></thead>
+          <thead><tr><th>Registro</th><th>Nombre</th>${cyaClientesEtapasEncabezados()}<th>Solicitud</th></tr></thead>
           <tbody>${renderClientesRows(aplicarOrden(atendidos))}</tbody>
         </table></div>
         <div class="clients-mobile-list">${renderClientesCards(aplicarOrden(atendidos))}</div>
@@ -543,9 +543,9 @@ function renderClientes(){
  * el delegado [data-cya-activity], con los permisos de la implementación original.
  */
 const CYA_CLIENT_STAGE_LABELS=[
- ['contrato','Contrato'],['firmas','Firmas'],['firmado','Firmado'],['alta','Alta AFORE'],
+ ['contrato','Contrato'],['firmas','Firmas'],['firmado','Firmado'],['alta','ALTA'],
  ['app','AFORE Móvil'],['banco_n4','Banco N4'],['cita','Cita'],['documentos','Documentos'],
- ['expediente','Expediente'],['solicitud','Solicitud'],['deposito','Depósito'],['honorarios','Honorarios']
+ ['expediente','Expediente actualizado'],['solicitud','Solicitud'],['deposito','Depósito'],['honorarios','Honorarios']
 ];
 function cyaClientesEtapasEncabezados(){
  return CYA_CLIENT_STAGE_LABELS.map(([id,label])=>'<th class="cya-client-milestone-head" scope="col" title="'+label+'">'+label+'</th>').join('');
@@ -570,7 +570,7 @@ function renderClientesCards(cl){
  if(!cl.length)return '';
  return cl.map(c=>'<article class="client-mobile-card cya-client-mobile-slim">'+
  '<div class="client-mobile-head"><div class="client-mobile-identity"><button class="cya-client-open-name" type="button" onclick="openPerfil(\''+escapeHTMLBasico(String(c.id))+'\')">'+escapeHTMLBasico(c.nombre||'Cliente')+'</button>'+
- '<div class="client-mobile-phone">Alta: '+fmtDate(c.fechaRegistro||c.fechaInicio||'')+' · Solicitud: '+etiquetaSolicitudCliente(c)+'</div></div></div>'+
+ '<div class="client-mobile-phone">Registro: '+fmtDate(c.fechaRegistro||c.fechaInicio||'')+' · Solicitud: '+etiquetaSolicitudCliente(c)+'</div></div></div>'+
  '<div class="cya-client-mobile-steps" aria-label="Doce etapas del trámite">'+CYA_CLIENT_STAGE_LABELS.map(step=>'<div class="cya-client-mobile-step"><span>'+step[1]+'</span>'+cyaClientesEtapasCelda(c,step).replace(/^<td[^>]*>|<\/td>$/g,'')+'</div>').join('')+'</div></article>').join('');
 }
 

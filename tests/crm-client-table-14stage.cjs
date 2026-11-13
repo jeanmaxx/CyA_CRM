@@ -8,7 +8,7 @@ const model=vm.runInNewContext(src.slice(start,end)+'\n({headers:cyaClientesEtap
 });
 const headers=model.headers();
 assert.equal((headers.match(/<th\b/g)||[]).length,12);
-for(const title of ['Contrato','Firmas','Firmado','Alta AFORE','AFORE Móvil','Banco N4','Cita','Documentos','Expediente','Solicitud','Depósito','Honorarios'])assert(headers.includes(title),title);
+for(const title of ['Contrato','Firmas','Firmado','ALTA','AFORE Móvil','Banco N4','Cita','Documentos','Expediente actualizado','Solicitud','Depósito','Honorarios'])assert(headers.includes(title),title);
 const c={id:'synthetic-1',nombre:'CLIENTE DE PRUEBA',servicio:'retiro_desempleo',fechaRegistro:'2026-11-13'};
 const html=model.rows([c]);
 assert.equal((html.match(/<td\b/g)||[]).length,15,'Date + name + 12 milestone cells + request');

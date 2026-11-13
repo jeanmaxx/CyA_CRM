@@ -17,7 +17,7 @@ const html='<!doctype html><html><head><meta name="viewport" content="width=devi
 (async()=>{
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  try{
-  for(const [name,width,height,theme] of [['desktop dark',1440,900,'dark'],['desktop light',1440,900,'light'],['mobile dark',390,844,'dark'],['mobile light',390,844,'light']]){
+  for(const [name,width,height,theme] of [['desktop dark',1440,900,'dark'],['desktop light',1440,900,'light'],['tablet dark',1024,768,'dark'],['tablet light',1024,768,'light'],['mobile dark',390,844,'dark'],['mobile light',390,844,'light']]){
    const page=await browser.newPage({viewport:{width,height}});
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.setContent(html);await page.addStyleTag({content:css});
@@ -39,8 +39,17 @@ const html='<!doctype html><html><head><meta name="viewport" content="width=devi
    assert.equal(columns,width<=840?2:3,name+' correct compact columns');
    assert.equal(await page.locator('#cya-hybrid-qualification.is-green').count(),1,name+' green qualification');
    await page.locator('[data-hybrid-lead-section="origen"]').click();
-   const source=await page.locator('#cya-hybrid-origin-overview').innerText();
+   const metaDetails=page.locator('#cya-hybrid-origin-overview');
+   assert.equal(await metaDetails.evaluate(el=>el.open),false,name+' campaign metadata collapsed by default');
+   const originOrder=await page.locator('#cya-hybrid-fields-origen').evaluate(el=>[...el.children].map(x=>x.id||x.className));
+   assert(originOrder.indexOf('cya-hybrid-qualification')<originOrder.indexOf('cya-meta-questionnaire-panel'),name+' qualification first');
+   assert(originOrder.indexOf('cya-meta-questionnaire-panel')<originOrder.indexOf('cya-hybrid-origin-overview'),name+' answers before metadata');
+   await page.locator('#cya-hybrid-origin-overview summary').click();
+   assert.equal(await metaDetails.evaluate(el=>el.open),true,name+' expandable Meta panel');
+   const source=await metaDetails.innerText();
    assert(source.includes('Campaña de prueba')&&source.includes('Conjunto Demo')&&source.includes('Anuncio Demo')&&source.includes('Formulario Demo'),name+' readable origin');
+   await page.locator('#cya-hybrid-origin-overview summary').click();
+   assert.equal(await metaDetails.evaluate(el=>el.open),false,name+' collapses again');
    const q=await page.locator('#cya-meta-questionnaire-panel').innerText();
    assert(!q.includes('technical-secret')&&!q.includes('campaign_id'),name+' no technical data');
    await page.locator('[data-hybrid-lead-section="identidad"]').click();

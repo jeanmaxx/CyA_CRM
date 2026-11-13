@@ -415,6 +415,17 @@ async function guardarCliente(){
   if(!nombre){showToast('El nombre es obligatorio','warn');return;}
   if(!tel){showToast('El teléfono es obligatorio','warn');return;}
   if(!svc){showToast('Selecciona un servicio','warn');switchTab('tab-contacto',0);return;}
+  // The hybrid UI displays Mexican dd/mm/aaaa, while el-fecha remains ISO.
+  // Never silently overwrite a stored date if its visible proxy is invalid.
+  if(window.__cyaHybridClientEditSection==='previsional'){
+    const shown=document.getElementById('cya-last-withdrawal-mx');
+    const native=document.getElementById('el-fecha');
+    if(shown&&shown.value.trim()&&(!native?.value||!shown.checkValidity())){
+      showToast('Fecha del último retiro inválida. Usa dd/mm/aaaa','warn');
+      shown.focus();
+      return;
+    }
+  }
   const docs={};
   document.querySelectorAll('#modal-docs-list .doc-check').forEach(el=>{ docs[el.dataset.doc]=el.classList.contains('checked'); });
   const oldCliente=editingId?store.clientes.find(c=>c.id===editingId):null;
@@ -504,6 +515,21 @@ async function guardarCliente(){
     notas:['notas']
   };
   const cyaIsScopedSave=Boolean(cyaInlineSection&&Object.prototype.hasOwnProperty.call(cyaInlineFields,cyaInlineSection));
+  const cyaNextAction=cyaIsScopedSave&&cyaInlineSection==='notas'&&oldCliente?{
+    tipo:getVal('fc-prox-tipo').trim(),
+    fecha:getVal('fc-prox-fecha').trim(),
+    hora:getVal('fc-prox-hora').trim()||'10:00',
+    nota:getVal('fc-prox-nota').trim()
+  }:null;
+  if(cyaNextAction?.tipo){
+    const dateOk=/^\d{4}-\d{2}-\d{2}$/.test(cyaNextAction.fecha);
+    const timeOk=/^([01]\d|2[0-3]):[0-5]\d$/.test(cyaNextAction.hora);
+    if(!dateOk||!timeOk){
+      showToast('Para programar la próxima acción, indica fecha y hora válidas','warn');
+      return;
+    }
+  }
+
   if(cyaIsScopedSave){
     // Reset all fields not owned by this section back to their stored value.
     // Preserve unknown legacy keys rather than assuming the current schema
@@ -603,11 +629,36 @@ async function guardarCliente(){
     }
 
   }
+  // Native Agenda integration for the Notes inline editor. The client form already
+  // saves the same four inputs when creating a new customer; this closes the
+  // edit-mode gap without introducing a duplicate scheduling component.
+  let cyaNewAgendaId=null;
+  if(cyaNextAction?.tipo){
+    if(!Array.isArray(store.agenda))store.agenda=[];
+    const matches=store.agenda.some(ev=>
+      String(ev.clienteId||'')===String(cliente.id)&&!ev.completado&&
+      String(ev.tipo||'')===cyaNextAction.tipo&&
+      String(ev.fecha||'')===cyaNextAction.fecha&&
+      String(ev.hora||'')===cyaNextAction.hora&&
+      String(ev.notas||'')===cyaNextAction.nota);
+    if(!matches){
+      cyaNewAgendaId='ev_'+Date.now()+'_cya';
+      store.agenda.push({
+        id:cyaNewAgendaId,
+        titulo:(cyaNextAction.nota||'Seguimiento')+' — '+cliente.nombre,
+        tipo:cyaNextAction.tipo,fecha:cyaNextAction.fecha,
+        hora:cyaNextAction.hora,notas:cyaNextAction.nota,
+        clienteId:cliente.id,asesorId:cliente.asesorId||sesionActiva?.id||null,
+        completado:false
+      });
+      addHist(cliente,'agenda','Próxima acción programada: '+cyaNextAction.fecha+' '+cyaNextAction.hora);
+    }
+  }
   editingId=cliente.id; // A failed synchronization retries this same record.
   // No hidden-card edit is allowed to refresh estimated dates or agenda rules.
   // The dedicated contract/alta and full-editor flows keep the legacy behavior.
   if(!cyaIsScopedSave)sincronizarFechasCliente(cliente,oldCliente);
-  try{await cloudSyncNow({throwOnError:true});}catch(e){showToast('Los cambios están pendientes de guardar. Intenta nuevamente.','warn');return;}
+  try{await cloudSyncNow({throwOnError:true});}catch(e){if(cyaNewAgendaId)store.agenda=store.agenda.filter(ev=>ev.id!==cyaNewAgendaId);showToast('Los cambios están pendientes de guardar. Intenta nuevamente.','warn');return;}
   showToast(oldCliente?'Cliente actualizado':'Cliente agregado correctamente','success');
   clienteFormDirty=false;
   closeModal('modal-cliente');

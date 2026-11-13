@@ -105,14 +105,18 @@ const inlineFields={
  afore:['fc-afore','fc-fecha-biometrica','fc-hora-afore','fc-sucursal-afore','fc-fecha-solicitud-manual'],
  banco:['fc-banco','fc-nivel-bbva','fc-clabe'],
  comisiones:['fc-colaborador','fc-col-pct','fc-col-comision','fc-honorarios','fc-comision'],
- notas:['fc-notas']
+ notas:['fc-notas','fc-prox-tipo','fc-prox-fecha','fc-prox-hora','fc-prox-nota']
 };
 let editorHome=null,editorActive=false,editorSection='';
 function stopInlineEditor(){
  const modal=$('modal-cliente');if(!modal||!editorActive)return;
+ // Restore the native ISO date input before returning the original editor.
+ const nativeDate=$('el-fecha');
+ if(nativeDate?.dataset.cyaHybridDateHidden==='1'){nativeDate.hidden=false;delete nativeDate.dataset.cyaHybridDateHidden;}
+ $('cya-last-withdrawal-mx')?.remove();
  modal.classList.remove('cya-hybrid-inline-editor','open');
  modal.removeAttribute('data-hybrid-section');
- modal.querySelectorAll('.form-group[hidden],.form-row[hidden],.tab-panel[hidden]').forEach(el=>{el.hidden=false;});
+ modal.querySelectorAll('.form-group[hidden],.form-row[hidden],.tab-panel[hidden],details[hidden],.cya-next-action-heading[hidden]').forEach(el=>{el.hidden=false;});
  const cancel=modal.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(cancel)cancel.setAttribute('onclick',"closeModal('modal-cliente')");
  if(editorHome&&modal.parentElement!==editorHome)editorHome.appendChild(modal);
@@ -142,9 +146,48 @@ function showEditorFields(section){
   const visible=[...panel.querySelectorAll('.form-group')].some(g=>!g.hidden);
   panel.hidden=!visible;
  });
+ // Hide orphan optional headers and non-form containers: only fields belonging
+ // to the selected category should occupy vertical space.
+ modal.querySelectorAll('details').forEach(details=>{
+  const visible=[...details.querySelectorAll('.form-group')].some(g=>!g.hidden);
+  details.hidden=!visible;
+ });
+ const nextAction=$('fc-prox-tipo')?.closest('.form-row')?.previousElementSibling;
+ if(nextAction&&/pr[oó]xima acci[oó]n/i.test(nextAction.textContent||'')){nextAction.classList.add('cya-next-action-heading');nextAction.hidden=section!=='notas';}
  // Eligibility is generated dynamically by the original application.
  const eligibility=$('tab-elegibilidad');
  if(eligibility)eligibility.hidden=section!=='previsional';
+}
+// Display the last-withdrawal date in Mexican format while preserving the
+// underlying ISO field required by eligibility calculations and persistence.
+function setupMxLastWithdrawal(section){
+ if(section!=='previsional')return;
+ const native=$('el-fecha');
+ if(!native||native.type!=='date')return;
+ let proxy=$('cya-last-withdrawal-mx');
+ if(!proxy){
+  proxy=document.createElement('input');
+  proxy.id='cya-last-withdrawal-mx';proxy.type='text';proxy.className='form-input input-fecha-mx';
+  proxy.inputMode='numeric';proxy.maxLength=10;proxy.placeholder='dd/mm/aaaa';
+  proxy.setAttribute('aria-label','Fecha del último retiro en formato día mes año');
+  native.insertAdjacentElement('afterend',proxy);
+  proxy.addEventListener('input',()=>{
+   const text=String(proxy.value||'').trim(),m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text);
+   let iso='';
+   if(m){
+    const date=new Date(Date.UTC(+m[3],+m[2]-1,+m[1]));
+    if(date.getUTCFullYear()===+m[3]&&date.getUTCMonth()+1===+m[2]&&date.getUTCDate()===+m[1])
+     iso=m[3]+'-'+m[2]+'-'+m[1];
+   }
+   native.value=iso;
+   proxy.setCustomValidity(text&&!iso?'Fecha inválida. Usa dd/mm/aaaa':'');
+   native.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+ }
+ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(native.value||''));
+ proxy.value=m?m[3]+'/'+m[2]+'/'+m[1]:'';
+ proxy.setCustomValidity('');
+ native.hidden=true;native.dataset.cyaHybridDateHidden='1';
 }
 function mountInlineEditor(c,section){
  const area=$('cya-hybrid-client-content'),editor=$('modal-cliente');
@@ -160,6 +203,7 @@ function mountInlineEditor(c,section){
  window.__cyaHybridClientEditSection=section;
  editorActive=true;
  showEditorFields(section);
+ setupMxLastWithdrawal(section);
  const originalCancel=editor.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(originalCancel){originalCancel.dataset.cyaHybridCancel='1';originalCancel.onclick=()=>{
   stopInlineEditor();selected='';selection(c);
@@ -181,9 +225,8 @@ function selection(c){
  area.innerHTML='<div class="cya-hybrid-client-panel-head"><strong>'+esc(x[1])+'</strong><small>Panel interno</small></div><div class="cya-hybrid-client-panel-content" id="cya-hybrid-client-content"></div>';
  const box=$('cya-hybrid-client-content'),source=$(x[3]);
  if(inlineCategories.has(selected)&&mountInlineEditor(c,selected)){
-  if(selected==='afore'){
-   const details=$('pd-cita-afore');if(details){details.hidden=false;details.classList.add('active');box.insertBefore(details,box.firstChild);}
-  }
+  // The native AFORE editor already renders its reference information.
+  // Never inject the legacy pd-cita-afore panel a second time.
   if(selected==='notas'){
    const entries=(c.historial||[]).filter(h=>/nota|observaci/i.test(String(h.tipo||'')+' '+String(h.texto||''))).slice(-8).reverse();
    if(entries.length){const log=document.createElement('div');log.className='cya-hybrid-notes-log';log.innerHTML='<strong>Notas anteriores</strong>'+entries.map(h=>'<p>'+esc(h.texto||'')+' <small>'+esc(format(h.fecha))+'</small></p>').join('');box.insertBefore(log,box.firstChild);}

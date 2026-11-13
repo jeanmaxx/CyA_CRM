@@ -2,7 +2,7 @@
 (function loadCollaboratorDraftRecovery(){
   if(document.querySelector('script[data-cya-sync-recovery]'))return;
   const script=document.createElement('script');
-  script.src='/app-sync-recovery.js?v=20261113-stable';
+  script.src='/app-sync-recovery.js?v=20261113-polish2';
   script.async=false;
   script.dataset.cyaSyncRecovery='1';
   document.head.appendChild(script);

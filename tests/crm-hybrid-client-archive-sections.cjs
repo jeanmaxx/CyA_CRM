@@ -1,6 +1,7 @@
 const fs=require('node:fs'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom'),vm=require('node:vm');
 const src=fs.readFileSync('app-core-02a.js','utf8');
-assert.match(src,/<details class="archivados-section clients-attended-section" style="margin-top:16px;">/);
+assert.match(src,/<details class="archivados-section clients-attended-section" style="margin-top:16px;width:100%;">/);
+assert.match(src,/cya-clients-attended-bar/,'Attended list has full-width accessible summary');
 assert.match(src,/<details class="archivados-section clients-discarded-section" style="margin-top:12px;">/);
 assert(!src.includes('id="btn-toggle-descartados"'));
 assert(!src.includes('onclick="eliminar('),'No destructive delete action in customer list');

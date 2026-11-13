@@ -22,6 +22,8 @@ const errors=[];
   for(const scenario of [
    {name:'desktop-dark',width:1440,height:900,theme:'dark'},
    {name:'desktop-light',width:1440,height:900,theme:'light'},
+   {name:'tablet-dark',width:1024,height:768,theme:'dark'},
+   {name:'tablet-light',width:1024,height:768,theme:'light'},
    {name:'mobile-dark',width:390,height:844,theme:'dark'},
    {name:'mobile-light',width:390,height:844,theme:'light'}
   ]){
@@ -69,6 +71,16 @@ const errors=[];
    assert.equal(await page.locator('#cya-operational-modal').isVisible(),true);
    await page.locator('[data-op-close]').first().click();
    assert.equal(await page.locator('#cya-operational-modal').count(),0);
+   await page.locator('[data-cya-activity="documentos"]').first().click();
+   assert.equal(await page.locator('#cya-operational-modal').isVisible(),true);
+   const bg=await page.locator('.cya-operational-dialog').evaluate(el=>getComputedStyle(el).backgroundColor);
+   const alpha=bg.startsWith('rgba(')?Number(bg.slice(bg.lastIndexOf(',')+1,-1)):1;
+   assert.equal(alpha,1,scenario.name+' activity dialog has fully opaque surface');
+   await page.locator('#cya-op-doc-csf').check();
+   assert.equal(await page.locator('#cya-op-doc-csf').isChecked(),true,scenario.name+' document checkbox works');
+   await page.locator('#cya-op-doc-csf').uncheck();
+   assert.equal(await page.locator('#cya-op-doc-csf').isChecked(),false,scenario.name+' document uncheck works');
+   await page.locator('[data-op-close]').first().click();
    // The center must work in both themes and remain a purely manual action.
    await page.addScriptTag({content:whatsAppJs});
    await page.evaluate(()=>window.cyaAbrirWhatsAppCliente());
