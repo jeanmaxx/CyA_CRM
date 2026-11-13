@@ -79,6 +79,8 @@ const nativeExtra=extract(meta,'  function extraFieldsHtml(){','  function ensur
    const columns=await page.locator('.cya-hybrid-lead-cards').evaluate(el=>getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length);
    assert.equal(columns,sc.w<=640?2:3,sc.name+' responsive nav columns');
    if(sc.w>1050){
+    console.log('ELIGIBILITY GEOMETRY',sc.name,JSON.stringify(boxes));
+    console.log('ELIGIBILITY DISPLAY',await page.locator('#cya-hybrid-fields-elegibilidad').evaluate(el=>({display:getComputedStyle(el).display,grid:getComputedStyle(el).gridTemplateColumns,children:[...el.children].map(n=>({id:n.id,cls:n.className,display:getComputedStyle(n).display,order:getComputedStyle(n).order}))})));
     const close=(a,b)=>Math.abs(boxes[a].y-boxes[b].y)<3;
     assert(close('lead-el-semanas','lead-el-cotiza')&&close('lead-el-semanas','lead-el-retiro')&&close('lead-el-semanas','lead-el-fecha-retiro'),
        sc.name+' all four primary criteria in one row');
