@@ -18,7 +18,7 @@ assert.ok(curp.includes('cya-curp-copy-icon'));
 assert.ok(curp.includes('cyaVerificarCurpProspecto()'));
 const dom=new JSDOM('<div class="modal-overlay" id="modal-lead"><div class="modal"><div class="modal-body">'+
  '<div class="form-row"><div class="form-group"><input id="lead-nombre" value="ANA PRUEBA"></div><div class="form-group"><input id="lead-tel" value="4420000000"></div></div>'+
- '<div class="form-row"><div class="form-group"><input id="lead-curp" value="CURPPRUEBA"><div id="lead-curp-actions"><button id="curp-copy">Copiar</button><button id="curp-renapo">RENAPO</button></div></div><div class="form-group"><select id="lead-colaborador"><option value="c1" selected>Jessica</option></select></div></div>'+
+ '<div class="form-row"><div class="form-group"><input id="lead-curp" value="CURPPRUEBA"><div id="lead-curp-actions"><button id="curp-copy">Copiar</button><button id="curp-renapo">✓ Verificar en RENAPO</button></div><button id="cya-mark-review-sent" disabled>✓ Revisión ya solicitada</button></div><div class="form-group"><select id="lead-colaborador"><option value="c1" selected>Jessica</option></select></div></div>'+
  '<div class="form-row"><div class="form-group"><select id="lead-servicio"><option value="retiro_desempleo">Retiro</option></select></div><div class="form-group"><select id="lead-estado"><option value="semanas">En revisión</option></select></div></div>'+
  '<div class="form-section">Datos de elegibilidad</div><div id="lead-elegibilidad-container"><input id="lead-el-semanas" value="900"></div>'+
  '<div class="form-group"><textarea id="lead-notas">Llamada inicial</textarea></div>'+
@@ -47,6 +47,19 @@ w.eval(code);
  assert.match(d.getElementById('cya-hybrid-lead-context').textContent,/Meta Ads/);
  assert.equal(d.getElementById('cya-hybrid-fields-identidad').contains(d.getElementById('lead-curp')),true);
  assert.equal(d.getElementById('cya-hybrid-fields-identidad').contains(d.getElementById('lead-domicilio')),true);
+ assert.equal(d.getElementById('cya-hybrid-registration-slot').contains(d.getElementById('lead-fecha-registro')),true,'Original editable registration field appears in header, not repeated in the form');
+ assert.equal(d.querySelectorAll('#lead-fecha-registro').length,1,'One date input and no duplicated data');
+ assert.equal(d.getElementById('cya-hybrid-curp-line').contains(d.getElementById('lead-curp')),true);
+ assert.equal(d.getElementById('cya-hybrid-curp-line').contains(d.getElementById('lead-curp-actions')),true,'CURP and original actions share one control row');
+ assert.equal(d.getElementById('curp-renapo').textContent,'RENAPO','Only RENAPO text');
+ assert.equal(d.getElementById('cya-hybrid-review-row').contains(d.getElementById('cya-mark-review-sent')),true,'Requested review is a discrete status row');
+ const identity=[...d.getElementById('cya-hybrid-fields-identidad').children].map(el=>el.querySelector('input,select')?.id||el.id);
+ assert.deepEqual(identity.slice(0,7),['lead-nombre','lead-curp','lead-colaborador','lead-tel','lead-email','lead-domicilio','lead-ciudad'],'Approved field order');
+ const heading=d.querySelector('.cya-hybrid-lead-heading');
+ assert(heading.querySelector('.cya-hybrid-name-line').contains(d.getElementById('cya-hybrid-lead-context')),'Advisor/type/source chips beside the name');
+ assert.equal(heading.querySelector('.cya-hybrid-registration-label').textContent,'REGISTRO');
+ assert.equal(heading.querySelectorAll('#cya-hybrid-lead-whatsapp').length,1,'Only header WhatsApp');
+
  assert.equal(d.getElementById('cya-hybrid-fields-elegibilidad').contains(d.getElementById('lead-el-semanas')),true);
  assert.equal(d.getElementById('cya-hybrid-fields-origen').contains(d.getElementById('lead-fuente')),true);
  assert.equal(d.getElementById('cya-hybrid-fields-origen').contains(d.getElementById('cya-meta-questionnaire-panel')),true);
