@@ -62,7 +62,9 @@ const nativeExtra=extract(meta,'  function extraFieldsHtml(){','  function ensur
    const ids=['lead-el-semanas','lead-el-cotiza','lead-el-retiro','lead-el-fecha-retiro','lead-nss','lead-afore','lead-banco'];
    const boxes={};
    for(const id of ids){
-    boxes[id]=await page.locator('#'+id).boundingBox();
+    const info=await page.locator('#'+id).evaluateAll(nodes=>nodes.map(el=>({hidden:el.hidden,visible:getComputedStyle(el).display,box:el.getBoundingClientRect().toJSON(),parent:el.parentElement?.className,ancestors:[el.parentElement?.parentElement?.id,el.parentElement?.parentElement?.parentElement?.id]})));
+    console.log('ELIGIBILITY CONTROL',sc.name,id,JSON.stringify(info));
+    boxes[id]=await page.locator('#'+id).boundingBox({timeout:2500});
     assert(boxes[id],sc.name+' visible '+id);
     assert(Math.abs(boxes[id].height-38)<2,sc.name+' 38px height for '+id+': '+boxes[id].height);
    }
