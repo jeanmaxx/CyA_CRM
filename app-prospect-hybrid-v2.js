@@ -93,6 +93,9 @@
   appendTo('elegibilidad',$('lead-elegibilidad-container'));
   appendTo('elegibilidad',groupFor('lead-nss'));
   appendTo('elegibilidad',groupFor('lead-afore'));
+  appendTo('elegibilidad',groupFor('lead-banco'));
+  const eleg=$('cya-hybrid-fields-elegibilidad');
+  if(eleg)eleg.dataset.eligibilityService=$('lead-servicio')?.value||'retiro_desempleo';
   appendTo('origen',groupFor('lead-fuente'));
   appendTo('seguimiento',$('cya-prospect-stage-stepper'));
   appendTo('seguimiento',rowFor('lead-servicio'));
@@ -130,7 +133,7 @@
    '<span>'+safe(advisor?.nombre||'Asesor asignado')+'</span><span>'+safe(person?.nombre||'Cliente directo')+'</span><span>'+safe(source)+'</span>';
   const descriptions={
    identidad:txt(byId('lead-nombre')||l?.nombre)+' · '+txt(byId('lead-tel')||l?.telefono),
-   elegibilidad:'CURP · NSS · Validaciones',
+   elegibilidad:(l?.servicio==='retiro_desempleo'||byId('lead-servicio')==='retiro_desempleo'?'Preaprobación y validación':'Validación por servicio'),
    origen:source+(l?.metaLead?.campaignName?' · '+l.metaLead.campaignName:''),
    seguimiento:txt($('lead-estado')?.selectedOptions?.[0]?.textContent||'Etapa pendiente'),
    historial:(Array.isArray(l?.historial)?l.historial.length:0)+' registros'
@@ -177,6 +180,20 @@
  }
  function showSelected(){
   const root=$('cya-hybrid-lead-root');if(!root)return;
+  const eligibilityFields=$('cya-hybrid-fields-elegibilidad');
+  if(eligibilityFields)eligibilityFields.dataset.eligibilityService=byId('lead-servicio')||'retiro_desempleo';
+  // Use the approved short labels only inside the hybrid unemployment panel;
+  // the original eligibility engine, values and validators stay untouched.
+  if(eligibilityFields?.dataset.eligibilityService==='retiro_desempleo'){
+   for(const [id,label] of [
+     ['lead-el-semanas','Semanas cotizadas'],
+     ['lead-el-cotiza','¿IMSS activo?'],
+     ['lead-el-fecha-retiro','Último retiro']
+   ]){
+    const original=$(id)?.closest('.form-group')?.querySelector('.form-label');
+    if(original&&original.textContent!==label)original.textContent=label;
+   }
+  }
   TABS.forEach(({id})=>{
    const section=$('cya-hybrid-section-'+id),btn=root.querySelector('[data-hybrid-lead-section="'+id+'"]');
    if(section)section.hidden=id!==current;

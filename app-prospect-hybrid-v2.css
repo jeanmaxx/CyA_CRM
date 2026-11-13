@@ -334,3 +334,123 @@
   #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-tel),
   #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-ciudad){grid-column:span 1!important;grid-row:auto!important}
 }
+
+
+/* Aprobación Elegibilidad 13/11/2026.
+ * Five aligned, centered uppercase cards; only Retiro por desempleo uses
+ * the approved compact eligibility grid. Native forms remain the sole source
+ * of values and oninput/onchange calculations. */
+#modal-lead .cya-hybrid-lead-cards{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:7px!important;
+}
+#modal-lead .cya-hybrid-lead-card{
+  align-items:center!important;justify-content:center!important;
+  text-align:center!important;gap:4px!important;min-width:0;
+}
+#modal-lead .cya-hybrid-lead-card .cya-hybrid-card-title{
+  display:block!important;width:100%;text-align:center!important;
+  font-size:10px!important;line-height:1.3!important;
+  text-transform:uppercase!important;letter-spacing:.025em;
+  overflow-wrap:break-word;
+}
+#modal-lead .cya-hybrid-lead-card small[data-hybrid-summary]{
+  display:block;width:100%;text-align:center;
+  font-size:9px!important;line-height:1.25;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"]{
+  display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;
+  gap:9px 10px!important;align-items:start!important;min-width:0;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"]>.form-section{
+  grid-column:1/-1!important;margin:1px 0 3px!important;
+  padding:0 0 6px!important;font-size:10px!important;
+  color:var(--text-muted)!important;letter-spacing:.045em!important;
+  border-bottom:1px solid var(--border)!important;min-height:0!important;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] #lead-elegibilidad-container,
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] #lead-elegibilidad-container>.form-row{
+  display:contents!important;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group{
+  display:block;min-width:0!important;max-width:100%!important;
+  margin:0!important;padding:0!important;box-sizing:border-box!important;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-semanas){
+  grid-column:span 3!important;order:1;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-cotiza){
+  grid-column:span 3!important;order:2;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-retiro){
+  grid-column:span 4!important;order:3;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-fecha-retiro){
+  grid-column:span 2!important;order:4;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-nss){
+  grid-column:span 3!important;order:5;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-afore){
+  grid-column:span 4!important;order:6;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-banco){
+  grid-column:span 5!important;order:7;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] #lead-initial-criteria{
+  grid-column:1/-1!important;order:8;margin:4px 0 0!important;
+  padding:0!important;width:100%;min-width:0;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-label{
+  display:block!important;min-width:0;font-size:10px!important;
+  line-height:1.25!important;margin:0 0 4px!important;white-space:normal;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] input.form-input,
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] select.form-select{
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  height:38px!important;min-height:38px!important;
+  padding:6px 9px!important;box-sizing:border-box!important;
+  font-size:11px!important;line-height:1.25!important;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] #lead-initial-criteria .criteria-alert{
+  border-radius:8px!important;padding:9px 11px!important;
+  margin:0!important;font-size:11px!important;line-height:1.35!important;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] #lead-initial-criteria .form-helper{
+  padding:9px 11px!important;margin:0!important;font-size:11px!important;
+  background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;
+}
+#modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .cya-lead-bank-original{
+  grid-column:span 5!important;
+}
+@media(max-width:900px){
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"]{
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  }
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-semanas),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-cotiza),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-retiro),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-fecha-retiro),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-nss),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-afore),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-banco){
+    grid-column:span 3!important;
+  }
+}
+@media(max-width:640px){
+  #modal-lead .cya-hybrid-lead-cards{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"]{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-semanas),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-cotiza),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-retiro),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-el-fecha-retiro),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-nss),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-afore),
+  #modal-lead #cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"] .form-group:has(#lead-banco){
+    grid-column:1/-1!important;
+  }
+}

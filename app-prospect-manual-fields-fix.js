@@ -3,7 +3,7 @@
   if(window.__cyaProspectManualFieldsFixInstalled)return;
   window.__cyaProspectManualFieldsFixInstalled=true;
 
-  const FIELD_IDS=['lead-email','lead-ciudad','lead-fuente','lead-nss','lead-afore','lead-domicilio'];
+  const FIELD_IDS=['lead-email','lead-ciudad','lead-fuente','lead-nss','lead-afore','lead-domicilio','lead-banco'];
   let dirtyValues={};
   let activeLeadKey='';
   let scheduled=false;
@@ -149,7 +149,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-whatsapp-message-center]'))return;
     const script=document.createElement('script');
-    script.src='/app-whatsapp-message-center.js?v=20261113-identidad-aprobada1';
+    script.src='/app-whatsapp-message-center.js?v=20261113-elegibilidad-aprobada1';
     script.async=false;
     script.dataset.cyaWhatsappMessageCenter='1';
     document.head.appendChild(script);
@@ -184,7 +184,7 @@
   window.__cyaHybridProspectLoaderStarted=true;
   if(window.__cyaHybridProspectInstalled)return;
   const script=document.createElement('script');
-  script.src='/app-prospect-hybrid-v2.js?v=20261113-identidad-aprobada1';
+  script.src='/app-prospect-hybrid-v2.js?v=20261113-elegibilidad-aprobada1';
   script.async=false;
   script.dataset.cyaHybridProspect='1';
   document.head.appendChild(script);

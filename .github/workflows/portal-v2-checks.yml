@@ -110,3 +110,4 @@ jobs:
           node tests/crm-hybrid-browser.cjs
           node tests/crm-prospect-browser.cjs
           node tests/crm-prospect-approved-identity-browser.cjs
+          node tests/crm-prospect-eligibility-browser.cjs

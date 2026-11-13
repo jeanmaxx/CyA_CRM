@@ -24,6 +24,7 @@
     fill('fc-ciudad',lead.ciudad||lead.municipio);
     fill('fc-nss',lead.nss);
     fill('fc-afore',lead.afore);
+    fill('fc-banco',lead.banco);
     fill('fc-domicilio',lead.domicilio);
     const source=lead.fuenteContacto||lead?.origen?.fuente||(lead.metaAds||lead.metaLead?'Meta Ads':'');
     if(source){const sel=document.getElementById('fc-fuente');if(sel&&!String(sel.value||'').trim())sel.value=source;}
