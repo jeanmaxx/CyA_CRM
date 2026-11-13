@@ -41,3 +41,6 @@
  #modal-lead .cya-hybrid-section-fields>.form-row{grid-column:1}
  #modal-lead .cya-hybrid-lead-card{min-height:56px}
 }
+
+/* Hide legacy top-level groups: their live form controls have been moved into the selected hybrid panel. */
+#modal-lead:has(#cya-hybrid-lead-root) .modal-body > :not(#cya-hybrid-lead-root){display:none!important}
