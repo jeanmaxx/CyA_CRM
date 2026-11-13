@@ -490,12 +490,10 @@ function renderClientes(){
     <div class="table-wrap clients-table-wrap">
       <table>
         <thead><tr>
-          <th onclick="ordenarClientes('fechaRegistro')" style="cursor:pointer;">Registro${flechaOrden('fechaRegistro')}</th>
-          <th onclick="ordenarClientes('nombre')" style="cursor:pointer;">Nombre${flechaOrden('nombre')}</th>
-          <th onclick="ordenarClientes('servicio')" style="cursor:pointer;">Servicio${flechaOrden('servicio')}</th>
-          <th onclick="ordenarClientes('etapa')" style="cursor:pointer;">Etapa actual${flechaOrden('etapa')}</th><th title="12 actividades operativas">Avance (12)</th>
-          <th onclick="ordenarClientes('procesoPendiente')" style="cursor:pointer;">Proceso pendiente${flechaOrden('procesoPendiente')}</th>
-          <th onclick="ordenarClientes('fechaSolicitud')" style="cursor:pointer;">Fecha de solicitud${flechaOrden('fechaSolicitud')}</th><th>Documentos</th><th></th>
+          <th class="cya-client-date-col" onclick="ordenarClientes('fechaRegistro')" style="cursor:pointer">Fecha de alta${flechaOrden('fechaRegistro')}</th>
+          <th class="cya-client-name-col" onclick="ordenarClientes('nombre')" style="cursor:pointer">Nombre${flechaOrden('nombre')}</th>
+          ${cyaClientesEtapasEncabezados()}
+          <th class="cya-client-request-col" onclick="ordenarClientes('fechaSolicitud')" style="cursor:pointer">Fecha de solicitud${flechaOrden('fechaSolicitud')}</th>
         </tr></thead>
         <tbody id="tbody-cl">${renderClientesRows(aplicarOrden(cl))}</tbody>
       </table>
@@ -514,7 +512,7 @@ function renderClientes(){
     <div style="padding:0 14px 14px;">
       <div class="card clients-list-card" style="overflow:hidden;">
         <div class="table-wrap clients-table-wrap"><table>
-          <thead><tr><th>Registro</th><th>Nombre</th><th>Servicio</th><th>Etapa actual</th><th>Avance (12)</th><th>Proceso pendiente</th><th>Fecha de solicitud</th><th>Documentos</th><th></th></tr></thead>
+          <thead><tr><th>Fecha de alta</th><th>Nombre</th>${cyaClientesEtapasEncabezados()}<th>Fecha de solicitud</th></tr></thead>
           <tbody>${renderClientesRows(aplicarOrden(atendidos))}</tbody>
         </table></div>
         <div class="clients-mobile-list">${renderClientesCards(aplicarOrden(atendidos))}</div>
@@ -539,69 +537,41 @@ function renderClientes(){
   </details>`:''}`;
 }
 
-function renderClientesRows(cl){
-  if(!cl.length) return '';
-  return cl.map(c=>{
-    const docs=c.docs||{};
-    const docList=docsFor(c.servicio);
-    const docOk=docList.filter(d=>docs[d.id]).length;
-    const docPct=docList.length>0?Math.round(docOk/docList.length*100):0;
-    return `<tr>
-      <td class="td-muted">${fmtDate(c.fechaRegistro)}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div class="client-avatar" style="width:30px;height:30px;font-size:11px;">${initials(c.nombre)}</div>
-          <span class="td-link" onclick="openPerfil('${c.id}')">${c.nombre}</span>
-        </div>
-      </td>
-      <td><span class="chip chip-gray" style="font-size:10px;">${getSvcLabel(c.servicio)}</span></td>
-      <td><span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span></td>
-       <td class="cya-operational-table-cell">${typeof cyaRenderActivitiesMini==='function'?cyaRenderActivitiesMini(c):'—'}</td>
-      <td class="td-muted">${escapeHTMLBasico(procesoPendienteCliente(c))}</td>
-      <td class="td-muted">${etiquetaSolicitudCliente(c)}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px;min-width:80px;">
-          <div class="progress-bar-wrap" style="flex:1;margin:0;"><div class="progress-bar" style="width:${docPct}%;${docPct===100?'background:var(--success)':''}"></div></div>
-          <span style="font-size:11px;color:var(--text-muted);width:28px">${docOk}/${docList.length}</span>
-        </div>
-      </td>
-      <td>
-        <div style="display:flex;gap:4px;">
-          <button class="action-btn" onclick="openPerfil('${c.id}')" title="Ver perfil">▤</button>
-          <button class="action-btn" onclick="openPerfil('${c.id}')" title="Abrir expediente">✎</button>
-          
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-}
 
+/* Fila operativa acordada: fecha de alta, nombre, 12 hitos con título individual y solicitud.
+ * El acceso al expediente está en el nombre. La acción de cada hito reutiliza
+ * el delegado [data-cya-activity], con los permisos de la implementación original.
+ */
+const CYA_CLIENT_STAGE_LABELS=[
+ ['contrato','Contrato'],['firmas','Firmas'],['firmado','Firmado'],['alta','Alta AFORE'],
+ ['app','AFORE Móvil'],['banco_n4','Banco N4'],['cita','Cita'],['documentos','Documentos'],
+ ['expediente','Expediente'],['solicitud','Solicitud'],['deposito','Depósito'],['honorarios','Honorarios']
+];
+function cyaClientesEtapasEncabezados(){
+ return CYA_CLIENT_STAGE_LABELS.map(([id,label])=>'<th class="cya-client-milestone-head" scope="col" title="'+label+'">'+label+'</th>').join('');
+}
+function cyaClientesEtapasCelda(c,step){
+ const id=step[0],label=step[1],real=typeof window!=='undefined'?window.__cyaClientActivitiesV2:null;
+ const info=c.servicio==='retiro_desempleo'?real?.statuses?.(c)?.find(x=>x.id===id):null;
+ const state=info?.state||'future',icon=state==='done'?'✓':state==='skipped'?'!':'·';
+ if(c.servicio!=='retiro_desempleo')return '<td class="cya-client-milestone-cell"><span class="cya-stage-unavailable" aria-label="No aplica">—</span></td>';
+ const text=label+' · '+(state==='done'?'Confirmado':state==='skipped'?'Pendiente anterior':'Sin confirmar');
+ return '<td class="cya-client-milestone-cell"><button type="button" class="cya-stage-cell is-'+state+'" data-cya-activity="'+id+'" data-cya-client="'+escapeHTMLBasico(String(c.id))+'" aria-label="'+text+'" title="'+text+'">'+icon+'</button></td>';
+}
+function renderClientesRows(cl){
+ if(!cl.length)return '';
+ return cl.map(c=>'<tr class="cya-client-row">'+
+  '<td class="td-muted cya-client-date-col">'+fmtDate(c.fechaRegistro||c.fechaInicio||'')+'</td>'+
+  '<td class="cya-client-name-col"><button type="button" class="cya-client-open-name" onclick="openPerfil(\''+escapeHTMLBasico(String(c.id))+'\')" aria-label="Abrir expediente de '+escapeHTMLBasico(c.nombre||'Cliente')+'">'+escapeHTMLBasico(c.nombre||'Cliente')+'</button></td>'+
+  CYA_CLIENT_STAGE_LABELS.map(step=>cyaClientesEtapasCelda(c,step)).join('')+
+  '<td class="td-muted cya-client-request-col">'+etiquetaSolicitudCliente(c)+'</td></tr>').join('');
+}
 function renderClientesCards(cl){
-  if(!cl.length) return '';
-  return cl.map(c=>{
-    const docs=c.docs||{};
-    const docList=docsFor(c.servicio);
-    const docOk=docList.filter(d=>docs[d.id]).length;
-    const docPct=docList.length>0?Math.round(docOk/docList.length*100):0;
-    return `<article class="client-mobile-card" onclick="openPerfil('${c.id}')">
-      <div class="client-mobile-head">
-        <div class="client-avatar">${initials(c.nombre)}</div>
-        <div class="client-mobile-identity"><div class="client-mobile-name">${c.nombre}</div><div class="client-mobile-phone">${c.telefono||'Sin teléfono'}</div></div>
-        <span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span>
-      </div>
-      <div class="client-mobile-meta"><span>${getSvcLabel(c.servicio)}</span><span>Registro: ${fmtDate(c.fechaRegistro)}</span><span>Pendiente: ${escapeHTMLBasico(procesoPendienteCliente(c))}</span><span>Solicitud: ${etiquetaSolicitudCliente(c)}</span></div>
-      <div class="cya-operational-mobile">${typeof cyaRenderActivitiesMini==='function'?cyaRenderActivitiesMini(c):''}</div>
-       <div class="client-mobile-docs">
-        <span>Documentos ${docOk}/${docList.length}</span>
-        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${docPct}%;${docPct===100?'background:var(--success)':''}"></div></div>
-      </div>
-      <div class="client-mobile-actions">
-        <button class="btn" onclick="event.stopPropagation();openPerfil('${c.id}')">Ver expediente</button>
-        <button class="action-btn" onclick="event.stopPropagation();openPerfil('${c.id}')" title="Abrir expediente" aria-label="Abrir expediente ${c.nombre}">✎</button>
-        
-      </div>
-    </article>`;
-  }).join('');
+ if(!cl.length)return '';
+ return cl.map(c=>'<article class="client-mobile-card cya-client-mobile-slim">'+
+ '<div class="client-mobile-head"><div class="client-mobile-identity"><button class="cya-client-open-name" type="button" onclick="openPerfil(\''+escapeHTMLBasico(String(c.id))+'\')">'+escapeHTMLBasico(c.nombre||'Cliente')+'</button>'+
+ '<div class="client-mobile-phone">Alta: '+fmtDate(c.fechaRegistro||c.fechaInicio||'')+' · Solicitud: '+etiquetaSolicitudCliente(c)+'</div></div></div>'+
+ '<div class="cya-client-mobile-steps" aria-label="Doce etapas del trámite">'+CYA_CLIENT_STAGE_LABELS.map(step=>'<div class="cya-client-mobile-step"><span>'+step[1]+'</span>'+cyaClientesEtapasCelda(c,step).replace(/^<td[^>]*>|<\/td>$/g,'')+'</div>').join('')+'</div></article>').join('');
 }
 
 function toggleAlertasClientes(el){
