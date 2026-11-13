@@ -20,7 +20,7 @@ assert.match(priorityCss,/html\[data-theme="light"\] \.ca-home-task-priority-tex
 assert.match(stage3,/data-activity="afore"/);
 assert.match(stage3,/data-activity="banco"/);
 assert.match(stage3,/data-activity="cita"/);
-assert.ok(stage4.includes("if(complete&&!['banco','cita'].includes(key))"));
+assert.ok(stage4.includes("if((complete||key==='honorarios'&&c.activities?.honorarios?.verifiedExternally)&&!['banco','cita'].includes(key))"));
 assert.match(edge,/allowed=\['name','phone','address','afore'\]/);
 assert.match(edge,/afore,historial:history/);
 assert.match(edge,/\.eq\('updated_at',expected\)/);
