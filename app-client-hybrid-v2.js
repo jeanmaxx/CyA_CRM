@@ -66,9 +66,9 @@ function header(c){
   }
   if(typeof showToast==='function')showToast(done?'CURP copiada':'No se pudo copiar la CURP',done?'success':'warn');
  };
- let meta=$('cya-hybrid-client-meta');if(!meta){meta=document.createElement('div');meta.id='cya-hybrid-client-meta';copy.appendChild(meta);}
+ let meta=$('cya-hybrid-client-meta');if(!meta){meta=document.createElement('div');meta.id='cya-hybrid-client-meta';meta.className='cya-hybrid-client-meta';copy.appendChild(meta);}
  meta.innerHTML='<span>'+esc(getAdvisor(c)?.nombre||c.asesorNombre||'Asesor asignado')+'</span><span>'+esc(getCollaborator(c)?.nombre||'Cliente directo')+'</span><span>'+esc(c.fuenteContacto||(typeof FUENTES!=='undefined'?FUENTES[c.fuente]:c.fuente)||'Origen pendiente')+'</span>';
- let dates=$('cya-hybrid-client-dates');if(!dates){dates=document.createElement('div');dates.id='cya-hybrid-client-dates';copy.insertAdjacentElement('afterend',dates);}
+ let dates=$('cya-hybrid-client-dates');if(!dates){dates=document.createElement('div');dates.id='cya-hybrid-client-dates';dates.className='cya-hybrid-client-dates';copy.insertAdjacentElement('afterend',dates);}
  // Only display existing estimated request values; do not alter formula or stored dates.
  const solicitud=c.fechaSolicitudManual||c.fechaRetiroEstimada||'';
  const cobro=c.fechaCobroProbable||plusBusiness(c.fechaSolicitudRealizada||c.etapasOperativasV2?.solicitud?.fecha||solicitud);
