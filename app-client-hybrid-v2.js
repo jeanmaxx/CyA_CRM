@@ -51,21 +51,8 @@ function header(c){
  const modal=$('modal-perfil'),copy=modal?.querySelector('.profile-header-copy');if(!copy)return;
  $('perfil-title').textContent=c.nombre||'Cliente';
  $('perfil-sub').textContent=[c.curp||'CURP pendiente',c.telefono||'',c.ciudad||''].filter(Boolean).join(' · ');
- let curpButton=$('cya-hybrid-copy-curp');
- if(!curpButton){
-  curpButton=document.createElement('button');curpButton.type='button';curpButton.id='cya-hybrid-copy-curp';curpButton.className='btn';curpButton.title='Copiar CURP';curpButton.setAttribute('aria-label','Copiar CURP');curpButton.textContent='⧉';
-  $('perfil-sub').insertAdjacentElement('afterend',curpButton);
- }
- curpButton.disabled=!c.curp;
- curpButton.onclick=async()=>{
-  let done=false;
-  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(String(c.curp));done=true;}}catch(_){}
-  if(!done){
-   const input=document.createElement('textarea');input.value=String(c.curp||'');input.style.cssText='position:fixed;left:-9999px;opacity:0';
-   document.body.appendChild(input);input.select();try{done=document.execCommand('copy');}catch(_){}input.remove();
-  }
-  if(typeof showToast==='function')showToast(done?'CURP copiada':'No se pudo copiar la CURP',done?'success':'warn');
- };
+ // La CURP se muestra en la cabecera sin botón suelto de copia.
+ $('cya-hybrid-copy-curp')?.remove();
  let meta=$('cya-hybrid-client-meta');if(!meta){meta=document.createElement('div');meta.id='cya-hybrid-client-meta';meta.className='cya-hybrid-client-meta';copy.appendChild(meta);}
  meta.innerHTML='<span>'+esc(getAdvisor(c)?.nombre||c.asesorNombre||'Asesor asignado')+'</span><span>'+esc(getCollaborator(c)?.nombre||'Cliente directo')+'</span><span>'+esc(c.fuenteContacto||(typeof FUENTES!=='undefined'?FUENTES[c.fuente]:c.fuente)||'Origen pendiente')+'</span>';
  let dates=$('cya-hybrid-client-dates');if(!dates){dates=document.createElement('div');dates.id='cya-hybrid-client-dates';dates.className='cya-hybrid-client-dates';copy.insertAdjacentElement('afterend',dates);}
@@ -91,7 +78,7 @@ function header(c){
  let menu=$('cya-hybrid-client-admin');
  if(!menu){
   menu=document.createElement('details');menu.id='cya-hybrid-client-admin';
-  menu.innerHTML='<summary aria-label="Administración del expediente" title="Administración del expediente">⚙</summary><div class="cya-hybrid-client-menu"><div id="cya-hybrid-return"></div><button class="btn" id="cya-hybrid-advisor" type="button">Cambiar asesor</button><div id="cya-hybrid-discard"></div><button class="btn cya-hybrid-danger" disabled type="button" title="Pendiente de validación de permisos y dependencias">Eliminar definitivamente</button></div>';
+  menu.innerHTML='<summary aria-label="Administración del expediente" title="Administración del expediente"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-1.91 1.91-.06-.06A1.65 1.65 0 0 0 16 18.4l-.12.07a1.65 1.65 0 0 0-.88 1.46V20h-3v-.07a1.65 1.65 0 0 0-.88-1.46l-.12-.07a1.65 1.65 0 0 0-1.82.33l-.06.06-1.91-1.91.06-.06A1.65 1.65 0 0 0 7.6 15l-.07-.12A1.65 1.65 0 0 0 6.07 14H6v-3h.07a1.65 1.65 0 0 0 1.46-.88L7.6 10a1.65 1.65 0 0 0-.33-1.82l-.06-.06 1.91-1.91.06.06A1.65 1.65 0 0 0 11 6.6l.12-.07A1.65 1.65 0 0 0 12 5.07V5h3v.07a1.65 1.65 0 0 0 .88 1.46l.12.07a1.65 1.65 0 0 0 1.82-.33l.06-.06 1.91 1.91-.06.06A1.65 1.65 0 0 0 19.4 10l.07.12a1.65 1.65 0 0 0 1.46.88H21v3h-.07a1.65 1.65 0 0 0-1.46.88l-.07.12z"/></svg></summary><div class="cya-hybrid-client-menu"><div id="cya-hybrid-return"></div><button class="btn" id="cya-hybrid-advisor" type="button">Cambiar asesor</button><div id="cya-hybrid-discard"></div><button class="btn cya-hybrid-danger" disabled type="button" title="Pendiente de validación de permisos y dependencias">Eliminar definitivamente</button></div>';
   const actions=modal.querySelector('.profile-header-actions');
   actions?.insertBefore(menu,actions.querySelector('.profile-close'));
  }

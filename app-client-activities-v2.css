@@ -31,3 +31,26 @@
 .cya-operational-actions{padding:12px 19px;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
 @media(max-width:930px){.cya-operational-track:not(.is-compact){grid-template-columns:repeat(12,minmax(57px,1fr));overflow-x:auto}}
 @media(max-width:650px){.cya-operational-track:not(.is-compact){gap:3px}.cya-operational-step{min-width:58px}.cya-operational-step .cya-operational-name{font-size:8px}}
+
+/* Tabla de Clientes: solo 14 columnas acordadas (alta, nombre, 12 hitos, solicitud). */
+.clients-table-wrap{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+.clients-table-wrap table{width:100%;min-width:1060px;table-layout:fixed;border-collapse:collapse}
+.clients-table-wrap .cya-client-date-col{width:92px;white-space:nowrap}
+.clients-table-wrap .cya-client-name-col{width:188px;min-width:165px}
+.clients-table-wrap .cya-client-request-col{width:115px;white-space:nowrap}
+.clients-table-wrap th.cya-client-milestone-head{width:55px;max-width:65px;font-size:9px;line-height:1.2;text-align:center;white-space:normal;overflow-wrap:anywhere;padding:8px 3px}
+.clients-table-wrap td.cya-client-milestone-cell{text-align:center;width:55px;padding:5px 1px;vertical-align:middle}
+.cya-client-open-name{display:inline-block;border:0;background:transparent;color:var(--text-primary,var(--text));padding:0;text-align:left;cursor:pointer;font:inherit;font-size:11px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.cya-client-open-name:hover{text-decoration:underline;color:var(--accent-blue)}
+.cya-client-open-name:focus-visible,.cya-stage-cell:focus-visible{outline:2px solid var(--warning);outline-offset:2px}
+.cya-stage-cell{border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-muted);font-size:12px;font-weight:800;width:25px;height:25px;display:grid;place-items:center;border-radius:50%;margin:auto;cursor:pointer}
+.cya-stage-cell.is-done{color:white;background:#158451;border-color:#158451}
+.cya-stage-cell.is-skipped{color:#24230e;background:#ffe100;border-color:#e7c900}
+.cya-stage-cell.is-future{opacity:.8}
+.cya-stage-cell:hover{outline:1px solid var(--warning);outline-offset:2px}
+.cya-stage-unavailable{font-size:12px;color:var(--text-muted)}
+.cya-client-mobile-slim{cursor:default}
+.cya-client-mobile-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}
+.cya-client-mobile-step{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:5px 6px;border:1px solid var(--border);border-radius:7px;font-size:10px;color:var(--text-secondary)}
+.cya-client-mobile-step .cya-stage-cell{flex:0 0 24px;margin:0}
+@media(max-width:430px){.cya-client-mobile-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}

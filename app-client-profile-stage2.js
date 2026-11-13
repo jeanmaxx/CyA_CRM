@@ -73,6 +73,12 @@
     if(busy)return;
     const modal=document.getElementById('modal-perfil'),body=document.getElementById('perfil-body'),c=activeClient();
     if(!modal?.classList.contains('open')||!body||!c)return;
+    // The hybrid expediente owns the visual hierarchy. Do not inject the legacy
+    // six-card overview, client-data grid, duplicate workflow or pending panels.
+    if(body.querySelector('#cya-hybrid-client-root')){
+      for(const id of ['cya2-overview','cya2-pending','cya2-stage-label'])body.querySelector('#'+id)?.remove();
+      return;
+    }
     const hasOverview=Boolean(body.querySelector('#cya2-overview'));if(hasOverview&&directAlerts(body).length===0)return;
     busy=true;
     try{

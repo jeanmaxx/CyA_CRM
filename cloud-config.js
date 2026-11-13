@@ -308,7 +308,7 @@ window.CA_TENANT_PUBLIC_BRAND=null;
 (function loadProfileVisualPolish(){
   if(document.querySelector('script[data-cya-profile-polish]'))return;
   const script=document.createElement('script');
-  script.src='/app-ui-profile-polish.js?v=20260919-routing1';
+  script.src='/app-ui-profile-polish.js?v=20261113-stable';
   script.async=false;
   script.dataset.cyaProfilePolish='1';
   document.head.appendChild(script);
