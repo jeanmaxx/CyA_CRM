@@ -23,7 +23,8 @@
  const esc=x=>String(x??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
  const older=['generando_contrato','contrato_firmas','contrato_firmado','dado_alta','afore_actualizada','solicitud_realizada','deposito_recibido','honorarios_recibidos','concluido'];
  const legacyAt=(c,id)=>older.indexOf(c?.etapa)>=older.indexOf(id)&&older.indexOf(c?.etapa)>=0;
- const flag=(c,id)=>Boolean(c?.etapasOperativasV2?.[id]?.done);
+ const flag=(c,id)=>Boolean(c?.etapasOperativasV2?.[id]?.done||c?.portalActividades?.[id==='firmado'?'firma':id==='banco_n4'?'banco':id]?.done);
+ const feeCollected=c=>['cobrado','pagado','liquidado','pago recibido','recibido'].some(v=>String(c?.estadoPago||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(v));
  const documents=c=>{
   const d=c?.etapasOperativasV2?.documentos?.checks||{},old=c?.docs||{};
   return {
@@ -39,14 +40,14 @@
    firmas:flag(c,'firmas')||Boolean(c?.contratoFirmado)||legacyAt(c,'contrato_firmado'),
    firmado:flag(c,'firmado')||Boolean(c?.contratoFirmado)||legacyAt(c,'contrato_firmado'),
    alta:flag(c,'alta')||Boolean(c?.fechaAltaAfore),
-   app:flag(c,'app'),
-   banco_n4:flag(c,'banco_n4'),
+   app:flag(c,'app')||String(c?.aforeMovil||'').toLowerCase()==='si',
+   banco_n4:flag(c,'banco_n4')||String(c?.cuentaNivel4||'').toLowerCase()==='si'||String(c?.nivelCuentaBBVA||'')==='4',
    cita:flag(c,'cita')||Boolean(c?.fechaBiometrica),
    documentos:allDocuments(c),
    expediente:flag(c,'expediente')||legacyAt(c,'afore_actualizada'),
    solicitud:flag(c,'solicitud')||Boolean(c?.fechaSolicitudRealizada)||legacyAt(c,'solicitud_realizada'),
    deposito:flag(c,'deposito')||legacyAt(c,'deposito_recibido'),
-   honorarios:flag(c,'honorarios')||legacyAt(c,'honorarios_recibidos')
+   honorarios:(flag(c,'honorarios')&&feeCollected(c))||legacyAt(c,'honorarios_recibidos')
   };
   // Do not guess optional milestones from later legacy stages. They remain yellow.
   return done;
@@ -139,7 +140,7 @@
  function save(id,stepId){
   const c=getClient(id),step=statuses(c).find(s=>s.id===stepId);
   if(!step||!authorized(c))return msg('No tienes permiso para actualizar este seguimiento');
-  if(stepId==='honorarios'&&!(['cobrado','pagado','liquidado','pago recibido'].includes(String(c.estadoPago||'').toLowerCase())||legacyAt(c,'honorarios_recibidos'))){
+  if(stepId==='honorarios'&&!(feeCollected(c)||legacyAt(c,'honorarios_recibidos'))){
    return msg('Primero confirma el cobro en Finanzas; el indicador no sustituye ese registro');
   }
   const note=String($('cya-op-note')?.value||'').trim(),date=readDate('cya-op-date');
@@ -147,6 +148,9 @@
   if(step.done&&note.length<3)return msg('Escribe un motivo de corrección de al menos tres caracteres');
   const docChecks={curp:Boolean($('cya-op-doc-curp')?.checked),csf:Boolean($('cya-op-doc-csf')?.checked),acta:Boolean($('cya-op-doc-acta')?.checked)};
   if(stepId==='documentos'&&!Object.values(docChecks).every(Boolean))return msg('Marca CURP, Constancia de Situación Fiscal y Acta de Nacimiento');
+  if(stepId==='firmado'&&!flags(c).contrato)return msg('Primero confirma que el contrato fue generado');
+  if(stepId==='firmado'&&typeof window.confirm==='function'&&!window.confirm('¿Confirmas que el contrato está firmado en la fecha registrada?'))return;
+  if(stepId==='deposito'&&typeof window.confirm==='function'&&!window.confirm('¿Confirmas que el depósito fue recibido realmente por el cliente?'))return;
   if(!requiredDependencies(c,stepId))return;
   const previous=JSON.parse(JSON.stringify(c.etapasOperativasV2||{}));
   const history=JSON.parse(JSON.stringify(c.historial||[]));
