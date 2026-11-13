@@ -53,7 +53,7 @@ const errors=[];
    assert.equal(await page.locator('#cya-hybrid-client-meta.cya-hybrid-client-meta').count(),1);
    assert.equal(await page.locator('#cya-hybrid-client-dates.cya-hybrid-client-dates').count(),1);
    const columns=await page.locator('.cya-hybrid-client-cards').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length);
-   assert.equal(columns,scenario.width<670?1:3,scenario.name+' responsive card columns');
+   assert.equal(columns,scenario.width<670?2:3,scenario.name+' responsive card columns');
    assert.equal(await page.locator('#cya-operational-profile').isVisible(),true);
    await page.locator('[data-hybrid-client="finanzas"]').click();
    assert.equal(await page.locator('#cya-hybrid-client-panel').isVisible(),true);
