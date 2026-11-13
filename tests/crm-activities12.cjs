@@ -37,9 +37,12 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert(model.open('c1','solicitud'));
  d.getElementById('cya-op-date').value='10/11/2026';
  d.getElementById('cya-op-note').value='Solicitud registrada y confirmación expediente';
- d.querySelector('[data-op-save]').click();
+ const firstSave=d.querySelector('[data-op-save]');
+ firstSave.click();
+ assert.equal(firstSave.disabled,true,'A pending milestone save must disable repeated clicks');
+ firstSave.click(); // deliberate double-click: only one write is permitted
  await tick();await tick();
- assert.equal(saves,1);
+ assert.equal(saves,1,'Double-click must trigger a single cloud write');
  assert.equal(confirmations,1,'Skipped expediente requires explicit confirmation');
  assert.equal(c.etapasOperativasV2.expediente.done,true);
  assert.equal(c.etapasOperativasV2.solicitud.done,true);
