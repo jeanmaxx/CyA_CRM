@@ -29,3 +29,15 @@ Fecha: 12/11/2026. Rama aislada: `feat/crm-hibrido-etapa3-clientes-20261112`. Es
 ## Criterio de seguridad
 
 Mantener PR en borrador hasta que la edición interna sea real, se valide mediante pruebas y comprobación visual, y exista un plan de fusión/despliegue sin interrupción operativa. No afirmar que esta fase está completada ni desplegada antes de ello.
+
+## Control de integridad añadido en esta revisión
+
+- Los guardados desde las tarjetas Identidad, Previsional, AFORE, Banco, Comisiones y Notas indican explícitamente su sección al guardado **nativo** `guardarCliente`. El adaptador permite persistir solo las claves pertenecientes a esa sección y restaura el resto de la información previa, incluido cualquier dato legado desconocido.
+- Para ediciones parciales se desactiva el recálculo transversal de fecha estimada y recordatorios desde `sincronizarFechasCliente`; el flujo completo original y los formularios específicos de contratos/alta conservan su comportamiento vigente. Se respeta cualquier ajuste manual previo.
+- La edición de Banco conserva expresamente su CLABE capturada. Notas deja evidencia cronológica de los textos anterior y nuevo en el historial del cliente.
+- Nuevas pruebas: `tests/crm-hybrid-client-save-isolation.cjs` (aislamiento de campos) y `tests/crm-hybrid-client-real-save.cjs` (ejecución real del guardado con cliente de prueba sintético y comprobación de fechas, montos, etapa, agenda y Notas). Las suites se ejecutan en GitHub Actions.
+- Diseño de escritorio ajustado a **tres tarjetas por fila**; tablet dos y móvil una, para minimizar altura.
+
+### Hallazgo técnico que **no se modificó**
+
+Se observaron varias implementaciones históricas de fechas: `calcFechaRetiro` en `app-core-04.js` utiliza una suma desde registro y `sincronizarFechasCliente` en `app-workflow.js` programa el recordatorio `solicitud_45` desde el alta. La instrucción vigente del usuario es **no cambiar la lógica actual**, por lo que esta fase solo aísla los guardados de las tarjetas y conserva sus fechas. Antes de etapa 4 hay que mapear cuál dato alimenta exactamente la tabla y la cabecera, sin asumir que todos esos cálculos tienen la misma semántica.
