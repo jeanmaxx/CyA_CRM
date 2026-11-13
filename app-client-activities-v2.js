@@ -154,7 +154,7 @@
   if(stepId==='contrato'&&!(c.historialContratos||[]).length)return msg('Primero genera el contrato desde Contratos');
   if(stepId==='banco_n4'&&!String(c.banco||'').trim())return msg('Primero registra el banco en su tarjeta');
   const citaTime=String($('cya-op-time')?.value||''),citaBranch=String($('cya-op-branch')?.value||'').trim();
-  if(stepId==='cita'&&(!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(citaTime)||!citaBranch))return msg('Registra hora y sucursal de la cita AFORE');
+  if(stepId==='cita'&&(!/^([01]\d|2[0-3]):[0-5]\d$/.test(citaTime)||!citaBranch))return msg('Registra hora y sucursal de la cita AFORE');
   if(stepId==='firmado'&&typeof window.confirm==='function'&&!window.confirm('¿Confirmas que el contrato está firmado en la fecha registrada?'))return;
   if(stepId==='deposito'&&typeof window.confirm==='function'&&!window.confirm('¿Confirmas que el depósito fue recibido realmente por el cliente?'))return;
   if(!requiredDependencies(c,stepId))return;
