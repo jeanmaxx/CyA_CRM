@@ -1,0 +1,76 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {JSDOM}=require('jsdom');
+const script=fs.readFileSync('app-client-hybrid-v2.js','utf8');
+const css=fs.readFileSync('app-client-hybrid-v2.css','utf8');
+assert.ok(css.includes('#modal-cliente.cya-hybrid-inline-editor'));
+const panel=id=>'<section class="tab-panel" id="pd-'+id+'"><div class="info-row">'+id+'</div></section>';
+const editorField=(id,v='')=>'<div class="form-group"><label>'+id+'</label><input id="'+id+'" value="'+v+'"></div>';
+const profileHTML=()=>'<div class="profile-stage-wrap">Etapas</div><div class="profile-summary-grid"></div><div id="perfil-tabs"></div>'+
+ ['contacto','datos','docs','contratos','cita-afore','finanzas','historial'].map(panel).join('');
+const html='<div class="modal-overlay open" id="modal-perfil"><div class="modal"><div class="profile-header"><div class="profile-header-copy"><div id="perfil-title"></div><div id="perfil-sub"></div></div><div class="profile-header-actions"><button id="perfil-edit-btn">Editar</button><button id="perfil-regresar-prospecto-btn"></button><button id="perfil-descartar-btn"></button><button class="profile-close">X</button></div></div><div id="perfil-body">'+profileHTML()+'</div></div></div>'+
+ '<div class="modal-overlay" id="modal-cliente"><div class="modal"><div class="modal-header">Editar cliente</div><div class="modal-body"><div id="modal-tabs"></div>'+
+ '<div id="tab-contacto" class="tab-panel"><div class="form-row">'+editorField('fc-nombre','CLIENTE PRUEBA')+editorField('fc-telefono','4421111111')+'</div><div class="form-row">'+editorField('fc-colaborador')+editorField('fc-notas')+'</div></div>'+
+ '<div id="tab-elegibilidad" class="tab-panel"><div class="form-row">'+editorField('el-semanas')+'</div></div>'+
+ '<div id="tab-datos-extra" class="tab-panel"><div class="form-row">'+editorField('fc-nss')+editorField('fc-banco')+'</div><div class="form-row">'+editorField('fc-afore')+editorField('fc-comision')+'</div></div>'+
+ '<div class="modal-footer"><button class="btn" onclick="closeModal(\'modal-cliente\')">Cancelar</button><button class="btn btn-primary" onclick="guardarCliente()">Guardar cliente</button></div></div></div></div>';
+const dom=new JSDOM(html,{url:'https://crm.example.invalid',runScripts:'outside-only'});
+const w=dom.window,d=w.document;
+const c={id:'c1',nombre:'CLIENTE PRUEBA',curp:'CURPPRUEBA12345678',telefono:'4421111111',colaboradorId:null,etapa:'contrato_firmado',contratoFirmado:true,notas:'',historial:[],historialContratos:[]};
+w.store={clientes:[c],asesores:[],colaboradores:[]};
+w.perfilClienteActivo=c.id;
+w.FUENTES={};w.clienteFormDirty=false;
+w.confirm=()=>false;
+let editCalls=0,saveCalls=0,openCalls=0;
+w.closeModal=id=>d.getElementById(id).classList.remove('open');
+w.editCliente=id=>{
+ assert.equal(id,'c1');editCalls++;
+ d.getElementById('modal-cliente').classList.add('open');
+ d.getElementById('fc-telefono').value=c.telefono;
+ d.getElementById('fc-banco').value=c.banco||'';
+};
+w.guardarCliente=async()=>{
+ saveCalls++;
+ c.banco=d.getElementById('fc-banco').value;
+ d.getElementById('modal-cliente').classList.remove('open');
+ w.clienteFormDirty=false;
+};
+w.openPerfil=id=>{
+ assert.equal(id,'c1');openCalls++;
+ d.getElementById('perfil-body').innerHTML=profileHTML();
+ d.getElementById('modal-perfil').classList.add('open');
+};
+w.eval(script);
+const tick=()=>new Promise(r=>setImmediate(r));
+(async()=>{
+ await tick();
+ const click=id=>d.querySelector('[data-hybrid-client="'+id+'"]').click();
+ assert.equal(d.getElementById('cya-hybrid-client-panel').hidden,true,'signed client opens with no panel');
+ click('identidad');
+ const editor=d.getElementById('modal-cliente');
+ assert.equal(editor.parentElement.id,'cya-hybrid-client-content','native editor inserted inside card');
+ assert.equal(editor.classList.contains('cya-hybrid-inline-editor'),true);
+ assert.equal(d.getElementById('fc-telefono').closest('.form-group').hidden,false);
+ assert.equal(d.getElementById('fc-banco').closest('.form-group').hidden,true);
+ assert.equal(editCalls,1);
+ w.clienteFormDirty=true;click('banco');
+ assert.equal(editor.dataset.hybridSection,'identidad','dirty edits block category change');
+ w.confirm=()=>true;click('banco');
+ assert.equal(editor.dataset.hybridSection,'banco');
+ assert.equal(d.getElementById('fc-telefono').closest('.form-group').hidden,true);
+ assert.equal(d.getElementById('fc-banco').closest('.form-group').hidden,false);
+ d.getElementById('fc-banco').value='SANTANDER';
+ await w.guardarCliente();await tick();
+ assert.equal(saveCalls,1);
+ assert.equal(openCalls,1,'successful save refreshed existing profile');
+ assert.equal(editor.parentElement,d.body,'native editor restored after save');
+ assert.equal(editor.classList.contains('cya-hybrid-inline-editor'),false);
+ assert.equal(c.banco,'SANTANDER');
+ click('notas');assert.equal(editor.dataset.hybridSection,'notas');
+ assert.equal(d.getElementById('fc-notas').closest('.form-group').hidden,false);
+ assert.equal(d.getElementById('fc-banco').closest('.form-group').hidden,true);
+ w.clienteFormDirty=false;
+ d.querySelector('.profile-close').click();
+ assert.equal(editor.parentElement,d.body,'profile close never strands editor inside a hidden profile');
+ d.defaultView.close();console.log('PASS: inline category editing, native field reuse, unsaved changes, bank save, reopen and restore.');
+})().catch(err=>{console.error(err);w.close();process.exitCode=1;});
