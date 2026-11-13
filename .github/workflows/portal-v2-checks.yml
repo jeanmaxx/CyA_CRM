@@ -6,6 +6,10 @@ on:
       - "runtime/colaboradores.html"
       - "supabase/functions/collaborator-portal/**"
       - "tests/**"
+      - "app-*-hybrid-v2.js"
+      - "app-*-hybrid-v2.css"
+      - "app-client-activities-v2.*"
+      - "app-whatsapp-message-center.js"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/portal-v2-checks.yml"
@@ -81,3 +85,23 @@ jobs:
         with:
           deno-version: v2.x
       - run: deno check --node-modules-dir=auto supabase/functions/collaborator-portal/index.ts
+
+  chromium-release-smoke:
+    name: Navegador Chromium escritorio/móvil
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Instalar navegador aislado para las pruebas
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.55.1
+          npx playwright install --with-deps chromium
+      - name: Validar escritorio, móvil, claro, oscuro y WhatsApp
+        run: node tests/crm-hybrid-browser.cjs
