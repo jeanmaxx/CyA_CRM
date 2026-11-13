@@ -103,6 +103,7 @@
   const docs=step.id==='documentos'?'<fieldset class="cya-operational-docs"><legend>Documentos integrados</legend>'+
    [['curp','CURP'],['csf','Constancia de Situación Fiscal'],['acta','Acta de Nacimiento']].map(([key,label])=>'<label><input type="checkbox" id="cya-op-doc-'+key+'" '+(check[key]?'checked':'')+' '+(!canEdit?'disabled':'')+'> '+label+'</label>').join('')+
    '<small>Recordar INE vigente y comprobante de domicilio de máximo tres meses.</small></fieldset>':'';
+  const citaFields=step.id==='cita'?'<label class="cya-operational-field">Hora programada (HH:MM)<input class="form-input" id="cya-op-time" type="time" value="'+esc(c.horaBiometrica||'')+'"></label><label class="cya-operational-field">Sucursal o ubicación<input class="form-input" id="cya-op-branch" maxlength="180" value="'+esc(c.sucursalAfore||'')+'"></label>':'';
   const detail=step.id==='cita'?'<p class="cya-operational-tip">La cita confirmada aquí significa <strong>programada</strong>, no atendida.</p>':
    step.id==='banco_n4'?'<p class="cya-operational-tip">Seleccionar un banco no confirma que su cuenta sea nivel 4.</p>':
    step.id==='honorarios'?'<p class="cya-operational-tip">Este indicador no registra el pago de comisiones ni sustituye los movimientos de Finanzas.</p>':
@@ -111,6 +112,7 @@
    '<div class="cya-operational-header"><div><small>ACTIVIDAD '+step.index+' DE 12</small><h3 id="cya-operational-title">'+esc(step.label)+'</h3></div><button type="button" class="btn" data-op-close aria-label="Cerrar">✕</button></div>'+
    '<div class="cya-operational-body"><p>Estado: <strong>'+({done:'Confirmado',skipped:'Pendiente anterior',future:'Sin confirmar'}[step.state])+'</strong></p>'+detail+docs+
    '<label class="cya-operational-field">Fecha real o de confirmación (dd/mm/aaaa)<input class="form-input" id="cya-op-date" value="'+esc(local)+'" inputmode="numeric" placeholder="dd/mm/aaaa" '+(!canEdit?'disabled':'')+'></label>'+
+   citaFields+
    '<label class="cya-operational-field">Observaciones<textarea class="form-textarea" id="cya-op-note" rows="3" '+(!canEdit?'disabled':'')+'>'+esc(record.nota||'')+'</textarea></label>'+
    (done?'<p class="cya-operational-tip">Para corregir un paso confirmado debes indicar el motivo. La corrección quedará en el historial.</p>':'')+
    '</div><div class="cya-operational-actions">'+(canEdit?'<button type="button" class="btn btn-primary" data-op-save>'+(done?'Corregir registro':'Confirmar actividad')+'</button>':'')+'<button type="button" class="btn" data-op-close>Cancelar</button></div></div></div>';
@@ -148,19 +150,49 @@
   if(step.done&&note.length<3)return msg('Escribe un motivo de corrección de al menos tres caracteres');
   const docChecks={curp:Boolean($('cya-op-doc-curp')?.checked),csf:Boolean($('cya-op-doc-csf')?.checked),acta:Boolean($('cya-op-doc-acta')?.checked)};
   if(stepId==='documentos'&&!Object.values(docChecks).every(Boolean))return msg('Marca CURP, Constancia de Situación Fiscal y Acta de Nacimiento');
-  if(stepId==='firmado'&&!flags(c).contrato)return msg('Primero confirma que el contrato fue generado');
+  if((stepId==='firmado'||stepId==='firmas')&&!flags(c).contrato)return msg('Primero genera el contrato desde el expediente');
+  if(stepId==='contrato'&&!(c.historialContratos||[]).length)return msg('Primero genera el contrato desde Contratos');
+  if(stepId==='banco_n4'&&!String(c.banco||'').trim())return msg('Primero registra el banco en su tarjeta');
+  const citaTime=String($('cya-op-time')?.value||''),citaBranch=String($('cya-op-branch')?.value||'').trim();
+  if(stepId==='cita'&&(!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(citaTime)||!citaBranch))return msg('Registra hora y sucursal de la cita AFORE');
   if(stepId==='firmado'&&typeof window.confirm==='function'&&!window.confirm('¿Confirmas que el contrato está firmado en la fecha registrada?'))return;
   if(stepId==='deposito'&&typeof window.confirm==='function'&&!window.confirm('¿Confirmas que el depósito fue recibido realmente por el cliente?'))return;
   if(!requiredDependencies(c,stepId))return;
+  const fieldsBefore={etapa:c.etapa,contratoFirmado:c.contratoFirmado,fechaFirmaContrato:c.fechaFirmaContrato,fechaAltaAfore:c.fechaAltaAfore,fechaSolicitudRealizada:c.fechaSolicitudRealizada,aforeMovil:c.aforeMovil,cuentaNivel4:c.cuentaNivel4,docs:JSON.parse(JSON.stringify(c.docs||{})),fechaBiometrica:c.fechaBiometrica,horaBiometrica:c.horaBiometrica,sucursalAfore:c.sucursalAfore};
   const previous=JSON.parse(JSON.stringify(c.etapasOperativasV2||{}));
   const history=JSON.parse(JSON.stringify(c.historial||[]));
   const before=flags(c),now=new Date().toISOString();
   c.etapasOperativasV2={...previous};
-  if(stepId==='solicitud'&&!before.expediente)c.etapasOperativasV2.expediente={done:true,fecha:date,nota:'Confirmado al registrar Solicitud',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
-  if(stepId==='deposito'&&!before.solicitud)c.etapasOperativasV2.solicitud={done:true,fecha:date,nota:'Solicitud confirmada al registrar Depósito',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
-  if(stepId==='honorarios'&&!before.deposito)c.etapasOperativasV2.deposito={done:true,fecha:date,nota:'Depósito confirmado al registrar Honorarios',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
+  if(stepId==='solicitud'&&!before.expediente)c.etapasOperativasV2.expediente={done:true,fecha:null,nota:'Confirmado al registrar Solicitud; fecha real del expediente no disponible',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
+  if(stepId==='deposito'&&!before.solicitud)c.etapasOperativasV2.solicitud={done:true,fecha:null,nota:'Solicitud confirmada al registrar Depósito; fecha real no disponible',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
+  if(stepId==='honorarios'&&!before.deposito)c.etapasOperativasV2.deposito={done:true,fecha:null,nota:'Depósito confirmado al registrar Honorarios; fecha real no disponible',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
   c.etapasOperativasV2[stepId]={done:true,fecha:date,nota:note,actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now,...(stepId==='documentos'?{checks:docChecks}:{})};
   if(stepId==='firmado'&&!before.firmas)c.etapasOperativasV2.firmas={done:true,fecha:date,nota:'Completado automáticamente al confirmar firma',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
+  // Puente con el pipeline canónico: solo cuando se confirma una actividad
+  // REAL y el estado anterior permite avanzar. Nunca modifica el pronóstico.
+  const currentRank=older.indexOf(c.etapa);
+  const advance=(target)=>{const index=older.indexOf(target);if(index>currentRank&&currentRank>=0)c.etapa=target;};
+  if(stepId==='firmas'&&c.etapa==='generando_contrato')advance('contrato_firmas');
+  if(stepId==='firmado'){
+    c.contratoFirmado=true;c.fechaFirmaContrato=date;
+    if(['generando_contrato','contrato_firmas'].includes(c.etapa))advance('contrato_firmado');
+  }
+  if(stepId==='alta'){
+    c.fechaAltaAfore=date;
+    if(c.etapa==='contrato_firmado')advance('dado_alta');
+  }
+  if(stepId==='app')c.aforeMovil='si';
+  if(stepId==='banco_n4')c.cuentaNivel4='si';
+  if(stepId==='cita'){c.fechaBiometrica=date;c.horaBiometrica=citaTime;c.sucursalAfore=citaBranch;}
+  if(stepId==='documentos')c.docs={...(c.docs||{}),...docChecks};
+  if(stepId==='expediente'&&['contrato_firmado','dado_alta'].includes(c.etapa))advance('afore_actualizada');
+  if(stepId==='solicitud'){
+    c.fechaSolicitudRealizada=date;
+    if(['contrato_firmado','dado_alta','afore_actualizada'].includes(c.etapa))advance('solicitud_realizada');
+  }
+  if(stepId==='deposito'&&['solicitud_realizada','afore_actualizada','dado_alta','contrato_firmado'].includes(c.etapa))advance('deposito_recibido');
+  // Para Honorarios, el cierre y archivado siguen bajo el flujo de Finanzas:
+  // no basta el indicador para cerrar el expediente ni pagar comisiones.
   if(typeof addHist==='function')addHist(c,'actividad','Actividad '+step.label+(step.done?' corregida':' confirmada')+' · '+date+(note?' · '+note:''));
   // Crucial: no writes to c.etapa, fechaFirmaContrato, fechaRetiroEstimada,
   // fechaSolicitudRealizada, estadoPago, commissions or native Agenda.
@@ -170,8 +202,9 @@
    if(typeof openPerfil==='function'&&$('modal-perfil')?.classList.contains('open'))openPerfil(id);
    msg('Actividad confirmada','success');
   };
-  if(typeof cloudSyncNow!=='function'){c.etapasOperativasV2=previous;c.historial=history;return msg('No está disponible la sincronización; no se guardó la actividad');}
+  if(typeof cloudSyncNow!=='function'){Object.assign(c,fieldsBefore);c.etapasOperativasV2=previous;c.historial=history;return msg('No está disponible la sincronización; no se guardó la actividad');}
   Promise.resolve().then(()=>cloudSyncNow({throwOnError:true})).then(saved).catch(()=>{
+    Object.assign(c,fieldsBefore);
     c.etapasOperativasV2=previous;c.historial=history;
     msg('No se pudo guardar. El registro anterior se conserva.');
   });
