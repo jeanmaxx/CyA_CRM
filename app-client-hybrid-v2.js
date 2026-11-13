@@ -105,7 +105,7 @@ const inlineFields={
  afore:['fc-afore','fc-fecha-biometrica','fc-hora-afore','fc-sucursal-afore','fc-fecha-solicitud-manual'],
  banco:['fc-banco','fc-nivel-bbva','fc-clabe'],
  comisiones:['fc-colaborador','fc-col-pct','fc-col-comision','fc-honorarios','fc-comision'],
- notas:['fc-notas']
+ notas:['fc-notas','fc-prox-tipo','fc-prox-fecha','fc-prox-hora','fc-prox-nota']
 };
 let editorHome=null,editorActive=false,editorSection='';
 function stopInlineEditor(){
@@ -142,6 +142,14 @@ function showEditorFields(section){
   const visible=[...panel.querySelectorAll('.form-group')].some(g=>!g.hidden);
   panel.hidden=!visible;
  });
+ // Hide orphan optional headers and non-form containers: only fields belonging
+ // to the selected category should occupy vertical space.
+ modal.querySelectorAll('details').forEach(details=>{
+  const visible=[...details.querySelectorAll('.form-group')].some(g=>!g.hidden);
+  details.hidden=!visible;
+ });
+ const nextAction=$('fc-prox-tipo')?.closest('.form-row')?.previousElementSibling;
+ if(nextAction&&/pr[oó]xima acci[oó]n/i.test(nextAction.textContent||''))nextAction.hidden=section!=='notas';
  // Eligibility is generated dynamically by the original application.
  const eligibility=$('tab-elegibilidad');
  if(eligibility)eligibility.hidden=section!=='previsional';
@@ -181,9 +189,8 @@ function selection(c){
  area.innerHTML='<div class="cya-hybrid-client-panel-head"><strong>'+esc(x[1])+'</strong><small>Panel interno</small></div><div class="cya-hybrid-client-panel-content" id="cya-hybrid-client-content"></div>';
  const box=$('cya-hybrid-client-content'),source=$(x[3]);
  if(inlineCategories.has(selected)&&mountInlineEditor(c,selected)){
-  if(selected==='afore'){
-   const details=$('pd-cita-afore');if(details){details.hidden=false;details.classList.add('active');box.insertBefore(details,box.firstChild);}
-  }
+  // The native AFORE editor already renders its reference information.
+  // Never inject the legacy pd-cita-afore panel a second time.
   if(selected==='notas'){
    const entries=(c.historial||[]).filter(h=>/nota|observaci/i.test(String(h.tipo||'')+' '+String(h.texto||''))).slice(-8).reverse();
    if(entries.length){const log=document.createElement('div');log.className='cya-hybrid-notes-log';log.innerHTML='<strong>Notas anteriores</strong>'+entries.map(h=>'<p>'+esc(h.texto||'')+' <small>'+esc(format(h.fecha))+'</small></p>').join('');box.insertBefore(log,box.firstChild);}
