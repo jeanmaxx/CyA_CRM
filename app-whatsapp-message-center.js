@@ -18,6 +18,10 @@
       texto:'Si cumples con estos requisitos o tienes duda con alguno, con gusto te apoyo con tu diagnóstico.\n\nPor favor, compárteme tu CURP a 18 dígitos (en texto, captura, PDF o foto de tu INE) para consultar tu viabilidad y monto disponible en sistema.\n\n*Ubicación:* Por el momento nuestra atención y firma presencial es en Irapuato, Querétaro, San Juan del Río, Tequisquiapan, Ezequiel Montes, Cadereyta y Tepeji.\n\n¡Quedo a tus órdenes para iniciar tu evaluación sin costo ni compromiso!'
     },
     {
+      id:'pl_wa_sindos_1',nombre:'WhatsApp · Revisión SINDOS',etapa:'sindos',tipo:'whatsapp',icono:'',cyaGrupo:'sindos',cyaOrden:1,
+      texto:'¡Hola, {{NOMBRE}}! {{SALUDO}}.\n\nTe saluda *{{ASESOR}}* de *Casillas & Asociados*.\n\nEstamos dando seguimiento a la revisión de tus datos y semanas cotizadas en SINDOS.\n\nEste paso es una verificación de información; la viabilidad definitiva y el monto disponible deberán confirmarse mediante los sistemas y procedimientos correspondientes.\n\nTe avisaré cuando tengamos una actualización y los siguientes pasos.\n\nQuedo pendiente para apoyarte.'
+    },
+    {
       id:'pl_wa_revision_1',nombre:'WhatsApp · Revisión en proceso',etapa:'semanas',tipo:'whatsapp',icono:'',cyaGrupo:'revision',cyaOrden:1,
       texto:'¡Hola, {{NOMBRE}}! {{SALUDO}}.\n\nTe saluda *{{ASESOR}}*, _Consultor Previsional_ de *Casillas & Asociados* y soy tu asesor asignado para brindarte la información.\n\nRecibimos tu solicitud para la revisión de tu *Retiro por Desempleo de AFORE*. Ya estamos validando tus datos en el sistema para calcular el monto al que puedes acceder.\n\n*Cobertura:* Nuestra atención y firma presencial se realiza en Querétaro, San Juan del Río, Tequisquiapan, Ezequiel Montes, Cadereyta, Tepeji e Irapuato.\n\nEn unos momentos te comparto los resultados de tu consulta y cómo podemos iniciar tu trámite.\n\n¡Quedo a tus órdenes!'
     },
@@ -75,21 +79,27 @@
     }
   ];
 
+  // Same institutional categories and order used by the collaborator portal.
+  // Keep source templates editable and never duplicate their saved content.
   const GROUPS=[
     {key:'bienvenida',label:'Bienvenida',kind:'main',ids:['pl_wa_bienvenida_1','pl_wa_bienvenida_2']},
     {key:'revision',label:'Revisión',kind:'main',ids:['pl_wa_revision_1']},
+    {key:'sindos',label:'Revisión SINDOS',kind:'main',ids:['pl_wa_sindos_1']},
     {key:'aprobado',label:'Aprobado',kind:'main',ids:['pl_wa_aprobado_1','pl_wa_aprobado_2']},
-    {key:'alta_15',label:'15 días después del alta',kind:'main',ids:['pl_wa_alta_15_1']},
     {key:'finalizacion',label:'Finalización',kind:'main',ids:['pl_wa_finalizacion_1','pl_wa_finalizacion_2','pl_wa_finalizacion_3']},
     {key:'despedida',label:'Despedida',kind:'main',ids:['pl_wa_despedida_1']},
     {key:'curp_mal',label:'CURP mal',kind:'reject',ids:['pl_wa_curp_mal_1']},
     {key:'imss_activo',label:'IMSS activo',kind:'reject',ids:['pl_wa_imss_activo_1']},
     {key:'inconsistencias',label:'Inconsistencias',kind:'reject',ids:['pl_wa_inconsistencias_1','pl_wa_inconsistencias_2']},
     {key:'retiro_5',label:'Retiro -5 años',kind:'reject',ids:['pl_wa_retiro_5_1']},
-    {key:'sin_semanas',label:'Sin semanas suficientes',kind:'reject',ids:['pl_wa_sin_semanas_1']}
+    {key:'sin_semanas',label:'Sin semanas suficientes',kind:'reject',ids:['pl_wa_sin_semanas_1']},
+    {key:'alta_15',label:'Seguimiento alta',kind:'reject',ids:['pl_wa_alta_15_1']}
   ];
 
   let currentGroupKey='';
+  let currentMessageIndex=0;
+  let currentDrafts=Object.create(null);
+  let selectionSuggested=false;
   let messageContactId=null;
   let messageContactType='lead';
   let archivedMessageMode=false;
@@ -265,7 +275,8 @@
     if(cause.includes('incons'))return 'inconsistencias';
     if(cause.includes('5')||cause.includes('retiro'))return 'retiro_5';
     if(state==='aprobado')return 'aprobado';
-    if(state==='semanas'||state==='sindos'||state.includes('revision'))return 'revision';
+    if(state==='sindos'||state.includes('sindos'))return 'sindos';
+    if(state==='semanas'||state.includes('revision'))return 'revision';
     return 'bienvenida';
   }
 
@@ -284,99 +295,154 @@
   function ensureStyles(){
     if(document.getElementById('cya-wa-message-center-styles'))return;
     const style=document.createElement('style');style.id='cya-wa-message-center-styles';
-    style.textContent=`
-      #cya-client-message-actions{display:none!important}
-      #perfil-whatsapp-btn{background:#188653;border-color:#188653;color:white;font-weight:700}
-      #perfil-whatsapp-btn:hover{background:#157648;border-color:#157648}
-      .cya-wa-alta-status{padding:10px 12px;margin:0 0 12px;border:1px solid rgba(202,158,56,.45);border-radius:8px;font-size:12px;line-height:1.5;color:var(--text-secondary,#cbd5e1);background:rgba(202,158,56,.08)}
-      #cya-wa-center-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-      #cya-wa-center-actions .cya-wa-open{background:#25d366;border-color:#25d366;color:#fff;font-weight:700}
-      .cya-wa-center-modal{width:min(780px,94vw);max-height:90vh;display:flex;flex-direction:column}
-      .cya-wa-center-modal .modal-body{overflow:auto;min-height:0;display:grid;grid-template-columns:minmax(165px,210px) minmax(0,1fr);column-gap:18px;align-content:start}
-      .cya-wa-center-modal .modal-footer{position:sticky;bottom:0;z-index:2;background:var(--bg-card,var(--surface,#131c30));border-top:1px solid rgba(148,163,184,.2)}
-      .cya-wa-nav{grid-column:1;grid-row:1/4;align-self:start;position:sticky;top:0;max-height:65vh;overflow:auto;padding-right:8px}
-      .cya-wa-nav .cya-wa-template-row{display:flex;flex-direction:column;flex-wrap:nowrap}
-      .cya-wa-nav .cya-wa-template-row .btn{text-align:left;white-space:normal}
-      .cya-wa-nav .cya-wa-section-label{margin-top:12px}
-      .cya-wa-content{grid-column:2;min-width:0}
-      .cya-wa-center-modal .cya-wa-block:first-child{margin-top:0}
-      .cya-wa-section-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted,#94a3b8);margin:4px 0 8px;font-weight:700}
-      .cya-wa-template-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-      .cya-wa-template-row .btn.active{border-color:#25d366;background:rgba(37,211,102,.12);color:#25d366;font-weight:700}
-      .cya-wa-helper{padding:10px 12px;border:1px solid rgba(148,163,184,.22);border-radius:8px;margin-bottom:14px;font-size:12px;line-height:1.45;color:var(--text-muted,#94a3b8)}
-      .cya-wa-block{border:1px solid rgba(148,163,184,.22);border-radius:10px;padding:12px;margin-top:10px;background:rgba(15,23,42,.08)}
-      .cya-wa-block-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px;font-size:12px}
-      .cya-wa-block-name{font-weight:700}
-      .cya-wa-block textarea{min-height:170px;line-height:1.48;resize:vertical}
-      .cya-wa-block-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
-      .cya-wa-block-actions .cya-wa-direct{background:#25d366;border-color:#25d366;color:#fff}
-      .cya-wa-human-note{font-size:11px;color:var(--text-muted,#94a3b8)}
-      @media(max-width:640px){.cya-wa-center-modal{width:96vw}.cya-wa-center-modal .modal-body{display:block}.cya-wa-nav{position:static;max-height:none;overflow:visible;padding-right:0}.cya-wa-nav .cya-wa-template-row{flex-direction:row;overflow-x:auto;flex-wrap:nowrap;scroll-snap-type:x proximity;padding-bottom:6px}.cya-wa-nav .cya-wa-template-row .btn{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap}.cya-wa-content{min-width:0}.cya-wa-block textarea{min-height:190px}.cya-wa-block-actions .btn{flex:1}}
-    `;document.head.appendChild(style);
+    style.textContent=[
+      '#cya-client-message-actions{display:none!important}',
+      '#perfil-whatsapp-btn{background:#188653;border-color:#188653;color:white;font-weight:700}',
+      '#perfil-whatsapp-btn:hover{background:#157648;border-color:#157648}',
+      '#cya-wa-center-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}',
+      '#cya-wa-center-actions .cya-wa-open{background:#25d366;border-color:#25d366;color:#fff;font-weight:700}',
+      '#cya-wa-message-center{z-index:30020!important;align-items:center;justify-content:center;padding:12px;box-sizing:border-box}',
+      '#cya-wa-message-center .modal.cya-wa-center-modal{width:min(1280px,calc(100vw - 32px))!important;max-width:1280px!important;max-height:94dvh!important;min-width:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;background:var(--bg-card,#17202d)!important;border-radius:15px}',
+      '#cya-wa-message-center .cya-wa-center-modal .modal-header{flex:0 0 auto;align-items:flex-start;min-height:0!important;padding:17px 22px 14px!important}',
+      '#cya-wa-message-center .cya-wa-eyebrow{font-size:10px;font-weight:750;letter-spacing:.1em;color:#d7ae57;text-transform:uppercase;margin-bottom:4px}',
+      '#cya-wa-message-center .cya-wa-center-modal .modal-title{font-size:22px!important;line-height:1.25!important}',
+      '#cya-wa-message-center .cya-wa-center-modal #cya-wa-center-person{font-size:12px;line-height:1.4;color:var(--text-muted,#a4b1c5);margin:5px 0 0}',
+      '#cya-wa-message-center .cya-wa-center-modal .modal-body{flex:1 1 auto;min-height:0!important;overflow-x:hidden!important;overflow-y:auto!important;display:flex!important;flex-direction:column!important;gap:13px!important;padding:16px 22px!important;align-items:stretch!important}',
+      '#cya-wa-message-center .cya-wa-nav{display:flex!important;flex-direction:column!important;grid-column:auto!important;grid-row:auto!important;position:static!important;max-height:none!important;overflow:visible!important;padding:0!important;border:0!important;min-width:0!important;gap:6px!important}',
+      '#cya-wa-message-center .cya-wa-section-label{font-size:11px!important;letter-spacing:.075em;text-transform:uppercase;color:var(--text-muted,#b7c3d5);font-weight:750;margin:0 0 4px!important}',
+      '#cya-wa-message-center .cya-wa-template-row{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:8px!important;width:100%!important;min-width:0!important;margin:0 0 8px!important}',
+      '#cya-wa-message-center .cya-wa-template-row .btn{display:flex!important;align-items:center!important;justify-content:center!important;min-width:0!important;min-height:50px!important;white-space:normal!important;text-align:center!important;overflow-wrap:anywhere;line-height:1.3!important;font-size:12px!important;padding:8px 7px!important;border-radius:10px!important;background:var(--bg-secondary,#202c3d);color:var(--text,#e7ecf4);font-weight:650}',
+      '#cya-wa-message-center .cya-wa-template-row .btn.active{border-color:#25d366!important;background:rgba(37,211,102,.13)!important;color:#44de99!important}',
+      '#cya-wa-message-center .cya-wa-template-row .btn:focus-visible,#cya-wa-message-center .cya-wa-part:focus-visible{outline:2px solid #d7ae57;outline-offset:2px}',
+      '#cya-wa-message-center .cya-wa-selected-note{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12px;color:var(--text-muted,#a4b1c5);margin:0!important}',
+      '#cya-wa-message-center .cya-wa-selected-note strong{color:#d7ae57}',
+      '#cya-wa-message-center .cya-wa-content{display:block!important;grid-column:auto!important;min-width:0!important}',
+      '#cya-wa-message-center .cya-wa-part-title{font-size:11px;letter-spacing:.05em;font-weight:750;text-transform:uppercase;color:var(--text-muted,#b7c3d5);margin:2px 0 7px}',
+      '#cya-wa-message-center .cya-wa-parts{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 13px}',
+      '#cya-wa-message-center .cya-wa-part{border:1px solid var(--border,#344359);color:var(--text,#d3dce8);background:var(--bg-secondary,#202c3d);padding:8px 12px;font:inherit;font-size:11px;font-weight:600;border-radius:9px;cursor:pointer;max-width:100%;overflow-wrap:anywhere}',
+      '#cya-wa-message-center .cya-wa-part.active{border-color:#d7ad46!important;background:rgba(196,150,50,.12);color:#f3c967}',
+      '#cya-wa-message-center .cya-wa-message-label{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:12px;font-weight:700;margin:0 0 8px}',
+      '#cya-wa-message-center .cya-wa-message-count{color:var(--text-muted,#8494ab);font-size:11px;font-weight:400}',
+      '#cya-wa-message-center #cya-wa-block-list{min-width:0}',
+      '#cya-wa-message-center .cya-wa-block{border:0!important;border-radius:0!important;background:transparent!important;margin:0!important;padding:0!important;min-width:0!important}',
+      '#cya-wa-message-center .cya-wa-block textarea{display:block;width:100%;min-width:0;max-width:100%;min-height:220px!important;height:235px!important;max-height:42dvh;resize:vertical;box-sizing:border-box;line-height:1.55!important;font-size:13px!important;padding:12px!important;border:1px solid var(--border,#39485d);border-radius:10px;background:var(--bg-secondary,#101722)!important;color:var(--text,#f5f5f5)!important}',
+      '#cya-wa-message-center .cya-wa-human-note{font-size:11px!important;color:var(--text-muted,#91a1b7);margin:9px 0 0!important;line-height:1.4}',
+      '#cya-wa-message-center .cya-wa-alta-status{padding:10px 12px;margin:0 0 12px;border:1px solid rgba(202,158,56,.45);border-radius:8px;font-size:12px;line-height:1.5;color:var(--text-secondary,#cbd5e1);background:rgba(202,158,56,.08)}',
+      '#cya-wa-message-center .cya-wa-center-modal .modal-footer{flex:0 0 auto;position:static!important;bottom:auto!important;display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:9px!important;flex-wrap:wrap;padding:13px 22px!important;background:var(--bg-card,#17202d)!important;border-top:1px solid var(--border,#344359)!important}',
+      '#cya-wa-message-center .cya-wa-center-modal .modal-footer .btn{min-height:38px!important;font-size:12px!important}',
+      '#cya-wa-message-center .cya-wa-footer-copy{display:inline-flex;align-items:center;justify-content:center;width:40px;min-width:40px;padding:0!important}',
+      '#cya-wa-message-center .cya-wa-footer-copy svg{width:17px;height:17px}',
+      '#cya-wa-message-center .cya-wa-direct{background:#16a85e!important;border-color:#16a85e!important;color:white!important;font-weight:750!important}',
+      '#cya-wa-message-center .cya-wa-direct:hover{background:#13884f!important;border-color:#13884f!important}',
+      '@media(max-width:1079px){#cya-wa-message-center .cya-wa-template-row{grid-template-columns:repeat(3,minmax(0,1fr))!important}}',
+      '@media(max-width:640px){#cya-wa-message-center{padding:6px}#cya-wa-message-center .modal.cya-wa-center-modal{width:calc(100vw - 12px)!important;max-width:calc(100vw - 12px)!important;max-height:96dvh!important}#cya-wa-message-center .cya-wa-center-modal .modal-header{padding:12px!important}#cya-wa-message-center .cya-wa-center-modal .modal-body{padding:10px 12px!important;gap:8px!important}#cya-wa-message-center .cya-wa-template-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}#cya-wa-message-center .cya-wa-template-row .btn{min-height:44px!important;font-size:11px!important}#cya-wa-message-center .cya-wa-center-modal .modal-footer{padding:10px 12px!important}#cya-wa-message-center .cya-wa-block textarea{min-height:180px!important;height:190px!important}#cya-wa-message-center .cya-wa-center-modal .modal-footer .btn{flex:0 1 auto}}'
+    ].join('\n');
+    document.head.appendChild(style);
   }
 
   function ensureCenterModal(){
     if(document.getElementById('cya-wa-message-center'))return;
     const modal=document.createElement('div');modal.id='cya-wa-message-center';modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal cya-wa-center-modal" role="dialog" aria-modal="true" aria-labelledby="cya-wa-center-title">
-      <div class="modal-header"><div><div class="modal-title" id="cya-wa-center-title">Mensajes WhatsApp</div><div class="form-helper" id="cya-wa-center-person"></div></div><button class="modal-close" type="button" onclick="cyaCerrarCentroMensajesWhatsApp()">×</button></div>
-      <div class="modal-body">
-        <nav class="cya-wa-nav" aria-label="Categorías de mensajes"><div class="cya-wa-section-label">Seguimiento</div><div class="cya-wa-template-row" id="cya-wa-main-buttons"></div>
-        <div class="cya-wa-section-label" id="cya-wa-reject-label">No viable / seguimiento futuro</div><div class="cya-wa-template-row" id="cya-wa-reject-buttons"></div></nav>
-        <section class="cya-wa-content" aria-label="Mensajes de la categoría seleccionada"><div id="cya-wa-block-list"></div></section>
-      </div>
-      <div class="modal-footer"><span class="cya-wa-human-note">Última acción siempre manual.</span><button class="btn" type="button" onclick="cyaEditarPlantillaWhatsAppSeleccionada()">Editar en Plantillas</button><button class="btn btn-primary" type="button" onclick="cyaCerrarCentroMensajesWhatsApp()">Cerrar</button></div>
-    </div>`;
+    modal.innerHTML='<div class="modal cya-wa-center-modal" role="dialog" aria-modal="true" aria-labelledby="cya-wa-center-title">'+
+      '<div class="modal-header"><div><div class="cya-wa-eyebrow">MENSAJES INSTITUCIONALES</div><div class="modal-title" id="cya-wa-center-title">Mensajes WhatsApp</div><div class="form-helper" id="cya-wa-center-person"></div></div>'+
+      '<button class="modal-close" type="button" aria-label="Cerrar mensajes WhatsApp" onclick="cyaCerrarCentroMensajesWhatsApp()">×</button></div>'+
+      '<div class="modal-body">'+
+        '<nav class="cya-wa-nav" aria-label="Categorías de mensajes"><div class="cya-wa-section-label">SEGUIMIENTO</div><div class="cya-wa-template-row" id="cya-wa-main-buttons"></div>'+
+        '<div class="cya-wa-section-label" id="cya-wa-reject-label">NO VIABLE / SEGUIMIENTO FUTURO</div><div class="cya-wa-template-row" id="cya-wa-reject-buttons"></div></nav>'+
+        '<p class="cya-wa-selected-note" role="status" id="cya-wa-selected-note"></p>'+
+        '<section class="cya-wa-content" aria-label="Mensajes de la categoría seleccionada"><div id="cya-wa-block-list"></div></section>'+
+      '</div>'+
+      '<div class="modal-footer"><button class="btn" type="button" onclick="cyaEditarPlantillaWhatsAppSeleccionada()">Editar en Plantillas</button>'+
+      '<button class="btn cya-wa-footer-copy" type="button" title="Copiar mensaje" aria-label="Copiar mensaje" onclick="cyaCopiarBloqueWhatsApp(0)">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button>'+
+      '<button class="btn cya-wa-direct" type="button" onclick="cyaAbrirBloqueWhatsApp(0)">Abrir WhatsApp</button></div>'+
+    '</div>';
     document.body.appendChild(modal);
     modal.addEventListener('click',e=>{if(e.target===modal)window.cyaCerrarCentroMensajesWhatsApp();});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))window.cyaCerrarCentroMensajesWhatsApp();});
   }
 
   function renderGroupButtons(){
-    const main=document.getElementById('cya-wa-main-buttons');const reject=document.getElementById('cya-wa-reject-buttons');
+    const main=document.getElementById('cya-wa-main-buttons');
+    const reject=document.getElementById('cya-wa-reject-buttons');
     if(!main||!reject)return;
-    const button=g=>`<button class="btn${g.key===currentGroupKey?' active':''}" type="button" aria-pressed="${g.key===currentGroupKey?'true':'false'}" data-cya-wa-group="${safe(g.key)}">${safe(g.label)}</button>`;
-    main.innerHTML=GROUPS.filter(g=>g.kind==='main'&&(
-      messageContactType==='client'
-        ? ['alta_15','finalizacion','despedida'].includes(g.key)
-        : g.key!=='alta_15'
-    )).map(button).join('');
-    reject.innerHTML=messageContactType==='client'?'':GROUPS.filter(g=>g.kind==='reject').map(button).join('');
-    const rejectLabel=document.getElementById('cya-wa-reject-label');
-    if(rejectLabel)rejectLabel.style.display=messageContactType==='client'?'none':'';
-    document.querySelectorAll('[data-cya-wa-group]').forEach(el=>el.onclick=()=>selectGroup(el.dataset.cyaWaGroup));
+    const button=g=>'<button class="btn'+(g.key===currentGroupKey?' active':'')+'" type="button" aria-pressed="'+(g.key===currentGroupKey?'true':'false')+'" data-cya-wa-group="'+safe(g.key)+'">'+safe(g.label)+'</button>';
+    main.innerHTML=GROUPS.filter(g=>g.kind==='main').map(button).join('');
+    reject.innerHTML=GROUPS.filter(g=>g.kind==='reject').map(button).join('');
+    const notice=document.getElementById('cya-wa-selected-note');
+    const group=GROUPS.find(g=>g.key===currentGroupKey);
+    if(notice)notice.innerHTML='<span aria-hidden="true">✧</span> '+(selectionSuggested?'Selección sugerida según etapa actual: ':'Categoría seleccionada: ')+'<strong>'+safe(group?.label||'')+'</strong>';
+    document.querySelectorAll('#cya-wa-message-center [data-cya-wa-group]').forEach(el=>el.onclick=()=>selectGroup(el.dataset.cyaWaGroup));
+  }
+
+  function currentTemplates(){
+    const group=GROUPS.find(g=>g.key===currentGroupKey)||GROUPS[0];
+    return group.ids.map(templateById).filter(Boolean);
+  }
+
+  function saveMessageDraft(){
+    const tpl=currentTemplates()[currentMessageIndex];
+    const area=document.getElementById('cya-wa-text-0');
+    if(tpl&&area)currentDrafts[tpl.id]=area.value;
   }
 
   function renderSelectedGroup(){
     const group=GROUPS.find(g=>g.key===currentGroupKey)||GROUPS[0];
     const contact=activeContact();
     const list=document.getElementById('cya-wa-block-list');if(!list||!contact)return;
-    const templates=group.ids.map(templateById).filter(Boolean);
+    const templates=currentTemplates();
+    currentMessageIndex=Math.min(Math.max(0,currentMessageIndex),Math.max(0,templates.length-1));
+    const tpl=templates[currentMessageIndex];
     const altaDays=group.key==='alta_15'&&messageContactType==='client'?daysSinceClientAlta(contact):null;
     const altaNote=group.key==='alta_15'&&messageContactType==='client'
       ?(altaDays===null?'No hay una fecha de alta válida registrada. Confirma la fecha antes de enviar este recordatorio.'
-        :altaDays<15?`Han transcurrido ${Math.max(0,altaDays)} días desde el alta. Este recordatorio corresponde a partir del día 15; ${15-Math.max(0,altaDays)===1?'falta 1 día':'faltan '+(15-Math.max(0,altaDays))+' días'}.`
-        :`Han transcurrido ${altaDays} días desde el alta. Revisa si ya se realizó la actualización AFORE antes de enviar el recordatorio.`)
-      :'';
-    list.innerHTML=(altaNote?`<div class="cya-wa-alta-status">${safe(altaNote)}</div>`:'')+templates.map((tpl,index)=>{
-      const text=renderText(tpl,contact);
-      const finalizacionTitles=['Felicitación por depósito','Datos para pagar honorarios','Pago recibido y despedida'];
-      const caption=group.key==='finalizacion'?finalizacionTitles[index]:group.label+' · Mensaje '+(index+1)+(templates.length>1?' de '+templates.length:'');
-      return `<div class="cya-wa-block"><div class="cya-wa-block-head"><span class="cya-wa-block-name">${safe(caption)}</span><span>Plantilla editable</span></div><textarea class="form-textarea" id="cya-wa-text-${index}" spellcheck="true">${safe(text)}</textarea><div class="cya-wa-block-actions"><button class="btn" type="button" onclick="cyaCopiarBloqueWhatsApp(${index})">Copiar</button><button class="btn cya-wa-direct" type="button" onclick="cyaAbrirBloqueWhatsApp(${index})">Abrir WhatsApp</button></div></div>`;
-    }).join('');
+        :altaDays<15?'Han transcurrido '+Math.max(0,altaDays)+' días desde el alta. Este recordatorio corresponde a partir del día 15; '+(15-Math.max(0,altaDays)===1?'falta 1 día':'faltan '+(15-Math.max(0,altaDays))+' días')+'.'
+        :'Han transcurrido '+altaDays+' días desde el alta. Revisa si ya se realizó la actualización AFORE antes de enviar el recordatorio.')
+      :group.key==='alta_15'?'Esta plantilla es para seguimiento posterior al alta de clientes. Confirma la etapa antes de utilizarla.':'';
+    const tabs=templates.map((item,index)=>
+      '<button class="cya-wa-part'+(index===currentMessageIndex?' active':'')+'" type="button" data-cya-wa-part="'+index+'" aria-pressed="'+(index===currentMessageIndex?'true':'false')+'">'+
+      safe((index+1)+' / '+templates.length+' · '+item.nombre)+'</button>'
+    ).join('');
+    const text=tpl?(Object.prototype.hasOwnProperty.call(currentDrafts,tpl.id)?currentDrafts[tpl.id]:renderText(tpl,contact)):'';
+    list.innerHTML=(altaNote?'<div class="cya-wa-alta-status" role="status">'+safe(altaNote)+'</div>':'')+
+      '<div class="cya-wa-part-title">MENSAJES DISPONIBLES</div><div class="cya-wa-parts" role="tablist" aria-label="Mensajes de la categoría">'+tabs+'</div>'+
+      '<div class="cya-wa-block"><label class="cya-wa-message-label" for="cya-wa-text-0">Mensaje editable <span class="cya-wa-message-count">Plantilla '+(templates.length?currentMessageIndex+1:0)+' de '+templates.length+'</span></label>'+
+      '<textarea class="form-textarea" id="cya-wa-text-0" spellcheck="true">'+safe(text)+'</textarea>'+
+      '<p class="cya-wa-human-note">Revisa los datos y el mensaje antes de abrir WhatsApp; nada se envía automáticamente.</p></div>';
+    list.querySelectorAll('[data-cya-wa-part]').forEach(el=>el.onclick=()=>window.cyaSeleccionarMensajeWhatsApp(Number(el.dataset.cyaWaPart)));
+    const copy=document.querySelector('#cya-wa-message-center .cya-wa-footer-copy');
+    const open=document.querySelector('#cya-wa-message-center .cya-wa-direct');
+    if(copy)copy.disabled=!tpl;
+    if(open)open.disabled=!tpl;
   }
 
+  window.cyaSeleccionarMensajeWhatsApp=function(index){
+    const templates=currentTemplates();
+    if(!Number.isInteger(index)||index<0||index>=templates.length)return;
+    saveMessageDraft();
+    currentMessageIndex=index;
+    renderSelectedGroup();
+  };
+
   function selectGroup(key){
-    if(!GROUPS.some(g=>g.key===key&&(g.key!=='alta_15'||messageContactType==='client')))return;
-    currentGroupKey=key;renderGroupButtons();renderSelectedGroup();
+    if(!GROUPS.some(g=>g.key===key))return;
+    saveMessageDraft();
+    currentGroupKey=key;
+    currentMessageIndex=0;
+    selectionSuggested=false;
+    renderGroupButtons();
+    renderSelectedGroup();
   }
 
   function openContactCenter(type,contact,groupKey){
     ensureTemplates();ensureStyles();ensureCenterModal();
     messageContactType=type;
     messageContactId=contact.id;
-    const validGroup=GROUPS.some(g=>g.key===groupKey&&(g.key!=='alta_15'||type==='client'));
+    const validGroup=GROUPS.some(g=>g.key===groupKey);
+    selectionSuggested=!validGroup;
     currentGroupKey=validGroup?groupKey:(type==='client'?recommendedClientGroup(contact):recommendedGroup(contact));
+    currentMessageIndex=0;
+    currentDrafts=Object.create(null);
     const person=document.getElementById('cya-wa-center-person');
     const phone=normalizePhone(type==='client'?contact.telefono:(String(currentLead()?.id)===String(contact?.id)?(document.getElementById('lead-tel')?.value||contact.telefono):contact.telefono));
     if(person)person.textContent=`${type==='client'?'Cliente':'Prospecto'}: ${contact.nombre||'Sin nombre'} · ${phone||'sin teléfono'}`;
@@ -427,24 +493,38 @@
     messageContactId=null;
     messageContactType='lead';
     archivedMessageMode=false;
+    currentDrafts=Object.create(null);
+    currentMessageIndex=0;
   };
 
   window.cyaCopiarBloqueWhatsApp=async function(index){
-    const area=document.getElementById(`cya-wa-text-${Number(index)}`);if(!area)return;
+    // The approved layout keeps exactly one active, editable message. The
+    // index argument is retained for legacy callers.
+    const area=document.getElementById('cya-wa-text-0');if(!area)return;
     const clean=sanitizeWhatsAppText(area.value,currentGroupKey==='finalizacion');area.value=clean;
-    const ok=await copyText(clean,currentGroupKey==='finalizacion');showToast?.(ok?'Mensaje copiado':'No fue posible copiar el mensaje',ok?'success':'warn');
+    saveMessageDraft();
+    const ok=await copyText(clean,currentGroupKey==='finalizacion');
+    showToast?.(ok?'Mensaje copiado':'No fue posible copiar el mensaje',ok?'success':'warn');
   };
 
   window.cyaAbrirBloqueWhatsApp=function(index){
-    const area=document.getElementById(`cya-wa-text-${Number(index)}`);const contact=activeContact();if(!area||!contact)return;
-    const clean=sanitizeWhatsAppText(area.value,currentGroupKey==='finalizacion');area.value=clean;openWhatsApp(contact,clean,currentGroupKey==='finalizacion');
+    const area=document.getElementById('cya-wa-text-0');const contact=activeContact();
+    if(!area||!contact)return;
+    const clean=sanitizeWhatsAppText(area.value,currentGroupKey==='finalizacion');
+    area.value=clean;saveMessageDraft();
+    openWhatsApp(contact,clean,currentGroupKey==='finalizacion');
   };
 
   window.cyaEditarPlantillaWhatsAppSeleccionada=function(){
-    const group=GROUPS.find(g=>g.key===currentGroupKey);const templateId=group?.ids?.[0]||null;if(!templateId)return;
+    const templateId=currentTemplates()[currentMessageIndex]?.id||null;
+    if(!templateId)return;
     const contactType=messageContactType;
     window.cyaCerrarCentroMensajesWhatsApp();
-    try{closeModal?.(contactType==='client'?'modal-perfil':'modal-lead');navigate('plantillas',document.querySelector('[data-page="plantillas"]'));setTimeout(()=>{if(typeof seleccionarPlantilla==='function')seleccionarPlantilla(templateId);},100);}catch(_){ }
+    try{
+      closeModal?.(contactType==='client'?'modal-perfil':'modal-lead');
+      navigate('plantillas',document.querySelector('[data-page="plantillas"]'));
+      setTimeout(()=>{if(typeof seleccionarPlantilla==='function')seleccionarPlantilla(templateId);},100);
+    }catch(_){ }
   };
 
   function ensureProspectButton(){
