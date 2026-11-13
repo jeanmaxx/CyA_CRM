@@ -41,3 +41,15 @@ Mantener PR en borrador hasta que la edición interna sea real, se valide median
 ### Hallazgo técnico que **no se modificó**
 
 Se observaron varias implementaciones históricas de fechas: `calcFechaRetiro` en `app-core-04.js` utiliza una suma desde registro y `sincronizarFechasCliente` en `app-workflow.js` programa el recordatorio `solicitud_45` desde el alta. La instrucción vigente del usuario es **no cambiar la lógica actual**, por lo que esta fase solo aísla los guardados de las tarjetas y conserva sus fechas. Antes de etapa 4 hay que mapear cuál dato alimenta exactamente la tabla y la cabecera, sin asumir que todos esos cálculos tienen la misma semántica.
+
+## Revisión de seguridad y listas — continuación
+
+- **Navegación segura:** Regresar a prospectos y Descartar cliente avisan cuando existen cambios sin guardar en el editor interno; el usuario puede cancelar la acción.
+- **Historial HTML:** el texto de observaciones y cambios ahora se escapa al mostrarlo para que notas con caracteres especiales no inyecten marcado HTML.
+- **Clientes atendidos y descartados:** quedan en ese orden debajo de clientes activos, ambas secciones contraídas por defecto; Descartados solo aparece si existen registros para la vista/asesor. Se filtran los archivados fuera de la lista activa. No se alteran registros de la base.
+- **Eliminar:** se retiran los accesos de eliminación rápida desde filas y tarjetas móviles; la opción de administración «Eliminar definitivamente» **continúa deshabilitada** hasta contar con permisos y verificación de referencias en backend, confirmación reforzada y un plan de recuperación.
+- **Cabecera:** se conserva la felicitación (visible aun cuando falte fecha de nacimiento, deshabilitada hasta completar datos) y se añadió Agenda que abre el formulario de evento **ya existente**, preasignando el cliente; no se crea un sistema paralelo de eventos.
+- **Seguimiento:** se oculta la barra de etapas *legada* dentro del expediente híbrido para no duplicar el indicador de la tabla; las nuevas 12 actividades se desarrollarán y probarán en la etapa 4.
+- **Pruebas:** la suite amplió cobertura de cierre con modificaciones pendientes, accesos a Agenda y listas archivadas. La última ejecución de Actions con controles funcionales pasó, antes del último ajuste de estilo. La comprobación de apariencia autenticada en escritorio/móvil y los permisos de eliminación siguen pendientes.
+
+La etapa 3 está **en validación**, no desplegada ni fusionada a `main`. El PR de revisión permanece en borrador.
