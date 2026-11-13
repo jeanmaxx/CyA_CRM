@@ -61,6 +61,7 @@ async function complete(step,date,note='Confirmado en evidencia'){
  assert.equal(JSON.stringify(c.etapasOperativasV2),pre,'Failed cloud write restores activity evidence');
  assert.equal(c.etapa,stage);
  assert.equal(c.historial.length,noteCount);
+ assert.equal(d.querySelector('[data-op-save]')?.disabled,false,'Save button must recover after cloud failure');
  fail=false;
  assert(saves>=6);
  w.close();console.log('PASS: contract/signature/alta native bridge, forecast unchanged, N4 verification, future AFORE appointment and failed sync rollback.');
