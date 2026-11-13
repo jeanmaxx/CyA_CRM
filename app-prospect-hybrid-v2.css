@@ -1,0 +1,43 @@
+/* C&A: etapa 2, expediente híbrido de prospectos.
+ * Solo se aplica a #modal-lead cuando el módulo de JS se haya instalado.
+ */
+#modal-lead:has(#cya-hybrid-lead-root) .modal{width:min(1120px,96vw)!important;max-width:1120px!important;max-height:94vh}
+#modal-lead #cya-hybrid-lead-root{display:grid;gap:15px;width:100%;box-sizing:border-box}
+#modal-lead #cya-hybrid-lead-root [hidden]{display:none!important}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:11px 12px;border:1px solid var(--border);border-radius:13px;background:var(--surface-2)}
+#modal-lead .cya-hybrid-lead-person{display:grid;gap:7px;min-width:0}
+#modal-lead .cya-hybrid-kicker{font-size:10px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+#modal-lead #cya-hybrid-lead-name{font-size:19px;line-height:1.25;overflow-wrap:anywhere;color:var(--text)}
+#modal-lead .cya-hybrid-lead-contact{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+#modal-lead .cya-hybrid-lead-context{display:flex;gap:6px;flex-wrap:wrap}
+#modal-lead .cya-hybrid-lead-context span{border:1px solid var(--border);border-radius:999px;padding:5px 9px;color:var(--muted);font-size:10px;background:var(--surface)}
+#modal-lead .cya-hybrid-wa{flex:none}
+#modal-lead .cya-hybrid-lead-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#modal-lead .cya-hybrid-lead-card{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:7px;min-height:68px;padding:13px 15px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);color:var(--text);text-align:left;font:inherit;cursor:pointer;min-width:0}
+#modal-lead .cya-hybrid-lead-card.active{border-color:var(--gold);background:rgba(197,155,40,.055)}
+#modal-lead .cya-hybrid-lead-card:hover{border-color:var(--gold)}
+#modal-lead .cya-hybrid-lead-card:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#modal-lead .cya-hybrid-lead-card .cya-hybrid-card-title{font-size:12px;font-weight:700}
+#modal-lead .cya-hybrid-lead-card small{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
+#modal-lead .cya-hybrid-lead-panels{max-width:100%}
+#modal-lead .cya-hybrid-lead-section{border:1px solid var(--gold);border-radius:13px;padding:16px;min-width:0;box-sizing:border-box}
+#modal-lead .cya-hybrid-lead-section h3{margin:0 0 12px;color:var(--text);font-size:14px}
+#modal-lead .cya-hybrid-section-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+#modal-lead .cya-hybrid-section-fields>.form-row{grid-column:1/-1;margin:0!important}
+#modal-lead .cya-hybrid-section-fields>.form-group{min-width:0;margin:0!important}
+#modal-lead .cya-hybrid-section-fields>.form-section,#modal-lead .cya-hybrid-section-fields>#lead-elegibilidad-container,#modal-lead .cya-hybrid-section-fields>#lead-registration-wrap,#modal-lead .cya-hybrid-section-fields>#cya-prospect-stage-stepper,#modal-lead .cya-hybrid-section-fields>#cya-meta-questionnaire-panel{grid-column:1/-1}
+#modal-lead .cya-hybrid-section-fields #lead-notas{min-height:100px}
+#modal-lead #cya-meta-lead-tabs,#modal-lead #cya-lead-extra-fields{display:none!important}
+#modal-lead .cya-hybrid-empty{padding:14px 0;font-size:11px;color:var(--muted)}
+#modal-lead .cya-hybrid-history-line{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px}
+#modal-lead .cya-hybrid-history-line small{color:var(--muted);font-size:10px}
+#modal-lead .cya-curp-copy-icon{min-width:35px!important;width:35px;height:34px;display:inline-grid;place-items:center;font-size:17px!important;padding:0!important}
+#modal-lead #lead-curp-actions{display:flex!important;gap:8px;align-items:center;flex-wrap:wrap}
+@media(max-width:760px){
+ #modal-lead:has(#cya-hybrid-lead-root) .modal{width:100%!important;max-width:100%!important}
+ #modal-lead .cya-hybrid-lead-heading{flex-wrap:wrap}
+ #modal-lead .cya-hybrid-lead-cards{grid-template-columns:1fr}
+ #modal-lead .cya-hybrid-section-fields{grid-template-columns:1fr}
+ #modal-lead .cya-hybrid-section-fields>.form-row{grid-column:1}
+ #modal-lead .cya-hybrid-lead-card{min-height:56px}
+}
