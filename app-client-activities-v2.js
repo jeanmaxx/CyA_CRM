@@ -28,8 +28,8 @@
   const status=String(c?.estadoPago||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
   // A legacy workflow step or external verification never proves money was collected.
   // Reject negated/unfinished statuses such as "no recibido", "no cobrado" and "pendiente".
-  if(!status||/\\b(no|sin|pendiente|parcial|por cobrar|por pagar|sin confirmar|cancelado|rechazado)\\b/.test(status))return false;
-  return /^(cobrado|pagado|liquidado|pago recibido|recibido)(?:\\s+(?:total|completo|confirmado))?$/.test(status);
+  if(!status||/\b(no|sin|pendiente|parcial|por cobrar|por pagar|sin confirmar|cancelado|rechazado)\b/.test(status))return false;
+  return /^(cobrado|pagado|liquidado|pago recibido|recibido)(?:\s+(?:total|completo|confirmado))?$/.test(status);
  };
  const documents=c=>{
   const d=c?.etapasOperativasV2?.documentos?.checks||{},old=c?.docs||{};
