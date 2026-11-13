@@ -98,6 +98,8 @@ function stopInlineEditor(){
  modal.classList.remove('cya-hybrid-inline-editor','open');
  modal.removeAttribute('data-hybrid-section');
  modal.querySelectorAll('.form-group[hidden],.form-row[hidden],.tab-panel[hidden]').forEach(el=>{el.hidden=false;});
+ const cancel=modal.querySelector('.modal-footer .btn:not(.btn-primary)');
+ if(cancel)cancel.setAttribute('onclick',"closeModal('modal-cliente')");
  if(editorHome&&modal.parentElement!==editorHome)editorHome.appendChild(modal);
  editorActive=false;editorSection='';
 }
@@ -162,7 +164,16 @@ function selection(c){
  if(stash){for(const old of [...area.querySelectorAll(':scope > .cya-hybrid-client-panel-content > .tab-panel')]){old.hidden=true;old.classList.remove('active');stash.appendChild(old);}}
  area.innerHTML='<div class="cya-hybrid-client-panel-head"><strong>'+esc(x[1])+'</strong><small>Panel interno</small></div><div class="cya-hybrid-client-panel-content" id="cya-hybrid-client-content"></div>';
  const box=$('cya-hybrid-client-content'),source=$(x[3]);
- if(inlineCategories.has(selected)&&mountInlineEditor(c,selected))return;
+ if(inlineCategories.has(selected)&&mountInlineEditor(c,selected)){
+  if(selected==='afore'){
+   const details=$('pd-cita-afore');if(details){details.hidden=false;details.classList.add('active');box.insertBefore(details,box.firstChild);}
+  }
+  if(selected==='notas'){
+   const entries=(c.historial||[]).filter(h=>/nota|observaci/i.test(String(h.tipo||'')+' '+String(h.texto||''))).slice(-8).reverse();
+   if(entries.length){const log=document.createElement('div');log.className='cya-hybrid-notes-log';log.innerHTML='<strong>Notas anteriores</strong>'+entries.map(h=>'<p>'+esc(h.texto||'')+' <small>'+esc(format(h.fecha))+'</small></p>').join('');box.insertBefore(log,box.firstChild);}
+  }
+  return;
+ }
  if(source){
   source.classList.add('active');source.hidden=false;box.appendChild(source);
   if(selected==='previsional'||selected==='banco'){
@@ -217,10 +228,14 @@ if(typeof nativeSave==='function')window.guardarCliente=async function(...args){
  return result;
 };
 // Always restore the native modal before closing the parent profile.
-$('modal-perfil')?.querySelector('.profile-close')?.addEventListener('click',()=>{
- if(editorActive&&!confirmSwitch())return;
+$('modal-perfil')?.querySelector('.profile-close')?.addEventListener('click',event=>{
+ if(editorActive&&!confirmSwitch()){event.preventDefault();event.stopImmediatePropagation();return;}
  stopInlineEditor();
 },true);
+// If the modal is closed by a different existing action, return editor to its
+// original DOM position before any new-client flow is attempted.
+const parentProfile=$('modal-perfil');
+if(parentProfile)new MutationObserver(()=>{if(!parentProfile.classList.contains('open')&&editorActive)stopInlineEditor();}).observe(parentProfile,{attributes:true,attributeFilter:['class']});
 
 const target=$('perfil-body');
 if(target)new MutationObserver(()=>{if(!$('cya-hybrid-client-root')&&$('pd-contacto'))build();}).observe(target,{childList:true,subtree:false});
