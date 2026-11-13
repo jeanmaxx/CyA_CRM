@@ -189,3 +189,16 @@
   script.dataset.cyaHybridProspect='1';
   document.head.appendChild(script);
 })();
+
+
+/* CRM híbrido etapa 3: capa de presentación para el expediente de clientes.
+   Se instala sobre el perfil existente, sin reemplazar su lógica de guardado. */
+(function loadHybridClientProfile(){
+ if(window.__cyaHybridClientLoaderStarted)return;
+ window.__cyaHybridClientLoaderStarted=true;
+ const script=document.createElement('script');
+ script.src='/app-client-hybrid-v2.js?v=20261112-stage3';
+ script.async=false;
+ script.dataset.cyaHybridClient='1';
+ document.head.appendChild(script);
+})();
