@@ -12,6 +12,7 @@ w.HTMLElement.prototype.scrollIntoView=function(){};w.HTMLElement.prototype.scro
 const run=s=>vm.runInContext(s,dom.getInternalVMContext());
 for(const file of ['app-core-01.js','app-core-02a.js','app-core-02b.js','app-core-03.js','app-core-04.js','app-core-05.js','app-core-06.js','app-core-07.js'])run(fs.readFileSync(file,'utf8').replace('\ninitResponsiveShell();','\n'));
 run(fs.readFileSync('tests/fixtures.js','utf8').replace('__ROLE__','admin').replace("actualizarSidebarSesion();updateRolUI();navigate('clientes');",''));
+for(const file of ['app-workflow.js','app-prospect-workflow.js','app-contract-word.js','app-operations.js'])run(fs.readFileSync(file,'utf8'));
 run("store.clientes.push({...store.clientes[0],id:'attended-fixture',nombre:'CLIENTE ATENDIDO',archivado:true,descartado:false});");
 run("store.clientes.push({...store.clientes[0],id:'discarded-fixture',nombre:'CLIENTE DESCARTADO',descartado:true,archivado:false,causaDescarte:'No contesta'});");
 run("navigate('clientes')");
