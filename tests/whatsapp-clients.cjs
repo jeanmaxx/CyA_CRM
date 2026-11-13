@@ -72,7 +72,7 @@ assert.match(decodeURIComponent(opened[0]),/¡Hola, Cliente!/);
 assert.doesNotMatch(decodeURIComponent(opened[0]),/Prospecto Demo/);
 window.cyaCerrarCentroMensajesWhatsApp();
 window.cyaAbrirWhatsAppCliente('finalizacion');
-assert.equal((fields['cya-wa-block-list'].innerHTML.match(/class="cya-wa-part/g)||[]).length,3,'Multiple messages must be selectable tabs, not stacked textareas');
+assert.equal((fields['cya-wa-block-list'].innerHTML.match(/data-cya-wa-part="/g)||[]).length,3,'Multiple messages must be selectable tabs, not stacked textareas');
 assert.equal((fields['cya-wa-block-list'].innerHTML.match(/<textarea/g)||[]).length,1,'One editable message at a time');
 window.cyaEditarPlantillaWhatsAppSeleccionada();
 assert.equal(closed.at(-1),'modal-perfil','Editar plantilla debe cerrar expediente, no prospecto');
