@@ -37,7 +37,7 @@ const summary=(c,id)=>{
  case 'historial':return (c.historial||[]).length+' movimientos';
  }return '';
 };
-let currentId='',selected='',building=false;
+let currentId='',selected='',building=false,previousSigned=null;
 function header(c){
  const modal=$('modal-perfil'),copy=modal?.querySelector('.profile-header-copy');if(!copy)return;
  $('perfil-title').textContent=c.nombre||'Cliente';
@@ -99,7 +99,7 @@ function build(){
  const c=getClient(),body=$('perfil-body');if(!c||!body||!$('pd-contacto')||$('cya-hybrid-client-root'))return;
  building=true;
  try{
-  if(String(c.id)!==currentId){currentId=String(c.id);selected=signed(c)?'':'contratos';}
+  if(String(c.id)!==currentId||signed(c)!==previousSigned){currentId=String(c.id);previousSigned=signed(c);selected=signed(c)?'':'contratos';}
   header(c);
   const tabs=$('perfil-tabs');if(tabs)tabs.hidden=true;
   const summaryGrid=body.querySelector('.profile-summary-grid');if(summaryGrid)summaryGrid.hidden=true;
