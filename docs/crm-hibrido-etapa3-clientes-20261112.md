@@ -53,3 +53,13 @@ Se observaron varias implementaciones históricas de fechas: `calcFechaRetiro` e
 - **Pruebas:** la suite amplió cobertura de cierre con modificaciones pendientes, accesos a Agenda y listas archivadas. La última ejecución de Actions con controles funcionales pasó, antes del último ajuste de estilo. La comprobación de apariencia autenticada en escritorio/móvil y los permisos de eliminación siguen pendientes.
 
 La etapa 3 está **en validación**, no desplegada ni fusionada a `main`. El PR de revisión permanece en borrador.
+
+## Auditoría de permisos y eliminación — actualización del 12/11/2026
+
+**Acceso a expediente:** la capa híbrida ahora verifica que los asesores solo abran/editen expedientes asignados a su ID. Administradores y administradores técnicos mantienen la vista de otros asesores. Esta regla se verifica adicionalmente en el guardado nativo acotado por sección. La protección efectiva en servidor continúa correspondiendo a las políticas RLS de Supabase; el control de interfaz no las sustituye.
+
+**Pruebas de roles:** `tests/crm-hybrid-client-access.cjs` cubre asesor propietario, asesor ajeno, administrador, administrador técnico y ausencia de sesión. `tests/crm-hybrid-client-real-save.cjs` intenta una actualización bancaria de un cliente ajeno desde el formulario original y comprueba el rechazo. Resultado: pruebas aprobadas por GitHub Actions (ejecución 43369611260).
+
+**Eliminación definitiva:** revisadas las migraciones de sincronización. La función `crm_save_changes` acepta operaciones DELETE y guarda snapshots antes de actualización/eliminación en `recovery_records`. Sin embargo, la fila del cliente puede vincularse con eventos en `agenda_events`, historial de contratos, importes de finanzas/comisiones, origen en prospectos y auditoría. No existe todavía una operación única explícita de eliminación definitiva de expediente completo que garantice preservar/gestionar todos esos enlaces. **Decisión técnica:** mantener deshabilitada la opción de eliminación definitiva hasta diseñar y probar una operación autorizada desde servidor con verificación de referencias, bloqueo en caso de movimientos financieros o contratos, confirmación reforzada y recuperación auditada. La opción «Descartar» permanece operativa y es la alternativa segura para retirar de la lista activa.
+
+**Criterio de cierre:** aunque la suite CI pasó, sigue faltando comprobación visual autenticada de la interfaz real (escritorio/móvil, claro/oscuro, PDF/contratos, notas, comisiones y sincronización de roles); no fusionar ni desplegar el rediseño sin verificar estos puntos.
