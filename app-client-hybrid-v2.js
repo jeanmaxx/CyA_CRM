@@ -15,6 +15,15 @@ const items=[
 const getClient=()=>typeof store==='undefined'?null:(store.clientes||[]).find(c=>String(c.id)===String(typeof perfilClienteActivo==='undefined'?'':perfilClienteActivo));
 const getAdvisor=c=>typeof store==='undefined'?null:(store.asesores||[]).find(a=>String(a.id)===String(c.asesorId));
 const getCollaborator=c=>typeof store==='undefined'?null:(store.colaboradores||[]).find(a=>String(a.id)===String(c.colaboradorId));
+
+const canAccessClient=c=>{
+ if(!c)return false;
+ if(typeof sesionActiva==='undefined')return true; // isolated regression harnesses
+ if(!sesionActiva?.id)return false;
+ if(typeof isAdmin==='function'&&isAdmin())return true;
+ return String(c.asesorId||'')===String(sesionActiva.id);
+};
+
 const signed=c=>c.contratoFirmado===true||['contrato_firmado','dado_alta','afore_actualizada','solicitud_realizada','deposito_recibido','honorarios_recibidos','concluido'].includes(c.etapa);
 const order=c=>signed(c)?[...items.slice(1,6),items[6],items[0],items[7],items[8]]:items;
 const format=d=>{if(!d)return 'Por confirmar';const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d));return m?m[3]+'/'+m[2]+'/'+m[1]:String(d)};
@@ -152,7 +161,7 @@ function showEditorFields(section){
 }
 function mountInlineEditor(c,section){
  const area=$('cya-hybrid-client-content'),editor=$('modal-cliente');
- if(!area||!editor||typeof window.editCliente!=='function')return false;
+ if(!area||!editor||typeof window.editCliente!=='function'||!canAccessClient(c))return false;
  if(!editorHome)editorHome=editor.parentElement;
  // editCliente populates native form fields and retains its current validation,
  // advisor permissions and cloudSyncNow guarded save.
@@ -215,6 +224,11 @@ function selection(c){
 function build(){
  if(building||!$('modal-perfil')?.classList.contains('open'))return;
  const c=getClient(),body=$('perfil-body');if(!c||!body||!$('pd-contacto')||$('cya-hybrid-client-root'))return;
+ if(!canAccessClient(c)){
+  if(typeof showToast==='function')showToast('Este expediente no está asignado a tu cuenta','warn');
+  if(typeof closeModal==='function')closeModal('modal-perfil');
+  return;
+ }
  building=true;
  try{
   if(String(c.id)!==currentId||signed(c)!==previousSigned){currentId=String(c.id);previousSigned=signed(c);selected=signed(c)?'':'contratos';}
