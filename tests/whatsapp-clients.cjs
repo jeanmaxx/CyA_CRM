@@ -97,4 +97,24 @@ window.cyaCerrarCentroMensajesWhatsApp();
 store.clientes[0].fechaAltaAfore='';
 window.cyaAbrirWhatsAppCliente();
 assert.match(fields['cya-wa-block-list'].innerHTML,/No hay una fecha de alta válida/);
-console.log('WhatsApp clientes: teléfono correcto, plantilla día 15, finalización y prospectos OK');
+// Phase 5: the 12-step operational deposit can recommend finalization even when
+// the legacy stage has not been advanced. This is a suggestion only: no payment
+// or commission field is mutated and sending remains manual.
+window.cyaCerrarCentroMensajesWhatsApp();
+store.clientes[0].fechaAltaAfore=toISO(alta);
+store.clientes[0].etapa='dado_alta';
+store.clientes[0].estadoPago='Pendiente';
+store.clientes[0].etapasOperativasV2={deposito:{done:true,fecha:toISO(now)}};
+window.cyaAbrirWhatsAppCliente();
+assert.match(fields['cya-wa-block-list'].innerHTML,/Felicitación por depósito/);
+assert.equal(store.clientes[0].estadoPago,'Pendiente','WhatsApp cannot collect fees');
+window.cyaCerrarCentroMensajesWhatsApp();
+store.clientes[0].etapasOperativasV2={honorarios:{done:true,verifiedExternally:true}};
+window.cyaAbrirWhatsAppCliente();
+assert.match(fields['cya-wa-block-list'].innerHTML,/Han transcurrido 20 días/,'External fee verification is not paid status');
+window.cyaCerrarCentroMensajesWhatsApp();
+const waSource=fs.readFileSync('app-whatsapp-message-center.js','utf8');
+assert.match(waSource,/class="cya-wa-nav"/,'navigation is grouped in a sidebar');
+assert.match(waSource,/aria-pressed=/,'selected group is accessible');
+assert.doesNotMatch(waSource,/<div class="cya-wa-helper">/,'permanent explanatory block removed');
+console.log('WhatsApp clientes: teléfono, 15 días, 12 actividades, finanzas separadas y navegación compacta OK');

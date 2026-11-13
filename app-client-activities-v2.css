@@ -1,0 +1,33 @@
+/* C&A CRM · 12 actividades operativas (etapa 4); azul marino y dorado. */
+.cya-operational-track{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;align-items:start;max-width:100%;overflow-x:auto;padding:4px 1px 6px}
+.cya-operational-step{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;min-width:52px;min-height:53px;border:0;border-radius:8px;padding:4px 2px;background:transparent;color:var(--text);cursor:pointer;font:inherit}
+.cya-operational-step .cya-operational-dot{display:grid;place-items:center;border-radius:50%;height:26px;width:26px;flex-shrink:0;font-size:12px;font-weight:800;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-muted)}
+.cya-operational-step .cya-operational-name{font-size:9px;font-weight:650;white-space:normal;line-height:1.2;overflow-wrap:anywhere}
+.cya-operational-step.is-done .cya-operational-dot{background:#16864f;border-color:#16864f;color:#fff}
+.cya-operational-step.is-skipped .cya-operational-dot{background:#ffe100;border-color:#e7c900;color:#24230e}
+.cya-operational-step.is-future .cya-operational-dot{background:var(--bg-secondary);color:var(--text-muted)}
+.cya-operational-step:focus-visible{outline:2px solid var(--warning);outline-offset:2px}
+.cya-operational-step:hover .cya-operational-dot{filter:brightness(.91);box-shadow:0 0 0 2px rgba(214,169,56,.16)}
+.cya-operational-track.is-compact{display:flex;gap:3px;width:max-content;min-width:0;max-width:none;padding:0}
+.cya-operational-step.is-mini{min-width:16px;min-height:20px;padding:0;border-radius:50%}
+.cya-operational-step.is-mini .cya-operational-dot{height:16px;width:16px;font-size:9px}
+.cya-operational-table-cell{white-space:nowrap;vertical-align:middle}
+.cya-operational-table-cell .cya-operational-track{overflow:visible}
+.cya-operational-profile{padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg-secondary)}
+.cya-operational-profile-label{font-size:10px;color:var(--text-muted);font-weight:700;letter-spacing:.06em;margin:0 0 9px}
+.cya-operational-overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.58);z-index:11000;padding:16px;box-sizing:border-box}
+.cya-operational-dialog{width:min(560px,96vw);max-height:92vh;overflow:auto;border:1px solid var(--border);border-radius:15px;background:var(--surface);color:var(--text);box-shadow:0 22px 65px rgba(0,0,0,.28)}
+.cya-operational-header{display:flex;align-items:start;justify-content:space-between;gap:12px;padding:17px 19px;border-bottom:1px solid var(--border)}
+.cya-operational-header small{color:var(--text-muted);font-size:10px;letter-spacing:.06em}
+.cya-operational-header h3{margin:4px 0 0;font-size:17px}
+.cya-operational-body{padding:14px 19px;display:grid;gap:12px}
+.cya-operational-body p{margin:0;font-size:12px}
+.cya-operational-field{font-size:12px;font-weight:600;display:grid;gap:6px}
+.cya-operational-field input,.cya-operational-field textarea{width:100%;box-sizing:border-box}
+.cya-operational-docs{display:grid;gap:8px;border:1px solid var(--border);border-radius:9px;padding:12px;margin:0}
+.cya-operational-docs legend{font-weight:700;font-size:12px}
+.cya-operational-docs label{font-size:12px;display:flex;gap:8px;align-items:center}
+.cya-operational-docs small,.cya-operational-tip{font-size:11px!important;color:var(--text-muted);line-height:1.5}
+.cya-operational-actions{padding:12px 19px;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
+@media(max-width:930px){.cya-operational-track:not(.is-compact){grid-template-columns:repeat(12,minmax(57px,1fr));overflow-x:auto}}
+@media(max-width:650px){.cya-operational-track:not(.is-compact){gap:3px}.cya-operational-step{min-width:58px}.cya-operational-step .cya-operational-name{font-size:8px}}

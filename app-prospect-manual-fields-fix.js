@@ -175,3 +175,42 @@
     document.head.appendChild(script);
   },25);
 })();
+
+
+/* Hybrid prospect redesign is a separate presentation layer; load only after the
+ * existing Meta workflow and manual field stability module are ready. */
+(function loadHybridProspectExpediente(){
+  if(window.__cyaHybridProspectLoaderStarted)return;
+  window.__cyaHybridProspectLoaderStarted=true;
+  if(window.__cyaHybridProspectInstalled)return;
+  const script=document.createElement('script');
+  script.src='/app-prospect-hybrid-v2.js?v=20261112-stage2';
+  script.async=false;
+  script.dataset.cyaHybridProspect='1';
+  document.head.appendChild(script);
+})();
+
+
+/* CRM híbrido etapa 3: capa de presentación para el expediente de clientes.
+   Se instala sobre el perfil existente, sin reemplazar su lógica de guardado. */
+(function loadHybridClientProfile(){
+ if(window.__cyaHybridClientLoaderStarted)return;
+ window.__cyaHybridClientLoaderStarted=true;
+ const script=document.createElement('script');
+ script.src='/app-client-hybrid-v2.js?v=20261112-stage3';
+ script.async=false;
+ script.dataset.cyaHybridClient='1';
+ document.head.appendChild(script);
+})();
+
+
+/* Stage 4: milestones use existing CRM client records and native sync. */
+(function loadOperationalActivitiesV2(){
+ if(window.__cyaClientActivitiesV2LoaderStarted)return;
+ window.__cyaClientActivitiesV2LoaderStarted=true;
+ const script=document.createElement('script');
+ script.src='/app-client-activities-v2.js?v=20261112-stage4';
+ script.async=false;
+ script.dataset.cyaClientActivities='1';
+ document.head.appendChild(script);
+})();

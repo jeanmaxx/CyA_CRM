@@ -1,11 +1,17 @@
 name: Portal de Colaboradores v2 — verificaciones
 on:
+  push:
+    branches: [main]
   pull_request:
     paths:
       - "colaborador/**"
       - "runtime/colaboradores.html"
       - "supabase/functions/collaborator-portal/**"
       - "tests/**"
+      - "app-*-hybrid-v2.js"
+      - "app-*-hybrid-v2.css"
+      - "app-client-activities-v2.*"
+      - "app-whatsapp-message-center.js"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/portal-v2-checks.yml"
@@ -37,6 +43,16 @@ jobs:
           node tests/collaborator-v2-polish.cjs
           node tests/collaborator-v2-final-ui.cjs
           node tests/collaborator-v2-cards-archive.cjs
+          node tests/crm-hybrid-prospect-v2.cjs
+          node tests/crm-hybrid-client-v2.cjs
+          node tests/crm-hybrid-client-inline.cjs
+          node tests/crm-hybrid-client-save-isolation.cjs
+          node tests/crm-hybrid-client-real-save.cjs
+          node tests/crm-hybrid-client-archive-sections.cjs
+          node tests/crm-hybrid-client-access.cjs
+          node tests/crm-activities12.cjs
+          node tests/crm-activities12-integration.cjs
+          node tests/crm-activities12-canonical-bridge.cjs
       - name: Suite completa del CRM
         run: npm test
 
@@ -71,3 +87,23 @@ jobs:
         with:
           deno-version: v2.x
       - run: deno check --node-modules-dir=auto supabase/functions/collaborator-portal/index.ts
+
+  chromium-release-smoke:
+    name: Navegador Chromium escritorio/móvil
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Instalar navegador aislado para las pruebas
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.55.1
+          npx playwright install --with-deps chromium
+      - name: Validar escritorio, móvil, claro, oscuro y WhatsApp
+        run: node tests/crm-hybrid-browser.cjs

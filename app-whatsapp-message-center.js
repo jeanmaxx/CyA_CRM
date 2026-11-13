@@ -271,8 +271,13 @@
 
   function recommendedClientGroup(client){
     const stage=String(client?.etapa||'');
-    const pay=String(client?.estadoPago||'').toLocaleLowerCase('es-MX');
-    if(client?.archivado||['deposito_recibido','honorarios_recibidos'].includes(stage)||/cobrado|pago recibido|pagado/.test(pay))return 'finalizacion';
+    const pay=String(client?.estadoPago||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es-MX');
+    // Shared 12-step evidence may confirm a deposit before the legacy stage is
+    // refreshed. Never interpret externally verified HONORARIOS as a paid invoice.
+    const operations=client?.etapasOperativasV2||{};
+    const deposited=operations.deposito?.done===true;
+    const collected=/cobrado|pago recibido|pagado|liquidado/.test(pay);
+    if(client?.archivado||deposited||['deposito_recibido','honorarios_recibidos','concluido'].includes(stage)||collected)return 'finalizacion';
     return 'alta_15';
   }
 
@@ -287,7 +292,14 @@
       #cya-wa-center-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
       #cya-wa-center-actions .cya-wa-open{background:#25d366;border-color:#25d366;color:#fff;font-weight:700}
       .cya-wa-center-modal{width:min(780px,94vw);max-height:90vh;display:flex;flex-direction:column}
-      .cya-wa-center-modal .modal-body{overflow:auto}
+      .cya-wa-center-modal .modal-body{overflow:auto;min-height:0;display:grid;grid-template-columns:minmax(165px,210px) minmax(0,1fr);column-gap:18px;align-content:start}
+      .cya-wa-center-modal .modal-footer{position:sticky;bottom:0;z-index:2;background:var(--bg-card,var(--surface,#131c30));border-top:1px solid rgba(148,163,184,.2)}
+      .cya-wa-nav{grid-column:1;grid-row:1/4;align-self:start;position:sticky;top:0;max-height:65vh;overflow:auto;padding-right:8px}
+      .cya-wa-nav .cya-wa-template-row{display:flex;flex-direction:column;flex-wrap:nowrap}
+      .cya-wa-nav .cya-wa-template-row .btn{text-align:left;white-space:normal}
+      .cya-wa-nav .cya-wa-section-label{margin-top:12px}
+      .cya-wa-content{grid-column:2;min-width:0}
+      .cya-wa-center-modal .cya-wa-block:first-child{margin-top:0}
       .cya-wa-section-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted,#94a3b8);margin:4px 0 8px;font-weight:700}
       .cya-wa-template-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
       .cya-wa-template-row .btn.active{border-color:#25d366;background:rgba(37,211,102,.12);color:#25d366;font-weight:700}
@@ -299,7 +311,7 @@
       .cya-wa-block-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
       .cya-wa-block-actions .cya-wa-direct{background:#25d366;border-color:#25d366;color:#fff}
       .cya-wa-human-note{font-size:11px;color:var(--text-muted,#94a3b8)}
-      @media(max-width:640px){.cya-wa-center-modal{width:96vw}.cya-wa-block textarea{min-height:190px}.cya-wa-block-actions .btn{flex:1}}
+      @media(max-width:640px){.cya-wa-center-modal{width:96vw}.cya-wa-center-modal .modal-body{display:block}.cya-wa-nav{position:static;max-height:none;overflow:visible;padding-right:0}.cya-wa-nav .cya-wa-template-row{flex-direction:row;overflow-x:auto;flex-wrap:nowrap;scroll-snap-type:x proximity;padding-bottom:6px}.cya-wa-nav .cya-wa-template-row .btn{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap}.cya-wa-content{min-width:0}.cya-wa-block textarea{min-height:190px}.cya-wa-block-actions .btn{flex:1}}
     `;document.head.appendChild(style);
   }
 
@@ -309,10 +321,9 @@
     modal.innerHTML=`<div class="modal cya-wa-center-modal" role="dialog" aria-modal="true" aria-labelledby="cya-wa-center-title">
       <div class="modal-header"><div><div class="modal-title" id="cya-wa-center-title">Mensajes WhatsApp</div><div class="form-helper" id="cya-wa-center-person"></div></div><button class="modal-close" type="button" onclick="cyaCerrarCentroMensajesWhatsApp()">×</button></div>
       <div class="modal-body">
-        <div class="cya-wa-section-label">Seguimiento</div><div class="cya-wa-template-row" id="cya-wa-main-buttons"></div>
-        <div class="cya-wa-section-label" id="cya-wa-reject-label">No viable / seguimiento futuro</div><div class="cya-wa-template-row" id="cya-wa-reject-buttons"></div>
-        <div class="cya-wa-helper">Los mensajes conservan *negritas* y _cursivas_ de WhatsApp. En Finalización también se conservan los emojis; en las demás plantillas se omiten para evitar símbolos incompatibles. El CRM nunca envía automáticamente: revisa el texto y pulsa Enviar manualmente en WhatsApp.</div>
-        <div id="cya-wa-block-list"></div>
+        <nav class="cya-wa-nav" aria-label="Categorías de mensajes"><div class="cya-wa-section-label">Seguimiento</div><div class="cya-wa-template-row" id="cya-wa-main-buttons"></div>
+        <div class="cya-wa-section-label" id="cya-wa-reject-label">No viable / seguimiento futuro</div><div class="cya-wa-template-row" id="cya-wa-reject-buttons"></div></nav>
+        <section class="cya-wa-content" aria-label="Mensajes de la categoría seleccionada"><div id="cya-wa-block-list"></div></section>
       </div>
       <div class="modal-footer"><span class="cya-wa-human-note">Última acción siempre manual.</span><button class="btn" type="button" onclick="cyaEditarPlantillaWhatsAppSeleccionada()">Editar en Plantillas</button><button class="btn btn-primary" type="button" onclick="cyaCerrarCentroMensajesWhatsApp()">Cerrar</button></div>
     </div>`;
@@ -324,7 +335,7 @@
   function renderGroupButtons(){
     const main=document.getElementById('cya-wa-main-buttons');const reject=document.getElementById('cya-wa-reject-buttons');
     if(!main||!reject)return;
-    const button=g=>`<button class="btn${g.key===currentGroupKey?' active':''}" type="button" data-cya-wa-group="${safe(g.key)}">${safe(g.label)}</button>`;
+    const button=g=>`<button class="btn${g.key===currentGroupKey?' active':''}" type="button" aria-pressed="${g.key===currentGroupKey?'true':'false'}" data-cya-wa-group="${safe(g.key)}">${safe(g.label)}</button>`;
     main.innerHTML=GROUPS.filter(g=>g.kind==='main'&&(
       messageContactType==='client'
         ? ['alta_15','finalizacion','despedida'].includes(g.key)
