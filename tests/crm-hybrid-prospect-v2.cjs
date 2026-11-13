@@ -50,6 +50,9 @@ w.eval(code);
  assert.equal(d.getElementById('cya-hybrid-fields-elegibilidad').contains(d.getElementById('lead-el-semanas')),true);
  assert.equal(d.getElementById('cya-hybrid-fields-origen').contains(d.getElementById('lead-fuente')),true);
  assert.equal(d.getElementById('cya-hybrid-fields-origen').contains(d.getElementById('cya-meta-questionnaire-panel')),true);
+ assert.match(d.getElementById('cya-hybrid-origin-overview').textContent,/Campaña/);
+ assert.match(d.getElementById('cya-hybrid-origin-overview').textContent,/Meta Ads/);
+ assert(d.getElementById('cya-hybrid-qualification'),'Qualification indicator appears inside eligibility section');
  assert.equal(d.getElementById('cya-hybrid-fields-seguimiento').contains(d.getElementById('lead-notas')),true);
  assert.equal(d.getElementById('cya-hybrid-fields-historial').textContent.includes('Alta de prospecto'),true);
  // The live original element, not a duplicate, remains editable and is seen by original save handler.
