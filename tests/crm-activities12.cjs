@@ -21,6 +21,16 @@ assert(model.renderMini(c).includes('is-mini'));
 assert(!model.renderFull({...c,servicio:'asesoria_pension'}),'Only retirement service receives 12-stage tracker');
 assert.equal(model.flags({...c,docs:{curp:true,acta:true,csf:true}}).documentos,true);
 assert.equal(model.flags({...c,docs:{curp:true,acta:true}}).documentos,false);
+for(const status of ['Pendiente','No recibido','No cobrado','Cobro parcial','Por cobrar','Cancelado']){
+ const legacy={...c,etapa:'honorarios_recibidos',estadoPago:status,etapasOperativasV2:{honorarios:{done:true,verifiedExternally:true}}};
+ assert.equal(model.flags(legacy).honorarios,false,'No honorarios verdes sin cobro real: '+status);
+}
+for(const status of ['Cobrado','Pago recibido','Liquidado']){
+ const verified={...c,etapa:'honorarios_recibidos',estadoPago:status};
+ assert.equal(model.flags(verified).honorarios,true,'Estado financiero pagado compatible: '+status);
+}
+assert.equal(model.flags({...c,estadoPago:'Cobrado',etapasOperativasV2:{honorarios:{done:true}}}).honorarios,true);
+
 const snap={fechaFirmaContrato:c.fechaFirmaContrato,fechaRetiroEstimada:c.fechaRetiroEstimada,fechaSolicitudManual:c.fechaSolicitudManual,honorarios:c.honorarios,comision:c.comision};
 const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
 (async()=>{
