@@ -61,7 +61,8 @@ function header(c){
  if(d&&!$('cya-hybrid-discard').contains(d))$('cya-hybrid-discard').appendChild(d);
  $('cya-hybrid-advisor').onclick=()=>{
   menu.open=false;
-  if(typeof window.cyaAbrirSolicitudCambioAsesor==='function')window.cyaAbrirSolicitudCambioAsesor(c.id);
+  if(typeof sesionActiva!=='undefined'&&['admin','tech_admin'].includes(String(sesionActiva?.rol||'')))$('perfil-edit-btn')?.click();
+  else if(typeof window.cyaAbrirSolicitudCambioAsesor==='function')window.cyaAbrirSolicitudCambioAsesor(c.id);
   else $('perfil-edit-btn')?.click();
  };
 }
