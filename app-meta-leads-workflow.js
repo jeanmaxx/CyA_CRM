@@ -119,22 +119,6 @@
     return tab;
   }
 
-  window.cyaCopiarSolicitudRevision=async function(){
-    const payload=reviewMessage();
-    if(!payload.ok){showToast?.('La CURP debe tener 18 caracteres antes de solicitar revisión','warn');return;}
-    const ok=await copyText(payload.message);
-    showToast?.(ok?'Solicitud de revisión copiada':'No fue posible copiar automáticamente la solicitud',ok?'success':'warn');
-  };
-
-  window.cyaAbrirWhatsAppRevision=function(){
-    const payload=reviewMessage();
-    if(!payload.ok){showToast?.('La CURP debe tener 18 caracteres antes de solicitar revisión','warn');return;}
-    const url='https://wa.me/?text='+encodeURIComponent(payload.message);
-    const tab=window.open(url,'_blank');
-    if(tab)try{tab.opener=null;}catch(_){ }
-    copyText(payload.message).then(ok=>showToast?.(tab?(ok?'WhatsApp abierto y solicitud copiada':'WhatsApp abierto. Selecciona tu grupo de trabajo.'):'El navegador bloqueó WhatsApp; la solicitud quedó copiada.',tab?'success':'warn'));
-  };
-
   window.cyaCopiarAvisoRevisionCliente=async function(){
     const payload=clientReviewMessage();
     if(!payload.ok)return;
@@ -225,12 +209,7 @@
 
   function ensureReviewButtons(){
     const actions=document.getElementById('lead-curp-actions');
-    if(!actions||document.getElementById('cya-copy-review-request'))return;
-    const copy=document.createElement('button');
-    copy.id='cya-copy-review-request';copy.type='button';copy.className='btn';copy.textContent='⧉ Copiar solicitud';copy.onclick=window.cyaCopiarSolicitudRevision;
-    const wa=document.createElement('button');
-    wa.id='cya-open-whatsapp-review';wa.type='button';wa.className='btn';wa.textContent='◉ Abrir WhatsApp';wa.onclick=window.cyaAbrirWhatsAppRevision;
-    actions.append(copy,wa);
+    if(!actions||document.getElementById('cya-mark-review-sent'))return;
 
     const mark=document.createElement('button');
     mark.id='cya-mark-review-sent';mark.type='button';mark.className='btn cya-review-sent';mark.textContent='✓ Marcar revisión como enviada';mark.onclick=window.cyaMarcarRevisionEnviada;
