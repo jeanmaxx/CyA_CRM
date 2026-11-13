@@ -10,7 +10,7 @@ const profileHTML=()=>'<div class="profile-stage-wrap">Etapas</div><div class="p
  ['contacto','datos','docs','contratos','cita-afore','finanzas','historial'].map(panel).join('');
 const html='<div class="modal-overlay open" id="modal-perfil"><div class="modal"><div class="profile-header"><div class="profile-header-copy"><div id="perfil-title"></div><div id="perfil-sub"></div></div><div class="profile-header-actions"><button id="perfil-edit-btn">Editar</button><button id="perfil-regresar-prospecto-btn"></button><button id="perfil-descartar-btn"></button><button class="profile-close">X</button></div></div><div id="perfil-body">'+profileHTML()+'</div></div></div>'+
  '<div class="modal-overlay" id="modal-cliente"><div class="modal"><div class="modal-header">Editar cliente</div><div class="modal-body"><div id="modal-tabs"></div>'+
- '<div id="tab-contacto" class="tab-panel"><div class="form-row">'+editorField('fc-nombre','CLIENTE PRUEBA')+editorField('fc-telefono','4421111111')+'</div><div class="form-row">'+editorField('fc-colaborador')+editorField('fc-notas')+'</div></div>'+
+ '<div id="tab-contacto" class="tab-panel"><div class="form-row">'+editorField('fc-nombre','CLIENTE PRUEBA')+editorField('fc-telefono','4421111111')+'</div><div class="form-row">'+editorField('fc-colaborador')+editorField('fc-notas')+'</div><div class="cya-next-action-heading">Próxima acción (opcional)</div><div class="form-row">'+editorField('fc-prox-tipo')+editorField('fc-prox-fecha')+'</div><div class="form-row">'+editorField('fc-prox-hora')+editorField('fc-prox-nota')+'</div></div>'+
  '<div id="tab-elegibilidad" class="tab-panel"><div class="form-row">'+editorField('el-semanas')+'</div></div>'+
  '<div id="tab-datos-extra" class="tab-panel"><div class="form-row">'+editorField('fc-nss')+editorField('fc-banco')+'</div><div class="form-row">'+editorField('fc-afore')+editorField('fc-comision')+'</div></div>'+
  '<div class="modal-footer"><button class="btn" onclick="closeModal(\'modal-cliente\')">Cancelar</button><button class="btn btn-primary" onclick="guardarCliente()">Guardar cliente</button></div></div></div></div>';
@@ -73,8 +73,14 @@ const tick=()=>new Promise(r=>setImmediate(r));
  assert.equal(c.banco,'SANTANDER');
  click('notas');assert.equal(editor.dataset.hybridSection,'notas');
  assert.equal(d.getElementById('fc-notas').closest('.form-group').hidden,false);
+ for(const field of ['fc-prox-tipo','fc-prox-fecha','fc-prox-hora','fc-prox-nota'])
+  assert.equal(d.getElementById(field).closest('.form-group').hidden,false,'Next action visible in Notes: '+field);
  assert.equal(d.getElementById('fc-banco').closest('.form-group').hidden,true);
  w.clienteFormDirty=false;
+ click('afore');
+ assert.equal(d.getElementById('cya-hybrid-client-content').querySelectorAll('#pd-cita-afore').length,0,'Legacy AFORE reference cannot be duplicated inside editor');
+ click('notas');
+ assert.equal(d.getElementById('fc-prox-tipo').closest('.form-group').hidden,false);
  d.querySelector('.profile-close').click();
  assert.equal(editor.parentElement,d.body,'profile close never strands editor inside a hidden profile');
  d.defaultView.close();console.log('PASS: inline category editing, native field reuse, unsaved changes, bank save, reopen and restore.');
