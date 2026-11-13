@@ -76,7 +76,11 @@ function header(c){
  if(d&&!$('cya-hybrid-discard').contains(d))$('cya-hybrid-discard').appendChild(d);
  $('cya-hybrid-advisor').onclick=()=>{
   menu.open=false;
-  if(typeof sesionActiva!=='undefined'&&['admin','tech_admin'].includes(String(sesionActiva?.rol||'')))$('perfil-edit-btn')?.click();
+  if(typeof sesionActiva!=='undefined'&&['admin','tech_admin'].includes(String(sesionActiva?.rol||''))){
+   if(editorActive&&!confirmSwitch())return;
+   selected='identidad';selection(c);
+   const owner=$('fc-asesor');if(owner){owner.closest('.form-group').hidden=false;owner.focus();}
+  }
   else if(typeof window.cyaAbrirSolicitudCambioAsesor==='function')window.cyaAbrirSolicitudCambioAsesor(c.id);
   else $('perfil-edit-btn')?.click();
  };
@@ -85,7 +89,7 @@ function header(c){
 /* Reuse the native client-edit form IN PLACE. No parallel save code or data model. */
 const inlineCategories=new Set(['identidad','previsional','afore','banco','comisiones','notas']);
 const inlineFields={
- identidad:['fc-nombre','fc-telefono','fc-email','fc-ciudad','fc-curp','fc-domicilio','fc-fuente','fc-servicio'],
+ identidad:['fc-nombre','fc-telefono','fc-email','fc-ciudad','fc-curp','fc-domicilio','fc-fuente','fc-servicio','fc-asesor'],
  previsional:['fc-nss','fc-rfc','el-semanas','el-imss','el-retiro','el-fecha','fc-monto'],
  afore:['fc-afore','fc-fecha-biometrica','fc-hora-afore','fc-sucursal-afore','fc-fecha-alta','fc-fecha-solicitud-manual'],
  banco:['fc-banco','fc-nivel-bbva','fc-clabe'],
