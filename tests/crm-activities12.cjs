@@ -71,12 +71,32 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(c.etapasOperativasV2.honorarios.done,true);
  assert.equal(c.etapasOperativasV2.deposito.done,true,'Deposit confirmation is explicit dependency');
  assert.equal(c.comision,snap.comision,'Never mark advisor commission paid');
+ // A completed/attended case is read-only except for an owner/admin's
+ // explicit and audited document correction.
+ const attended={...c,id:'arch-1',archivado:true,etapasOperativasV2:{},docs:{curp:true,csf:false,acta:false},historial:[]};
+ w.store.clientes.push(attended);
+ assert(model.open('arch-1','documentos'));
+ assert.equal(d.getElementById('cya-op-doc-csf').disabled,false,'Owner can correct attended client documents');
+ assert.equal(d.getElementById('cya-op-doc-acta').disabled,false);
+ d.getElementById('cya-op-date').value='11/11/2026';
+ d.getElementById('cya-op-doc-csf').click();
+ d.getElementById('cya-op-doc-acta').click();
+ assert.equal(d.getElementById('cya-op-doc-csf').checked,true,'Checkbox responds to real click');
+ d.querySelector('[data-op-save]').click();await tick();await tick();
+ assert.equal(attended.etapasOperativasV2.documentos.done,true,'Archived owner document correction persisted');
+ assert(attended.historial.some(h=>h.tipo==='actividad'),'Correction has audit trail');
+ assert(model.open('arch-1','alta'));
+ assert(!d.querySelector('[data-op-save]'),'Unrelated archived milestones are read-only');
  // No save for other advisor.
  w.sesionActiva={id:'other',rol:'asesor'};
  const before=saves;
  assert(model.open('c1','app'));
  assert(!d.querySelector('[data-op-save]'),'Unauthorized advisor sees read-only activity details');
  assert.equal(saves,before);
+ assert(model.open('arch-1','documentos'));
+ assert.equal(d.getElementById('cya-op-doc-csf').disabled,true,'Non-owner cannot modify attended documents');
+ assert(!d.querySelector('[data-op-save]'));
+ assert.match(d.querySelector('.cya-operational-readonly')?.textContent||'',/Solo lectura/);
  model.close();w.close();
  console.log('PASS: 12 milestones, confirmed canonical request, forecast preservation, no fabricated prior dates, finance and role guards.');
 })().catch(e=>{console.error(e);w.close();process.exitCode=1});
