@@ -236,7 +236,7 @@ function build(){
   const tabs=$('perfil-tabs');if(tabs)tabs.hidden=true;
   const summaryGrid=body.querySelector('.profile-summary-grid');if(summaryGrid)summaryGrid.hidden=true;
   const root=document.createElement('section');root.id='cya-hybrid-client-root';
-  root.innerHTML='<div class="cya-hybrid-client-section-title">TARJETAS DEL EXPEDIENTE</div><nav class="cya-hybrid-client-cards" aria-label="Tarjetas del expediente"></nav><div id="cya-hybrid-client-legacy" hidden></div><section class="cya-hybrid-client-panel" id="cya-hybrid-client-panel" hidden></section>';
+  root.innerHTML='<div class="cya-operational-profile" id="cya-operational-profile"><div class="cya-operational-profile-label">SEGUIMIENTO DEL TRÁMITE · 12 ACTIVIDADES</div>'+(typeof cyaRenderActivitiesFull==='function'?cyaRenderActivitiesFull(c):'')+'</div><div class="cya-hybrid-client-section-title">TARJETAS DEL EXPEDIENTE</div><nav class="cya-hybrid-client-cards" aria-label="Tarjetas del expediente"></nav><div id="cya-hybrid-client-legacy" hidden></div><section class="cya-hybrid-client-panel" id="cya-hybrid-client-panel" hidden></section>';
   const stages=body.querySelector('.profile-stage-wrap');if(stages)stages.insertAdjacentElement('afterend',root);else body.prepend(root);
   const stash=$('cya-hybrid-client-legacy');
   for(const panel of [...body.querySelectorAll(':scope>.tab-panel')]){panel.hidden=true;panel.classList.remove('active');stash.appendChild(panel);}
