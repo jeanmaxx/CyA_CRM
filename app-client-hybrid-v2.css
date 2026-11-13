@@ -61,3 +61,10 @@
 @media(max-width:670px){
  #modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-row{grid-template-columns:1fr}
 }
+
+/* El expediente híbrido se edita desde las tarjetas; evitar segundo botón/modal redundante. */
+#modal-perfil:has(#cya-hybrid-client-root) #perfil-edit-btn{display:none!important}
+#modal-perfil:has(#cya-hybrid-client-root) #pd-cita-afore>button{display:none!important}
+#modal-perfil .cya-hybrid-notes-log{padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:12px;font-size:11px;color:var(--text-secondary)}
+#modal-perfil .cya-hybrid-notes-log p{display:flex;justify-content:space-between;gap:8px;margin:8px 0;white-space:pre-wrap}
+#modal-perfil .cya-hybrid-notes-log small{color:var(--text-muted);font-size:10px;white-space:nowrap}
