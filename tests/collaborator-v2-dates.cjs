@@ -10,7 +10,7 @@ const dateTags=[...stage4.matchAll(/type=['"]date['"]/g),...signature.matchAll(/
 assert.equal(dateTags.length,0,'No browser-dependent MM/DD/YYYY inputs in collaborator activity and signature forms');
 assert.match(html,/portal-v2-dates\.js\?v=20261112-mx/);
 assert.ok(html.indexOf('portal-v2-dates.js')<html.indexOf('portal-v2-stage4.js'));
-assert.match(stage4,/key:'firma',short:'Firma'/);
+assert.match(stage4,/key:'firma',short:'Firmado'/);
 assert.ok(stage4.indexOf("key:'firma'")<stage4.indexOf("key:'alta'"));
 assert.match(stage3,/\['Contrato firmado'/);
 const dom=new JSDOM('<div id="page-content"></div>',{url:'https://example.test',runScripts:'outside-only'});
