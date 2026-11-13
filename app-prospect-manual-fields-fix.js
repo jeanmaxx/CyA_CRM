@@ -175,3 +175,17 @@
     document.head.appendChild(script);
   },25);
 })();
+
+
+/* Hybrid prospect redesign is a separate presentation layer; load only after the
+ * existing Meta workflow and manual field stability module are ready. */
+(function loadHybridProspectExpediente(){
+  if(window.__cyaHybridProspectLoaderStarted)return;
+  window.__cyaHybridProspectLoaderStarted=true;
+  if(window.__cyaHybridProspectInstalled)return;
+  const script=document.createElement('script');
+  script.src='/app-prospect-hybrid-v2.js?v=20261112-stage2';
+  script.async=false;
+  script.dataset.cyaHybridProspect='1';
+  document.head.appendChild(script);
+})();
