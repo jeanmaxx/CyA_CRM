@@ -33,10 +33,13 @@
  };
  const documents=c=>{
   const d=c?.etapasOperativasV2?.documentos?.checks||{},old=c?.docs||{};
+  // An explicitly unchecked document must override a stale legacy checked
+  // value. Otherwise "uncheck and save" appears to work but silently reverts.
+  const check=(key,legacy)=>typeof d[key]==='boolean'?d[key]:Boolean(legacy);
   return {
-   curp:Boolean(d.curp===true||old.curp===true),
-   csf:Boolean(d.csf===true||old.csf===true||old.constancia_fiscal===true||old.constanciaSituacionFiscal===true),
-   acta:Boolean(d.acta===true||old.acta===true),
+   curp:check('curp',old.curp===true),
+   csf:check('csf',old.csf===true||old.constancia_fiscal===true||old.constanciaSituacionFiscal===true),
+   acta:check('acta',old.acta===true),
   };
  };
  const allDocuments=c=>Object.values(documents(c)).every(Boolean);
@@ -125,7 +128,7 @@
    citaFields+
    '<label class="cya-operational-field">Observaciones<textarea class="form-textarea" id="cya-op-note" rows="3" '+(!canEdit?'disabled':'')+'>'+esc(record.nota||'')+'</textarea></label>'+
    (done?'<p class="cya-operational-tip">Para corregir un paso confirmado debes indicar el motivo. La corrección quedará en el historial.</p>':'')+
-   '</div><div class="cya-operational-actions">'+(canEdit?'<button type="button" class="btn btn-primary" data-op-save>'+(done?'Corregir registro':'Confirmar actividad')+'</button>':'')+'<button type="button" class="btn" data-op-close>Cancelar</button></div></div></div>';
+   '</div><div class="cya-operational-actions">'+(canEdit?'<button type="button" class="btn btn-primary" data-op-save>'+(step.id==='documentos'?(done?'Corregir documentos':'Guardar documentos'):(done?'Corregir registro':'Confirmar actividad'))+'</button>':'')+'<button type="button" class="btn" data-op-close>Cancelar</button></div></div></div>';
  }
  function open(id,stepId){
   const c=getClient(id),status=statuses(c).find(x=>x.id===stepId);
@@ -160,7 +163,7 @@
   if(!date||(stepId!=='cita'&&date>isoToday()))return msg('Registra una fecha válida en formato dd/mm/aaaa; las actividades realizadas no pueden tener fecha futura');
   if(step.done&&note.length<3)return msg('Escribe un motivo de corrección de al menos tres caracteres');
   const docChecks={curp:Boolean($('cya-op-doc-curp')?.checked),csf:Boolean($('cya-op-doc-csf')?.checked),acta:Boolean($('cya-op-doc-acta')?.checked)};
-  if(stepId==='documentos'&&!Object.values(docChecks).every(Boolean))return msg('Marca CURP, Constancia de Situación Fiscal y Acta de Nacimiento');
+  // Individual checks are saved, even when the checklist is incomplete.
   if((stepId==='firmado'||stepId==='firmas')&&!flags(c).contrato)return msg('Primero genera el contrato desde el expediente');
   if(stepId==='contrato'&&!(c.historialContratos||[]).length)return msg('Primero genera el contrato desde Contratos');
   if(stepId==='banco_n4'&&!String(c.banco||'').trim())return msg('Primero registra el banco en su tarjeta');
@@ -177,7 +180,7 @@
   if(stepId==='solicitud'&&!before.expediente)c.etapasOperativasV2.expediente={done:true,fecha:null,nota:'Confirmado al registrar Solicitud; fecha real del expediente no disponible',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
   if(stepId==='deposito'&&!before.solicitud)c.etapasOperativasV2.solicitud={done:true,fecha:null,nota:'Solicitud confirmada al registrar Depósito; fecha real no disponible',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
   if(stepId==='honorarios'&&!before.deposito)c.etapasOperativasV2.deposito={done:true,fecha:null,nota:'Depósito confirmado al registrar Honorarios; fecha real no disponible',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
-  c.etapasOperativasV2[stepId]={done:true,fecha:date,nota:note,actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now,...(stepId==='documentos'?{checks:docChecks}:{})};
+  c.etapasOperativasV2[stepId]={done:stepId==='documentos'?Object.values(docChecks).every(Boolean):true,fecha:date,nota:note,actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now,...(stepId==='documentos'?{checks:docChecks}:{})};
   if(stepId==='firmado'&&!before.firmas)c.etapasOperativasV2.firmas={done:true,fecha:date,nota:'Completado automáticamente al confirmar firma',actorId:typeof sesionActiva==='undefined'?null:sesionActiva?.id||null,registradaEn:now};
   // Puente con el pipeline canónico: solo cuando se confirma una actividad
   // REAL y el estado anterior permite avanzar. Nunca modifica el pronóstico.
@@ -212,7 +215,7 @@
    close();
    if(typeof renderPage==='function'&&typeof currentPage!=='undefined')renderPage(currentPage);
    if(typeof openPerfil==='function'&&$('modal-perfil')?.classList.contains('open'))openPerfil(id);
-   msg('Actividad confirmada','success');
+   msg(stepId==='documentos'?'Documentos guardados'+(Object.values(docChecks).every(Boolean)?' · expediente completo':' · aún faltan documentos'):'Actividad confirmada','success');
   };
   if(typeof cloudSyncNow!=='function'){Object.assign(c,fieldsBefore);c.etapasOperativasV2=previous;c.historial=history;return msg('No está disponible la sincronización; no se guardó la actividad');}
   saving=true;
