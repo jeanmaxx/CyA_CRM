@@ -18,6 +18,7 @@ d.body.innerHTML=extra();
 const bank=d.getElementById('lead-banco');
 assert(bank&&bank.list?.id==='cya-lead-bancos','Actual Meta lead form includes editable bank and suggestions');
 assert.equal(bank.required,false,'Bank stays optional');
+assert.equal(d.getElementById('lead-afore').list?.id,'cya-lead-afores','AFORE retains suggested options and free text');
 for(const [id,value] of Object.entries({
  'lead-email':'correo@demo.mx','lead-ciudad':'Querétaro','lead-fuente':'Meta Ads',
  'lead-nss':'442 123 12345','lead-afore':'SURA','lead-domicilio':'Domicilio DEMO','lead-banco':' bbva '
