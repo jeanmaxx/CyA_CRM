@@ -46,6 +46,7 @@ jobs:
           node tests/crm-hybrid-client-access.cjs
           node tests/crm-activities12.cjs
           node tests/crm-activities12-integration.cjs
+          node tests/crm-activities12-canonical-bridge.cjs
       - name: Suite completa del CRM
         run: npm test
 
