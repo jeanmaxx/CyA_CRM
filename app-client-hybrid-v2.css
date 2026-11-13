@@ -113,3 +113,57 @@
  #modal-perfil:has(#cya-hybrid-client-root) .cya-hybrid-client-dates{width:100%;justify-content:space-between}
  #modal-perfil:has(#cya-hybrid-client-root) .profile-header-actions{justify-content:flex-start!important}
 }
+
+/* PR visual polishing: compact native form without duplicating any field. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .tab-panel:not([hidden]){
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:8px 10px!important;align-items:start;min-width:0;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-row:not([hidden]){
+ display:contents!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-row[hidden],
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group[hidden],
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor details[hidden],
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .cya-next-action-heading[hidden]{display:none!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group{min-width:0!important;max-width:100%!important;margin:0!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group:has(#fc-domicilio),
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group:has(#fc-notas){grid-column:span 2}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group:has(#fc-notas) textarea{min-height:72px!important;max-height:170px!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .optional-data,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .cya-next-action-heading{
+ grid-column:1/-1;min-width:0;margin:3px 0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .optional-data:not([hidden]){
+ border:1px solid var(--border);border-radius:7px;padding:5px 10px
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .optional-data .form-group{margin:6px 0 0!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-label{font-size:10px!important;margin:0 0 3px!important;line-height:1.3}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-helper{font-size:9px!important;line-height:1.25!important;margin-top:2px!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor input.form-input,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor select.form-select{
+ min-height:34px!important;height:34px!important;max-width:100%!important;
+ font-size:12px!important;padding:6px 9px!important;box-sizing:border-box!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor textarea{max-width:100%!important;box-sizing:border-box!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .modal-body{padding:0 0 8px!important;overflow:visible!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .client-edit-footer{
+ position:sticky!important;bottom:0!important;z-index:3!important;
+ background:var(--bg-card,#1c2333)!important;
+ padding:10px 2px!important;margin-top:14px!important;
+ border-top:1px solid var(--border);box-sizing:border-box;clear:both;
+}
+#modal-perfil #cya-hybrid-client-panel{overflow:visible!important;min-width:0}
+#modal-perfil #cya-hybrid-client-panel .cya-hybrid-client-panel-content{min-width:0}
+#modal-perfil #cya-hybrid-client-panel .cya-hybrid-client-panel-head{margin-bottom:8px}
+#modal-perfil #cya-hybrid-client-panel .cya-hybrid-notes-log{max-height:180px;overflow:auto}
+@media(max-width:800px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor .tab-panel:not([hidden]){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group:has(#fc-domicilio),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group:has(#fc-notas){grid-column:1/-1}
+}
+@media(max-width:480px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor .tab-panel:not([hidden]){grid-template-columns:1fr!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group:has(#fc-domicilio),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group:has(#fc-notas){grid-column:1/-1}
+}
