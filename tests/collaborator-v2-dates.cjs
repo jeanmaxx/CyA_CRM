@@ -37,7 +37,7 @@ w.eval(stage4);
 w.eval(signature);
 w.navigate('clientes');
 const headers=[...w.document.querySelectorAll('.ca-v2-table thead th')].map(x=>x.textContent);
-assert.deepEqual(headers.slice(0,3),['Cliente','Firma','Alta']);
+assert.deepEqual(headers.slice(0,3),['Cliente','Contrato','Firmas']);
 assert.equal(w.document.querySelectorAll('.ca-v2-table thead th').length,10);
 assert.equal(w.document.querySelectorAll('.ca-v2-table tbody .ca-v2-step').length,9);
 w.caV2OpenActivity('c1','firma');
