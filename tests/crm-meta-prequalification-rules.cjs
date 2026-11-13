@@ -5,6 +5,11 @@ assert(from>=0&&to>from,'Shared qualification must be available in Meta workflow
 const qualify=vm.runInNewContext(src.slice(from,to)+'\nmetaQualification;');
 const client=(imss='opcion_a_no_estoy_trabajando_mas_de_45_dias',retiro='opcion_a_no_nunca_he_solicitado_un_retiro',weeks='110 semanas')=>({metaLead:{answers:{imss_status_declared:imss,previous_withdrawal_declared:retiro,weeks_declared:weeks}}});
 assert.equal(qualify(client('opcion_b_si_estoy_cotizando')).tone,'red','Working/active IMSS is red');
+assert.equal(qualify(client('actualmente_sigo_cotizando_con_un_patrón_ante_el_imss.')).tone,'red','Legacy Meta active IMSS answer is red');
+assert.equal(qualify(client('ya_estoy_dado_de_baja_del_imss_o_actualmente_trabajo_por_mi_cuenta_/_de_manera_independiente.','no,_nunca.','sí,_2_años_o_más.')).tone,'green','Legacy Meta unemployed and 2+ years is green');
+assert.equal(qualify(client('ya_estoy_dado_de_baja_del_imss_o_actualmente_trabajo_por_mi_cuenta_/_de_manera_independiente.','sí,_fue_hace_menos_de_5_años.','sí,_2_años_o_más.')).tone,'red','Legacy recent withdrawal remains red');
+assert.equal(qualify(client(undefined,undefined,'creo_que_tengo_menos_de_2_años.')).tone,'orange','Legacy under two years needs 65-week verification');
+
 assert.equal(qualify(client(undefined,'opcion_c_si_hace_menos_de_5_anos')).tone,'red','Withdrawal <5 years is red');
 assert.equal(qualify(client(undefined,undefined,'40 semanas')).tone,'red','<65 weeks is red');
 const mid=qualify(client(undefined,undefined,'90 semanas'));
