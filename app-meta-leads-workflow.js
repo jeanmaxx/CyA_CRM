@@ -248,7 +248,7 @@
         <div class="form-group"><label class="form-label">NSS (si ya se conoce)</label><input class="form-input" id="lead-nss" inputmode="numeric" maxlength="11" placeholder="11 dígitos"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">AFORE (si ya se conoce)</label><input class="form-input" id="lead-afore" placeholder="AFORE"></div>
+        <div class="form-group"><label class="form-label">AFORE (si ya se conoce)</label><input class="form-input" id="lead-afore" list="cya-lead-afores" placeholder="Por definir"><datalist id="cya-lead-afores"><option value="Azteca"><option value="Banamex"><option value="Inbursa"><option value="Invercap"><option value="PensionISSSTE"><option value="Principal"><option value="Profuturo"><option value="SURA"><option value="XXI Banorte"></datalist></div>
         <div class="form-group"><label class="form-label">Domicilio (opcional)</label><input class="form-input" id="lead-domicilio" placeholder="Calle, número, colonia, municipio, CP"></div>
       </div>
       <div class="form-group cya-lead-bank-original"><label class="form-label" for="lead-banco">Banco</label><input class="form-input input-upper" id="lead-banco" list="cya-lead-bancos" placeholder="Por definir" autocomplete="off"><datalist id="cya-lead-bancos"><option value="BBVA"><option value="BANAMEX"><option value="SANTANDER"><option value="BANORTE"><option value="HSBC"><option value="SCOTIABANK"><option value="AZTECA"><option value="BAJÍO"><option value="INBURSA"><option value="OTRO"></datalist></div><div id="cya-meta-origin-box" class="cya-meta-origin-box" hidden></div>
