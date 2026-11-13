@@ -562,24 +562,65 @@
   }
 
 
+  /* Calificación orientativa sobre respuestas Meta. No marca elegible en IMSS/AFORE.
+   * 65-104 semanas: verde CON revisión de saldo solo si IMSS y retiro son favorables.
+   * Desconocidos / respuestas dudosas: naranja; nunca se inventan semanas.
+   */
   function metaQualification(l){
-    const a=l?.metaLead?.answers||{},d=l?.elegibilidadDeclarada||l?.elegibilidad?.porServicio?.retiro_desempleo?.declarado||{};
-    const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_');
-    const imss=norm(a.imss_status_declared||d.respuestasOriginales?.cotiza);
-    const retiro=norm(a.previous_withdrawal_declared||d.respuestasOriginales?.retiro);
-    const semanas=norm(a.weeks_declared||d.respuestasOriginales?.semanas);
-    const active=d.sinCotizar==='cotiza_activo'||(/opcion_b|actualmente_cotiz|imss_activo|dado_de_alta|trabajando/.test(imss)&&!/no_estoy|sin_cotizar|no_cotizo/.test(imss));
-    const recent=d.retiro==='menos_5_anos'||/opcion_c|menos_de_5_anos/.test(retiro);
-    const short=d.semanas==='menos_105'||/opcion_b|menos_de_2_anos|menos_de_105/.test(semanas);
-    const favorable=!active&&!recent&&!short&&(d.precalificacion==='favorable'||(/opcion_a|45_dias|sin_cotizar/.test(imss)&&/opcion_a|al_menos_2_anos/.test(semanas)&&/opcion_a|opcion_b|nunca|mas_de_5_anos/.test(retiro)));
-    return {tone:active||recent||short?'red':favorable?'green':'orange',active,recent,label:active?'IMSS activo · Declarado':recent?'Retiro menor a 5 años · Declarado':short?'Cotización insuficiente · Declarada':favorable?'Buen candidato · Por verificar':'Información por verificar'};
+    const a=l?.metaLead?.answers||l?.origenMeta?.answers||{},d=l?.elegibilidadDeclarada||l?.elegibilidad?.porServicio?.retiro_desempleo?.declarado||{},raw=a.raw||{};
+    const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+    const fromRaw=rx=>{const hit=Object.entries(raw).find(([key])=>rx.test(norm(key)));return hit?hit[1]:''};
+    const imss=norm(a.imss_status_declared||d.respuestasOriginales?.cotiza||fromRaw(/cotiz|imss|empleo|trabaj/));
+    const retiro=norm(a.previous_withdrawal_declared||d.respuestasOriginales?.retiro||fromRaw(/retiro|desempleo.*afore/));
+    const semanas=norm(a.weeks_declared||d.respuestasOriginales?.semanas||fromRaw(/semana|tiempo.*cotiz|anos.*imss/));
+    const unsure=v=>/no_se|no_estoy_seguro|no_estoy_segura|no_recuerdo|no_tengo_certeza|quiero_revision|necesito_revision|por_verificar|tengo_dudas/.test(v);
+    const imssUnknown=unsure(imss)||/opcion_c|opcion_d/.test(imss);
+    const withdrawalUnknown=unsure(retiro)||/opcion_d/.test(retiro);
+    const weeksUnknown=unsure(semanas)||/opcion_c|opcion_d/.test(semanas);
+    const active=d.sinCotizar==='cotiza_activo'||(
+      /opcion_b|imss_activo|actualmente_cotiz|dado_de_alta|estoy_trabajando|con_empleo|si_cotizo/.test(imss)&&
+      !/no_estoy|no_cotiz|sin_cotizar|no_trabajo/.test(imss));
+    const inactive=d.sinCotizar==='sin_cotizar'||(
+      (/opcion_a|45_dias|sin_cotizar|no_estoy|no_cotizo|desempleado|mas_de_45_dias/.test(imss))&&!active&&!imssUnknown);
+    const recent=d.retiro==='menos_5_anos'||/opcion_c|menos_de_5_anos|menos_de_cinco|hace_[0-4]_anos/.test(retiro);
+    const withdrawalGood=!recent&&!withdrawalUnknown&&(
+      /opcion_a|opcion_b|nunca|no_he_retirado|no_nunca|mas_de_5_anos|hace_mas_de_5/.test(retiro)||
+      ['nunca','mas_5_anos','mas_de_5_anos'].includes(String(d.retiro||'')));
+    const explicitWeeks=(String(a.weeks_declared||d.respuestasOriginales?.semanas||'').match(/\b(\d{1,4})\s*semanas?\b/i)||[])[1];
+    const weeksCount=explicitWeeks?Number(explicitWeeks):null;
+    const below65=(weeksCount!==null&&weeksCount<65)||/menos_de_65|menos_65|menos_de_sesenta_y_cinco/.test(semanas)||d.semanas==='menos_65';
+    const midWeeks=(weeksCount!==null&&weeksCount>=66&&weeksCount<105)||/entre_66_y_104|mas_de_65_y_menos_de_105|entre_65_y_105/.test(semanas);
+    const highWeeks=(weeksCount!==null&&weeksCount>=105)||/opcion_a|mas_de_105|al_menos_105|105_o_mas|al_menos_2_anos|mas_de_2_anos/.test(semanas)||d.semanas==='mas_105';
+    const below105Unconfirmed=(/opcion_b|menos_de_105|menos_de_2_anos/.test(semanas)||d.semanas==='menos_105')&&!midWeeks&&!below65;
+    if(active)return {tone:'red',active:true,recent:false,label:'No elegible · IMSS activo',reason:'Actualmente cotiza ante IMSS'};
+    if(recent)return {tone:'red',active:false,recent:true,label:'No elegible · retiro menor a 5 años',reason:'Retiro por desempleo reciente'};
+    if(below65)return {tone:'red',active:false,recent:false,label:'No elegible · menos de 65 semanas',reason:'Cotización declarada insuficiente'};
+    if(imssUnknown||withdrawalUnknown||weeksUnknown||!inactive||!withdrawalGood)
+      return {tone:'orange',active:false,recent:false,label:'Revisión manual · información por confirmar',reason:'Faltan respuestas verificables'};
+    if(midWeeks)return {tone:'green',active:false,recent:false,needsBalanceReview:true,label:'Preaprobación condicionada · revisar saldo AFORE',reason:'Entre 66 y 104 semanas declaradas'};
+    if(highWeeks)return {tone:'green',active:false,recent:false,label:'Preaprobación favorable · por verificar',reason:'Criterios iniciales declarados favorables'};
+    if(below105Unconfirmed)return {tone:'orange',active:false,recent:false,needsBalanceReview:true,label:'Revisar semanas y saldo en AFORE',reason:'Aún no se confirma superar las 65 semanas'};
+    return {tone:'orange',active:false,recent:false,label:'Revisión manual · semanas pendientes',reason:'No hay constancia suficiente'};
   }
+  // Una sola clasificación compartida para las tarjetas Meta y el expediente.
+  window.cyaMetaQualification=metaQualification;
   function metaQuestionsHtml(l){
-    const a=l?.metaLead?.answers||{},raw=a.raw||{};
-    const excluded=/^(id|lead_id|leadgen_id|created_time|campaign_name|adset_name|ad_name|form_name|platform|full_name|email|phone|phone_number|lead_status|resumen_para_compartir|notas_manuales|accion_crm|estado_crm|fecha_crm)$/i;
-    const entries=Object.entries(raw).filter(([k,v])=>!excluded.test(k)&&v!==null&&String(v).trim());
-    const items=entries.length?entries:[['Situación IMSS',a.imss_status_declared],['Tiempo cotizado',a.weeks_declared],['Retiro anterior',a.previous_withdrawal_declared]].filter(([,v])=>v);
-    return items.length?items.map(([k,v])=>'<div class="cya-meta-answer"><strong>'+safe(String(k).replace(/_/g,' '))+'</strong><span>'+safe(v)+'</span></div>').join(''):'<p>Este registro no incluye respuestas del cuestionario.</p>';
+    const a=l?.metaLead?.answers||l?.origenMeta?.answers||{},raw=a.raw||{};
+    const toLabel=v=>String(v??'').replace(/^opci[oó]n[\s_-]*[a-z][\s_-]*/i,'').replace(/_/g,' ').replace(/\s+/g,' ').trim()||'Sin respuesta';
+    const questions=[
+      ['Situación ante IMSS',a.imss_status_declared],
+      ['Retiro por desempleo anterior',a.previous_withdrawal_declared],
+      ['Semanas cotizadas',a.weeks_declared]
+    ];
+    const matchers=[/imss|cotiz|empleo|laborando/,/retiro|desempleo/,/semanas|tiempo.*cotiz|anos.*imss/];
+    for(let i=0;i<questions.length;i++){
+      if(questions[i][1])continue;
+      const item=Object.entries(raw).find(([key])=>matchers[i].test(String(key).toLowerCase()));
+      if(item)questions[i][1]=item[1];
+    }
+    return questions.filter(([,v])=>v!==null&&v!==undefined&&String(v).trim()).map(([label,value])=>
+      '<div class="cya-meta-answer"><strong>'+safe(label)+'</strong><span>'+safe(toLabel(value))+'</span></div>').join('')
+      ||'<p>Sin respuestas suficientes. Solicitar revisión manual.</p>';
   }
   window.cyaMetaWhatsApp=function(id){
     const l=leadById(id);if(!l)return;
