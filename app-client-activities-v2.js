@@ -66,8 +66,11 @@
   });
  };
  const getClient=id=>typeof store==='undefined'?null:(store.clientes||[]).find(c=>String(c.id)===String(id));
- const authorized=c=>{
-  if(!c||c.servicio!=='retiro_desempleo'||c.descartado||c.archivado||c.devueltoAProspectos)return false;
+ const authorized=(c,stepId='')=>{
+  // Closed clients remain read-only except for an audited correction of missing
+  // documents, performed by an authorized owner or administrator.
+  if(!c||c.servicio!=='retiro_desempleo'||c.descartado||c.devueltoAProspectos)return false;
+  if(c.archivado&&stepId!=='documentos')return false;
   if(typeof sesionActiva==='undefined')return true; // test harness only
   if(!sesionActiva?.id)return false;
   if(typeof isAdmin==='function'&&isAdmin())return true;
@@ -105,7 +108,7 @@
  function form(c,step){
   const record=c.etapasOperativasV2?.[step.id]||{},when=record.fecha||isoToday(),date=when.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const local=date?date[3]+'/'+date[2]+'/'+date[1]:'';
-  const canEdit=authorized(c),done=flags(c)[step.id];
+  const canEdit=authorized(c,step.id),done=flags(c)[step.id];
   const check=documents(c);
   const docs=step.id==='documentos'?'<fieldset class="cya-operational-docs"><legend>Documentos integrados</legend>'+
    [['curp','CURP'],['csf','Constancia de Situación Fiscal'],['acta','Acta de Nacimiento']].map(([key,label])=>'<label><input type="checkbox" id="cya-op-doc-'+key+'" '+(check[key]?'checked':'')+' '+(!canEdit?'disabled':'')+'> '+label+'</label>').join('')+
@@ -117,7 +120,7 @@
    step.id==='alta'?'<p class="cya-operational-tip">Registra el alta solo si fue confirmada. No se calcula automáticamente por hora de firma.</p>':'';
   return '<div class="cya-operational-overlay" id="cya-operational-modal"><div class="cya-operational-dialog" role="dialog" aria-modal="true" aria-labelledby="cya-operational-title">'+
    '<div class="cya-operational-header"><div><small>ACTIVIDAD '+step.index+' DE 12</small><h3 id="cya-operational-title">'+esc(step.label)+'</h3></div><button type="button" class="btn" data-op-close aria-label="Cerrar">✕</button></div>'+
-   '<div class="cya-operational-body"><p>Estado: <strong>'+({done:'Confirmado',skipped:'Pendiente anterior',future:'Sin confirmar'}[step.state])+'</strong></p>'+detail+docs+
+   '<div class="cya-operational-body"><p>Estado: <strong>'+({done:'Confirmado',skipped:'Pendiente anterior',future:'Sin confirmar'}[step.state])+'</strong></p>'+(canEdit?(c.archivado?'<p class="cya-operational-tip">Corrección documental autorizada en cliente atendido. Se registrará en el historial.</p>':''):'<p class="cya-operational-readonly" role="status">Solo lectura: expediente cerrado o sin permisos de edición.</p>')+detail+docs+
    '<label class="cya-operational-field">Fecha real o de confirmación (dd/mm/aaaa)<input class="form-input" id="cya-op-date" value="'+esc(local)+'" inputmode="numeric" placeholder="dd/mm/aaaa" '+(!canEdit?'disabled':'')+'></label>'+
    citaFields+
    '<label class="cya-operational-field">Observaciones<textarea class="form-textarea" id="cya-op-note" rows="3" '+(!canEdit?'disabled':'')+'>'+esc(record.nota||'')+'</textarea></label>'+
@@ -149,7 +152,7 @@
  function save(id,stepId){
   if(saving)return msg('Ya hay una confirmación guardándose; revisa el resultado antes de repetirla');
   const c=getClient(id),step=statuses(c).find(s=>s.id===stepId);
-  if(!step||!authorized(c))return msg('No tienes permiso para actualizar este seguimiento');
+  if(!step||!authorized(c,stepId))return msg('No tienes permiso para actualizar este seguimiento');
   if(stepId==='honorarios'&&!feeCollected(c)){
    return msg('Primero confirma el cobro en Finanzas; el indicador no sustituye ese registro');
   }
