@@ -7,7 +7,7 @@ const meta=fs.readFileSync('app-meta-leads-workflow.js','utf8');
 const from=meta.indexOf('  function metaQualification(l){'),to=meta.indexOf('  window.cyaMetaWhatsApp=function(id){',from);
 assert(from>=0&&to>from);
 const functions='(function(){const safe=s=>String(s??"").replace(/[&<>"]/g,"");'+meta.slice(from,to)+'window.cyaMetaHumanQuestions=metaQuestionsHtml;})()';
-const form=(id,second)=>'<div class="form-row"><div class="form-group"><input id="'+id+'" value="'+(id==='lead-nombre'?'PRUEBA LOCAL':id==='lead-curp'?'PRUEBACURP':'4420000000')+'">'+(id==='lead-curp'?'<div id="lead-curp-actions"><button type="button">Copiar CURP</button><button type="button">Verificar en RENAPO</button></div>':'')+'</div><div class="form-group"><input id="'+second+'" value="Prueba"></div></div>';
+const form=(id,second)=>'<div class="form-row"><div class="form-group"><input id="'+id+'" value="'+(id==='lead-nombre'?'PRUEBA LOCAL':id==='lead-curp'?'PRUEBACURP':'4420000000')+'">'+(id==='lead-curp'?'<div id="lead-curp-actions"><button class="btn cya-curp-copy-icon" type="button" aria-label="Copiar CURP">⧉</button><button class="btn btn-primary" type="button">Verificar en RENAPO</button></div>':'')+'</div><div class="form-group"><input id="'+second+'" value="Prueba"></div></div>';
 const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:13px Arial;--bg-secondary:#16202e;--surface-2:#1d2838;--border:#344056;--text:#fff;--text-muted:#aaa;--text-secondary:#ccc;color:#fff;background:#101827}.modal-overlay.open{display:block}.modal{width:94vw;max-height:94vh;overflow-y:auto;margin:auto}.modal-body{padding:10px}.form-row{display:flex;gap:10px}.form-group{flex:1;min-width:0}.form-input,select,input{padding:8px;box-sizing:border-box;max-width:100%;color:inherit;background:#101827}button{cursor:pointer}</style></head><body><div class="modal-overlay open" id="modal-lead"><div class="modal modal-lg"><div class="modal-body">'+
  form('lead-nombre','lead-tel')+form('lead-curp','lead-colaborador')+
  '<div class="form-row"><div class="form-group"><select id="lead-servicio"><option value="retiro_desempleo">Retiro desempleo</option></select></div><div class="form-group"><select id="lead-estado"><option>semanas</option></select></div></div>'+
@@ -69,12 +69,8 @@ const html='<!doctype html><html><head><meta name="viewport" content="width=devi
    const curpField=await page.locator('#lead-curp').boundingBox();
    const copyButton=await page.locator('#lead-curp-actions button').first().boundingBox();
    const renapoButton=await page.locator('#lead-curp-actions button').last().boundingBox();
-   console.log('CURP GEOMETRY',name,JSON.stringify({curpField,copyButton,renapoButton,
-     parent:await page.locator('#lead-curp-actions').evaluate(el=>el.parentElement?.id),
-     fieldParent:await page.locator('#lead-curp').evaluate(el=>el.parentElement?.id),
-     group:await page.locator('#lead-curp').evaluate(el=>({width:el.closest('.form-group')?.getBoundingClientRect().width,style:getComputedStyle(el.parentElement).display}))
-   }));
-   assert(Math.abs(curpField.y-copyButton.y)<4&&Math.abs(curpField.y-renapoButton.y)<4,name+' CURP and actions inline');
+   const center=box=>box.y+box.height/2;
+   assert(Math.abs(center(curpField)-center(copyButton))<3&&Math.abs(center(curpField)-center(renapoButton))<3,name+' CURP and actions centered in same row');
    assert(copyButton.x>=curpField.x+curpField.width-3,name+' Copy to right of CURP');
    assert.equal((await page.locator('#lead-curp-actions button').last().innerText()).trim(),'RENAPO',name+' exact RENAPO label');
    const formHeight=await page.locator('#cya-hybrid-fields-identidad').evaluate(el=>el.getBoundingClientRect().height);
