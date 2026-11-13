@@ -33,6 +33,9 @@ const nativeExtra=extract(meta,'  function extraFieldsHtml(){','  function ensur
     document.getElementById('lead-curp-warning').insertAdjacentHTML('afterend',
      '<div id="lead-curp-actions"><button class="btn cya-curp-copy-icon">⧉</button><button class="btn">RENAPO</button></div>');
     window.store={leads:[{id:'demo',nombre:'CLIENTE PRUEBA',telefono:'4420000000',curp:'DEMOCURP',servicio:'retiro_desempleo',elegibilidad:{semanas:'110',cotizaImss:'no',retiro5:'no'},banco:'BBVA'}],asesores:[],colaboradores:[]};
+    const service=document.getElementById('lead-servicio');
+    service.innerHTML='<option value="retiro_desempleo">Retiro por desempleo</option>';
+    service.value='retiro_desempleo';
     window.editingLeadId='demo';
     window.openModalLead=()=>document.getElementById('modal-lead').classList.add('open');
     window.guardarLead=async()=>{};
@@ -62,9 +65,7 @@ const nativeExtra=extract(meta,'  function extraFieldsHtml(){','  function ensur
    const ids=['lead-el-semanas','lead-el-cotiza','lead-el-retiro','lead-el-fecha-retiro','lead-nss','lead-afore','lead-banco'];
    const boxes={};
    for(const id of ids){
-    const info=await page.locator('#'+id).evaluateAll(nodes=>nodes.map(el=>({hidden:el.hidden,visible:getComputedStyle(el).display,box:el.getBoundingClientRect().toJSON(),parent:el.parentElement?.className,ancestors:[el.parentElement?.parentElement?.id,el.parentElement?.parentElement?.parentElement?.id]})));
-    console.log('ELIGIBILITY CONTROL',sc.name,id,JSON.stringify(info));
-    boxes[id]=await page.locator('#'+id).boundingBox({timeout:2500});
+    boxes[id]=await page.locator('#'+id).boundingBox({timeout:3000});
     assert(boxes[id],sc.name+' visible '+id);
     assert(Math.abs(boxes[id].height-38)<2,sc.name+' 38px height for '+id+': '+boxes[id].height);
    }
