@@ -21,7 +21,7 @@
 #modal-perfil #perfil-body>.tab-panel{display:none!important}
 #modal-perfil #perfil-body #cya-hybrid-client-root{width:100%;display:grid;gap:13px;margin-top:15px}
 #modal-perfil .cya-hybrid-client-section-title{font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--text-secondary)}
-#modal-perfil .cya-hybrid-client-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#modal-perfil .cya-hybrid-client-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #modal-perfil .cya-hybrid-client-card{display:flex;min-height:62px;flex-direction:column;gap:6px;align-items:flex-start;justify-content:center;border:1px solid var(--border);border-radius:12px;padding:10px 14px;background:var(--bg-secondary);color:var(--text);cursor:pointer;text-align:left;font:inherit;min-width:0}
 #modal-perfil .cya-hybrid-client-card strong{font-size:12px;font-weight:700;line-height:1.3}
 #modal-perfil .cya-hybrid-client-card small{font-size:10px;color:var(--text-muted);line-height:1.35;overflow-wrap:anywhere}
@@ -35,6 +35,7 @@
 #modal-perfil .cya-hybrid-client-panel-content>.tab-panel{display:block!important;animation:none!important;overflow:visible;min-width:0}
 #modal-perfil .cya-hybrid-client-panel-content>.tab-panel .info-row[hidden]{display:none!important}
 #modal-perfil .cya-hybrid-client-panel-content>p{font-size:12px;color:var(--text-secondary)}
+@media(max-width:980px){#modal-perfil .cya-hybrid-client-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1050px){#modal-perfil .cya-hybrid-client-dates{gap:13px}#modal-perfil .profile-header-actions{flex-basis:100%;justify-content:flex-end}}
 @media(max-width:670px){#modal-perfil:has(#cya-hybrid-client-root) .client-profile-modal{width:100%!important;max-width:100%!important}#modal-perfil .cya-hybrid-client-cards{grid-template-columns:1fr}#modal-perfil .cya-hybrid-client-card{min-height:55px}#modal-perfil .cya-hybrid-client-dates{gap:15px;flex-wrap:wrap}}
 
