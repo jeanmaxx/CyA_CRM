@@ -2,7 +2,7 @@
 (function loadCollaboratorDraftRecovery(){
   if(document.querySelector('script[data-cya-sync-recovery]'))return;
   const script=document.createElement('script');
-  script.src='/app-sync-recovery.js?v=20261113-prospect-final1';
+  script.src='/app-sync-recovery.js?v=20261113-restored93';
   script.async=false;
   script.dataset.cyaSyncRecovery='1';
   document.head.appendChild(script);

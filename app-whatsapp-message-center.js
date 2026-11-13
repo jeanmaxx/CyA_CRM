@@ -312,74 +312,6 @@
       .cya-wa-block-actions .cya-wa-direct{background:#25d366;border-color:#25d366;color:#fff}
       .cya-wa-human-note{font-size:11px;color:var(--text-muted,#94a3b8)}
       @media(max-width:640px){.cya-wa-center-modal{width:96vw}.cya-wa-center-modal .modal-body{display:block}.cya-wa-nav{position:static;max-height:none;overflow:visible;padding-right:0}.cya-wa-nav .cya-wa-template-row{flex-direction:row;overflow-x:auto;flex-wrap:nowrap;scroll-snap-type:x proximity;padding-bottom:6px}.cya-wa-nav .cya-wa-template-row .btn{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap}.cya-wa-content{min-width:0}.cya-wa-block textarea{min-height:190px}.cya-wa-block-actions .btn{flex:1}}
-
-      /* Prospect/client WhatsApp center: actual full-size dialog, not the
-         global .modal default max-width of 580px. Keep all actions manual. */
-      #cya-wa-message-center .modal.cya-wa-center-modal{
-        width:min(880px,calc(100vw - 40px))!important;max-width:880px!important;
-        max-height:min(720px,90dvh)!important;min-width:0!important;
-        overflow:hidden!important;display:flex!important;flex-direction:column!important;
-        background:var(--bg-card,#1b2334)!important;
-      }
-      #cya-wa-message-center .cya-wa-center-modal .modal-header{
-        flex:0 0 auto;padding:12px 16px!important;min-height:0;
-      }
-      #cya-wa-message-center .cya-wa-center-modal .modal-body{
-        display:grid!important;grid-template-columns:212px minmax(0,1fr)!important;
-        column-gap:16px!important;gap:0!important;padding:12px 16px!important;
-        align-items:start;overflow-y:auto!important;min-height:0!important;flex:1 1 auto;
-      }
-      #cya-wa-message-center .cya-wa-center-modal .cya-wa-nav{
-        grid-column:1;grid-row:1!important;position:sticky;top:0;
-        max-height:calc(90dvh - 176px);overflow-y:auto;overflow-x:hidden;
-        padding-right:9px;border-right:1px solid var(--border);
-      }
-      #cya-wa-message-center .cya-wa-center-modal .cya-wa-content{
-        grid-column:2;grid-row:1;min-width:0;align-self:stretch;
-      }
-      #cya-wa-message-center .cya-wa-nav .cya-wa-template-row{gap:4px;margin-bottom:10px}
-      #cya-wa-message-center .cya-wa-nav .cya-wa-template-row .btn{
-        padding:6px 9px!important;min-height:31px!important;line-height:1.25;
-        font-size:11px!important;white-space:normal!important;border-radius:6px;
-      }
-      #cya-wa-message-center .cya-wa-section-label{margin:5px 0 6px;font-size:10px}
-      #cya-wa-message-center .cya-wa-block{margin-top:0;padding:10px;min-width:0;background:var(--bg-secondary,#131c2a)}
-      #cya-wa-message-center .cya-wa-block textarea{
-        width:100%;min-height:224px!important;max-height:46dvh;
-        font-size:12px!important;line-height:1.45;box-sizing:border-box;
-      }
-      #cya-wa-message-center .cya-wa-block-head{gap:8px;margin-bottom:7px;flex-wrap:wrap}
-      #cya-wa-message-center .cya-wa-block-actions{margin-top:8px;gap:7px}
-      #cya-wa-message-center .cya-wa-center-modal .modal-footer{
-        display:flex;align-items:center;justify-content:flex-end;gap:7px;
-        flex:0 0 auto;flex-wrap:wrap;padding:10px 16px!important;
-        background:var(--bg-card,#1b2334)!important;
-      }
-      #cya-wa-message-center .cya-wa-human-note{margin-right:auto}
-      @media(max-width:690px){
-        #cya-wa-message-center .modal.cya-wa-center-modal{
-          width:calc(100vw - 14px)!important;max-width:calc(100vw - 14px)!important;
-          max-height:94dvh!important;
-        }
-        #cya-wa-message-center .cya-wa-center-modal .modal-body{
-          display:block!important;overflow-y:auto!important;padding:10px 12px!important;
-        }
-        #cya-wa-message-center .cya-wa-center-modal .cya-wa-nav{
-          position:static;max-height:none;overflow:visible;
-          padding:0;border-right:0;border-bottom:1px solid var(--border);margin-bottom:10px;
-        }
-        #cya-wa-message-center .cya-wa-nav .cya-wa-template-row{
-          display:flex;flex-direction:row;flex-wrap:nowrap;
-          overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;
-        }
-        #cya-wa-message-center .cya-wa-nav .cya-wa-template-row .btn{
-          flex:0 0 auto;scroll-snap-align:start;white-space:nowrap!important;
-        }
-        #cya-wa-message-center .cya-wa-content{display:block;min-width:0}
-        #cya-wa-message-center .cya-wa-block textarea{min-height:180px!important}
-        #cya-wa-message-center .cya-wa-center-modal .modal-footer{padding:9px 12px!important}
-        #cya-wa-message-center .cya-wa-human-note{flex-basis:100%;font-size:10px}
-      }
     `;document.head.appendChild(style);
   }
 
@@ -520,10 +452,7 @@
     const lead=currentLead();
     let actions=document.getElementById('cya-wa-center-actions');
     if(!actions){actions=document.createElement('div');actions.id='cya-wa-center-actions';actions.innerHTML='<button class="btn cya-wa-open" type="button" onclick="cyaAbrirCentroMensajesWhatsApp()">WhatsApp</button>';tel.insertAdjacentElement('afterend',actions);}
-    const hybrid=document.getElementById('cya-hybrid-lead-root');
-    const display=lead&&!hybrid?'flex':'none';
-    if(actions.style.display!==display)actions.style.display=display;
-    if(actions.hidden!==Boolean(hybrid))actions.hidden=Boolean(hybrid);
+    actions.style.display=lead?'flex':'none';
   }
 
   function patchReviewFlow(){
