@@ -45,6 +45,7 @@ jobs:
           node tests/crm-hybrid-client-archive-sections.cjs
           node tests/crm-hybrid-client-access.cjs
           node tests/crm-activities12.cjs
+          node tests/crm-activities12-integration.cjs
       - name: Suite completa del CRM
         run: npm test
 
