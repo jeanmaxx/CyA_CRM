@@ -69,6 +69,11 @@ const html='<!doctype html><html><head><meta name="viewport" content="width=devi
    const curpField=await page.locator('#lead-curp').boundingBox();
    const copyButton=await page.locator('#lead-curp-actions button').first().boundingBox();
    const renapoButton=await page.locator('#lead-curp-actions button').last().boundingBox();
+   console.log('CURP GEOMETRY',name,JSON.stringify({curpField,copyButton,renapoButton,
+     parent:await page.locator('#lead-curp-actions').evaluate(el=>el.parentElement?.id),
+     fieldParent:await page.locator('#lead-curp').evaluate(el=>el.parentElement?.id),
+     group:await page.locator('#lead-curp').evaluate(el=>({width:el.closest('.form-group')?.getBoundingClientRect().width,style:getComputedStyle(el.parentElement).display}))
+   }));
    assert(Math.abs(curpField.y-copyButton.y)<4&&Math.abs(curpField.y-renapoButton.y)<4,name+' CURP and actions inline');
    assert(copyButton.x>=curpField.x+curpField.width-3,name+' Copy to right of CURP');
    assert.equal((await page.locator('#lead-curp-actions button').last().innerText()).trim(),'RENAPO',name+' exact RENAPO label');
