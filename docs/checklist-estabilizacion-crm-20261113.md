@@ -33,12 +33,15 @@
 - [x] Rama de respaldo `backup/main-pre-fix-visual-20261113`.
 - [x] Rama aislada `fix/crm-hibrido-ui-precalificacion-20261113`.
 - [x] Añadir regresiones de preaprobación y tabla con 12 hitos.
-- [ ] Validar la suite completa en GitHub Actions.
-- [ ] Validar Chromium escritorio/móvil en claro y oscuro.
-- [ ] Revisar conflictos entre capas de perfil; con test de compatibilidad específico.
-- [ ] Confirmar estabilidad de roles, Agenda, Finanzas, contratos y datos en escenarios sintéticos existentes.
+- [x] Validar la suite completa en GitHub Actions (ejecución #43387878034, aprobada).
+- [x] Validar Chromium en Prospectos y Clientes: escritorio/móvil, claro/oscuro (8 escenarios, #43387878034).
+- [x] Revisar conflicto entre las dos capas de perfil; test de Chromium comprueba que el resumen anterior no se superpone.
+- [x] Confirmar suite preexistente de roles, Agenda, Finanzas, contratos y datos en escenarios sintéticos (npm test).
 - [ ] Fusionar exclusivamente con pruebas y revisión de cambios satisfactorias.
 - [ ] Verificar resultado después de integrar; confirmar que la versión del sitio Cloudflare se sirve efectivamente cuando sea comprobable.
 
 ## Decisiones de seguridad
 No modificar base de datos, comisiones ni reglas de cobro para resolver cambios puramente visuales. No afirmar que una precalificación declarada constituye elegibilidad oficial. Una respuesta de 65 semanas exactas requiere validación manual; el intervalo verde condicionado solo comienza en 66 semanas. No eliminar ningún cliente real.
+## Verificación adicional de despliegue
+- Versiones de caché actualizadas en HTML y loaders encadenados: CSS, core de clientes, archivo de Meta Ads, resumen del perfil y módulos híbridos, para obligar a cargar recursos actualizados.
+- La distribución completa se validó con navegador sintético. La prueba con sesión autenticada de una persona operadora es la comprobación de aceptación final en el sitio real; no se deben usar datos reales para pruebas destructivas.
