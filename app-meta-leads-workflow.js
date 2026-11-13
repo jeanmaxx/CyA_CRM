@@ -462,7 +462,7 @@
       child.hidden=showQuestions;
     }
   }
-  // Read-only adapter for the hybrid expediente: one clear answers display.\n  window.cyaMetaHumanQuestions=metaQuestionsHtml;\n  function fillQuestionnaireTab(l){
+  function fillQuestionnaireTab(l){
     const tabs=ensureQuestionnaireTab();
     const panel=document.getElementById('cya-meta-questionnaire-panel');
     if(!tabs||!panel)return;

@@ -1,182 +1,153 @@
-/* C&A — Expediente de prospectos compacto, versión única.
-   DOM: se reutilizan los campos nativos mediante app-prospect-hybrid-v2.js.
-   Los cambios solo afectan al modal con #cya-hybrid-lead-root. */
-#modal-lead:has(#cya-hybrid-lead-root) .modal.modal-lg{
-  width:min(1040px,calc(100vw - 32px))!important;max-width:1040px!important;
-  max-height:92dvh!important;display:flex;flex-direction:column;overflow:hidden;
-}
-#modal-lead:has(#cya-hybrid-lead-root) .modal-header,
-#modal-lead:has(#cya-hybrid-lead-root) .modal-footer{
-  flex:none;padding:10px 16px!important;background:var(--bg-card,#1c2333);z-index:3;
-}
-#modal-lead:has(#cya-hybrid-lead-root) .modal-body{
-  padding:10px 16px!important;overflow:auto!important;min-height:0;flex:1 1 auto;
-}
-#modal-lead:has(#cya-hybrid-lead-root) .modal-body>:not(#cya-hybrid-lead-root){display:none!important}
-#modal-lead #cya-hybrid-lead-root{display:grid!important;gap:9px!important;min-width:0;width:100%;box-sizing:border-box}
+/* C&A: etapa 2, expediente híbrido de prospectos.
+ * Solo se aplica a #modal-lead cuando el módulo de JS se haya instalado.
+ */
+#modal-lead:has(#cya-hybrid-lead-root) .modal{width:min(1120px,96vw)!important;max-width:1120px!important;max-height:94vh}
+#modal-lead #cya-hybrid-lead-root{display:grid;gap:15px;width:100%;box-sizing:border-box}
 #modal-lead #cya-hybrid-lead-root [hidden]{display:none!important}
-#modal-lead .cya-hybrid-lead-heading{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;
-  background:var(--bg-secondary,#161c2a);border:1px solid var(--border);border-radius:10px;min-width:0;
-}
-#modal-lead .cya-hybrid-lead-person{min-width:0;display:grid;gap:2px}
-#modal-lead .cya-hybrid-kicker{font-size:9px;font-weight:700;letter-spacing:.045em;color:var(--text-muted)}
-#modal-lead #cya-hybrid-lead-name{font-size:16px;line-height:1.25;color:var(--text);overflow-wrap:anywhere}
-#modal-lead .cya-hybrid-lead-contact{font-size:10px;color:var(--text-secondary);overflow-wrap:anywhere}
-#modal-lead .cya-hybrid-lead-context{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
-#modal-lead .cya-hybrid-lead-context span{
-  display:inline-block;border:1px solid var(--border);border-radius:999px;background:var(--bg-card);
-  color:var(--text-muted);font-size:9px;padding:2px 6px;
-}
-#modal-lead .cya-hybrid-wa{flex:0 0 auto;min-height:32px!important;padding:6px 12px!important;white-space:nowrap}
-#modal-lead .cya-hybrid-lead-cards{
-  display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:6px!important;min-width:0;
-}
-#modal-lead .cya-hybrid-lead-card{
-  min-width:0;min-height:49px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
-  gap:3px;padding:7px 9px;text-align:left;border:1px solid var(--border);border-radius:8px;
-  background:var(--bg-secondary,#161c2a);color:var(--text);font:inherit;cursor:pointer;
-}
-#modal-lead .cya-hybrid-lead-card.active{border-color:var(--gold,#d1ad62);background:rgba(199,157,58,.07)}
-#modal-lead .cya-hybrid-lead-card:hover{border-color:var(--gold,#d1ad62)}
-#modal-lead .cya-hybrid-lead-card:focus-visible{outline:2px solid var(--gold,#d1ad62);outline-offset:2px}
-#modal-lead .cya-hybrid-card-title{font-size:11px;font-weight:700;line-height:1.18}
-#modal-lead .cya-hybrid-lead-card small{
-  display:block;max-width:100%;font-size:9px;line-height:1.25;color:var(--text-muted);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-#modal-lead .cya-hybrid-lead-panels{min-width:0}
-#modal-lead .cya-hybrid-lead-section{
-  min-width:0;padding:10px 12px!important;box-sizing:border-box;
-  border:1px solid var(--border);border-radius:9px;background:transparent;
-}
-#modal-lead .cya-hybrid-lead-section h3{font-size:12px;line-height:1.3;margin:0 0 9px;font-weight:700;color:var(--text)}
-#modal-lead .cya-hybrid-section-fields{
-  display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;
-  align-items:start;column-gap:10px;row-gap:8px;min-width:0;
-}
-#modal-lead .cya-hybrid-section-fields>.form-row{display:contents!important}
-#modal-lead .cya-hybrid-section-fields>.form-group{
-  min-width:0!important;max-width:100%!important;grid-column:span 6;
-  margin:0!important;padding:0!important;box-sizing:border-box!important;
-}
-#modal-lead .cya-hybrid-section-fields .form-label{display:block;margin:0 0 3px;font-size:10px;line-height:1.3}
-#modal-lead .cya-hybrid-section-fields .form-helper,
-#modal-lead .cya-hybrid-section-fields .curp-warning{font-size:9px;line-height:1.2;margin-top:3px}
-#modal-lead .cya-hybrid-section-fields input.form-input,
-#modal-lead .cya-hybrid-section-fields select.form-select,
-#modal-lead .cya-hybrid-section-fields input:not([type=checkbox]){
-  width:100%;min-width:0!important;min-height:33px!important;height:33px!important;max-width:100%;
-  font-size:12px!important;padding:6px 9px!important;box-sizing:border-box!important;
-}
-#modal-lead .cya-hybrid-section-fields textarea{
-  width:100%;min-width:0;min-height:76px!important;max-height:190px;font-size:12px;padding:8px 10px;box-sizing:border-box;
-}
-/* Identity, 12-column grid:
-   date 2 + name 4 + CURP 4 + phone 2; collaborator 3 + email 4 + city 2 + address 3. */
-#modal-lead #cya-hybrid-fields-identidad #lead-registration-wrap{grid-column:span 2;min-width:0!important;max-width:100%!important;margin:0!important}
-#modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-nombre){grid-column:span 4}
-#modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-curp){grid-column:span 4}
-#modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-tel){grid-column:span 2}
-#modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-colaborador){grid-column:span 3}
-#modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-email){grid-column:span 4}
-#modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-ciudad){grid-column:span 2}
-#modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-domicilio){grid-column:span 3}
-#modal-lead .cya-curp-inline{display:flex;align-items:center;gap:4px;min-width:0;width:100%}
-#modal-lead .cya-curp-inline #lead-curp{min-width:0!important;flex:1 1 0!important;width:0!important;max-width:none!important;font-size:11px!important;padding:6px!important}
-#modal-lead #lead-curp-actions{
-  display:flex!important;flex:0 0 auto;align-items:center;justify-content:flex-end;gap:4px!important;
-  flex-wrap:nowrap!important;margin:0!important;width:auto!important;
-}
-#modal-lead #lead-curp-actions .btn{
-  flex:0 0 auto!important;min-height:33px!important;height:33px!important;font-size:10px!important;
-  padding:5px 7px!important;white-space:nowrap!important;line-height:1.1;
-}
-#modal-lead #lead-curp-actions .cya-curp-copy-icon{
-  min-width:32px!important;width:32px!important;padding:0!important;display:grid;place-items:center;font-size:17px!important;
-}
-#modal-lead:has(#cya-hybrid-lead-root) #cya-client-message-actions{display:none!important}
-#modal-lead:has(#cya-hybrid-lead-root) #cya-client-message-actions[style]{display:none!important}
-#modal-lead #cya-mark-review-sent{font-size:10px!important;min-height:27px;padding:4px 8px;margin-top:4px;max-width:100%}
-#modal-lead #cya-hybrid-fields-elegibilidad>.form-section,
-#modal-lead #cya-hybrid-fields-elegibilidad>#lead-elegibilidad-container{grid-column:1/-1}
-#modal-lead #cya-hybrid-fields-elegibilidad .form-section{margin:0;font-size:10px}
-#modal-lead #cya-hybrid-fields-origen .cya-hybrid-qualification{
-  grid-column:1/-1;border:1px solid var(--border);border-left:4px solid #f59e0b;
-  padding:10px 12px;border-radius:8px;background:var(--bg-secondary);
-  display:grid;gap:3px;
-}
-#modal-lead #cya-hybrid-fields-origen .cya-hybrid-qualification.is-red{border-left-color:#dc2626}
-#modal-lead #cya-hybrid-fields-origen .cya-hybrid-qualification.is-green{border-left-color:#16864f}
-#modal-lead #cya-hybrid-fields-origen .cya-hybrid-qualification.is-orange{border-left-color:#f59e0b}
-#modal-lead .cya-hybrid-qualification strong{font-size:12px}
-#modal-lead .cya-hybrid-qualification small{font-size:10px;color:var(--text-secondary)}
-#modal-lead .cya-hybrid-qualification span{font-size:9px;color:var(--text-muted)}
-#modal-lead #cya-hybrid-answers{
-  grid-column:1/-1;min-width:0;box-sizing:border-box;
-}
-#modal-lead #cya-hybrid-answers .cya-meta-questionnaire-list{
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px!important;
-}
-#modal-lead #cya-hybrid-answers .cya-meta-answer{
-  min-width:0;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);
-  display:grid;gap:4px;padding:10px;
-}
-#modal-lead #cya-hybrid-answers .cya-meta-answer strong{font-size:10px;line-height:1.25}
-#modal-lead #cya-hybrid-answers .cya-meta-answer span{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
-#modal-lead #cya-hybrid-fields-origen .form-group:has(#lead-fuente){grid-column:span 4}
-#modal-lead #cya-hybrid-fields-origen #cya-hybrid-origin-overview{
-  grid-column:1/-1;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);
-  padding:0;overflow:hidden;min-width:0;
-}
-#modal-lead .cya-hybrid-origin-overview>.cya-hybrid-source-title{
-  cursor:pointer;display:flex;justify-content:space-between;align-items:center;
-  gap:10px;padding:10px 12px;margin:0;font-size:11px;font-weight:700;
-}
-#modal-lead .cya-hybrid-origin-overview>.cya-hybrid-source-title::marker{color:var(--text-muted)}
-#modal-lead .cya-hybrid-origin-overview[open]>.cya-hybrid-source-title{border-bottom:1px solid var(--border)}
-#modal-lead .cya-hybrid-source-grid{
-  padding:10px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
-}
-#modal-lead .cya-hybrid-source-row{
-  display:grid;gap:2px;min-width:0;padding:7px 9px;
-  border:1px solid var(--border);border-radius:6px;background:var(--bg-card);
-}
-#modal-lead .cya-hybrid-source-row small{font-size:9px;color:var(--text-muted)}
-#modal-lead .cya-hybrid-source-row strong{font-size:11px;color:var(--text);overflow-wrap:anywhere}
-#modal-lead #cya-hybrid-fields-seguimiento #cya-prospect-stage-stepper{grid-column:1/-1;order:0;min-width:0}
-#modal-lead #cya-hybrid-fields-seguimiento .form-group:has(#lead-estado){grid-column:span 6;order:1}
-#modal-lead #cya-hybrid-fields-seguimiento .form-group:has(#lead-servicio){grid-column:span 6;order:2}
-#modal-lead #cya-hybrid-fields-seguimiento .form-group:has(#lead-notas){grid-column:1/-1;order:3;max-width:100%}
-#modal-lead #cya-hybrid-fields-historial{display:block!important}
-#modal-lead .cya-hybrid-history-line{
-  display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:11px;
-}
-#modal-lead .cya-hybrid-history-line small{font-size:10px;color:var(--text-muted)}
-#modal-lead .cya-hybrid-empty{padding:8px 0;font-size:11px;color:var(--text-muted)}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:11px 12px;border:1px solid var(--border);border-radius:13px;background:var(--surface-2)}
+#modal-lead .cya-hybrid-lead-person{display:grid;gap:7px;min-width:0}
+#modal-lead .cya-hybrid-kicker{font-size:10px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+#modal-lead #cya-hybrid-lead-name{font-size:19px;line-height:1.25;overflow-wrap:anywhere;color:var(--text)}
+#modal-lead .cya-hybrid-lead-contact{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+#modal-lead .cya-hybrid-lead-context{display:flex;gap:6px;flex-wrap:wrap}
+#modal-lead .cya-hybrid-lead-context span{border:1px solid var(--border);border-radius:999px;padding:5px 9px;color:var(--muted);font-size:10px;background:var(--surface)}
+#modal-lead .cya-hybrid-wa{flex:none}
+#modal-lead .cya-hybrid-lead-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#modal-lead .cya-hybrid-lead-card{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:7px;min-height:68px;padding:13px 15px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);color:var(--text);text-align:left;font:inherit;cursor:pointer;min-width:0}
+#modal-lead .cya-hybrid-lead-card.active{border-color:var(--gold);background:rgba(197,155,40,.055)}
+#modal-lead .cya-hybrid-lead-card:hover{border-color:var(--gold)}
+#modal-lead .cya-hybrid-lead-card:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#modal-lead .cya-hybrid-lead-card .cya-hybrid-card-title{font-size:12px;font-weight:700}
+#modal-lead .cya-hybrid-lead-card small{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
+#modal-lead .cya-hybrid-lead-panels{max-width:100%}
+#modal-lead .cya-hybrid-lead-section{border:1px solid var(--gold);border-radius:13px;padding:16px;min-width:0;box-sizing:border-box}
+#modal-lead .cya-hybrid-lead-section h3{margin:0 0 12px;color:var(--text);font-size:14px}
+#modal-lead .cya-hybrid-section-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+#modal-lead .cya-hybrid-section-fields>.form-row{grid-column:1/-1;margin:0!important}
+#modal-lead .cya-hybrid-section-fields>.form-group{min-width:0;margin:0!important}
+#modal-lead .cya-hybrid-section-fields>.form-section,#modal-lead .cya-hybrid-section-fields>#lead-elegibilidad-container,#modal-lead .cya-hybrid-section-fields>#lead-registration-wrap,#modal-lead .cya-hybrid-section-fields>#cya-prospect-stage-stepper,#modal-lead .cya-hybrid-section-fields>#cya-meta-questionnaire-panel{grid-column:1/-1}
+#modal-lead .cya-hybrid-section-fields #lead-notas{min-height:100px}
 #modal-lead #cya-meta-lead-tabs,#modal-lead #cya-lead-extra-fields{display:none!important}
-@media(max-width:900px){
- #modal-lead .cya-hybrid-lead-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important}
- #modal-lead #cya-hybrid-fields-identidad{grid-template-columns:repeat(6,minmax(0,1fr))!important}
- #modal-lead #cya-hybrid-fields-identidad #lead-registration-wrap{grid-column:span 2}
- #modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-nombre){grid-column:span 4}
- #modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-curp){grid-column:1/-1}
- #modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-tel),
- #modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-colaborador){grid-column:span 3}
- #modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-email){grid-column:1/-1}
- #modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-ciudad){grid-column:span 2}
- #modal-lead #cya-hybrid-fields-identidad .form-group:has(#lead-domicilio){grid-column:span 4}
-}
-@media(max-width:620px){
- #modal-lead:has(#cya-hybrid-lead-root) .modal.modal-lg{
-   width:calc(100vw - 12px)!important;max-width:calc(100vw - 12px)!important;max-height:96dvh!important;
- }
- #modal-lead .cya-hybrid-lead-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#modal-lead .cya-hybrid-empty{padding:14px 0;font-size:11px;color:var(--muted)}
+#modal-lead .cya-hybrid-history-line{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px}
+#modal-lead .cya-hybrid-history-line small{color:var(--muted);font-size:10px}
+#modal-lead .cya-curp-copy-icon{min-width:35px!important;width:35px;height:34px;display:inline-grid;place-items:center;font-size:17px!important;padding:0!important}
+#modal-lead #lead-curp-actions{display:flex!important;gap:8px;align-items:center;flex-wrap:wrap}
+@media(max-width:760px){
+ #modal-lead:has(#cya-hybrid-lead-root) .modal{width:100%!important;max-width:100%!important}
  #modal-lead .cya-hybrid-lead-heading{flex-wrap:wrap}
- #modal-lead #cya-hybrid-fields-origen #cya-hybrid-answers .cya-meta-questionnaire-list{grid-template-columns:1fr}
- #modal-lead #cya-hybrid-fields-origen .form-group:has(#lead-fuente){grid-column:1/-1}
- #modal-lead #cya-hybrid-fields-seguimiento .form-group:has(#lead-estado),
- #modal-lead #cya-hybrid-fields-seguimiento .form-group:has(#lead-servicio){grid-column:1/-1}
+ #modal-lead .cya-hybrid-lead-cards{grid-template-columns:1fr}
+ #modal-lead .cya-hybrid-section-fields{grid-template-columns:1fr}
+ #modal-lead .cya-hybrid-section-fields>.form-row{grid-column:1}
+ #modal-lead .cya-hybrid-lead-card{min-height:56px}
+}
+
+/* Hide legacy top-level groups: their live form controls have been moved into the selected hybrid panel. */
+#modal-lead:has(#cya-hybrid-lead-root) .modal-body > :not(#cya-hybrid-lead-root){display:none!important}
+
+/* Estabilización: ficha compacta, tres secciones por fila en escritorio. */
+#modal-lead:has(#cya-hybrid-lead-root) .modal{width:min(1080px,97vw)!important;max-height:94dvh}
+#modal-lead #cya-hybrid-lead-root{gap:9px!important}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading{padding:9px 12px;gap:9px;min-height:auto;flex-wrap:wrap}
+#modal-lead .cya-hybrid-lead-person{gap:3px}
+#modal-lead .cya-hybrid-kicker{font-size:9px}
+#modal-lead #cya-hybrid-lead-name{font-size:16px}
+#modal-lead .cya-hybrid-lead-context{gap:4px}
+#modal-lead .cya-hybrid-lead-context span{font-size:9px;padding:3px 6px}
+#modal-lead .cya-hybrid-lead-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+#modal-lead .cya-hybrid-lead-card{min-height:46px;gap:3px;padding:7px 10px;justify-content:center}
+#modal-lead .cya-hybrid-lead-card .cya-hybrid-card-title{font-size:11px}
+#modal-lead .cya-hybrid-lead-card small{font-size:9px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#modal-lead .cya-hybrid-lead-section{padding:12px}
+#modal-lead .cya-hybrid-lead-section h3{margin:0 0 9px;font-size:12px}
+#modal-lead .cya-hybrid-section-fields{gap:8px 11px}
+#modal-lead .cya-hybrid-section-fields>.form-row{margin:0!important}
+#modal-lead .cya-hybrid-section-fields>.form-row .form-group{margin-bottom:0!important;min-width:0}
+#modal-lead .cya-hybrid-section-fields .form-group{min-width:0}
+#modal-lead .cya-hybrid-section-fields .form-label{margin-bottom:4px;font-size:10px}
+#modal-lead .cya-hybrid-section-fields input.form-input,
+#modal-lead .cya-hybrid-section-fields select.form-select{min-height:33px!important;height:auto!important;padding:7px 10px!important;font-size:12px}
+#modal-lead #lead-curp-actions{display:flex!important;align-items:center;gap:5px;flex-wrap:nowrap!important;max-width:100%}
+#modal-lead #lead-curp-actions .btn,#modal-lead #lead-curp-actions button{flex:0 1 auto;white-space:nowrap;font-size:10px!important}
+#modal-lead #lead-curp-actions .cya-curp-copy-icon{height:32px;min-width:32px!important;width:32px}
+#modal-lead .cya-hybrid-wa{min-height:33px!important;white-space:nowrap}
+#modal-lead .cya-hybrid-origin-overview{grid-column:1/-1;border:1px solid var(--border);padding:10px 12px;border-radius:10px;background:var(--surface-2,var(--bg-secondary))}
+#modal-lead .cya-hybrid-source-title{font-size:11px;font-weight:700;margin-bottom:9px}
+#modal-lead .cya-hybrid-source-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+#modal-lead .cya-hybrid-source-row{display:grid;min-width:0;gap:2px;padding:7px 10px;border-radius:7px;background:var(--bg-secondary);border:1px solid var(--border)}
+#modal-lead .cya-hybrid-source-row small{font-size:9px;color:var(--text-muted)}
+#modal-lead .cya-hybrid-source-row strong{font-size:11px;font-weight:650;color:var(--text);overflow-wrap:anywhere}
+#modal-lead .cya-hybrid-source-note{margin:9px 0 0;color:var(--text-muted);font-size:10px}
+#modal-lead .cya-hybrid-qualification{grid-column:1/-1;display:grid;gap:5px;padding:11px 13px;border:1px solid var(--border);border-left:4px solid #f59e0b;border-radius:9px;background:var(--bg-secondary)}
+#modal-lead .cya-hybrid-qualification strong{font-size:12px}
+#modal-lead .cya-hybrid-qualification small{font-size:11px;color:var(--text-secondary)}
+#modal-lead .cya-hybrid-qualification span{font-size:10px;color:var(--text-muted)}
+#modal-lead .cya-hybrid-qualification.is-red{border-left-color:#dc2626}
+#modal-lead .cya-hybrid-qualification.is-green{border-left-color:#16864f}
+#modal-lead .cya-hybrid-qualification.is-orange{border-left-color:#f59e0b}
+#modal-lead #cya-meta-questionnaire-panel{grid-column:1/-1!important;min-width:0}
+#modal-lead .cya-meta-questionnaire-head{padding:10px 12px;margin:0 0 8px}
+#modal-lead .cya-meta-questionnaire-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#modal-lead .cya-meta-questionnaire-list .cya-meta-answer{padding:9px 10px;min-width:0}
+#modal-lead .cya-meta-questionnaire-list .cya-meta-answer strong{font-size:10px}
+#modal-lead .cya-meta-questionnaire-list .cya-meta-answer span{font-size:11px}
+@media(max-width:840px){#modal-lead .cya-hybrid-lead-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){
+ #modal-lead .cya-hybrid-lead-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #modal-lead .cya-hybrid-section-fields{grid-template-columns:1fr!important}
  #modal-lead .cya-hybrid-source-grid{grid-template-columns:1fr}
- #modal-lead .cya-hybrid-section-fields{column-gap:7px;row-gap:8px}
+ #modal-lead .cya-meta-questionnaire-list{grid-template-columns:1fr}
+ #modal-lead #lead-curp-actions{flex-wrap:wrap!important}
+}
+
+/* 13-nov: prospect fields should use their intrinsic sizes instead of two huge 50% rows. */
+#modal-lead .cya-hybrid-section-fields{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:9px 11px!important;align-items:start;
+}
+#modal-lead .cya-hybrid-section-fields>.form-row:not([hidden]){display:contents!important;grid-column:auto!important}
+#modal-lead .cya-hybrid-section-fields>.form-row[hidden]{display:none!important}
+#modal-lead .cya-hybrid-section-fields>.form-row .form-group{min-width:0!important;max-width:100%!important;margin:0!important}
+#modal-lead .cya-hybrid-section-fields .form-group:has(#lead-nombre),
+#modal-lead .cya-hybrid-section-fields .form-group:has(#lead-email),
+#modal-lead .cya-hybrid-section-fields .form-group:has(#lead-curp),
+#modal-lead .cya-hybrid-section-fields .form-group:has(#lead-domicilio){grid-column:span 2;min-width:0}
+#modal-lead .cya-hybrid-section-fields #lead-registration-wrap{grid-column:auto!important;min-width:0!important;max-width:190px!important}
+#modal-lead .cya-hybrid-section-fields #cya-prospect-stage-stepper{grid-column:1/-1!important;order:-1}
+#modal-lead .cya-hybrid-section-fields .form-group:has(#lead-notas){grid-column:1/-1}
+#modal-lead .cya-hybrid-section-fields .form-group:has(#lead-notas) textarea{min-height:90px!important}
+#modal-lead .cya-hybrid-section-fields .form-group:has(#lead-fuente){grid-column:span 2}
+#modal-lead #cya-hybrid-fields-origen #cya-hybrid-qualification{grid-column:1/-1;order:0}
+#modal-lead #cya-hybrid-fields-origen #cya-meta-questionnaire-panel{grid-column:1/-1;order:1;margin:0}
+#modal-lead #cya-hybrid-fields-origen #cya-meta-questionnaire-panel .cya-meta-questionnaire-head{display:none!important}
+#modal-lead #cya-hybrid-fields-origen .form-group:has(#lead-fuente){order:2}
+#modal-lead #cya-hybrid-fields-origen #cya-hybrid-origin-overview{grid-column:1/-1!important;order:3}
+#modal-lead .cya-hybrid-origin-overview{padding:0!important;overflow:hidden}
+#modal-lead .cya-hybrid-origin-overview .cya-hybrid-source-title{display:flex;align-items:center;justify-content:space-between;
+ padding:11px 13px;margin:0!important;cursor:pointer;font-size:12px!important;font-weight:700;border-radius:8px}
+#modal-lead .cya-hybrid-origin-overview .cya-hybrid-source-title::marker{color:var(--text-muted)}
+#modal-lead .cya-hybrid-origin-overview[open] .cya-hybrid-source-title{border-bottom:1px solid var(--border)}
+#modal-lead .cya-hybrid-origin-overview .cya-hybrid-source-grid{padding:11px 12px 2px}
+#modal-lead .cya-hybrid-origin-overview .cya-hybrid-source-note{padding:0 13px 12px;margin:8px 0 0}
+#modal-lead .cya-hybrid-lead-section{min-height:0!important;padding:11px 12px!important}
+#modal-lead .cya-hybrid-lead-panels{min-height:0!important}
+#modal-lead .cya-hybrid-lead-section .form-label{font-size:10px!important;margin:0 0 4px!important}
+#modal-lead .cya-hybrid-lead-section .form-helper{font-size:9px!important;line-height:1.3}
+#modal-lead .cya-hybrid-lead-section input.form-input,#modal-lead .cya-hybrid-lead-section select.form-select{
+ min-height:33px!important;height:33px!important;padding:6px 8px!important;font-size:12px!important;min-width:0!important;max-width:100%!important;
+}
+#modal-lead .cya-hybrid-section-fields .form-group:has(#lead-colaborador){min-width:0}
+@media(max-width:1030px){
+ #modal-lead .cya-hybrid-section-fields{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:720px){
+ #modal-lead .cya-hybrid-section-fields{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #modal-lead .cya-hybrid-section-fields .form-group:has(#lead-nombre),
+ #modal-lead .cya-hybrid-section-fields .form-group:has(#lead-email),
+ #modal-lead .cya-hybrid-section-fields .form-group:has(#lead-curp),
+ #modal-lead .cya-hybrid-section-fields .form-group:has(#lead-domicilio){grid-column:1/-1}
+}
+@media(max-width:460px){
+ #modal-lead .cya-hybrid-section-fields{grid-template-columns:1fr!important}
+ #modal-lead .cya-hybrid-section-fields .form-group:has(#lead-fuente){grid-column:1/-1}
+ #modal-lead #lead-curp-actions{flex-wrap:wrap!important}
 }
