@@ -11,6 +11,7 @@ const meta=fs.readFileSync('app-meta-leads-workflow.js','utf8');
 const extract=(text,a,b)=>{const start=text.indexOf(a),stop=text.indexOf(b,start+a.length);assert(start>=0&&stop>start,'Missing native function '+a);return text.slice(start,stop);};
 const nativeRender=extract(workflow,'function renderLeadElegibilidad(existing={})','function actualizarNacimientoDesdeCurp()');
 const nativeExtra=extract(meta,'  function extraFieldsHtml(){','  function ensureExtraFields(){');
+const nativeMeta=extract(meta,'  function metaQualification(l){','  window.cyaMetaWhatsApp=function(id){');
 (async()=>{
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  try{
@@ -32,7 +33,7 @@ const nativeExtra=extract(meta,'  function extraFieldsHtml(){','  function ensur
      '<div id="lead-registration-wrap"><div class="form-group"><label class="form-label">Fecha de registro</label><input class="form-input" id="lead-fecha-registro" value="12/11/2026"></div></div>');
     document.getElementById('lead-curp-warning').insertAdjacentHTML('afterend',
      '<div id="lead-curp-actions"><button class="btn cya-curp-copy-icon">⧉</button><button class="btn">RENAPO</button></div>');
-    window.store={leads:[{id:'demo',nombre:'CLIENTE PRUEBA',telefono:'4420000000',curp:'DEMOCURP',servicio:'retiro_desempleo',elegibilidad:{semanas:'110',cotizaImss:'no',retiro5:'no'},banco:'BBVA'}],asesores:[],colaboradores:[]};
+    window.store={leads:[{id:'demo',nombre:'CLIENTE PRUEBA',telefono:'4420000000',curp:'DEMOCURP',servicio:'retiro_desempleo',elegibilidad:{semanas:'110',cotizaImss:'no',retiro5:'no'},banco:'BBVA',fuenteContacto:'Meta Ads',metaAds:true,metaLead:{campaignName:'Campaña de prueba',adsetName:'Conjunto Demo',adName:'Anuncio Demo',formName:'Formulario Demo',answers:{imss_status_declared:'opcion_a_sin_cotizar',previous_withdrawal_declared:'opcion_a_nunca',weeks_declared:'opcion_a_2_anos_o_mas',raw:{campaign_id:'technical-secret'}}}}],asesores:[],colaboradores:[]};
     const service=document.getElementById('lead-servicio');
     service.innerHTML='<option value="retiro_desempleo">Retiro por desempleo</option>';
     service.value='retiro_desempleo';
@@ -52,6 +53,15 @@ const nativeExtra=extract(meta,'  function extraFieldsHtml(){','  function ensur
     window.triSelect=(id,label,value)=>'<div class="form-group"><label class="form-label">'+label+'</label><select id="'+id+'" class="form-select"><option value="">Por verificar</option><option value="si">Sí</option><option value="no" '+(value==='no'?'selected':'')+'>No</option></select></div>';
     window.inputFecha=(id,value,label)=>'<div class="form-group"><label class="form-label">'+label+'</label><input class="form-input input-fecha-mx" id="'+id+'" value="'+(value||'')+'" placeholder="dd/mm/aaaa"></div>';
     window.actualizarElegibilidadInicial=()=>{let el=document.getElementById('lead-initial-criteria');if(el)el.innerHTML='<div class="criteria-alert criteria-verde">✓ Cumple criterios iniciales · confirmar con IMSS/AFORE</div>';};
+   });
+   await page.addScriptTag({content:'(function(){const safe=v=>String(v??" ").replace(/[&<>\"]/g,"");'+nativeMeta+'window.cyaMetaHumanQuestions=metaQuestionsHtml;})()'});
+   await page.evaluate(()=>{
+     const questionnaire=document.createElement('section');
+     questionnaire.id='cya-meta-questionnaire-panel';
+     questionnaire.className='cya-meta-questionnaire-panel';
+     const lead=window.store.leads[0];
+     questionnaire.innerHTML='<div class="cya-meta-questionnaire-head"><strong>Encabezado Meta heredado</strong></div><div class="cya-meta-questionnaire-list">'+window.cyaMetaHumanQuestions(lead)+'</div>';
+     document.querySelector('#modal-lead .modal-body').appendChild(questionnaire);
    });
    await page.addScriptTag({content:nativeRender});
    await page.evaluate(()=>renderLeadElegibilidad({semanas:'110',cotizaImss:'no',retiro5:'no',fechaRetiro:''}));
@@ -90,6 +100,64 @@ const nativeExtra=extract(meta,'  function extraFieldsHtml(){','  function ensur
     assert(result.y>boxes['lead-nss'].y,sc.name+' verdict below supplemental bank');
    }
    assert.equal(await page.locator('#lead-initial-criteria .criteria-alert').isVisible(),true,sc.name+' live eligibility result');
+   // Match the approved Origen y captación mockup in the REAL production modal:
+   // gold accent is common to all five active tabs, while the qualification
+   // retains independent green/red/orange status semantics.
+   await page.locator('[data-hybrid-lead-section="origen"]').click();
+   const originSection=page.locator('#cya-hybrid-section-origen');
+   assert.equal(await originSection.isVisible(),true,sc.name+' origin visible');
+   const gold=await originSection.evaluate(el=>({width:getComputedStyle(el).borderLeftWidth,color:getComputedStyle(el).borderLeftColor}));
+   assert.equal(gold.width,'4px',sc.name+' gold accent applied to active tab');
+   assert.equal(gold.color,'rgb(202, 164, 94)',sc.name+' accent uses approved C&A gold');
+   const qualification=page.locator('#cya-hybrid-qualification.is-green');
+   assert.equal(await qualification.count(),1,sc.name+' native Meta qualification stays green');
+   const qStyle=await qualification.locator('strong').evaluate(el=>({align:getComputedStyle(el).textAlign,transform:getComputedStyle(el).textTransform,size:parseFloat(getComputedStyle(el).fontSize)}));
+   assert.equal(qStyle.align,'center');
+   assert.equal(qStyle.transform,'uppercase');
+   assert(qStyle.size>=14,sc.name+' enlarged approval title');
+   const qText=(await qualification.locator('strong').innerText()).toUpperCase();
+   assert(qText.includes('PREAPROBACIÓN FAVORABLE'),sc.name+' actual preapproval text');
+   const cards=page.locator('#cya-hybrid-fields-origen .cya-meta-questionnaire-list .cya-meta-answer');
+   assert.equal(await cards.count(),3,sc.name+' precisely three human-readable answers');
+   const boxesAnswers=[];
+   for(let i=0;i<3;i++){
+    const title=cards.nth(i).locator('strong');
+    const style=await title.evaluate(el=>({align:getComputedStyle(el).textAlign,transform:getComputedStyle(el).textTransform,size:parseFloat(getComputedStyle(el).fontSize)}));
+    assert.equal(style.align,'center',sc.name+' centered answer title '+i);
+    assert.equal(style.transform,'uppercase',sc.name+' uppercase answer title '+i);
+    assert(style.size>=12,sc.name+' readable answer title '+i);
+    boxesAnswers.push(await cards.nth(i).boundingBox());
+   }
+   if(sc.w>640){
+    assert(boxesAnswers.every(box=>Math.abs(box.y-boxesAnswers[0].y)<3),sc.name+' three answers share a row');
+    assert(boxesAnswers[1].x>boxesAnswers[0].x&&boxesAnswers[2].x>boxesAnswers[1].x,sc.name+' answer ordering');
+   }else{
+    assert(boxesAnswers[1].y>boxesAnswers[0].y&&boxesAnswers[2].y>boxesAnswers[1].y,sc.name+' answers stack on mobile');
+   }
+   const originContents=await page.locator('#cya-hybrid-fields-origen').evaluate(el=>[...el.children].map(c=>c.id||c.querySelector('select')?.id));
+   assert(originContents.indexOf('cya-hybrid-qualification')<originContents.indexOf('cya-meta-questionnaire-panel'));
+   assert(originContents.indexOf('cya-meta-questionnaire-panel')<originContents.indexOf('cya-hybrid-origin-overview'));
+   assert.equal(await page.locator('#cya-meta-questionnaire-panel .cya-meta-questionnaire-head').isVisible(),false,sc.name+' duplicate summary hidden');
+   const source=page.locator('#lead-fuente');
+   assert.equal(await source.isVisible(),true,sc.name+' native source remains editable');
+   const details=page.locator('#cya-hybrid-origin-overview');
+   assert.equal(await details.evaluate(el=>el.open),false,sc.name+' Meta details collapsed by default');
+   const detailsTitle=await details.locator('summary').evaluate(el=>({align:getComputedStyle(el).textAlign,transform:getComputedStyle(el).textTransform}));
+   assert.equal(detailsTitle.transform,'uppercase');
+   await details.locator('summary').click();
+   assert.equal(await details.evaluate(el=>el.open),true,sc.name+' Meta details expands');
+   const srcText=await details.innerText();
+   for(const label of ['Campaña de prueba','Conjunto Demo','Anuncio Demo','Formulario Demo'])assert(srcText.includes(label),sc.name+' meta label '+label);
+   assert(!srcText.includes('technical-secret'),sc.name+' sensitive technical IDs not exposed');
+   await details.locator('summary').click();
+   assert.equal(await details.evaluate(el=>el.open),false,sc.name+' Meta details collapses');
+   // All five content panels receive the same accent, not just Origen.
+   for(const tab of ['identidad','elegibilidad','seguimiento','historial']){
+    await page.locator('[data-hybrid-lead-section="'+tab+'"]').click();
+    const color=await page.locator('#cya-hybrid-section-'+tab).evaluate(el=>getComputedStyle(el).borderLeftColor);
+    assert.equal(color,'rgb(202, 164, 94)',sc.name+' gold accent '+tab);
+   }
+   await page.locator('[data-hybrid-lead-section="elegibilidad"]').click();
    await page.locator('#lead-banco').fill('SANTANDER');
    assert.equal(await page.locator('#lead-banco').inputValue(),'SANTANDER');
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2);

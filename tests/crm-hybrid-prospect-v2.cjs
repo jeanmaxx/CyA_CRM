@@ -5,7 +5,7 @@ const meta=fs.readFileSync('app-meta-leads-workflow.js','utf8');
 const curp=fs.readFileSync('app-curp-client-eligibility.js','utf8');
 const html=fs.readFileSync('app/index.html','utf8');
 const loader=fs.readFileSync('app-prospect-manual-fields-fix.js','utf8');
-assert.match(html,/app-prospect-hybrid-v2\.css\?v=20261113-elegibilidad-aprobada1/);
+assert.match(html,/app-prospect-hybrid-v2\.css\?v=20261113-origen-aprobado1/);
 assert.match(loader,/app-prospect-hybrid-v2\.js\?v=20261113-elegibilidad-aprobada1/);
 assert.match(styles,/cya-hybrid-lead-cards/);
 assert.ok(!meta.includes('cya-copy-review-request'));
