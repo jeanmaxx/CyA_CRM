@@ -81,17 +81,88 @@ function header(c){
   else $('perfil-edit-btn')?.click();
  };
 }
+
+/* Reuse the native client-edit form IN PLACE. No parallel save code or data model. */
+const inlineCategories=new Set(['identidad','previsional','afore','banco','comisiones','notas']);
+const inlineFields={
+ identidad:['fc-nombre','fc-telefono','fc-email','fc-ciudad','fc-curp','fc-domicilio','fc-fuente','fc-servicio'],
+ previsional:['fc-nss','fc-rfc','el-semanas','el-imss','el-retiro','el-fecha','fc-monto'],
+ afore:['fc-afore','fc-fecha-biometrica','fc-hora-afore','fc-sucursal-afore','fc-fecha-alta','fc-fecha-solicitud-manual'],
+ banco:['fc-banco','fc-nivel-bbva','fc-clabe'],
+ comisiones:['fc-colaborador','fc-col-pct','fc-col-comision','fc-honorarios','fc-comision'],
+ notas:['fc-notas']
+};
+let editorHome=null,editorActive=false,editorSection='';
+function stopInlineEditor(){
+ const modal=$('modal-cliente');if(!modal||!editorActive)return;
+ modal.classList.remove('cya-hybrid-inline-editor','open');
+ modal.removeAttribute('data-hybrid-section');
+ modal.querySelectorAll('.form-group[hidden],.form-row[hidden],.tab-panel[hidden]').forEach(el=>{el.hidden=false;});
+ if(editorHome&&modal.parentElement!==editorHome)editorHome.appendChild(modal);
+ editorActive=false;editorSection='';
+}
+function confirmSwitch(){
+ if(!editorActive)return true;
+ if(typeof clienteFormDirty!=='undefined'&&clienteFormDirty&&
+    !window.confirm('Hay cambios sin guardar. ¿Deseas descartarlos y cambiar de sección?'))return false;
+ return true;
+}
+function showEditorFields(section){
+ const modal=$('modal-cliente');if(!modal)return;
+ const allow=new Set(inlineFields[section]||[]);
+ const groupIds=[...modal.querySelectorAll('.form-group')];
+ for(const group of groupIds){
+  const ids=[...group.querySelectorAll('input[id],select[id],textarea[id]')].map(el=>el.id);
+  group.hidden=!ids.some(id=>allow.has(id));
+ }
+ // Row-level hiding makes the editor compact, but leaves source inputs in the
+ // document so guardarCliente's existing validation and persistence work.
+ for(const row of modal.querySelectorAll('.form-row')){
+  const children=[...row.querySelectorAll('.form-group')];
+  row.hidden=children.length>0&&!children.some(g=>!g.hidden);
+ }
+ modal.querySelectorAll('.tab-panel').forEach(panel=>{
+  const visible=[...panel.querySelectorAll('.form-group')].some(g=>!g.hidden);
+  panel.hidden=!visible;
+ });
+ // Eligibility is generated dynamically by the original application.
+ const eligibility=$('tab-elegibilidad');
+ if(eligibility)eligibility.hidden=section!=='previsional';
+}
+function mountInlineEditor(c,section){
+ const area=$('cya-hybrid-client-content'),editor=$('modal-cliente');
+ if(!area||!editor||typeof window.editCliente!=='function')return false;
+ if(!editorHome)editorHome=editor.parentElement;
+ // editCliente populates native form fields and retains its current validation,
+ // advisor permissions and cloudSyncNow guarded save.
+ window.editCliente(c.id);
+ area.appendChild(editor);
+ editor.classList.add('cya-hybrid-inline-editor');
+ editor.dataset.hybridSection=section;
+ editorSection=section;
+ editorActive=true;
+ showEditorFields(section);
+ const originalCancel=editor.querySelector('.modal-footer .btn:not(.btn-primary)');
+ if(originalCancel){originalCancel.dataset.cyaHybridCancel='1';originalCancel.onclick=()=>{
+  stopInlineEditor();selected='';selection(c);
+ };}
+ if(typeof clienteFormDirty!=='undefined')clienteFormDirty=false;
+ return true;
+}
+
 function selection(c){
  const root=$('cya-hybrid-client-root'),area=$('cya-hybrid-client-panel');
  if(!root||!area)return;
  root.querySelectorAll('[data-hybrid-client]').forEach(b=>{const yes=b.dataset.hybridClient===selected;b.classList.toggle('active',yes);b.setAttribute('aria-pressed',String(yes));});
- if(!selected){area.hidden=true;return;}
+ if(!selected){if(editorActive)stopInlineEditor();area.hidden=true;return;}
  area.hidden=false;
  const x=items.find(v=>v[0]===selected);
+ if(editorActive)stopInlineEditor();
  const stash=$('cya-hybrid-client-legacy');
  if(stash){for(const old of [...area.querySelectorAll(':scope > .cya-hybrid-client-panel-content > .tab-panel')]){old.hidden=true;old.classList.remove('active');stash.appendChild(old);}}
  area.innerHTML='<div class="cya-hybrid-client-panel-head"><strong>'+esc(x[1])+'</strong><small>Panel interno</small></div><div class="cya-hybrid-client-panel-content" id="cya-hybrid-client-content"></div>';
  const box=$('cya-hybrid-client-content'),source=$(x[3]);
+ if(inlineCategories.has(selected)&&mountInlineEditor(c,selected))return;
  if(source){
   source.classList.add('active');source.hidden=false;box.appendChild(source);
   if(selected==='previsional'||selected==='banco'){
@@ -125,10 +196,32 @@ function build(){
   const stash=$('cya-hybrid-client-legacy');
   for(const panel of [...body.querySelectorAll(':scope>.tab-panel')]){panel.hidden=true;panel.classList.remove('active');stash.appendChild(panel);}
   root.querySelector('.cya-hybrid-client-cards').innerHTML=order(c).map(x=>'<button class="cya-hybrid-client-card" type="button" data-hybrid-client="'+x[0]+'" aria-pressed="false"><strong>'+esc(x[2])+' &nbsp; '+esc(x[1])+'</strong><small>'+esc(summary(c,x[0]))+'</small></button>').join('');
-  root.querySelector('.cya-hybrid-client-cards').addEventListener('click',e=>{const b=e.target.closest('[data-hybrid-client]');if(!b)return;selected=selected===b.dataset.hybridClient?'':b.dataset.hybridClient;selection(c);});
+  root.querySelector('.cya-hybrid-client-cards').addEventListener('click',e=>{const b=e.target.closest('[data-hybrid-client]');if(!b||!confirmSwitch())return;selected=selected===b.dataset.hybridClient?'':b.dataset.hybridClient;selection(c);});
   selection(c);
  }finally{building=false;}
 }
+
+const nativeSave=window.guardarCliente;
+if(typeof nativeSave==='function')window.guardarCliente=async function(...args){
+ const wasInline=editorActive,priorSection=selected,wasId=currentId;
+ const result=await nativeSave.apply(this,args);
+ if(wasInline&&!$('modal-cliente')?.classList.contains('open')){
+  stopInlineEditor();
+  if($('modal-perfil')?.classList.contains('open')&&typeof window.openPerfil==='function'){
+   window.openPerfil(wasId);
+   selected=priorSection;
+   // The existing openPerfil rebuilds the profile; its MutationObserver
+   // reconstructs the nine cards and their selected native form.
+  }
+ }
+ return result;
+};
+// Always restore the native modal before closing the parent profile.
+$('modal-perfil')?.querySelector('.profile-close')?.addEventListener('click',()=>{
+ if(editorActive&&!confirmSwitch())return;
+ stopInlineEditor();
+},true);
+
 const target=$('perfil-body');
 if(target)new MutationObserver(()=>{if(!$('cya-hybrid-client-root')&&$('pd-contacto'))build();}).observe(target,{childList:true,subtree:false});
 if($('modal-perfil')?.classList.contains('open'))build();
