@@ -71,3 +71,9 @@
 #modal-perfil .cya-hybrid-notes-log small{color:var(--text-muted);font-size:10px;white-space:nowrap}
 
 #modal-perfil:has(#cya-hybrid-client-root) #perfil-save-btn{display:none!important}
+
+/* El seguimiento del trámite está fuera del expediente; ocultar el duplicado legado. */
+#modal-perfil:has(#cya-hybrid-client-root) .profile-stage-wrap{display:none!important}
+#modal-perfil:has(#cya-hybrid-client-root) .profile-stage-current{display:none!important}
+#modal-perfil:has(#cya-hybrid-client-root) .alerta-firma{font-size:11px!important;padding:7px 10px!important;margin-bottom:7px!important}
+#modal-perfil #cya-hybrid-client-agenda{font-size:11px;white-space:nowrap}
