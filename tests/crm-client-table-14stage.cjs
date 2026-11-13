@@ -13,7 +13,7 @@ const c={id:'synthetic-1',nombre:'CLIENTE DE PRUEBA',servicio:'retiro_desempleo'
 const html=model.rows([c]);
 assert.equal((html.match(/<td\b/g)||[]).length,15,'Date + name + 12 milestone cells + request');
 assert.equal((html.match(/data-cya-activity=/g)||[]).length,12);
-assert(!html.includes('Abrir expediente')&&!html.includes('Ver perfil')&&!html.includes('✎'),'No extra row actions');
+assert(!html.includes('action-btn')&&!html.includes('>✎</button>'),'No extra row action buttons');
 assert(html.includes('data-cya-activity="documentos"'));
 const mobile=model.cards([c]);
 assert.equal((mobile.match(/data-cya-activity=/g)||[]).length,12);
