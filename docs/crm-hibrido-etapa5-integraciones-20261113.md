@@ -44,3 +44,10 @@ Respaldo: `backup/crm-hibrido-etapa4-pre-etapa5-20261113`.
 4. Confirmar integridad de contratos PDF, comisiones de clientes atendidos/archivados y vistas de servicios distintos a retiro.
 5. Resolver cualquier problema previo a fusionar PR #89, #90, #91 en orden; ejecutar CI y comprobación del Cloudflare desplegado; preparar y ensayar reversión.
 6. La eliminación definitiva de expediente permanece deshabilitada hasta disponer de backend reversible y control de dependencias financieras.
+
+## Reforzamiento de Finanzas — continuación 13/11/2026
+
+- El indicador 12 «Honorarios» exige evidencia explícita de cobro desde `estadoPago` y, además, un hito registrado o etapa histórica compatible; no basta que una etapa histórica indique «honorarios recibidos» si Finanzas sigue pendiente.
+- Se rechazan estados negados, pendientes o parciales. Se reconocen estados finales compatibles como `Cobrado`, `Pago recibido` y `Liquidado`; este indicador no calcula ni aplica comisiones.
+- `tests/crm-activities12.cjs` verifica casos de estado pendiente, negado, parcial, cobrado y registros históricos con verificación externa; se mantiene aislada la función del colaborador.
+- Fusionar a `main` solo después de comprobar pruebas autenticadas y renderización móvil/escritorio; la suite CI no equivale a despliegue validado.
