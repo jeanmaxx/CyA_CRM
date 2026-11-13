@@ -7,6 +7,8 @@
 (function installWhatsAppMessageCenter(){
   if(window.__cyaWhatsAppMessageCenterInstalled)return;
   window.__cyaWhatsAppMessageCenterInstalled=true;
+  // The official SINDOS module must not inject its legacy side-button into the new 6-column layout.
+  window.__cyaWhatsAppSindosIntegrated=true;
 
   const TEMPLATE_DEFAULTS=[
     {
@@ -19,7 +21,7 @@
     },
     {
       id:'pl_wa_sindos_1',nombre:'WhatsApp · Revisión SINDOS',etapa:'sindos',tipo:'whatsapp',icono:'',cyaGrupo:'sindos',cyaOrden:1,
-      texto:'¡Hola, {{NOMBRE}}! {{SALUDO}}.\n\nTe saluda *{{ASESOR}}* de *Casillas & Asociados*.\n\nEstamos dando seguimiento a la revisión de tus datos y semanas cotizadas en SINDOS.\n\nEste paso es una verificación de información; la viabilidad definitiva y el monto disponible deberán confirmarse mediante los sistemas y procedimientos correspondientes.\n\nTe avisaré cuando tengamos una actualización y los siguientes pasos.\n\nQuedo pendiente para apoyarte.'
+      texto:'Hola, {{NOMBRE}}.\n\nQueremos informarte que tu trámite *continúa en proceso de revisión*.\nAl realizar la primera validación de tus semanas cotizadas, el sistema nos indica que _anteriormente ya realizaste un retiro por desempleo_.\n\nPor este motivo, es necesario realizar una segunda revisión, con la finalidad de confirmar la fecha en que se efectuó tu último retiro y validar que actualmente ya cumplas nuevamente con el tiempo requerido para solicitar este beneficio.\n\nEsta revisión se realiza únicamente en días hábiles. En cuanto tengamos la confirmación, me comunicaré contigo para informarte si ya eres apto para continuar.\n\nAgradecemos tu paciencia y confianza.'
     },
     {
       id:'pl_wa_revision_1',nombre:'WhatsApp · Revisión en proceso',etapa:'semanas',tipo:'whatsapp',icono:'',cyaGrupo:'revision',cyaOrden:1,
