@@ -24,7 +24,13 @@
  const older=['generando_contrato','contrato_firmas','contrato_firmado','dado_alta','afore_actualizada','solicitud_realizada','deposito_recibido','honorarios_recibidos','concluido'];
  const legacyAt=(c,id)=>older.indexOf(c?.etapa)>=older.indexOf(id)&&older.indexOf(c?.etapa)>=0;
  const flag=(c,id)=>Boolean(c?.etapasOperativasV2?.[id]?.done||c?.portalActividades?.[id==='firmado'?'firma':id==='banco_n4'?'banco':id]?.done);
- const feeCollected=c=>['cobrado','pagado','liquidado','pago recibido','recibido'].some(v=>String(c?.estadoPago||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(v));
+ const feeCollected=c=>{
+  const status=String(c?.estadoPago||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  // A legacy workflow step or external verification never proves money was collected.
+  // Reject negated/unfinished statuses such as "no recibido", "no cobrado" and "pendiente".
+  if(!status||/\\b(no|sin|pendiente|parcial|por cobrar|por pagar|sin confirmar|cancelado|rechazado)\\b/.test(status))return false;
+  return /^(cobrado|pagado|liquidado|pago recibido|recibido)(?:\\s+(?:total|completo|confirmado))?$/.test(status);
+ };
  const documents=c=>{
   const d=c?.etapasOperativasV2?.documentos?.checks||{},old=c?.docs||{};
   return {
@@ -47,7 +53,7 @@
    expediente:flag(c,'expediente')||legacyAt(c,'afore_actualizada'),
    solicitud:flag(c,'solicitud')||Boolean(c?.fechaSolicitudRealizada)||legacyAt(c,'solicitud_realizada'),
    deposito:flag(c,'deposito')||legacyAt(c,'deposito_recibido'),
-   honorarios:(flag(c,'honorarios')&&feeCollected(c))||legacyAt(c,'honorarios_recibidos')
+   honorarios:feeCollected(c)&&(flag(c,'honorarios')||legacyAt(c,'honorarios_recibidos'))
   };
   // Do not guess optional milestones from later legacy stages. They remain yellow.
   return done;
@@ -142,7 +148,7 @@
  function save(id,stepId){
   const c=getClient(id),step=statuses(c).find(s=>s.id===stepId);
   if(!step||!authorized(c))return msg('No tienes permiso para actualizar este seguimiento');
-  if(stepId==='honorarios'&&!(feeCollected(c)||legacyAt(c,'honorarios_recibidos'))){
+  if(stepId==='honorarios'&&!feeCollected(c)){
    return msg('Primero confirma el cobro en Finanzas; el indicador no sustituye ese registro');
   }
   const note=String($('cya-op-note')?.value||'').trim(),date=readDate('cya-op-date');
