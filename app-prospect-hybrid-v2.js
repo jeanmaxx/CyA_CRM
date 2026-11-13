@@ -180,6 +180,8 @@
  }
  function showSelected(){
   const root=$('cya-hybrid-lead-root');if(!root)return;
+  const eligibilityFields=$('cya-hybrid-fields-elegibilidad');
+  if(eligibilityFields)eligibilityFields.dataset.eligibilityService=byId('lead-servicio')||'retiro_desempleo';
   TABS.forEach(({id})=>{
    const section=$('cya-hybrid-section-'+id),btn=root.querySelector('[data-hybrid-lead-section="'+id+'"]');
    if(section)section.hidden=id!==current;
