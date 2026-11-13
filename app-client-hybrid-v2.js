@@ -42,6 +42,21 @@ function header(c){
  const modal=$('modal-perfil'),copy=modal?.querySelector('.profile-header-copy');if(!copy)return;
  $('perfil-title').textContent=c.nombre||'Cliente';
  $('perfil-sub').textContent=[c.curp||'CURP pendiente',c.telefono||'',c.ciudad||''].filter(Boolean).join(' · ');
+ let curpButton=$('cya-hybrid-copy-curp');
+ if(!curpButton){
+  curpButton=document.createElement('button');curpButton.type='button';curpButton.id='cya-hybrid-copy-curp';curpButton.className='btn';curpButton.title='Copiar CURP';curpButton.setAttribute('aria-label','Copiar CURP');curpButton.textContent='⧉';
+  $('perfil-sub').insertAdjacentElement('afterend',curpButton);
+ }
+ curpButton.disabled=!c.curp;
+ curpButton.onclick=async()=>{
+  let done=false;
+  try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(String(c.curp));done=true;}}catch(_){}
+  if(!done){
+   const input=document.createElement('textarea');input.value=String(c.curp||'');input.style.cssText='position:fixed;left:-9999px;opacity:0';
+   document.body.appendChild(input);input.select();try{done=document.execCommand('copy');}catch(_){}input.remove();
+  }
+  if(typeof showToast==='function')showToast(done?'CURP copiada':'No se pudo copiar la CURP',done?'success':'warn');
+ };
  let meta=$('cya-hybrid-client-meta');if(!meta){meta=document.createElement('div');meta.id='cya-hybrid-client-meta';copy.appendChild(meta);}
  meta.innerHTML='<span>'+esc(getAdvisor(c)?.nombre||c.asesorNombre||'Asesor asignado')+'</span><span>'+esc(getCollaborator(c)?.nombre||'Cliente directo')+'</span><span>'+esc(c.fuenteContacto||(typeof FUENTES!=='undefined'?FUENTES[c.fuente]:c.fuente)||'Origen pendiente')+'</span>';
  let dates=$('cya-hybrid-client-dates');if(!dates){dates=document.createElement('div');dates.id='cya-hybrid-client-dates';copy.insertAdjacentElement('afterend',dates);}
