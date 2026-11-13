@@ -3,7 +3,7 @@
   if(window.__cyaProspectManualFieldsFixInstalled)return;
   window.__cyaProspectManualFieldsFixInstalled=true;
 
-  const FIELD_IDS=['lead-email','lead-ciudad','lead-fuente','lead-nss','lead-afore','lead-domicilio'];
+  const FIELD_IDS=['lead-email','lead-ciudad','lead-fuente','lead-nss','lead-afore','lead-domicilio','lead-banco'];
   let dirtyValues={};
   let activeLeadKey='';
   let scheduled=false;
