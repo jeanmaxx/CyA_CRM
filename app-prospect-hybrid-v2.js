@@ -138,6 +138,23 @@
   setTimeout(refresh,120);
   return result;
  };
+ // Maintain the approved continuity rule: after a successful save, keep the
+ // expediente open on the same section without creating a second data record.
+ const originalSave=window.guardarLead;
+ if(typeof originalSave==='function')window.guardarLead=async function(...args){
+  const openBefore=modal()?.classList.contains('open')===true,section=current;
+  const response=await originalSave.apply(this,args);
+  if(openBefore&&!modal()?.classList.contains('open')){
+   const id=typeof editingLeadId!=='undefined'?editingLeadId:null;
+   const persisted=id&&typeof store!=='undefined'&&store.leads?.some(l=>String(l.id)===String(id));
+   if(persisted&&typeof window.openModalLead==='function'){
+    window.openModalLead(id);
+    current=section;dirty=false;
+    setTimeout(()=>{refresh();current=section;showSelected();},160);
+   }
+  }
+  return response;
+ };
  // One first refresh handles a modal already open at module initialization.
  if(modal()?.classList.contains('open'))setTimeout(refresh,120);
 })();
