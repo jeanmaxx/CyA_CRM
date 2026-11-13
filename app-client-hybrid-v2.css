@@ -77,3 +77,39 @@
 #modal-perfil:has(#cya-hybrid-client-root) .profile-stage-current{display:none!important}
 #modal-perfil:has(#cya-hybrid-client-root) .alerta-firma{font-size:11px!important;padding:7px 10px!important;margin-bottom:7px!important}
 #modal-perfil #cya-hybrid-client-agenda{font-size:11px;white-space:nowrap}
+
+/* Corrección de estabilización: el diseño híbrido es la única jerarquía visible.
+   El antiguo resumen de seis KPIs / datos del cliente no debe invadir la pantalla. */
+#modal-perfil:has(#cya-hybrid-client-root) #cya2-overview,
+#modal-perfil:has(#cya-hybrid-client-root) #cya2-stage-label,
+#modal-perfil:has(#cya-hybrid-client-root) #cya2-pending,
+#modal-perfil:has(#cya-hybrid-client-root) .profile-stage-wrap,
+#modal-perfil:has(#cya-hybrid-client-root) .profile-summary-grid,
+#modal-perfil:has(#cya-hybrid-client-root) #perfil-tabs{display:none!important}
+#modal-perfil:has(#cya-hybrid-client-root) .client-profile-modal{display:flex!important;flex-direction:column!important;max-height:94dvh!important}
+#modal-perfil:has(#cya-hybrid-client-root) #perfil-body{min-height:0!important;flex:1 1 auto;overflow:auto!important;padding-top:10px!important;overscroll-behavior:contain}
+#modal-perfil:has(#cya-hybrid-client-root) .profile-header{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:10px!important;padding:12px 16px!important}
+#modal-perfil:has(#cya-hybrid-client-root) .profile-header-copy{flex:1 1 260px!important;grid-column:auto!important;width:auto!important;min-width:0!important}
+#modal-perfil:has(#cya-hybrid-client-root) .profile-header-actions{display:flex!important;flex:0 0 auto!important;grid-column:auto!important;width:auto!important;gap:6px!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-end!important}
+#modal-perfil:has(#cya-hybrid-client-root) #perfil-title{font-size:17px!important;white-space:normal!important}
+#modal-perfil:has(#cya-hybrid-client-root) #perfil-sub{margin-top:3px!important;color:var(--text-muted)}
+#modal-perfil:has(#cya-hybrid-client-root) #cya-hybrid-client-root{gap:10px!important;margin-top:0!important}
+#modal-perfil:has(#cya-hybrid-client-root) .cya-operational-profile{padding:10px 12px!important}
+#modal-perfil:has(#cya-hybrid-client-root) .cya-hybrid-client-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#modal-perfil:has(#cya-hybrid-client-root) .cya-hybrid-client-card{min-height:54px;padding:9px 12px;gap:3px}
+#modal-perfil:has(#cya-hybrid-client-root) .cya-hybrid-client-card small{font-size:10px}
+#modal-perfil:has(#cya-hybrid-client-root) #cya-hybrid-client-admin summary{display:grid;place-items:center;width:36px;height:36px;padding:0;min-width:36px;color:var(--text);border-color:var(--border)}
+#modal-perfil:has(#cya-hybrid-client-root) #cya-hybrid-client-admin summary:hover{border-color:var(--warning);background:var(--bg-secondary)}
+#modal-perfil:has(#cya-hybrid-client-root) #cya-hybrid-client-admin summary svg{display:block}
+#modal-perfil:has(#cya-hybrid-client-root) .cya-hybrid-client-menu{right:0!important}
+#modal-perfil:has(#cya-hybrid-client-root) .cya-hybrid-client-dates{gap:14px}
+@media(max-width:980px){
+ #modal-perfil:has(#cya-hybrid-client-root) .cya-hybrid-client-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #modal-perfil:has(#cya-hybrid-client-root) .profile-header-actions{flex-basis:100%!important}
+}
+@media(max-width:480px){
+ #modal-perfil:has(#cya-hybrid-client-root) .cya-hybrid-client-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #modal-perfil:has(#cya-hybrid-client-root) .cya-hybrid-client-card{min-height:62px}
+ #modal-perfil:has(#cya-hybrid-client-root) .cya-hybrid-client-dates{width:100%;justify-content:space-between}
+ #modal-perfil:has(#cya-hybrid-client-root) .profile-header-actions{justify-content:flex-start!important}
+}
