@@ -41,3 +41,23 @@
 #modal-perfil #cya-hybrid-client-legacy[hidden]{display:none!important}
 
 #modal-perfil #cya-hybrid-copy-curp{display:inline-grid;place-items:center;vertical-align:middle;margin-top:5px;padding:3px;width:27px;height:27px;min-width:27px;font-size:15px}
+
+
+/* The ONE existing #modal-cliente form becomes an inline editor, not an overlay. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor{display:block!important;position:static!important;inset:auto!important;width:100%!important;height:auto!important;max-height:none!important;overflow:visible!important;padding:0!important;margin:0!important;background:none!important;z-index:auto!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor>.modal{display:block!important;position:static!important;transform:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;background:none!important;padding:0!important;margin:0!important;width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .modal-body{display:block!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .modal-header,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor #modal-tabs,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-section,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .divider{display:none!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .tab-panel:not([hidden]){display:block!important;animation:none!important;padding:0!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor [hidden]{display:none!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:10px}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-row:not([hidden])>.form-group{min-width:0}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor>.modal>.modal-footer{position:sticky;bottom:0;z-index:2;background:var(--bg-secondary);border-top:1px solid var(--border);margin:12px 0 0;padding:12px 0;display:flex!important;justify-content:flex-end}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor .client-edit-footer{position:sticky;bottom:0;z-index:2;background:var(--bg-secondary);border-top:1px solid var(--border);padding:12px 0;margin-top:12px;display:flex;justify-content:flex-end}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor textarea{max-width:100%}
+@media(max-width:670px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-row{grid-template-columns:1fr}
+}
