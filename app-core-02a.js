@@ -508,7 +508,7 @@ function renderClientes(){
     <div class="clients-mobile-list" id="clientes-mobile-list">${renderClientesCards(aplicarOrden(cl))}</div>
   </div>
   ${atendidos.length?`<details class="archivados-section clients-attended-section" style="margin-top:16px;width:100%;">
-    <summary class="archivados-header cya-clients-attended-bar" style="cursor:pointer;">▸ Clientes atendidos (${atendidos.length})</summary>
+    <summary class="archivados-header cya-clients-attended-bar" style="cursor:pointer;">▸ CLIENTES ATENDIDOS (${atendidos.length})</summary>
     <div style="padding:0 14px 14px;">
       <div class="card clients-list-card" style="overflow:hidden;">
         <div class="table-wrap clients-table-wrap"><table>
