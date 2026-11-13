@@ -149,7 +149,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-whatsapp-message-center]'))return;
     const script=document.createElement('script');
-    script.src='/app-whatsapp-message-center.js?v=20261113-whatsapp-wide1';
+    script.src='/app-whatsapp-message-center.js?v=20261113-wa-close-fixed1';
     script.async=false;
     script.dataset.cyaWhatsappMessageCenter='1';
     document.head.appendChild(script);
