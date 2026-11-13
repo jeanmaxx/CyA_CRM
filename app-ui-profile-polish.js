@@ -39,7 +39,7 @@
   }
 
   const core=document.createElement('script');
-  core.src='/app-ui-profile-polish-core.js?v=20261113-polish2';
+  core.src='/app-ui-profile-polish-core.js?v=20261113-prospect-final1';
   core.async=false;
   core.dataset.cyaProfilePolishCore='1';
   core.onload=waitForStage1ThenLoadStage2;
