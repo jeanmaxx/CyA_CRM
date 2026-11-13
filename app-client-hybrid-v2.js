@@ -24,7 +24,7 @@ const canAccessClient=c=>{
  return String(c.asesorId||'')===String(sesionActiva.id);
 };
 
-const signed=c=>c.contratoFirmado===true||['contrato_firmado','dado_alta','afore_actualizada','solicitud_realizada','deposito_recibido','honorarios_recibidos','concluido'].includes(c.etapa);
+const signed=c=>c.contratoFirmado===true||c.etapasOperativasV2?.firmado?.done===true||['contrato_firmado','dado_alta','afore_actualizada','solicitud_realizada','deposito_recibido','honorarios_recibidos','concluido'].includes(c.etapa);
 const order=c=>signed(c)?[...items.slice(1,6),items[6],items[0],items[7],items[8]]:items;
 const format=d=>{if(!d)return 'Por confirmar';const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d));return m?m[3]+'/'+m[2]+'/'+m[1]:String(d)};
 const plusBusiness=(d)=>{
@@ -71,7 +71,7 @@ function header(c){
  let dates=$('cya-hybrid-client-dates');if(!dates){dates=document.createElement('div');dates.id='cya-hybrid-client-dates';copy.insertAdjacentElement('afterend',dates);}
  // Only display existing estimated request values; do not alter formula or stored dates.
  const solicitud=c.fechaSolicitudManual||c.fechaRetiroEstimada||'';
- const cobro=c.fechaCobroProbable||plusBusiness(c.fechaSolicitudRealizada||solicitud);
+ const cobro=c.fechaCobroProbable||plusBusiness(c.fechaSolicitudRealizada||c.etapasOperativasV2?.solicitud?.fecha||solicitud);
  dates.innerHTML='<div><small>SOLICITUD PROBABLE</small><strong>'+esc(format(solicitud))+'</strong></div><div><small>COBRO PROBABLE</small><strong>'+esc(format(cobro))+'</strong></div>';
  let agenda=$('cya-hybrid-client-agenda');
  if(!agenda){
