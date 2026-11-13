@@ -47,6 +47,13 @@ for(const path of ['app-workflow.js','app-prospect-workflow.js','app-contract-wo
  assert.equal(noted.banco,'SANTANDER');
  assert(noted.historial.some(h=>h.tipo==='nota'),'Notes update must be recorded in client audit history');
  assert.equal(noted.fechaRetiroEstimada,before.fechaRetiroEstimada);
+ // Another advisor cannot call the native scoped save directly even if a UI
+ // route or browser console somehow exposes an edit form.
+ run("sesionActiva.rol='asesor';sesionActiva.id='other-advisor';window.__cyaHybridClientEditSection='banco';editCliente('test-client')");
+ val('fc-banco','NO AUTORIZADO');
+ await run('guardarCliente()');
+ assert.equal(run("store.clientes[0].banco"),'SANTANDER','Unauthorized advisor must not modify another advisor client');
+
  dom.window.close();
  console.log('PASS: real guardarCliente protects nonselected fields, manual dates, bank account, finance and notes audit.');
 })().catch(error=>{console.error(error);dom.window.close();process.exitCode=1});
