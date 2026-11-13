@@ -306,6 +306,10 @@
       '#cya-wa-message-center{z-index:30020!important;align-items:center;justify-content:center;padding:12px;box-sizing:border-box}',
       '#cya-wa-message-center .modal.cya-wa-center-modal{width:min(1280px,calc(100vw - 32px))!important;max-width:1280px!important;max-height:94dvh!important;min-width:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;background:var(--bg-card,#17202d)!important;border-radius:15px}',
       '#cya-wa-message-center .cya-wa-center-modal .modal-header{flex:0 0 auto;align-items:flex-start;min-height:0!important;padding:17px 22px 14px!important}',
+      '#cya-wa-message-center .cya-wa-close{appearance:none!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 36px!important;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;padding:0!important;box-sizing:border-box!important;border:1px solid var(--border,#3a4659)!important;border-radius:9px!important;background:var(--bg-secondary,#202b3b)!important;color:var(--text,#e9eef5)!important;cursor:pointer!important}',
+      '#cya-wa-message-center .cya-wa-close svg{display:block!important;width:18px!important;height:18px!important;stroke:currentColor!important;stroke-width:2!important;flex:none!important}',
+      '#cya-wa-message-center .cya-wa-close:hover{background:rgba(148,163,184,.16)!important;border-color:var(--text-muted,#9caabf)!important}',
+      '#cya-wa-message-center .cya-wa-close:focus-visible{outline:2px solid #d7ae57!important;outline-offset:2px!important}',
       '#cya-wa-message-center .cya-wa-eyebrow{font-size:10px;font-weight:750;letter-spacing:.1em;color:#d7ae57;text-transform:uppercase;margin-bottom:4px}',
       '#cya-wa-message-center .cya-wa-center-modal .modal-title{font-size:22px!important;line-height:1.25!important}',
       '#cya-wa-message-center .cya-wa-center-modal #cya-wa-center-person{font-size:12px;line-height:1.4;color:var(--text-muted,#a4b1c5);margin:5px 0 0}',
@@ -347,7 +351,7 @@
     const modal=document.createElement('div');modal.id='cya-wa-message-center';modal.className='modal-overlay';
     modal.innerHTML='<div class="modal cya-wa-center-modal" role="dialog" aria-modal="true" aria-labelledby="cya-wa-center-title">'+
       '<div class="modal-header"><div><div class="cya-wa-eyebrow">MENSAJES INSTITUCIONALES</div><div class="modal-title" id="cya-wa-center-title">Mensajes WhatsApp</div><div class="form-helper" id="cya-wa-center-person"></div></div>'+
-      '<button class="modal-close" type="button" aria-label="Cerrar mensajes WhatsApp" onclick="cyaCerrarCentroMensajesWhatsApp()">×</button></div>'+
+      '<button class="cya-wa-close" type="button" aria-label="Cerrar mensajes WhatsApp" title="Cerrar" onclick="cyaCerrarCentroMensajesWhatsApp()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>'+
       '<div class="modal-body">'+
         '<nav class="cya-wa-nav" aria-label="Categorías de mensajes"><div class="cya-wa-section-label">SEGUIMIENTO</div><div class="cya-wa-template-row" id="cya-wa-main-buttons"></div>'+
         '<div class="cya-wa-section-label" id="cya-wa-reject-label">NO VIABLE / SEGUIMIENTO FUTURO</div><div class="cya-wa-template-row" id="cya-wa-reject-buttons"></div></nav>'+
