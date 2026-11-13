@@ -112,7 +112,7 @@ function stopInlineEditor(){
  const modal=$('modal-cliente');if(!modal||!editorActive)return;
  modal.classList.remove('cya-hybrid-inline-editor','open');
  modal.removeAttribute('data-hybrid-section');
- modal.querySelectorAll('.form-group[hidden],.form-row[hidden],.tab-panel[hidden]').forEach(el=>{el.hidden=false;});
+ modal.querySelectorAll('.form-group[hidden],.form-row[hidden],.tab-panel[hidden],details[hidden],.cya-next-action-heading[hidden]').forEach(el=>{el.hidden=false;});
  const cancel=modal.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(cancel)cancel.setAttribute('onclick',"closeModal('modal-cliente')");
  if(editorHome&&modal.parentElement!==editorHome)editorHome.appendChild(modal);
@@ -149,7 +149,7 @@ function showEditorFields(section){
   details.hidden=!visible;
  });
  const nextAction=$('fc-prox-tipo')?.closest('.form-row')?.previousElementSibling;
- if(nextAction&&/pr[oó]xima acci[oó]n/i.test(nextAction.textContent||''))nextAction.hidden=section!=='notas';
+ if(nextAction&&/pr[oó]xima acci[oó]n/i.test(nextAction.textContent||'')){nextAction.classList.add('cya-next-action-heading');nextAction.hidden=section!=='notas';}
  // Eligibility is generated dynamically by the original application.
  const eligibility=$('tab-elegibilidad');
  if(eligibility)eligibility.hidden=section!=='previsional';
