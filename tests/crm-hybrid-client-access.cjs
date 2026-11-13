@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require('jsdom');
+const script=fs.readFileSync('app-client-hybrid-v2.js','utf8');
+const build=(session,owner)=> {
+ const panels=['contacto','datos','contratos','cita-afore','docs','finanzas','historial'].map(x=>'<div class="tab-panel" id="pd-'+x+'"></div>').join('');
+ const html='<div id="modal-perfil" class="modal-overlay open"><div class="profile-header"><div class="profile-header-copy"><strong id="perfil-title"></strong><span id="perfil-sub"></span></div><div class="profile-header-actions"><button id="perfil-edit-btn">Editar</button><button id="perfil-regresar-prospecto-btn">Regresar</button><button id="perfil-descartar-btn">Descartar</button><button class="profile-close">Cerrar</button></div></div><div id="perfil-body"><div class="profile-stage-wrap"></div><div class="profile-summary-grid"></div><div id="perfil-tabs"></div>'+panels+'</div></div>';
+ const dom=new JSDOM(html,{url:'https://crm.example.invalid/',runScripts:'outside-only'});
+ const w=dom.window,d=w.document;
+ w.store={clientes:[{id:'c1',nombre:'CLIENTE DE PRUEBA',asesorId:owner,etapa:'contrato_firmado'}],asesores:[],colaboradores:[]};
+ w.perfilClienteActivo='c1';
+ w.sesionActiva=session;
+ w.isAdmin=()=>['admin','tech_admin'].includes(session?.rol);
+ w.showToast=()=>{};
+ w.closeModal=id=>d.getElementById(id).classList.remove('open');
+ w.eval(script);
+ const permitted=Boolean(d.getElementById('cya-hybrid-client-root'));
+ const open=d.getElementById('modal-perfil').classList.contains('open');
+ dom.window.close();return {permitted,open};
+};
+assert.deepEqual(build({id:'a1',rol:'asesor'},'a1'),{permitted:true,open:true},'Owner advisor should access own client');
+assert.deepEqual(build({id:'a2',rol:'asesor'},'a1'),{permitted:false,open:false},'Other advisor denied');
+assert.deepEqual(build({id:'admin',rol:'admin'},'a1'),{permitted:true,open:true},'Administrator may inspect other advisors');
+assert.deepEqual(build({id:'tech',rol:'tech_admin'},'a1'),{permitted:true,open:true},'Technical administrator may inspect other advisors');
+assert.deepEqual(build(null,'a1'),{permitted:false,open:false},'Unauthenticated profile denied');
+console.log('PASS: own-advisor client visibility, nonowner rejection, administrator exceptions and no-session denial.');
