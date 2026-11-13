@@ -31,6 +31,8 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
  assert.match(d.querySelector('#cya-hybrid-client-dates').textContent,/27\/12\/2026/);
  assert.match(d.querySelector('#cya-hybrid-client-meta').textContent,/Jessica/);
  assert.match(d.querySelector('#cya-hybrid-client-meta').textContent,/Meta Ads/);
+ assert.ok(d.getElementById('cya-hybrid-copy-curp'),'Client CURP has compact copy action');
+ assert.equal(d.getElementById('cya-hybrid-copy-curp').getAttribute('aria-label'),'Copiar CURP');
  assert.equal(d.querySelector('#cya-hybrid-client-panel').hidden,false,'Contracts open automatically before signed');
  assert.ok(d.querySelector('#cya-hybrid-client-content #native-contract'),'Original native contract controls preserved');
  const click=x=>d.querySelector('[data-hybrid-client="'+x+'"]').click();
