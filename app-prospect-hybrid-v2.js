@@ -63,8 +63,8 @@
   appendTo('elegibilidad',groupFor('lead-nss'));
   appendTo('elegibilidad',groupFor('lead-afore'));
   appendTo('origen',groupFor('lead-fuente'));
-  appendTo('seguimiento',rowFor('lead-servicio'));
   appendTo('seguimiento',$('cya-prospect-stage-stepper'));
+  appendTo('seguimiento',rowFor('lead-servicio'));
   appendTo('seguimiento',groupFor('lead-notas'));
   // The legacy Meta Ads tab remains hidden; its read-only content is displayed
   // in Origen. Do not recreate the original answers or write to them.
@@ -107,25 +107,38 @@
   // Interpretación humana de Meta Ads: no mostrar IDs técnicos, valores de API ni
   // cuestionarios duplicados. La fuente original sigue disponible en el registro.
   const meta=l?.metaLead||l?.origenMeta||null;
-  const sourceBox=$('cya-hybrid-origin-overview')||document.createElement('div');
-  if(!sourceBox.id){sourceBox.id='cya-hybrid-origin-overview';sourceBox.className='cya-hybrid-origin-overview';$('cya-hybrid-fields-origen')?.prepend(sourceBox);}
+  const sourceBox=$('cya-hybrid-origin-overview')||document.createElement('details');
+  if(!sourceBox.id){sourceBox.id='cya-hybrid-origin-overview';sourceBox.className='cya-hybrid-origin-overview';$('cya-hybrid-fields-origen')?.appendChild(sourceBox);}
+  const wasExpanded=sourceBox.open===true;
   const clean=x=>String(x??'').trim();
   const sourceRows=[
    ['Fuente',source],['Campaña',meta?.campaignName||meta?.campaign_name],
    ['Conjunto',meta?.adsetName||meta?.adset_name],['Anuncio',meta?.adName||meta?.ad_name],
    ['Formulario',meta?.formName||meta?.form_name]
   ].filter(([k,v])=>clean(v)&&clean(v)!=='—'&&!(k==='Fuente'&&clean(v)==='Origen pendiente'));
-  sourceBox.innerHTML='<div class="cya-hybrid-source-title">Origen de la solicitud</div><div class="cya-hybrid-source-grid">'+
+  sourceBox.innerHTML='<summary class="cya-hybrid-source-title">Detalles de Meta Ads <span aria-hidden="true">▾</span></summary><div class="cya-hybrid-source-grid">'+
     (sourceRows.length?sourceRows.map(([label,value])=>'<div class="cya-hybrid-source-row"><small>'+safe(label)+'</small><strong>'+safe(value)+'</strong></div>').join(''):'<span class="cya-hybrid-empty">Fuente sin confirmar</span>')+
-    '</div><p class="cya-hybrid-source-note">Detalles técnicos de la campaña ocultos. Las respuestas relevantes se muestran a continuación.</p>';
+    '</div><p class="cya-hybrid-source-note">Datos de procedencia de la solicitud. Los identificadores técnicos permanecen ocultos.</p>';
+  sourceBox.open=wasExpanded;
   const qualify=$('cya-hybrid-qualification')||document.createElement('div');
-  if(!qualify.id){qualify.id='cya-hybrid-qualification';$('cya-hybrid-fields-elegibilidad')?.prepend(qualify);}
+  if(!qualify.id){qualify.id='cya-hybrid-qualification';$('cya-hybrid-fields-origen')?.prepend(qualify);}
   const result=l&&typeof window.cyaMetaQualification==='function'?window.cyaMetaQualification(l):null;
   qualify.className='cya-hybrid-qualification '+(result?'is-'+result.tone:'is-orange');
   qualify.innerHTML='<strong>'+safe(result?.label||'Precalificación pendiente de revisión')+'</strong><small>'+
     safe(result?.reason||'Sin respuestas suficientes para clasificar')+
     (result?.needsBalanceReview?' · Consultar saldo directamente en AFORE':'')+
     '</small><span>Resultado orientativo; no sustituye la validación IMSS/AFORE.</span>';
+  // Operational priority: eligibility result, human answers, editable source,
+  // then optional collapsed campaign metadata.
+  const origin=$('cya-hybrid-fields-origen');
+  if(origin){
+   origin.prepend(qualify);
+   const questionnaire=$('cya-meta-questionnaire-panel');
+   if(questionnaire)qualify.insertAdjacentElement('afterend',questionnaire);
+   const sourceControl=$('lead-fuente')?.closest('.form-group');
+   if(sourceControl)origin.appendChild(sourceControl);
+   origin.appendChild(sourceBox);
+  }
   const status=root.querySelector('[data-hybrid-summary="elegibilidad"]');
   if(status&&result)status.textContent=result.label;
   makeHistory(l);
