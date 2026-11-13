@@ -112,7 +112,7 @@
   const wasExpanded=sourceBox.open===true;
   const clean=x=>String(x??'').trim();
   const sourceRows=[
-   ['Fuente',source],['Campaña',meta?.campaignName||meta?.campaign_name],
+   ['Campaña',meta?.campaignName||meta?.campaign_name],
    ['Conjunto',meta?.adsetName||meta?.adset_name],['Anuncio',meta?.adName||meta?.ad_name],
    ['Formulario',meta?.formName||meta?.form_name]
   ].filter(([k,v])=>clean(v)&&clean(v)!=='—'&&!(k==='Fuente'&&clean(v)==='Origen pendiente'));
