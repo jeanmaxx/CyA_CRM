@@ -111,3 +111,4 @@ jobs:
           node tests/crm-prospect-browser.cjs
           node tests/crm-prospect-approved-identity-browser.cjs
           node tests/crm-prospect-eligibility-browser.cjs
+          node tests/crm-whatsapp-wide-browser.cjs

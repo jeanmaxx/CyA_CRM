@@ -13,6 +13,7 @@ const files=[
   'app-prospect-manual-fields-fix.js',
   'app-prospect-hybrid-v2.js',
   'app-whatsapp-message-center.js',
+  'app-wa-sindos-template.js',
   'app-client-hybrid-v2.js',
   'app-client-activities-v2.js'
 ];
@@ -30,5 +31,8 @@ assert.match(meta,/function fillQuestionnaireTab\(l\)/);
 assert(!meta.includes('\\\\n  function fillQuestionnaireTab'),'Backslash n literals must never break Meta JS');
 assert.match(recovery,/app-meta-leads-workflow\.js\?v=20261113-elegibilidad-aprobada1/);
 assert.match(loader,/app-prospect-hybrid-v2\.js\?v=20261113-elegibilidad-aprobada1/);
+assert.match(loader,/app-whatsapp-message-center\.js\?v=20261113-whatsapp-wide1/);
+const worker=fs.readFileSync('_worker.js','utf8');
+assert.match(worker,/app-wa-sindos-template\.js\?v=20261113-whatsapp-wide1/);
 assert.match(app,/app-prospect-hybrid-v2\.css\?v=20261113-origen-aprobado1/);
 console.log('PASS production loader graph and syntax');
