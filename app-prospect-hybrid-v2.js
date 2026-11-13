@@ -66,8 +66,9 @@
   }
   // The existing Meta workflow inserts a second WhatsApp button below phone.
   // Only the approved top-right WhatsApp entry remains visible.
-  const duplicate=$('cya-client-message-actions');
-  if(duplicate)duplicate.hidden=true;
+  for(const id of ['cya-client-message-actions','cya-wa-center-actions']){
+   const duplicate=$(id);if(duplicate)duplicate.hidden=true;
+  }
  }
  function routeFields(){
   const container=body();if(!container)return;
