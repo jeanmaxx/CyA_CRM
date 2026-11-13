@@ -415,6 +415,17 @@ async function guardarCliente(){
   if(!nombre){showToast('El nombre es obligatorio','warn');return;}
   if(!tel){showToast('El teléfono es obligatorio','warn');return;}
   if(!svc){showToast('Selecciona un servicio','warn');switchTab('tab-contacto',0);return;}
+  // The hybrid UI displays Mexican dd/mm/aaaa, while el-fecha remains ISO.
+  // Never silently overwrite a stored date if its visible proxy is invalid.
+  if(window.__cyaHybridClientEditSection==='previsional'){
+    const shown=document.getElementById('cya-last-withdrawal-mx');
+    const native=document.getElementById('el-fecha');
+    if(shown&&shown.value.trim()&&(!native?.value||!shown.checkValidity())){
+      showToast('Fecha del último retiro inválida. Usa dd/mm/aaaa','warn');
+      shown.focus();
+      return;
+    }
+  }
   const docs={};
   document.querySelectorAll('#modal-docs-list .doc-check').forEach(el=>{ docs[el.dataset.doc]=el.classList.contains('checked'); });
   const oldCliente=editingId?store.clientes.find(c=>c.id===editingId):null;
