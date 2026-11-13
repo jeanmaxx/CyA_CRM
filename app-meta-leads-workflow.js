@@ -251,7 +251,7 @@
         <div class="form-group"><label class="form-label">AFORE (si ya se conoce)</label><input class="form-input" id="lead-afore" placeholder="AFORE"></div>
         <div class="form-group"><label class="form-label">Domicilio (opcional)</label><input class="form-input" id="lead-domicilio" placeholder="Calle, número, colonia, municipio, CP"></div>
       </div>
-      <div id="cya-meta-origin-box" class="cya-meta-origin-box" hidden></div>
+      <div class="form-group cya-lead-bank-original"><label class="form-label" for="lead-banco">Banco</label><input class="form-input input-upper" id="lead-banco" list="cya-lead-bancos" placeholder="Por definir" autocomplete="off"><datalist id="cya-lead-bancos"><option value="BBVA"><option value="BANAMEX"><option value="SANTANDER"><option value="BANORTE"><option value="HSBC"><option value="SCOTIABANK"><option value="AZTECA"><option value="BAJÍO"><option value="INBURSA"><option value="OTRO"></datalist></div><div id="cya-meta-origin-box" class="cya-meta-origin-box" hidden></div>
     </div>`;
   }
 
@@ -492,6 +492,7 @@
     set('lead-nss',l?.nss||'');
     set('lead-afore',l?.afore||'');
     set('lead-domicilio',l?.domicilio||'');
+    set('lead-banco',l?.banco||'');
     if(l&&isMetaLead(l)){
       const nameInput=document.getElementById('lead-nombre');
       const preferred=preferredMetaName(l);
@@ -517,7 +518,7 @@
 
   function captureExtraFields(){
     const get=id=>String(document.getElementById(id)?.value||'').trim();
-    return {email:get('lead-email'),ciudad:get('lead-ciudad'),fuenteContacto:get('lead-fuente'),nss:get('lead-nss').replace(/\D/g,'').slice(0,11),afore:get('lead-afore'),domicilio:get('lead-domicilio')};
+    return {email:get('lead-email'),ciudad:get('lead-ciudad'),fuenteContacto:get('lead-fuente'),nss:get('lead-nss').replace(/\D/g,'').slice(0,11),afore:get('lead-afore'),domicilio:get('lead-domicilio'),banco:get('lead-banco').toUpperCase()};
   }
 
   const baseOpenModalLead=window.openModalLead;
