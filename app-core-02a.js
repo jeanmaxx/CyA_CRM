@@ -486,24 +486,6 @@ function renderClientes(){
       <option value="directo">Solo directos</option>
       ${misColabs.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('')}
     </select>`:''}
-    <button class="btn" onclick="toggleDescartadosView()" id="btn-toggle-descartados" style="font-size:12px;flex-shrink:0;">
-      Descartados (${descartados.length})
-    </button>
-  </div>
-  <div id="descartados-panel" class="discarded-clients-panel" style="display:none;">
-    <div class="card" style="overflow:hidden;">
-      <div class="card-header"><div class="card-title">Clientes descartados (${descartados.length})</div></div>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Cliente</th><th>Causa</th><th>Fecha</th><th>Seguimiento</th></tr></thead>
-        <tbody>${descartados.map(c=>`<tr>
-          <td><span class="td-link" onclick="openPerfil('${c.id}')">${c.nombre}</span></td>
-          <td style="font-size:12px;">${c.causaDescarte||'—'}</td>
-          <td class="td-muted">${fmtDate(c.fechaDescarte)}</td>
-          <td>${c.fechaElegibleNuevo?`<span class="chip chip-amber" style="font-size:10px;">Elegible ~${fmtDate(c.fechaElegibleNuevo)}</span>`:'—'}</td>
-        </tr>`).join('')}</tbody>
-      </table></div>
-    </div>
-  </div>
   <div class="card clients-list-card">
     <div class="table-wrap clients-table-wrap">
       <table>
@@ -527,7 +509,7 @@ function renderClientes(){
     </div>
     <div class="clients-mobile-list" id="clientes-mobile-list">${renderClientesCards(aplicarOrden(cl))}</div>
   </div>
-  ${atendidos.length?`<details class="archivados-section clients-attended-section" style="margin-top:16px;" open>
+  ${atendidos.length?`<details class="archivados-section clients-attended-section" style="margin-top:16px;">
     <summary class="archivados-header" style="cursor:pointer;">CLIENTES ATENDIDOS (${atendidos.length})</summary>
     <div style="padding:0 14px 14px;">
       <div class="card clients-list-card" style="overflow:hidden;">
@@ -536,6 +518,22 @@ function renderClientes(){
           <tbody>${renderClientesRows(aplicarOrden(atendidos))}</tbody>
         </table></div>
         <div class="clients-mobile-list">${renderClientesCards(aplicarOrden(atendidos))}</div>
+      </div>
+    </div>
+  </details>`:''}
+  ${descartados.length?`<details class="archivados-section clients-discarded-section" style="margin-top:12px;">
+    <summary class="archivados-header" style="cursor:pointer;">CLIENTES DESCARTADOS (${descartados.length})</summary>
+    <div style="padding:0 14px 14px;">
+      <div class="card clients-list-card" style="overflow:hidden;">
+        <div class="table-wrap clients-table-wrap"><table>
+          <thead><tr><th>Cliente</th><th>Causa</th><th>Fecha</th><th>Seguimiento</th></tr></thead>
+          <tbody>${descartados.map(c=>`<tr>
+            <td><span class="td-link" onclick="openPerfil('${c.id}')">${escapeHTMLBasico(c.nombre||'')}</span></td>
+            <td style="font-size:12px;">${escapeHTMLBasico(c.causaDescarte||'—')}</td>
+            <td class="td-muted">${fmtDate(c.fechaDescarte)}</td>
+            <td>${c.fechaElegibleNuevo?`<span class="chip chip-amber" style="font-size:10px;">Elegible ~${fmtDate(c.fechaElegibleNuevo)}</span>`:'—'}</td>
+          </tr>`).join('')}</tbody>
+        </table></div>
       </div>
     </div>
   </details>`:''}`;
@@ -569,8 +567,8 @@ function renderClientesRows(cl){
       <td>
         <div style="display:flex;gap:4px;">
           <button class="action-btn" onclick="openPerfil('${c.id}')" title="Ver perfil">▤</button>
-          <button class="action-btn" onclick="editCliente('${c.id}')" title="Editar">✎</button>
-          <button class="action-btn" onclick="eliminar('${c.id}')" title="Eliminar" style="color:var(--danger)">⊗</button>
+          <button class="action-btn" onclick="openPerfil('${c.id}')" title="Abrir expediente">✎</button>
+          
         </div>
       </td>
     </tr>`;
@@ -597,8 +595,8 @@ function renderClientesCards(cl){
       </div>
       <div class="client-mobile-actions">
         <button class="btn" onclick="event.stopPropagation();openPerfil('${c.id}')">Ver expediente</button>
-        <button class="action-btn" onclick="event.stopPropagation();editCliente('${c.id}')" title="Editar" aria-label="Editar ${c.nombre}">✎</button>
-        <button class="action-btn" onclick="event.stopPropagation();eliminar('${c.id}')" title="Eliminar" aria-label="Eliminar ${c.nombre}" style="color:var(--danger)">⊗</button>
+        <button class="action-btn" onclick="event.stopPropagation();openPerfil('${c.id}')" title="Abrir expediente" aria-label="Abrir expediente ${c.nombre}">✎</button>
+        
       </div>
     </article>`;
   }).join('');
@@ -625,7 +623,7 @@ function filtrarClientes(){
   const fuente=document.getElementById('fil-fuente')?.value||'';
   const colab=document.getElementById('fil-colaborador')?.value||'';
   const filtered=clientesVisibles().filter(c=>{
-    if(c.descartado) return false; // excluir descartados de la lista principal
+    if(c.descartado||c.archivado) return false; // solo clientes activos en la lista principal
     return (!q||c.nombre.toLowerCase().includes(q)||(c.telefono||'').includes(q)||(c.nss||'').includes(q))
       &&(!svc||c.servicio===svc)&&(!etapa||c.etapa===etapa)&&(!fuente||c.fuente===fuente)
       &&(!colab||(colab==='directo'?!c.colaboradorId:c.colaboradorId===colab));

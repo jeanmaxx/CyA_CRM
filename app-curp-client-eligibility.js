@@ -71,7 +71,7 @@
     const warning=document.getElementById('lead-curp-warning');
     const actions=document.createElement('div');
     actions.id='lead-curp-actions';actions.className='cya-curp-actions';
-    actions.innerHTML='<button class="btn" type="button" onclick="cyaCopiarCurpProspecto()">⧉ Copiar CURP</button><button class="btn btn-primary" type="button" onclick="cyaVerificarCurpProspecto()">✓ Verificar en RENAPO</button>';
+    actions.innerHTML='<button class="btn cya-curp-copy-icon" type="button" title="Copiar CURP" aria-label="Copiar CURP" onclick="cyaCopiarCurpProspecto()">⧉</button><button class="btn btn-primary" type="button" onclick="cyaVerificarCurpProspecto()">✓ Verificar en RENAPO</button>';
     (warning||input).insertAdjacentElement('afterend',actions);
   }
 
