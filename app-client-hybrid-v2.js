@@ -64,6 +64,21 @@ function header(c){
  const solicitud=c.fechaSolicitudManual||c.fechaRetiroEstimada||'';
  const cobro=c.fechaCobroProbable||plusBusiness(c.fechaSolicitudRealizada||solicitud);
  dates.innerHTML='<div><small>SOLICITUD PROBABLE</small><strong>'+esc(format(solicitud))+'</strong></div><div><small>COBRO PROBABLE</small><strong>'+esc(format(cobro))+'</strong></div>';
+ let agenda=$('cya-hybrid-client-agenda');
+ if(!agenda){
+  agenda=document.createElement('button');agenda.id='cya-hybrid-client-agenda';agenda.type='button';agenda.className='btn';
+  agenda.textContent='Agenda';agenda.title='Crear un evento en Agenda vinculado a este cliente';
+  const actions=modal.querySelector('.profile-header-actions');
+  actions?.insertBefore(agenda,actions.querySelector('.profile-close'));
+ }
+ agenda.onclick=()=>{
+  if(editorActive&&!confirmSwitch())return;
+  if(typeof window.openModalAgenda!=='function')return;
+  if(editorActive)stopInlineEditor();
+  if(typeof window.closeModal==='function')window.closeModal('modal-perfil');
+  window.openModalAgenda(null);
+  if(typeof window.selAgCliente==='function')window.selAgCliente(c.id,c.nombre||'');
+ };
  let menu=$('cya-hybrid-client-admin');
  if(!menu){
   menu=document.createElement('details');menu.id='cya-hybrid-client-admin';
