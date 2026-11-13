@@ -47,6 +47,29 @@ for(const path of ['app-workflow.js','app-prospect-workflow.js','app-contract-wo
  assert.equal(noted.banco,'SANTANDER');
  assert(noted.historial.some(h=>h.tipo==='nota'),'Notes update must be recorded in client audit history');
  assert.equal(noted.fechaRetiroEstimada,before.fechaRetiroEstimada);
+ // Edit-mode next action must use the original Agenda model, not a secondary UI.
+ run("window.__cyaHybridClientEditSection='notas';editCliente('test-client')");
+ val('fc-prox-tipo','llamada');val('fc-prox-fecha','2026-11-23');
+ val('fc-prox-hora','11:45');val('fc-prox-nota','Confirmar documentos');
+ await run('guardarCliente()');
+ const scheduled=JSON.parse(run("JSON.stringify(store.agenda.filter(e=>e.clienteId==='test-client'&&e.tipo==='llamada'&&e.fecha==='2026-11-23'))"));
+ assert.equal(scheduled.length,1,'Client notes save creates exactly one native Agenda action');
+ assert.equal(scheduled[0].hora,'11:45');
+ assert.equal(scheduled[0].notas,'Confirmar documentos');
+ const notesAfterSchedule=JSON.parse(run("JSON.stringify(store.clientes[0])"));
+ assert.equal(notesAfterSchedule.fechaRetiroEstimada,before.fechaRetiroEstimada);
+ assert.equal(notesAfterSchedule.estadoPago,before.estadoPago);
+ // Saving the same action again must not create a duplicate event.
+ run("window.__cyaHybridClientEditSection='notas';editCliente('test-client')");
+ val('fc-prox-tipo','llamada');val('fc-prox-fecha','2026-11-23');
+ val('fc-prox-hora','11:45');val('fc-prox-nota','Confirmar documentos');
+ await run('guardarCliente()');
+ assert.equal(run("store.agenda.filter(e=>e.clienteId==='test-client'&&e.tipo==='llamada'&&e.fecha==='2026-11-23').length"),1);
+ // A selected action with no date must not result in an Agenda write.
+ run("window.__cyaHybridClientEditSection='notas';editCliente('test-client')");
+ val('fc-prox-tipo','whatsapp');val('fc-prox-fecha','');
+ await run('guardarCliente()');
+ assert.equal(run("store.agenda.filter(e=>e.clienteId==='test-client'&&e.tipo==='whatsapp').length"),0);
  // Another advisor cannot call the native scoped save directly even if a UI
  // route or browser console somehow exposes an edit form.
  run("sesionActiva.rol='asesor';sesionActiva.id='other-advisor';window.__cyaHybridClientEditSection='banco';editCliente('test-client')");
