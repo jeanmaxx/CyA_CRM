@@ -80,7 +80,8 @@ if(action==='complete_activity'){
  const p=c.payload||{},now=new Date().toISOString(),stage=String(c.stage||'');
  const input=body.data&&typeof body.data==='object'&&!Array.isArray(body.data)?body.data:{};
  const date=(v:unknown)=>{const s=text(v);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return'';const d=new Date(s+'T12:00:00Z');return !isNaN(d.getTime())&&d.toISOString().slice(0,10)===s?s:''};
- const patch:any={};let next=stage;
+ if(['alta','solicitud'].includes(key)&&date(input.date)>new Date().toISOString().slice(0,10))return respond(req,400,{error:'La fecha real de esta actividad no puede ser futura'});
+  const patch:any={};let next=stage;
   if(key==='contrato'&&!latestContract(p).available)return respond(req,409,{error:'Primero genera el contrato en el CRM'});
   if(key==='firmas'&&!latestContract(p).available)return respond(req,409,{error:'Primero genera el contrato en el CRM'});
   if(key==='firmas'&&!['generando_contrato','contrato_firmas'].includes(stage))return respond(req,409,{error:'El contrato ya superó firmas. Confirma la firma real desde el expediente'});
