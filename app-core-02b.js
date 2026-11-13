@@ -237,7 +237,7 @@ function openPerfil(id){
     <div class="tab-panel" id="pd-historial">
       <div class="timeline">
         ${!(c.historial||[]).length?'<div style="font-size:12px;color:var(--text-muted)">Sin actividad registrada</div>':
-          [...(c.historial||[])].reverse().map(h=>`<div class="tl-item"><div class="tl-dot ${h.tipo==='etapa'?'tl-dot-blue':h.tipo==='doc'?'tl-dot-green':'tl-dot-gray'}"></div><div class="tl-date">${fmtFechaHistorial(h.fecha)}</div><div class="tl-text">${h.texto}</div></div>`).join('')}
+          [...(c.historial||[])].reverse().map(h=>`<div class="tl-item"><div class="tl-dot ${h.tipo==='etapa'?'tl-dot-blue':h.tipo==='doc'?'tl-dot-green':'tl-dot-gray'}"></div><div class="tl-date">${fmtFechaHistorial(h.fecha)}</div><div class="tl-text">${escapeHTMLBasico(h.texto||'')}</div></div>`).join('')}
       </div>
     </div>
     <!-- FINANZAS -->
