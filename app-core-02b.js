@@ -509,7 +509,7 @@ async function guardarCliente(){
     // the input's value. Read it only for the explicitly selected bank panel.
     if(cyaInlineSection==='banco')cliente.clabe=getVal('fc-clabe')||'';
     if(cyaInlineSection==='notas'&&String(oldCliente.notas||'')!==String(cliente.notas||'')){
-      addHist(cliente,'nota','Observaciones actualizadas desde expediente de cliente');
+      addHist(cliente,'nota','Nota actualizada · Anterior: '+String(oldCliente.notas||'Sin nota').slice(0,1600)+' · Nueva: '+String(cliente.notas||'Sin nota').slice(0,1600));
     }
   }
 
