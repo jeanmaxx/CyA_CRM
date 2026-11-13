@@ -37,3 +37,5 @@
 #modal-perfil .cya-hybrid-client-panel-content>p{font-size:12px;color:var(--text-secondary)}
 @media(max-width:1050px){#modal-perfil .cya-hybrid-client-dates{gap:13px}#modal-perfil .profile-header-actions{flex-basis:100%;justify-content:flex-end}}
 @media(max-width:670px){#modal-perfil:has(#cya-hybrid-client-root) .client-profile-modal{width:100%!important;max-width:100%!important}#modal-perfil .cya-hybrid-client-cards{grid-template-columns:1fr}#modal-perfil .cya-hybrid-client-card{min-height:55px}#modal-perfil .cya-hybrid-client-dates{gap:15px;flex-wrap:wrap}}
+
+#modal-perfil #cya-hybrid-client-legacy[hidden]{display:none!important}
