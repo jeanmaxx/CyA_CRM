@@ -418,6 +418,16 @@ async function guardarCliente(){
   const docs={};
   document.querySelectorAll('#modal-docs-list .doc-check').forEach(el=>{ docs[el.dataset.doc]=el.classList.contains('checked'); });
   const oldCliente=editingId?store.clientes.find(c=>c.id===editingId):null;
+  // Extra UI-level check for partial/hybrid editing; database RLS remains authoritative.
+  // Never permit a scoped save to another advisor's client even if the editor was opened directly.
+  if(oldCliente&&window.__cyaHybridClientEditSection&&typeof sesionActiva!=='undefined'){
+    const adminActual=typeof isAdmin==='function'?isAdmin():['admin','tech_admin'].includes(String(sesionActiva?.rol||''));
+    if(!sesionActiva?.id||(!adminActual&&String(oldCliente.asesorId||'')!==String(sesionActiva.id))){
+      showToast('No tienes permiso para editar este expediente','warn');
+      return;
+    }
+  }
+
   const leadOrigenConversion=!editingId&&leadConversionPendienteId?store.leads.find(l=>l.id===leadConversionPendienteId):null;
   const montoFin=getVal('fc-monto').trim();
   const honorariosFin=getVal('fc-honorarios').trim();
