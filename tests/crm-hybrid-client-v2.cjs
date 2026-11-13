@@ -31,6 +31,8 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
  assert.deepEqual(cards.map(c=>c.dataset.hybridClient),['contratos','identidad','previsional','afore','banco','finanzas','comisiones','notas','historial']);
  assert.match(d.querySelector('#cya-hybrid-client-dates').textContent,/27\/12\/2026/);
  assert.match(d.querySelector('#cya-hybrid-client-meta').textContent,/Jessica/);
+ assert(d.querySelector('#cya-hybrid-client-meta').classList.contains('cya-hybrid-client-meta'),'Header metadata must receive responsive CSS');
+ assert(d.querySelector('#cya-hybrid-client-dates').classList.contains('cya-hybrid-client-dates'),'Header date labels must receive responsive CSS');
  assert.match(d.querySelector('#cya-hybrid-client-meta').textContent,/Meta Ads/);
  assert.ok(d.getElementById('cya-hybrid-copy-curp'),'Client CURP has compact copy action');
  assert.equal(d.getElementById('cya-hybrid-copy-curp').getAttribute('aria-label'),'Copiar CURP');
