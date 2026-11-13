@@ -2,7 +2,7 @@
 (function loadCollaboratorDraftRecovery(){
   if(document.querySelector('script[data-cya-sync-recovery]'))return;
   const script=document.createElement('script');
-  script.src='/app-sync-recovery.js?v=20260919-routing1';
+  script.src='/app-sync-recovery.js?v=20261113-stable';
   script.async=false;
   script.dataset.cyaSyncRecovery='1';
   document.head.appendChild(script);

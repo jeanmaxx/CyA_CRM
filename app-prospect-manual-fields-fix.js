@@ -184,7 +184,7 @@
   window.__cyaHybridProspectLoaderStarted=true;
   if(window.__cyaHybridProspectInstalled)return;
   const script=document.createElement('script');
-  script.src='/app-prospect-hybrid-v2.js?v=20261112-stage2';
+  script.src='/app-prospect-hybrid-v2.js?v=20261113-stable';
   script.async=false;
   script.dataset.cyaHybridProspect='1';
   document.head.appendChild(script);
@@ -197,7 +197,7 @@
  if(window.__cyaHybridClientLoaderStarted)return;
  window.__cyaHybridClientLoaderStarted=true;
  const script=document.createElement('script');
- script.src='/app-client-hybrid-v2.js?v=20261112-stage3';
+ script.src='/app-client-hybrid-v2.js?v=20261113-stable';
  script.async=false;
  script.dataset.cyaHybridClient='1';
  document.head.appendChild(script);
