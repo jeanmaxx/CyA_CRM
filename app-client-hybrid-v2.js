@@ -172,7 +172,7 @@ function setupMxLastWithdrawal(section){
   proxy.setAttribute('aria-label','Fecha del último retiro en formato día mes año');
   native.insertAdjacentElement('afterend',proxy);
   proxy.addEventListener('input',()=>{
-   const text=String(proxy.value||'').trim(),m=/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/.exec(text);
+   const text=String(proxy.value||'').trim(),m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text);
    let iso='';
    if(m){
     const date=new Date(Date.UTC(+m[3],+m[2]-1,+m[1]));
@@ -184,7 +184,7 @@ function setupMxLastWithdrawal(section){
    native.dispatchEvent(new Event('input',{bubbles:true}));
   });
  }
- const m=/^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(String(native.value||''));
+ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(native.value||''));
  proxy.value=m?m[3]+'/'+m[2]+'/'+m[1]:'';
  proxy.setCustomValidity('');
  native.hidden=true;native.dataset.cyaHybridDateHidden='1';
