@@ -216,6 +216,11 @@ function build(){
  }finally{building=false;}
 }
 
+const nativeOpenProfile=window.openPerfil;
+if(typeof nativeOpenProfile==='function')window.openPerfil=function(...args){
+ if(editorActive)stopInlineEditor();
+ return nativeOpenProfile.apply(this,args);
+};
 const nativeSave=window.guardarCliente;
 if(typeof nativeSave==='function')window.guardarCliente=async function(...args){
  const wasInline=editorActive,priorSection=selected,wasId=currentId;
