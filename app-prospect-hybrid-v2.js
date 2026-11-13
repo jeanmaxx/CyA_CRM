@@ -182,6 +182,18 @@
   const root=$('cya-hybrid-lead-root');if(!root)return;
   const eligibilityFields=$('cya-hybrid-fields-elegibilidad');
   if(eligibilityFields)eligibilityFields.dataset.eligibilityService=byId('lead-servicio')||'retiro_desempleo';
+  // Use the approved short labels only inside the hybrid unemployment panel;
+  // the original eligibility engine, values and validators stay untouched.
+  if(eligibilityFields?.dataset.eligibilityService==='retiro_desempleo'){
+   for(const [id,label] of [
+     ['lead-el-semanas','Semanas cotizadas'],
+     ['lead-el-cotiza','¿IMSS activo?'],
+     ['lead-el-fecha-retiro','Último retiro']
+   ]){
+    const original=$(id)?.closest('.form-group')?.querySelector('.form-label');
+    if(original&&original.textContent!==label)original.textContent=label;
+   }
+  }
   TABS.forEach(({id})=>{
    const section=$('cya-hybrid-section-'+id),btn=root.querySelector('[data-hybrid-lead-section="'+id+'"]');
    if(section)section.hidden=id!==current;
