@@ -170,7 +170,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-meta-leads-workflow]'))return;
     const script=document.createElement('script');
-    script.src='/app-meta-leads-workflow.js?v=20261113-identidad-aprobada1';
+    script.src='/app-meta-leads-workflow.js?v=20261113-elegibilidad-aprobada1';
     script.async=false;
     script.dataset.cyaMetaLeadsWorkflow='1';
     document.head.appendChild(script);
@@ -210,7 +210,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-meta-client-prefill]'))return;
     const script=document.createElement('script');
-    script.src='/app-meta-lead-client-prefill.js?v=20261027-meta2';
+    script.src='/app-meta-lead-client-prefill.js?v=20261113-elegibilidad-aprobada1';
     script.async=false;script.dataset.cyaMetaClientPrefill='1';document.head.appendChild(script);
   },25);
 })();
@@ -245,7 +245,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-prospect-manual-fields-fix]'))return;
     const script=document.createElement('script');
-    script.src='/app-prospect-manual-fields-fix.js?v=20261113-identidad-aprobada1';
+    script.src='/app-prospect-manual-fields-fix.js?v=20261113-elegibilidad-aprobada1';
     script.async=false;
     script.dataset.cyaProspectManualFieldsFix='1';
     document.head.appendChild(script);
