@@ -17,7 +17,7 @@
   {key:'honorarios',short:'Honorarios',title:'Pago de honorarios',external:true}
  ];
  const $=id=>document.getElementById(id);
- const items=()=>Array.isArray(state?.bootstrap?.clients)?state.bootstrap.clients.filter(c=>!c.discarded&&!(c.serviceId==='retiro_desempleo'&&c.stage==='generando_contrato')):[];
+ const items=()=>Array.isArray(state?.bootstrap?.clients)?state.bootstrap.clients.filter(c=>!c.discarded):[];
  const find=id=>items().find(c=>c.id===id);
  const stages=['generando_contrato','contrato_firmas','contrato_firmado','dado_alta','afore_actualizada','solicitud_realizada','deposito_recibido','honorarios_recibidos','concluido'];
  const rank=s=>stages.indexOf(String(s||''));
