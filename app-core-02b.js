@@ -481,6 +481,38 @@ async function guardarCliente(){
     if(cliente.etapa==='solicitud_realizada') cliente.fechaSolicitudRealizada=cliente.fechaSolicitudManual||oldCliente?.fechaSolicitudRealizada||fechaISOLocal(new Date());
   }
 
+  // Hybrid client panel edits must never overwrite unrelated stored fields.
+  // This is a narrow compatibility guard for the EXISTING guardarCliente route,
+  // not a second write path. Its only effect is on verified inline edits.
+  const cyaInlineSection=oldCliente&&window.__cyaHybridClientEditSection||'';
+  const cyaInlineFields={
+    identidad:['nombre','telefono','email','ciudad','curp','domicilio','fuente'],
+    previsional:['nss','rfc','el_semanas','el_imss','el_retiro','el_fecha'],
+    afore:['afore','fechaBiometrica','horaBiometrica','sucursalAfore','fechaSolicitudManual'],
+    banco:['banco','clabe','nivelCuentaBBVA'],
+    comisiones:['colaboradorId','colPct','honorarios','comision','comisionManual','finanzasConfiguradas'],
+    notas:['notas']
+  };
+  const cyaIsScopedSave=Boolean(cyaInlineSection&&Object.prototype.hasOwnProperty.call(cyaInlineFields,cyaInlineSection));
+  if(cyaIsScopedSave){
+    // Reset all fields not owned by this section back to their stored value.
+    // Preserve unknown legacy keys rather than assuming the current schema
+    // exhaustively describes the customer's original record.
+    const allowed=new Set(cyaInlineFields[cyaInlineSection]);
+    const before=JSON.parse(JSON.stringify(oldCliente));
+    for(const key of Object.keys(cliente)){
+      if(allowed.has(key))continue;
+      if(Object.prototype.hasOwnProperty.call(before,key))cliente[key]=before[key];
+      else delete cliente[key];
+    }
+    // The native save path has historically reused old CLABE instead of taking
+    // the input's value. Read it only for the explicitly selected bank panel.
+    if(cyaInlineSection==='banco')cliente.clabe=getVal('fc-clabe')||'';
+    if(cyaInlineSection==='notas'&&String(oldCliente.notas||'')!==String(cliente.notas||'')){
+      addHist(cliente,'nota','Observaciones actualizadas desde expediente de cliente');
+    }
+  }
+
   if(editingId){
     const idx=store.clientes.findIndex(c=>c.id===editingId);
     if(idx>=0){
@@ -492,9 +524,9 @@ async function guardarCliente(){
       cliente.montoRetiro=cliente.montoAfore;
       cliente.estadoPago=old.estadoPago||(comisionEfectiva(cliente)>0?'Pendiente':'');
       // Fecha retiro: si ya existe y fue editada manualmente, preservar; si no, calcular
-      cliente.fechaRetiroEstimada=old.fechaRetiroEstimadaManual
+      cliente.fechaRetiroEstimada=cyaIsScopedSave?old.fechaRetiroEstimada:(old.fechaRetiroEstimadaManual
         ? old.fechaRetiroEstimada
-        : calcFechaRetiro(old.fechaRegistro||new Date().toISOString());
+        : calcFechaRetiro(old.fechaRegistro||new Date().toISOString()));
       cliente.fechaRetiroEstimadaManual=old.fechaRetiroEstimadaManual||false;
       // Si etapa cambió a espera_45 y no estaba antes, autocompletar finanzas
       if(cliente.etapa==='espera_45'&&old.etapa!=='espera_45'&&cliente.montoAfore&&!old.estadoPago){
@@ -562,7 +594,9 @@ async function guardarCliente(){
 
   }
   editingId=cliente.id; // A failed synchronization retries this same record.
-  sincronizarFechasCliente(cliente,oldCliente);
+  // No hidden-card edit is allowed to refresh estimated dates or agenda rules.
+  // The dedicated contract/alta and full-editor flows keep the legacy behavior.
+  if(!cyaIsScopedSave)sincronizarFechasCliente(cliente,oldCliente);
   try{await cloudSyncNow({throwOnError:true});}catch(e){showToast('Los cambios están pendientes de guardar. Intenta nuevamente.','warn');return;}
   showToast(oldCliente?'Cliente actualizado':'Cliente agregado correctamente','success');
   clienteFormDirty=false;
