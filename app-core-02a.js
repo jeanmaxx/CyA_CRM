@@ -493,7 +493,7 @@ function renderClientes(){
           <th onclick="ordenarClientes('fechaRegistro')" style="cursor:pointer;">Registro${flechaOrden('fechaRegistro')}</th>
           <th onclick="ordenarClientes('nombre')" style="cursor:pointer;">Nombre${flechaOrden('nombre')}</th>
           <th onclick="ordenarClientes('servicio')" style="cursor:pointer;">Servicio${flechaOrden('servicio')}</th>
-          <th onclick="ordenarClientes('etapa')" style="cursor:pointer;">Etapa actual${flechaOrden('etapa')}</th>
+          <th onclick="ordenarClientes('etapa')" style="cursor:pointer;">Etapa actual${flechaOrden('etapa')}</th><th title="12 actividades operativas">Avance (12)</th>
           <th onclick="ordenarClientes('procesoPendiente')" style="cursor:pointer;">Proceso pendiente${flechaOrden('procesoPendiente')}</th>
           <th onclick="ordenarClientes('fechaSolicitud')" style="cursor:pointer;">Fecha de solicitud${flechaOrden('fechaSolicitud')}</th><th>Documentos</th><th></th>
         </tr></thead>
@@ -514,7 +514,7 @@ function renderClientes(){
     <div style="padding:0 14px 14px;">
       <div class="card clients-list-card" style="overflow:hidden;">
         <div class="table-wrap clients-table-wrap"><table>
-          <thead><tr><th>Registro</th><th>Nombre</th><th>Servicio</th><th>Etapa actual</th><th>Proceso pendiente</th><th>Fecha de solicitud</th><th>Documentos</th><th></th></tr></thead>
+          <thead><tr><th>Registro</th><th>Nombre</th><th>Servicio</th><th>Etapa actual</th><th>Avance (12)</th><th>Proceso pendiente</th><th>Fecha de solicitud</th><th>Documentos</th><th></th></tr></thead>
           <tbody>${renderClientesRows(aplicarOrden(atendidos))}</tbody>
         </table></div>
         <div class="clients-mobile-list">${renderClientesCards(aplicarOrden(atendidos))}</div>
@@ -556,6 +556,7 @@ function renderClientesRows(cl){
       </td>
       <td><span class="chip chip-gray" style="font-size:10px;">${getSvcLabel(c.servicio)}</span></td>
       <td><span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span></td>
+       <td class="cya-operational-table-cell">${typeof cyaRenderActivitiesMini==='function'?cyaRenderActivitiesMini(c):'—'}</td>
       <td class="td-muted">${escapeHTMLBasico(procesoPendienteCliente(c))}</td>
       <td class="td-muted">${etiquetaSolicitudCliente(c)}</td>
       <td>
@@ -589,7 +590,8 @@ function renderClientesCards(cl){
         <span class="stage-badge ${stageCls(c.etapa,c.servicio)}">${stageLabel(c.etapa,c.servicio)}</span>
       </div>
       <div class="client-mobile-meta"><span>${getSvcLabel(c.servicio)}</span><span>Registro: ${fmtDate(c.fechaRegistro)}</span><span>Pendiente: ${escapeHTMLBasico(procesoPendienteCliente(c))}</span><span>Solicitud: ${etiquetaSolicitudCliente(c)}</span></div>
-      <div class="client-mobile-docs">
+      <div class="cya-operational-mobile">${typeof cyaRenderActivitiesMini==='function'?cyaRenderActivitiesMini(c):''}</div>
+       <div class="client-mobile-docs">
         <span>Documentos ${docOk}/${docList.length}</span>
         <div class="progress-bar-wrap"><div class="progress-bar" style="width:${docPct}%;${docPct===100?'background:var(--success)':''}"></div></div>
       </div>
