@@ -520,7 +520,9 @@
     const lead=currentLead();
     let actions=document.getElementById('cya-wa-center-actions');
     if(!actions){actions=document.createElement('div');actions.id='cya-wa-center-actions';actions.innerHTML='<button class="btn cya-wa-open" type="button" onclick="cyaAbrirCentroMensajesWhatsApp()">WhatsApp</button>';tel.insertAdjacentElement('afterend',actions);}
-    actions.style.display=lead?'flex':'none';
+    const hybrid=document.getElementById('cya-hybrid-lead-root');
+    actions.style.display=lead&&!hybrid?'flex':'none';
+    actions.hidden=Boolean(hybrid);
   }
 
   function patchReviewFlow(){
