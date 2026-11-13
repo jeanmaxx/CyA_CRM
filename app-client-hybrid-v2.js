@@ -89,9 +89,9 @@ function header(c){
 /* Reuse the native client-edit form IN PLACE. No parallel save code or data model. */
 const inlineCategories=new Set(['identidad','previsional','afore','banco','comisiones','notas']);
 const inlineFields={
- identidad:['fc-nombre','fc-telefono','fc-email','fc-ciudad','fc-curp','fc-domicilio','fc-fuente','fc-servicio','fc-asesor'],
- previsional:['fc-nss','fc-rfc','el-semanas','el-imss','el-retiro','el-fecha','fc-monto'],
- afore:['fc-afore','fc-fecha-biometrica','fc-hora-afore','fc-sucursal-afore','fc-fecha-alta','fc-fecha-solicitud-manual'],
+ identidad:['fc-nombre','fc-telefono','fc-email','fc-ciudad','fc-curp','fc-domicilio','fc-fuente','fc-asesor'],
+ previsional:['fc-nss','fc-rfc','el-semanas','el-imss','el-retiro','el-fecha'],
+ afore:['fc-afore','fc-fecha-biometrica','fc-hora-afore','fc-sucursal-afore','fc-fecha-solicitud-manual'],
  banco:['fc-banco','fc-nivel-bbva','fc-clabe'],
  comisiones:['fc-colaborador','fc-col-pct','fc-col-comision','fc-honorarios','fc-comision'],
  notas:['fc-notas']
@@ -105,7 +105,7 @@ function stopInlineEditor(){
  const cancel=modal.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(cancel)cancel.setAttribute('onclick',"closeModal('modal-cliente')");
  if(editorHome&&modal.parentElement!==editorHome)editorHome.appendChild(modal);
- editorActive=false;editorSection='';
+ editorActive=false;editorSection='';window.__cyaHybridClientEditSection='';
 }
 function confirmSwitch(){
  if(!editorActive)return true;
@@ -146,6 +146,7 @@ function mountInlineEditor(c,section){
  editor.classList.add('cya-hybrid-inline-editor');
  editor.dataset.hybridSection=section;
  editorSection=section;
+ window.__cyaHybridClientEditSection=section;
  editorActive=true;
  showEditorFields(section);
  const originalCancel=editor.querySelector('.modal-footer .btn:not(.btn-primary)');
@@ -224,6 +225,7 @@ if(typeof nativeOpenProfile==='function')window.openPerfil=function(...args){
 const nativeSave=window.guardarCliente;
 if(typeof nativeSave==='function')window.guardarCliente=async function(...args){
  const wasInline=editorActive,priorSection=selected,wasId=currentId;
+ if(wasInline)window.__cyaHybridClientEditSection=editorSection;
  const result=await nativeSave.apply(this,args);
  if(wasInline&&!$('modal-cliente')?.classList.contains('open')){
   stopInlineEditor();
