@@ -17,7 +17,7 @@ const html='<!doctype html><html><head><meta name="viewport" content="width=devi
 (async()=>{
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  try{
-  for(const [name,width,height,theme] of [['desktop dark',1440,900,'dark'],['desktop light',1440,900,'light'],['mobile dark',390,844,'dark'],['mobile light',390,844,'light']]){
+  for(const [name,width,height,theme] of [['desktop dark',1440,900,'dark'],['desktop light',1440,900,'light'],['tablet dark',1024,768,'dark'],['tablet light',1024,768,'light'],['mobile dark',390,844,'dark'],['mobile light',390,844,'light']]){
    const page=await browser.newPage({viewport:{width,height}});
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.setContent(html);await page.addStyleTag({content:css});
