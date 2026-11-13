@@ -36,7 +36,7 @@ for(const path of ['app-workflow.js','app-prospect-workflow.js','app-contract-wo
   assert.deepEqual(after[key],before[key],'Unrelated field changed while saving bank: '+key);
  }
  assert.deepEqual(after.docs,before.docs);
- assert.deepEqual(run("store.agenda.filter(e=>e.clienteId==='test-client'&&e.regla==='solicitud_45')"),[],'No new schedule from bank save');
+ assert.equal(run("store.agenda.filter(e=>e.clienteId==='test-client'&&e.regla==='solicitud_45').length"),0,'No new schedule from bank save');
  // Exercise actual notes persistence, including a history entry, without changing bank.
  run("window.__cyaHybridClientEditSection='notas';editCliente('test-client')");
  val('fc-notas','Nueva observación de seguimiento');
