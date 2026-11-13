@@ -30,5 +30,5 @@ assert.match(meta,/function fillQuestionnaireTab\(l\)/);
 assert(!meta.includes('\\\\n  function fillQuestionnaireTab'),'Backslash n literals must never break Meta JS');
 assert.match(recovery,/app-meta-leads-workflow\.js\?v=20261113-elegibilidad-aprobada1/);
 assert.match(loader,/app-prospect-hybrid-v2\.js\?v=20261113-elegibilidad-aprobada1/);
-assert.match(app,/app-prospect-hybrid-v2\.css\?v=20261113-elegibilidad-aprobada1/);
+assert.match(app,/app-prospect-hybrid-v2\.css\?v=20261113-origen-aprobado1/);
 console.log('PASS production loader graph and syntax');
