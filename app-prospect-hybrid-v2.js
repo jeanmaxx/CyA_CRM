@@ -35,7 +35,7 @@
   container.insertBefore(root,container.firstChild);
   root.querySelectorAll('[data-hybrid-lead-section]').forEach(btn=>btn.addEventListener('click',()=>{
    if(btn.dataset.hybridLeadSection===current)return;
-   if(dirty&&!window.confirm('Hay cambios sin guardar. ¿Deseas cambiar de sección sin guardarlos?'))return;
+   if(dirty&&!window.confirm('Hay cambios pendientes de guardar. ¿Deseas continuar a otra sección sin guardarlos todavía?'))return;
    current=btn.dataset.hybridLeadSection;showSelected();
   }));
   root.querySelector('#cya-hybrid-lead-whatsapp').addEventListener('click',()=>{
@@ -69,7 +69,7 @@
   // The legacy Meta Ads tab remains hidden; its read-only content is displayed
   // in Origen. Do not recreate the original answers or write to them.
   const questionnaire=$('cya-meta-questionnaire-panel');
-  if(questionnaire){appendTo('origen',questionnaire);questionnaire.hidden=false;}
+  if(questionnaire){appendTo('origen',questionnaire);const l=currentLead();questionnaire.hidden=!Boolean(l?.metaLead||l?.origenMeta||l?.metaAds);}
   const extra=$('cya-lead-extra-fields');
   if(extra){extra.hidden=true;}
   const tabs=$('cya-meta-lead-tabs');if(tabs)tabs.hidden=true;
@@ -113,7 +113,7 @@
    if(section)section.hidden=id!==current;
    if(btn){btn.classList.toggle('active',id===current);btn.setAttribute('aria-pressed',String(id===current));}
   });
-  summary();dirty=false;
+  summary();
  }
  function refresh(){
   if(!modal()?.classList.contains('open'))return;
@@ -134,7 +134,7 @@
  const baseOpen=window.openModalLead;
  if(typeof baseOpen==='function')window.openModalLead=function(...args){
   const result=baseOpen.apply(this,args);
-  const key=args[0]||'new';if(lastLeadKey!==key){lastLeadKey=key;current='identidad';dirty=false;}
+  const key=args[0]||'new';lastLeadKey=key;current='identidad';dirty=false;
   setTimeout(refresh,120);
   return result;
  };
