@@ -97,6 +97,7 @@
   return d.getUTCDate()===+m[1]&&d.getUTCMonth()+1===+m[2]?m[3]+'-'+m[2]+'-'+m[1]:null;
  };
  let active=null;
+ let saving=false;
  const close=()=>{
   $('cya-operational-modal')?.remove();
   active=null;
@@ -146,6 +147,7 @@
   return true;
  }
  function save(id,stepId){
+  if(saving)return msg('Ya hay una confirmación guardándose; revisa el resultado antes de repetirla');
   const c=getClient(id),step=statuses(c).find(s=>s.id===stepId);
   if(!step||!authorized(c))return msg('No tienes permiso para actualizar este seguimiento');
   if(stepId==='honorarios'&&!feeCollected(c)){
@@ -203,13 +205,19 @@
   // Crucial: no writes to c.etapa, fechaFirmaContrato, fechaRetiroEstimada,
   // fechaSolicitudRealizada, estadoPago, commissions or native Agenda.
   const saved=()=>{
+   saving=false;
    close();
    if(typeof renderPage==='function'&&typeof currentPage!=='undefined')renderPage(currentPage);
    if(typeof openPerfil==='function'&&$('modal-perfil')?.classList.contains('open'))openPerfil(id);
    msg('Actividad confirmada','success');
   };
   if(typeof cloudSyncNow!=='function'){Object.assign(c,fieldsBefore);c.etapasOperativasV2=previous;c.historial=history;return msg('No está disponible la sincronización; no se guardó la actividad');}
+  saving=true;
+  const submit=$('cya-operational-modal')?.querySelector('[data-op-save]');
+  if(submit)submit.disabled=true;
   Promise.resolve().then(()=>cloudSyncNow({throwOnError:true})).then(saved).catch(()=>{
+    saving=false;
+    if(submit?.isConnected)submit.disabled=false;
     Object.assign(c,fieldsBefore);
     c.etapasOperativasV2=previous;c.historial=history;
     msg('No se pudo guardar. El registro anterior se conserva.');
