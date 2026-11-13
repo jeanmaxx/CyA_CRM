@@ -135,7 +135,7 @@
  if(typeof baseOpen==='function')window.openModalLead=function(...args){
   const result=baseOpen.apply(this,args);
   const key=args[0]||'new';if(lastLeadKey!==key){lastLeadKey=key;current='identidad';dirty=false;}
-  setTimeout(refresh,100);setTimeout(refresh,240);
+  setTimeout(refresh,120);
   return result;
  };
  // One first refresh handles a modal already open at module initialization.
