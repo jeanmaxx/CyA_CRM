@@ -8,7 +8,7 @@ function field(id){
   const classes=new Set(id==='modal-perfil'?['open']:[]);
   return {id,value:'',dataset:{},innerHTML:'',textContent:'',style:{},
     classList:{add:v=>classes.add(v),remove:v=>classes.delete(v),contains:v=>classes.has(v)},
-    addEventListener(){},setAttribute(){},insertAdjacentElement(_where,el){fields[el.id]=el;}};
+    addEventListener(){},setAttribute(){},querySelectorAll(){return [];},insertAdjacentElement(_where,el){fields[el.id]=el;}};
 }
 for(const id of ['modal-perfil','lead-tel','lead-nombre','cya-wa-main-buttons',
   'cya-wa-reject-buttons','cya-wa-reject-label','cya-wa-block-list','cya-wa-center-person'])fields[id]=field(id);
@@ -16,7 +16,7 @@ fields['lead-tel'].value='5551234567';
 fields['lead-nombre'].value='PROSPECTO DEMO';
 const document={
   getElementById:id=>fields[id]||null,
-  querySelectorAll:()=>[],
+  querySelectorAll:()=>[],querySelector:()=>null,
   createElement:()=>field(''),
   addEventListener(){},
   documentElement:{},
@@ -54,10 +54,12 @@ assert.match(fs.readFileSync('app/index.html','utf8'),/id="perfil-whatsapp-btn"[
 window.cyaAbrirWhatsAppCliente();
 assert.equal(window.cyaTipoContactoWhatsApp(),'client');
 assert.match(fields['cya-wa-center-person'].textContent,/Cliente: CLIENTE DE PRUEBA/);
-assert.match(fields['cya-wa-main-buttons'].innerHTML,/15 días después del alta/);
+assert.match(fields['cya-wa-reject-buttons'].innerHTML,/Seguimiento alta/);
 assert.match(fields['cya-wa-main-buttons'].innerHTML,/Finalización/);
-assert.doesNotMatch(fields['cya-wa-main-buttons'].innerHTML,/Bienvenida/);
-assert.equal(fields['cya-wa-reject-buttons'].innerHTML,'');
+assert.match(fields['cya-wa-main-buttons'].innerHTML,/Bienvenida/);
+assert.match(fields['cya-wa-reject-buttons'].innerHTML,/IMSS activo/);
+assert.equal((fields['cya-wa-main-buttons'].innerHTML.match(/data-cya-wa-group=/g)||[]).length,6,'Six follow-up categories');
+assert.equal((fields['cya-wa-reject-buttons'].innerHTML.match(/data-cya-wa-group=/g)||[]).length,6,'Six future/nonviable categories');
 assert.match(fields['cya-wa-block-list'].innerHTML,/Han transcurrido 20 días/);
 assert.match(fields['cya-wa-block-list'].innerHTML,/¡Hola, Cliente!/);
 const textArea=fields['cya-wa-block-list'].innerHTML.match(/id="cya-wa-text-0"[^>]*>([\s\S]*?)<\/textarea>/);
@@ -70,7 +72,8 @@ assert.match(decodeURIComponent(opened[0]),/¡Hola, Cliente!/);
 assert.doesNotMatch(decodeURIComponent(opened[0]),/Prospecto Demo/);
 window.cyaCerrarCentroMensajesWhatsApp();
 window.cyaAbrirWhatsAppCliente('finalizacion');
-assert.equal((fields['cya-wa-block-list'].innerHTML.match(/class="cya-wa-block-head"/g)||[]).length,3);
+assert.equal((fields['cya-wa-block-list'].innerHTML.match(/data-cya-wa-part="/g)||[]).length,3,'Multiple messages must be selectable tabs, not stacked textareas');
+assert.equal((fields['cya-wa-block-list'].innerHTML.match(/<textarea/g)||[]).length,1,'One editable message at a time');
 window.cyaEditarPlantillaWhatsAppSeleccionada();
 assert.equal(closed.at(-1),'modal-perfil','Editar plantilla debe cerrar expediente, no prospecto');
 window.cyaAbrirCentroMensajesWhatsApp('revision');
@@ -106,7 +109,7 @@ store.clientes[0].etapa='dado_alta';
 store.clientes[0].estadoPago='Pendiente';
 store.clientes[0].etapasOperativasV2={deposito:{done:true,fecha:toISO(now)}};
 window.cyaAbrirWhatsAppCliente();
-assert.match(fields['cya-wa-block-list'].innerHTML,/Felicitación por depósito/);
+assert.match(fields['cya-wa-block-list'].innerHTML,/Finalización \(1\/3\)/);
 assert.equal(store.clientes[0].estadoPago,'Pendiente','WhatsApp cannot collect fees');
 window.cyaCerrarCentroMensajesWhatsApp();
 store.clientes[0].etapasOperativasV2={honorarios:{done:true,verifiedExternally:true}};
@@ -114,7 +117,11 @@ window.cyaAbrirWhatsAppCliente();
 assert.match(fields['cya-wa-block-list'].innerHTML,/Han transcurrido 20 días/,'External fee verification is not paid status');
 window.cyaCerrarCentroMensajesWhatsApp();
 const waSource=fs.readFileSync('app-whatsapp-message-center.js','utf8');
-assert.match(waSource,/class="cya-wa-nav"/,'navigation is grouped in a sidebar');
+assert.match(waSource,/class="cya-wa-nav"/,'navigation is grouped in the wide top area');
+assert.match(waSource,/grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/,'Six category buttons per desktop row');
+assert.match(waSource,/width:min\(1280px,calc\(100vw - 32px\)\)/,'Approved maximum modal width');
+assert.match(waSource,/cya-wa-footer-copy/,'Icon-only copy in footer');
+assert.match(waSource,/__cyaWhatsAppSindosIntegrated=true/,'SINDOS is integrated without a second legacy button');
 assert.match(waSource,/aria-pressed=/,'selected group is accessible');
 assert.doesNotMatch(waSource,/<div class="cya-wa-helper">/,'permanent explanatory block removed');
 console.log('WhatsApp clientes: teléfono, 15 días, 12 actividades, finanzas separadas y navegación compacta OK');

@@ -245,7 +245,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-prospect-manual-fields-fix]'))return;
     const script=document.createElement('script');
-    script.src='/app-prospect-manual-fields-fix.js?v=20261113-elegibilidad-aprobada1';
+    script.src='/app-prospect-manual-fields-fix.js?v=20261113-whatsapp-wide1';
     script.async=false;
     script.dataset.cyaProspectManualFieldsFix='1';
     document.head.appendChild(script);
