@@ -106,4 +106,6 @@ jobs:
           npm install --no-save --package-lock=false --ignore-scripts playwright@1.55.1
           npx playwright install --with-deps chromium
       - name: Validar escritorio, móvil, claro, oscuro y WhatsApp
-        run: node tests/crm-hybrid-browser.cjs
+        run: |
+          node tests/crm-hybrid-browser.cjs
+          node tests/crm-prospect-browser.cjs
