@@ -22,6 +22,7 @@ const css=fs.readFileSync('styles.css','utf8');
    await page.addStyleTag({content:css});
    await page.evaluate(theme=>{
     document.documentElement.dataset.theme=theme;
+    window.perfilClienteActivo='client1';
     window.store={
       leads:[{id:'lead1',nombre:'PROSPECTO DEMO',telefono:'4421234567',estado:'semanas'},
              {id:'lead2',nombre:'SINDOS DEMO',telefono:'4421234567',estado:'sindos'}],
