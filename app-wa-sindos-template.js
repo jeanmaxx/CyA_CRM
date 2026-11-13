@@ -147,6 +147,9 @@
   }
 
   function tick(){
+    // The unified center already owns the SINDOS group and edit/send actions.
+    // Preserve the institutional template, but do not inject duplicate UI or wrap handlers.
+    if(window.__cyaWhatsAppSindosIntegrated===true){if(!persisted)ensurePersistedTemplate();return;}
     if(!persisted)ensurePersistedTemplate();
     ensureButton();wrapOpen();wrapOpenById();wrapEdit();
   }
