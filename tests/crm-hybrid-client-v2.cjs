@@ -20,6 +20,7 @@ const dom=new JSDOM(shell(),{url:'https://example.test',runScripts:'outside-only
 const w=dom.window,d=w.document,clientData={id:'c1',nombre:'CLIENTE DE PRUEBA',curp:'CURPDEPRUEBA',telefono:'4420000000',ciudad:'Querétaro',fechaRetiroEstimada:'2026-12-27',fechaFirmaContrato:'2026-11-11',contratoFirmado:false,etapa:'generando_contrato',colaboradorId:'col1',asesorId:'as1',fuente:'meta_ads',historial:[{texto:'Creación'}],historialContratos:[],nss:'12345678901',banco:'Santander',notas:'Llamada'};
 w.store={clientes:[clientData],colaboradores:[{id:'col1',nombre:'Jessica'}],asesores:[{id:'as1',nombre:'Asesor de prueba'}]};
 w.perfilClienteActivo='c1';w.FUENTES={meta_ads:'Meta Ads'};
+let agendaOpens=0,linkedAgendaClient='';w.openModalAgenda=()=>agendaOpens++;w.selAgCliente=id=>{linkedAgendaClient=id};w.closeModal=id=>d.getElementById(id)?.classList.remove('open');
 w.cyaAbrirSolicitudCambioAsesor=()=>{};
 w.eval(client);
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
@@ -57,5 +58,9 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
  const after=[...d.querySelectorAll('[data-hybrid-client]')].map(c=>c.dataset.hybridClient);
  assert.deepEqual(after,['identidad','previsional','afore','banco','finanzas','comisiones','contratos','notas','historial']);
  assert.equal(d.querySelector('#cya-hybrid-client-panel').hidden,true,'Signed client starts without a selected section');
+ assert.ok(d.getElementById('cya-hybrid-client-agenda'),'Agenda shortcut visible in client profile');
+ d.getElementById('cya-hybrid-client-agenda').click();
+ assert.equal(agendaOpens,1,'Agenda shortcut invokes existing event creation');
+ assert.equal(linkedAgendaClient,'c1','Agenda event is linked to current client');
  w.close();console.log('PASS: 9 cards, signed ordering, existing profile controls, bank/AFORE/finance, compact dates and admin menu.');
 })().catch(error=>{console.error(error);w.close();process.exitCode=1});
