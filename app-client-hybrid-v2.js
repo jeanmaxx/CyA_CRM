@@ -481,6 +481,61 @@ function mountInlineEditor(c,section){
  return true;
 }
 
+// Contracts share the original native actions and date inputs. Move the
+// existing elements into one visual row, preserving native onclick handlers.
+function arrangeContractPanel(panel,c){
+ if(!panel||panel.querySelector('.cya-contract-top-row'))return;
+ const make=[...panel.querySelectorAll('button')].find(b=>/Generar nuevo contrato/i.test(b.textContent||''));
+ const save=[...panel.querySelectorAll('button')].find(b=>/guardarFechasContratoAlta/.test(b.getAttribute('onclick')||''));
+ const signature=panel.querySelector('#perfil-firma'),alta=panel.querySelector('#perfil-alta');
+ const dateRow=signature?.closest('.form-row');
+ const status=panel.querySelector('.profile-contract-status');
+ const statusWrap=status?.parentElement;
+ const predicted=[...(statusWrap?.children||[])].find(el=>el.tagName==='P'&&/Solicitud prevista/i.test(el.textContent||''));
+ if(!make||!save||!dateRow||!signature||!alta||!predicted)return;
+ const row=document.createElement('div');row.className='cya-contract-top-row';
+ const buttonBox=make.parentElement;
+ if(buttonBox&&buttonBox!==panel){
+  buttonBox.style.margin='0';
+  row.appendChild(buttonBox);
+ }else row.appendChild(make);
+ row.appendChild(dateRow);row.appendChild(predicted);row.appendChild(save);
+ panel.insertBefore(row,panel.firstChild);
+ if(statusWrap){
+  statusWrap.classList.add('cya-contract-original-status');
+  if(statusWrap.querySelector('.profile-contract-status')){
+   statusWrap.hidden=true;
+  }
+ }
+ const hr=panel.querySelector(':scope > hr.divider');
+ if(hr)hr.classList.add('cya-contract-history-divider');
+ const heading=[...panel.children].find(el=>el!==row&&/Historial de contratos generados/i.test(el.textContent||'')&&el.children.length===0);
+ if(heading){
+  heading.classList.add('cya-contract-history-heading');
+  const statusLabel=document.createElement('span');statusLabel.textContent='ESTADO DEL CONTRATO';
+  heading.appendChild(statusLabel);
+ }
+ const entries=[...panel.querySelectorAll('.hist-contrato-item')];
+ entries.forEach((item,index)=>{
+  item.classList.add('cya-contract-history-entry');
+  const chips=item.querySelectorAll('.chip');
+  const statusLabel=String(chips[0]?.textContent||'').trim();
+  const signedPerRecord=/firmad[oa]/i.test(statusLabel);
+  if(signedPerRecord)chips[0]?.classList.add('chip-green');
+  // Only the most recent contract can inherit the signed stage of the
+  // current dossier. Older generated versions retain their own status.
+  if(index===0&&c?.contratoFirmado&&!signedPerRecord){
+   const right=chips[0]?.parentElement;
+   if(right){
+    const signed=document.createElement('span');
+    signed.className='chip chip-green cya-contract-signed-chip';
+    signed.textContent='✓ Firmado';
+    chips[0].insertAdjacentElement('afterend',signed);
+   }
+  }
+ });
+}
+
 function selection(c){
  const root=$('cya-hybrid-client-root'),area=$('cya-hybrid-client-panel');
  if(!root||!area)return;
@@ -505,6 +560,7 @@ function selection(c){
  }
  if(source){
   source.classList.add('active');source.hidden=false;box.appendChild(source);
+  if(selected==='contratos')arrangeContractPanel(source,c);
   if(selected==='finanzas'){
    // Move ONLY native finance controls + native save button into a single
    // horizontal editor. Keep underlying calculations and saved summary intact.
