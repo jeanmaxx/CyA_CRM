@@ -209,6 +209,10 @@ function readClientFields(){
   if(el.id==='cya-last-withdrawal-mx')return; // native el-fecha is canonical
   values[el.id]=el.type==='checkbox'||el.type==='radio'?el.checked:el.value;
  });
+ // Also protect unsaved contract dates and financial fields in their cards.
+ $('modal-perfil')?.querySelectorAll('#pd-finanzas input[id],#pd-finanzas select[id],#pd-contratos input[id],#pd-contratos select[id]').forEach(el=>{
+  values['profile:'+el.id]=el.type==='checkbox'?el.checked:el.value;
+ });
  $('modal-cliente')?.querySelectorAll('.doc-check[data-doc]').forEach(el=>{
   values['doc:'+el.dataset.doc]=el.classList.contains('checked');
  });
@@ -743,8 +747,9 @@ for(const id of ['perfil-regresar-prospecto-btn','perfil-descartar-btn']){
  if(action&&!action.dataset.cyaHybridDirtyGuard){
   action.dataset.cyaHybridDirtyGuard='1';
   action.addEventListener('click',event=>{
-   if(editorActive&&!confirmSwitch()){event.preventDefault();event.stopImmediatePropagation();}
-   else if(editorActive)stopInlineEditor();
+   if(clientIsDirty()){
+    event.preventDefault();event.stopImmediatePropagation();requestClientClose();
+   }else if(editorActive)stopInlineEditor();
   },true);
  }
 }
