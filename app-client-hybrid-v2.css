@@ -792,3 +792,11 @@
   grid-template-columns:1fr!important;
  }
 }
+
+
+/* Override older AFORE span-two rules explicitly; every item uses ONE grid
+   track in desktop view, including AFORE and sucursal fields. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields>.form-group:has(#fc-afore),
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields>.form-group:has(#fc-sucursal-afore){
+ grid-column:auto!important;grid-row:auto!important;
+}
