@@ -198,6 +198,7 @@ let editorHome=null,editorActive=false,editorSection='',identityShowAdvisor=fals
 let identityPlaces=[],identityCurpRow=null,identityCurpControl=null,identityCurpLabelHTML='';
 let previsionalNssPlace=null;
 let aforeFieldPlaces=[];
+let bankFieldPlaces=[];
 // Relocate the exact six NATIVE form controls: no duplicate inputs, no parallel
 // save model and no mutation of clients. Each original location is restored on
 // section change/close so the rest of the CRM still sees its original form.
@@ -343,8 +344,33 @@ function setupAforeFields(section){
  // continues to refresh from the selected AFORE. Never re-create its links.
  modal.classList.add('cya-afore-inline-active');
 }
+// Bank uses the same native inputs and validation; only move their form groups
+// into a compact row. Restore the original DOM when leaving the section.
+function restoreBankFields(){
+ for(const {group,anchor} of bankFieldPlaces){
+  if(anchor.parentNode){anchor.parentNode.insertBefore(group,anchor);anchor.remove();}
+ }
+ bankFieldPlaces=[];
+ $('cya-bank-inline-fields')?.remove();
+}
+function setupBankFields(section){
+ if(section!=='banco')return;
+ const modal=$('modal-cliente'),body=modal?.querySelector('.modal-body');
+ const ids=['fc-banco','fc-clabe','fc-nivel-bbva'];
+ if(!body||!ids.every(id=>$(id)?.closest('.form-group')))return;
+ restoreBankFields();
+ const grid=document.createElement('div');grid.id='cya-bank-inline-fields';
+ grid.className='cya-bank-inline-fields';
+ body.insertBefore(grid,body.firstChild);
+ for(const id of ids){
+  const group=$(id).closest('.form-group'),anchor=document.createComment('restore-bank-'+id);
+  group.parentNode.insertBefore(anchor,group);
+  group.hidden=false;grid.appendChild(group);bankFieldPlaces.push({group,anchor});
+ }
+}
 function stopInlineEditor(){
  const modal=$('modal-cliente');if(!modal||!editorActive)return;
+ restoreBankFields();
  restoreAforeFields();
  restorePrevisionalNss();
  // Restore the original DOM placement of all six fields before opening any other form.
@@ -445,6 +471,7 @@ function mountInlineEditor(c,section){
  setupMxLastWithdrawal(section);
  setupPrevisionalNss(section);
  setupAforeFields(section);
+ setupBankFields(section);
  setupIdentityFields(section);
  const originalCancel=editor.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(originalCancel){originalCancel.dataset.cyaHybridCancel='1';originalCancel.onclick=()=>{
@@ -479,12 +506,19 @@ function selection(c){
  if(source){
   source.classList.add('active');source.hidden=false;box.appendChild(source);
   if(selected==='finanzas'){
-   // Group the five EXISTING payment controls in a 3+2 grid: preserve IDs,
-   // input values, input listeners and native guardarFinanzas handler.
+   // Move ONLY native finance controls + native save button into a single
+   // horizontal editor. Keep underlying calculations and saved summary intact.
    const rows=[...source.querySelectorAll(':scope > .form-row')].filter(row=>row.querySelector('[id^="fin-"]'));
-   if(rows.length){
-    const grid=document.createElement('div');grid.className='cya-client-finance-edit-grid';
-    rows[0].before(grid);rows.forEach(row=>grid.appendChild(row));
+   const save=source.querySelector('.profile-finance-save');
+   if(rows.length===3&&save){
+    const grid=document.createElement('div');
+    grid.className='cya-client-finance-edit-grid';
+    const title=[...source.children].find(el=>/Editar\s*\/\s*confirmar datos de cobro/i.test(el.textContent||'')&&!el.querySelector('input,select,button'));
+    const auto=source.querySelector('.profile-finance-auto');
+    if(title&&auto)auto.before(title);
+    if(title)title.after(grid);else rows[0].before(grid);
+    rows.forEach(row=>grid.appendChild(row));
+    grid.appendChild(save);
    }
   }
   if(selected==='previsional'||selected==='banco'){
