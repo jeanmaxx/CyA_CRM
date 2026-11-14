@@ -245,6 +245,9 @@ function setupIdentityFields(section){
  restoreIdentityFields();
  const layout=document.createElement('div');
  layout.className='cya-client-identity-grid';layout.id='cya-client-identity-grid';
+ // Insert before relocating the six groups: detached elements must stay in
+ // the document so every native validator and getElementById continues working.
+ body.insertBefore(layout,body.firstChild);
  for(let rowIndex=0;rowIndex<layouts.length;rowIndex++){
   const row=document.createElement('div');row.className='cya-client-identity-row row-'+(rowIndex+1);
   for(const spec of layouts[rowIndex]){
@@ -281,7 +284,6 @@ function setupIdentityFields(section){
  copy.addEventListener('click',()=>copyCurrentIdentityCurp(copy));
  ctrl.appendChild(copy);
  identityCurpRow=ctrl;identityCurpControl=control;
- body.insertBefore(layout,body.firstChild);
  modal.classList.add('cya-client-identity-active');
 }
 
