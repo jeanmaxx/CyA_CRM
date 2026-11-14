@@ -37,7 +37,7 @@
     },
     {
       id:'pl_wa_aprobado_corto_1',nombre:'Mensaje Aprobado Corto',etapa:'aprobado',tipo:'whatsapp',icono:'',cyaGrupo:'aprobado_corto',cyaOrden:1,
-      texto:'¡Hola, {{NOMBRE}}, {{SALUDO}}!\\n\\n¡Te tengo muy buenas noticias! Terminamos de realizar la consulta en el sistema y cumples todos los requisitos básicos para comenzar a tramitar tu *Retiro por Desempleo*.\\n\\nAvísame cuando tengas oportunidad de recibirme una llamada para darte todos los detalles de qué sigue y cómo podemos comenzar.\\n\\nSaludos.'
+      texto:'¡Hola, {{NOMBRE}}, {{SALUDO}}!\n\n¡Te tengo muy buenas noticias! Terminamos de realizar la consulta en el sistema y cumples todos los requisitos básicos para comenzar a tramitar tu *Retiro por Desempleo*.\n\nAvísame cuando tengas oportunidad de recibirme una llamada para darte todos los detalles de qué sigue y cómo podemos comenzar.\n\nSaludos.'
     },
     {
       id:'pl_wa_despedida_1',nombre:'WhatsApp · Despedida / servicios',etapa:'',tipo:'whatsapp',icono:'',cyaGrupo:'despedida',cyaOrden:1,
