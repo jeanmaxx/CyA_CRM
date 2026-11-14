@@ -237,6 +237,51 @@ const cases=[
    assert.equal(await page.locator('#pd-finanzas .profile-finance-save').count(),1,sc.name+' one native finance save');
    await page.locator('#pd-finanzas .profile-finance-save').click();
    assert.equal(await page.evaluate(()=>window.__financeSaveClicked),true,sc.name+' native finance save click retained');
+   // Comisiones: optional extra-document control must not render in this tab.
+   await page.locator('[data-hybrid-client="comisiones"]').click();
+   assert.equal(await page.locator('#extra-doc-new').count(),1,sc.name+' document field still exists in source DOM');
+   assert.equal(await page.locator('#extra-doc-new').isVisible(),false,sc.name+' extra document hidden in commissions');
+   assert.equal(await page.locator('#docs-checklist-container').isVisible(),false,sc.name+' checklist hidden in commissions');
+   // Contracts: original native controls + each real contract's status.
+   await page.evaluate(()=>{
+     const p=document.getElementById('pd-contratos');
+     p.innerHTML='<div class="contract-native-block"><div>ESTADO DEL CONTRATO</div>'+
+       '<div class="profile-contract-status"><span>Contrato firmado</span><span class="chip chip-green">✓ Firmado</span></div>'+
+       '<div class="form-row"><div class="form-group"><label class="form-label">Fecha real de firma</label><input class="form-input" id="perfil-firma" value="11/11/2026"></div>'+
+       '<div class="form-group"><label class="form-label">Fecha de alta</label><input class="form-input" id="perfil-alta" value="13/11/2026"></div></div>'+
+       '<p>Solicitud prevista: 28/12/2026</p>'+
+       '<button class="btn btn-primary" onclick="window.__contractDatesSaved=true;guardarFechasContratoAltaStub()">Guardar fechas</button></div>'+
+       '<hr class="divider"><div class="contract-history-label">Historial de contratos generados</div>'+
+       '<div class="hist-contrato-item"><div>▤</div><div style="flex:1">Retiro por desempleo</div><div><span class="chip chip-gray">Generado</span><button class="btn">Ver</button></div></div>'+
+       '<div class="hist-contrato-item"><div>▤</div><div style="flex:1">Corrección de datos</div><div><span class="chip chip-gray">Generado</span><button class="btn">Ver</button></div></div>'+
+       '<div class="contract-generate-wrap"><button class="btn" onclick="window.__contractGenerateClicked=true">+ Generar nuevo contrato</button></div>';
+     window.guardarFechasContratoAltaStub=()=>{};
+   });
+   await page.locator('[data-hybrid-client="contratos"]').click();
+   const contractPositions=await page.locator('#pd-contratos').evaluate(panel=>{
+     const rect=s=>{const el=panel.querySelector(s);if(!el)return null;const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width};};
+     return {top:rect('.cya-contract-top-row'),generate:rect('.cya-contract-top-row button:first-child'),
+       firma:rect('#perfil-firma'),alta:rect('#perfil-alta'),
+       predicted:rect('.cya-contract-top-row>p'),save:rect('.cya-contract-top-row>button'),
+       heading:rect('.cya-contract-history-heading'),
+       first:rect('.hist-contrato-item'),panel:rect('#pd-contratos')};
+   });
+   assert(contractPositions.top&&contractPositions.generate&&contractPositions.firma&&contractPositions.alta&&contractPositions.predicted&&contractPositions.save,sc.name+' all native contract fields in top row '+JSON.stringify(contractPositions));
+   assert(contractPositions.top.bottom<=contractPositions.heading.top+2,sc.name+' history below contract editor');
+   if(sc.width>940){
+     const aligned=[contractPositions.generate,contractPositions.firma,contractPositions.alta,contractPositions.predicted,contractPositions.save];
+     assert(aligned.every(x=>x.top>=contractPositions.top.top-2&&x.bottom<=contractPositions.top.bottom+2),sc.name+' elements inside compact row');
+     assert(contractPositions.generate.left<contractPositions.firma.left&&contractPositions.alta.left<contractPositions.predicted.left&&contractPositions.predicted.left<contractPositions.save.left,sc.name+' approved left-to-right contract order');
+   }
+   assert(contractPositions.top.right<=contractPositions.panel.right+2,sc.name+' contract top no overflow');
+   assert.equal(await page.locator('#pd-contratos .hist-contrato-item').count(),2,sc.name+' no fabricated contracts');
+   assert.equal(await page.locator('#pd-contratos .cya-contract-signed-chip').count(),1,sc.name+' only latest contract inherits dossier signed flag');
+   assert.equal(await page.locator('#pd-contratos .hist-contrato-item').nth(1).locator('.cya-contract-signed-chip').count(),0,sc.name+' older contract does not inherit signed status');
+   assert.equal(await page.locator('#pd-contratos .cya-contract-history-heading span').innerText(),'ESTADO DEL CONTRATO',sc.name+' contract status header');
+   await page.locator('#pd-contratos .cya-contract-top-row button').first().click();
+   assert.equal(await page.evaluate(()=>window.__contractGenerateClicked),true,sc.name+' original generate handler retained');
+   await page.locator('#pd-contratos .cya-contract-top-row>button').click();
+   assert.equal(await page.evaluate(()=>window.__contractDatesSaved),true,sc.name+' original dates save handler retained');
    assert.deepEqual(errors,[],sc.name+' no uncaught JS errors');
    console.log('PASS approved client layout '+sc.name+': six compact top cards, nine navigation cards, gold panel, exact six editable fields and full CURP copy');
    await page.close();
