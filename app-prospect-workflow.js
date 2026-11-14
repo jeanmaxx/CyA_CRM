@@ -305,4 +305,5 @@ async function guardarLead(){
   if(aprobadoAhora&&typeof window.cyaAbrirCentroMensajesWhatsApp==='function'){
     window.cyaAbrirCentroMensajesWhatsApp('aprobado');
   }
+  return true;
 }
