@@ -70,7 +70,7 @@ const errors=[];
     const alignment=await card.evaluate(el=>({align:getComputedStyle(el).textAlign,items:getComputedStyle(el).alignItems,font:parseFloat(getComputedStyle(el.querySelector('strong')).fontSize)}));
     assert.equal(alignment.align,'center',scenario.name+' centered summary');
     assert.equal(alignment.items,'center',scenario.name+' centered flex');
-    assert(alignment.font>=14,scenario.name+' enlarged summary values');
+    assert(alignment.font>=11&&alignment.font<=13,scenario.name+' approved compact summary values');
    }
    const columns=await page.locator('.cya-hybrid-client-cards').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length);
    assert.equal(columns,scenario.width<670?2:3,scenario.name+' responsive card columns');

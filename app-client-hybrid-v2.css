@@ -246,3 +246,209 @@
  #modal-perfil #cya-hybrid-client-root .cya-client-summary-card strong{font-size:14px!important}
  #modal-perfil #cya-hybrid-client-root .cya-hybrid-client-card{min-height:63px!important}
 }
+
+
+/* Clientes · maqueta final aprobada · 13 Nov 2026
+   One row (4 KPIs + pending warnings), no horizontal scroll at desktop.
+   Six real original Identity inputs, two rows, full CURP plus copy, gold
+   border around every selected native/legacy section. */
+#modal-perfil:has(#cya-hybrid-client-root) #perfil-body>.alerta-firma,
+#modal-perfil:has(#cya-hybrid-client-root) #perfil-body>.alerta-afore-urgente,
+#modal-perfil:has(#cya-hybrid-client-root) #perfil-body>.alerta-afore-warning{display:none!important}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-grid{
+ display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:5px!important;
+ padding:0 0 12px!important;
+ align-items:stretch!important;
+ min-width:0!important;width:100%!important;overflow:visible!important;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-grid.has-1-alerts{
+ grid-template-columns:minmax(0,.85fr) minmax(0,.98fr) minmax(0,.92fr) minmax(0,.92fr) minmax(0,1.45fr)!important;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-grid.has-2-alerts{
+ grid-template-columns:minmax(0,.82fr) minmax(0,.96fr) minmax(0,.88fr) minmax(0,.88fr) minmax(0,1.32fr) minmax(0,1.58fr)!important;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-card{
+ min-width:0!important;width:100%!important;min-height:55px!important;
+ padding:6px 4px!important;gap:3px!important;
+ border-radius:8px!important;
+ overflow:hidden!important;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-card small{
+ font-size:9px!important;font-weight:650!important;line-height:1.1!important;
+ letter-spacing:0!important;white-space:normal!important;
+ overflow-wrap:anywhere!important;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-card strong{
+ font-size:12px!important;font-weight:700!important;line-height:1.22!important;
+ text-align:center!important;overflow:hidden!important;overflow-wrap:anywhere!important;
+ display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-next-priority{
+ font-size:8px!important;line-height:1.05!important;letter-spacing:0!important;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-pending-alert{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ justify-content:flex-start!important;gap:5px!important;
+ padding:6px 7px!important;box-sizing:border-box!important;
+ min-width:0!important;width:100%!important;min-height:55px!important;
+ border:1px solid #926e2d!important;border-radius:8px!important;
+ background:rgba(164,106,20,.16)!important;color:#f3c36c!important;
+ font-size:10px!important;line-height:1.2!important;text-align:left!important;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-pending-alert.is-high{
+ border-color:#b95057!important;background:rgba(170,46,60,.12)!important;color:#f79b99!important;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-pending-symbol{
+ flex:none;font-size:13px;line-height:1;font-weight:750;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-alert-text{
+ display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+ overflow:hidden;min-width:0;overflow-wrap:anywhere;
+}
+/* The four statuses remain at the left and pending alerts never form another
+   horizontal row on full desktop. Very small screens reflow, not overflow. */
+@media(min-width:761px){
+ #modal-perfil #cya-hybrid-client-root .cya-client-summary-grid{grid-auto-flow:row!important}
+}
+@media(max-width:760px){
+ #modal-perfil #cya-hybrid-client-root .cya-client-summary-grid,
+ #modal-perfil #cya-hybrid-client-root .cya-client-summary-grid.has-1-alerts,
+ #modal-perfil #cya-hybrid-client-root .cya-client-summary-grid.has-2-alerts{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ #modal-perfil #cya-hybrid-client-root .cya-client-summary-card strong{font-size:12px!important}
+}
+
+/* Full gold outline marks the currently selected card and its ENTIRE panel. */
+#modal-perfil #cya-hybrid-client-panel{
+ border:3px solid #d0a55d!important;border-left:4px solid #d0a55d!important;
+ background:var(--bg-card,#202838)!important;
+ border-radius:12px!important;padding:12px!important;
+ margin:1px 0 0!important;box-sizing:border-box!important;
+ min-width:0!important;overflow:visible!important;
+}
+#modal-perfil #cya-hybrid-client-panel .cya-hybrid-client-panel-head{
+ margin:0 0 10px!important;
+ padding:0!important;align-items:center!important;
+}
+#modal-perfil #cya-hybrid-client-panel .cya-hybrid-client-panel-head strong{
+ font-size:15px!important;font-weight:750!important;line-height:1.3!important;
+}
+#modal-perfil #cya-hybrid-client-panel .cya-hybrid-client-panel-head small{
+ color:var(--text-muted)!important;font-size:10px!important;
+}
+#modal-perfil #cya-hybrid-client-panel .cya-hybrid-client-panel-content{
+ background:var(--bg-secondary,#182231)!important;
+ border:1px solid var(--border,#465267)!important;
+ border-radius:10px!important;
+ padding:12px!important;
+ min-width:0!important;box-sizing:border-box!important;
+}
+/* Native, original editable controls retain their original IDs and handlers. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .tab-panel:not([hidden]){
+ display:none!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-grid{
+ display:flex!important;flex-direction:column!important;gap:9px!important;
+ width:100%!important;min-width:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row{
+ display:grid!important;align-items:start!important;gap:8px!important;
+ min-width:0!important;width:100%!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row.row-1{
+ grid-template-columns:minmax(0,2.6fr) minmax(0,2fr) minmax(0,1.25fr)!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row.row-2{
+ grid-template-columns:minmax(0,1.8fr) minmax(0,3fr) minmax(0,1.5fr)!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-advisor{
+ grid-template-columns:minmax(0,1fr)!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .form-group{
+ display:flex!important;flex-direction:column!important;gap:3px!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ grid-column:auto!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .form-label{
+ font-size:10px!important;font-weight:500!important;line-height:1.25!important;
+ margin:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .form-input,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .form-select{
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ height:38px!important;min-height:38px!important;
+ padding:6px 8px!important;box-sizing:border-box!important;
+ font-size:11px!important;line-height:1.25!important;text-overflow:clip!important;
+ background:#303743!important;border:1px solid #535e6f!important;color:#f7f9fb!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-curp-control{
+ display:flex!important;align-items:center!important;gap:5px!important;
+ width:100%!important;min-width:0!important;height:38px!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-curp-control>.nss-wrap{
+ display:block!important;flex:1 1 auto!important;min-width:0!important;width:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-curp-control #fc-curp{
+ font-size:11px!important;letter-spacing:0!important;
+ font-family:ui-monospace,SFMono-Regular,Consolas,monospace!important;
+ padding-left:7px!important;padding-right:27px!important;
+ width:100%!important;min-width:0!important;text-overflow:clip!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-copy-curp{
+ appearance:none!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 38px!important;width:38px!important;height:38px!important;min-width:38px!important;
+ border:1px solid #526687!important;border-radius:6px!important;
+ background:#202c40!important;color:#e0eafa!important;
+ padding:0!important;cursor:pointer!important;box-sizing:border-box!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-copy-curp:hover{
+ background:#293e60!important;border-color:#8aafd9!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-copy-curp.copied{
+ border-color:#48c992!important;color:#63dcaa!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-copy-curp:focus-visible{
+ outline:2px solid #d0a55d!important;outline-offset:2px!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-copy-curp svg{display:block!important;width:17px!important;height:17px!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .client-edit-footer,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active>.modal>.modal-footer{
+ position:static!important;margin-top:13px!important;padding:10px 0 0!important;
+ background:transparent!important;border-top:0!important;
+}
+@media(max-width:800px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row.row-1,
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row.row-2{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row.row-1>.form-group:first-child,
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row.row-2>.form-group:nth-child(2){
+  grid-column:1/-1!important;
+ }
+}
+@media(max-width:480px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row.row-1,
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row.row-2{
+  grid-template-columns:1fr!important;
+ }
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row>.form-group{
+  grid-column:1/-1!important;
+ }
+}
+
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-caption{
+ margin:2px 0 0!important;padding:0!important;
+ font-size:10px!important;line-height:1.35!important;
+ color:var(--text-muted,#94a3b8)!important;
+}
+[data-theme="light"] #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .form-input,
+[data-theme="light"] #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .form-select{
+ background:#f1f5f9!important;border-color:#cbd5e1!important;color:#0f172a!important;
+}
+[data-theme="light"] #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-copy-curp{
+ background:#e2e8f0!important;color:#1e293b!important;border-color:#94a3b8!important;
+}

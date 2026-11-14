@@ -35,15 +35,15 @@ const plusBusiness=(d)=>{
 };
 const summary=(c,id)=>{
  switch(id){
- case 'contratos':return (c.historialContratos||[]).length?'Último contrato · '+format((c.historialContratos||[]).at(-1)?.fecha):'Crear contrato';
- case 'identidad':return [c.telefono,c.ciudad].filter(Boolean).join(' · ')||'Nombre, teléfono y dirección';
- case 'previsional':return 'NSS: '+field(c.nss)+' · CURP';
- case 'afore':return field(c.afore)+' · '+(c.fechaBiometrica?'Cita '+format(c.fechaBiometrica):'Sin cita');
- case 'banco':return field(c.banco)+' · '+(c.nivelCuentaBBVA?'Nivel '+c.nivelCuentaBBVA:'Nivel por confirmar');
- case 'finanzas':return 'Retiro, honorarios y cobros';
+ case 'contratos':return 'Documentos y firmas';
+ case 'identidad':return 'Datos personales';
+ case 'previsional':return 'NSS · IMSS · Semanas';
+ case 'afore':return field(c.afore,'AFORE')+' · Citas y trámites';
+ case 'banco':return 'Cuenta y CLABE';
+ case 'finanzas':return 'Retiros y cobros';
  case 'comisiones':return 'Asesor y colaborador';
- case 'notas':return c.notas?String(c.notas).slice(0,65):'Sin observaciones';
- case 'historial':return (c.historial||[]).length+' movimientos';
+ case 'notas':return 'Seguimiento y pendientes';
+ case 'historial':return 'Movimientos registrados';
  }return '';
 };
 // Read-only header for the next operational step. The milestone engine remains
@@ -90,18 +90,41 @@ const stageTitle=c=>{
  const labels={generando_contrato:'Generando contrato',contrato_firmas:'Contrato en firmas',contrato_firmado:'Contrato firmado',dado_alta:'Dado de alta',afore_actualizada:'AFORE actualizada',solicitud_realizada:'Solicitud realizada',deposito_recibido:'Depósito recibido',honorarios_recibidos:'Honorarios recibidos',concluido:'Concluido'};
  return labels[c.etapa]||(typeof STAGES_RETIRO!=='undefined'?STAGES_RETIRO.find(x=>x.id===c.etapa)?.label:'')||field(c.etapa,'Por confirmar');
 };
-const summaryCards=c=>{
+// Native profile warnings are the source of truth; surface only unresolved
+// warnings in the same horizontal strip as the four approved status cards.
+const pendingProfileAlerts=body=>{
+ if(!body)return [];
+ const warnings=[...body.children].filter(el=>
+  el.matches('.alerta-firma,.alerta-afore-urgente,.alerta-afore-warning')&&
+  !el.classList.contains('alerta-verde')&&!el.classList.contains('alerta-green'));
+ const rows=warnings.map(el=>{
+  const raw=String(el.textContent||'').replace(/\s+/g,' ').trim().replace(/^[✓✔⚠!\s]+/,'');
+  const resolved=/^(contrato firmado|cita confirmada|completad[oa]|realizad[oa]|recibid[oa]|pagad[oa])/i.test(raw);
+  const level=el.classList.contains('alerta-roja')||el.classList.contains('alerta-afore-urgente')?'high':'medium';
+  el.classList.add('cya-client-native-alert');
+  return {text:raw,level,resolved};
+ }).filter(a=>a.text&&!a.resolved);
+ // Do not hide additional warnings. When there are more than two, keep their
+ // full descriptions accessible via title and the merged second alert.
+ if(rows.length<=2)return rows;
+ return [rows[0],{text:rows.slice(1).map(x=>x.text).join(' · '),level:rows.slice(1).some(x=>x.level==='high')?'high':'medium',more:rows.length-1}];
+};
+const summaryCards=(c,pending=[])=>{
  const next=clientNextAction(c);
  const solicitud=c.fechaSolicitudManual||c.fechaRetiroEstimada||'';
  const cobro=c.fechaCobroProbable||plusBusiness(c.fechaSolicitudRealizada||c.etapasOperativasV2?.solicitud?.fecha||solicitud);
  const card=(id,title,value)=>'<div class="cya-client-summary-card" data-cya-summary="'+id+'"><small>'+title+'</small><strong>'+esc(value)+'</strong></div>';
- return '<div class="cya-client-summary-grid" aria-label="Resumen del cliente">'+
+ const alerts=pending.slice(0,2).map(a=>
+  '<div class="cya-client-pending-alert is-'+(a.level==='high'?'high':'medium')+'" role="status" title="'+esc(a.text)+'">'+
+  '<span class="cya-client-pending-symbol" aria-hidden="true">⚠</span><span class="cya-client-alert-text">'+esc(a.text)+'</span></div>'
+ ).join('');
+ return '<div class="cya-client-summary-grid has-'+Math.min(pending.length,2)+'-alerts" aria-label="Resumen y avisos pendientes del cliente">'+
   card('stage','ETAPA ACTUAL',stageTitle(c))+
   '<'+(next.eventId?'button':'div')+' class="cya-client-summary-card cya-client-next is-'+next.tone+'"'+(next.eventId?' type="button" data-cya-next-event="'+esc(next.eventId)+'" title="Abrir el evento pendiente en Agenda"':'')+'>'+
   '<small>ACCIÓN SIGUIENTE</small><strong>'+esc(next.label)+'</strong><span class="cya-client-next-priority">'+esc(next.priorityText)+'</span></'+(next.eventId?'button':'div')+'>'+
   card('request','SOLICITUD PROBABLE',format(solicitud))+
   card('collection','COBRO PROBABLE',format(cobro))+
-  '</div>';
+  alerts+'</div>';
 };
 
 let currentId='',selected='',building=false,previousSigned=null;
@@ -153,7 +176,7 @@ function header(c){
   menu.open=false;
   if(typeof sesionActiva!=='undefined'&&['admin','tech_admin'].includes(String(sesionActiva?.rol||''))){
    if(editorActive&&!confirmSwitch())return;
-   selected='identidad';selection(c);
+   identityShowAdvisor=true;selected='identidad';selection(c);
    const owner=$('fc-asesor');if(owner){owner.closest('.form-group').hidden=false;owner.focus();}
   }
   else if(typeof window.cyaAbrirSolicitudCambioAsesor==='function')window.cyaAbrirSolicitudCambioAsesor(c.id);
@@ -164,16 +187,113 @@ function header(c){
 /* Reuse the native client-edit form IN PLACE. No parallel save code or data model. */
 const inlineCategories=new Set(['identidad','previsional','afore','banco','comisiones','notas']);
 const inlineFields={
- identidad:['fc-nombre','fc-telefono','fc-email','fc-ciudad','fc-curp','fc-domicilio','fc-fuente','fc-asesor'],
+ identidad:['fc-nombre','fc-telefono','fc-email','fc-ciudad','fc-curp','fc-domicilio','fc-asesor'],
  previsional:['fc-nss','fc-rfc','el-semanas','el-imss','el-retiro','el-fecha'],
  afore:['fc-afore','fc-fecha-biometrica','fc-hora-afore','fc-sucursal-afore','fc-fecha-solicitud-manual'],
  banco:['fc-banco','fc-nivel-bbva','fc-clabe'],
  comisiones:['fc-colaborador','fc-col-pct','fc-col-comision','fc-honorarios','fc-comision'],
  notas:['fc-notas','fc-prox-tipo','fc-prox-fecha','fc-prox-hora','fc-prox-nota']
 };
-let editorHome=null,editorActive=false,editorSection='';
+let editorHome=null,editorActive=false,editorSection='',identityShowAdvisor=false;
+let identityPlaces=[],identityCurpRow=null,identityCurpControl=null,identityCurpLabelHTML='';
+// Relocate the exact six NATIVE form controls: no duplicate inputs, no parallel
+// save model and no mutation of clients. Each original location is restored on
+// section change/close so the rest of the CRM still sees its original form.
+function restoreIdentityFields(){
+ if(identityCurpRow&&identityCurpControl){
+  identityCurpRow.parentNode?.insertBefore(identityCurpControl,identityCurpRow);
+  identityCurpRow.remove();
+ }
+ identityCurpRow=null;identityCurpControl=null;
+ for(const entry of identityPlaces){
+  if(entry.label&&entry.html!==null)entry.label.innerHTML=entry.html;
+  if(entry.anchor?.parentNode){entry.anchor.parentNode.insertBefore(entry.group,entry.anchor);entry.anchor.remove();}
+ }
+ identityPlaces=[];
+ $('cya-client-identity-grid')?.remove();
+ $('modal-cliente')?.classList.remove('cya-client-identity-active');
+}
+async function copyCurrentIdentityCurp(button){
+ const input=$('fc-curp'),curp=String(input?.value||'').trim();
+ if(!curp){if(typeof showToast==='function')showToast('No hay CURP para copiar','warn');return;}
+ let copied=false;
+ try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(curp);copied=true;}}catch(_){}
+ if(!copied){
+  try{
+   input.focus();input.select();
+   copied=Boolean(document.execCommand?.('copy'));
+   input.setSelectionRange?.(curp.length,curp.length);
+  }catch(_){}
+ }
+ if(copied){
+  button.setAttribute('aria-label','CURP copiada');
+  button.classList.add('copied');
+  if(typeof showToast==='function')showToast('CURP copiada','success');
+ }else if(typeof showToast==='function')showToast('No se pudo copiar la CURP','warn');
+}
+function setupIdentityFields(section){
+ if(section!=='identidad')return;
+ const modal=$('modal-cliente'),body=modal?.querySelector('.modal-body');
+ if(!body)return;
+ const layouts=[
+  [{id:'fc-nombre'}, {id:'fc-curp',label:'CURP'}, {id:'fc-telefono'}],
+  [{id:'fc-email'}, {id:'fc-domicilio'}, {id:'fc-ciudad',label:'Ciudad / municipio'}]
+ ];
+ // Isolated tests or older native forms may not have every input. In that case
+ // keep the existing editor unchanged instead of risking partial relocation.
+ if(!layouts.every(row=>row.every(spec=>$(spec.id)?.closest('.form-group'))))return;
+ restoreIdentityFields();
+ const layout=document.createElement('div');
+ layout.className='cya-client-identity-grid';layout.id='cya-client-identity-grid';
+ // Insert before relocating the six groups: detached elements must stay in
+ // the document so every native validator and getElementById continues working.
+ body.insertBefore(layout,body.firstChild);
+ for(let rowIndex=0;rowIndex<layouts.length;rowIndex++){
+  const row=document.createElement('div');row.className='cya-client-identity-row row-'+(rowIndex+1);
+  for(const spec of layouts[rowIndex]){
+   const group=$(spec.id).closest('.form-group'),anchor=document.createComment('restore-'+spec.id);
+   group.parentNode.insertBefore(anchor,group);
+   const label=group.querySelector('.form-label'),html=label?.innerHTML??null;
+   identityPlaces.push({group,anchor,label,html});
+   group.hidden=false;
+   if(spec.label&&label)label.textContent=spec.label;
+   row.appendChild(group);
+  }
+  layout.appendChild(row);
+ }
+ const caption=document.createElement('p');caption.className='cya-client-identity-caption';
+ caption.textContent='Datos personales organizados en dos filas, sin repetir la información del encabezado.';
+ layout.appendChild(caption);
+ if(identityShowAdvisor){
+  const owner=$('fc-asesor'),group=owner?.closest('.form-group');
+  if(group){
+   const anchor=document.createComment('restore-fc-asesor');
+   group.parentNode.insertBefore(anchor,group);
+   identityPlaces.push({group,anchor,label:null,html:null});
+   group.hidden=false;
+   const row=document.createElement('div');row.className='cya-client-identity-row cya-client-identity-advisor';row.appendChild(group);
+   layout.appendChild(row);
+  }
+ }
+ // CURP input retains its native indicator and validation. The copy button
+ // reads the complete live 18-character value, including unsaved edits.
+ const curp=$('fc-curp'),control=curp.closest('.nss-wrap')||curp;
+ const ctrl=document.createElement('div');ctrl.className='cya-client-identity-curp-control';
+ control.parentNode.insertBefore(ctrl,control);ctrl.appendChild(control);
+ const copy=document.createElement('button');copy.type='button';copy.id='cya-client-copy-curp';
+ copy.className='cya-client-copy-curp';copy.title='Copiar CURP completa';
+ copy.setAttribute('aria-label','Copiar CURP completa');
+ copy.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
+ copy.addEventListener('click',()=>copyCurrentIdentityCurp(copy));
+ ctrl.appendChild(copy);
+ identityCurpRow=ctrl;identityCurpControl=control;
+ modal.classList.add('cya-client-identity-active');
+}
+
 function stopInlineEditor(){
  const modal=$('modal-cliente');if(!modal||!editorActive)return;
+ // Restore the original DOM placement of all six fields before opening any other form.
+ restoreIdentityFields();
  // Restore the native ISO date input before returning the original editor.
  const nativeDate=$('el-fecha');
  if(nativeDate?.dataset.cyaHybridDateHidden==='1'){nativeDate.hidden=false;delete nativeDate.dataset.cyaHybridDateHidden;}
@@ -268,6 +388,7 @@ function mountInlineEditor(c,section){
  editorActive=true;
  showEditorFields(section);
  setupMxLastWithdrawal(section);
+ setupIdentityFields(section);
  const originalCancel=editor.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(originalCancel){originalCancel.dataset.cyaHybridCancel='1';originalCancel.onclick=()=>{
   stopInlineEditor();selected='';selection(c);
@@ -280,13 +401,14 @@ function selection(c){
  const root=$('cya-hybrid-client-root'),area=$('cya-hybrid-client-panel');
  if(!root||!area)return;
  root.querySelectorAll('[data-hybrid-client]').forEach(b=>{const yes=b.dataset.hybridClient===selected;b.classList.toggle('active',yes);b.setAttribute('aria-pressed',String(yes));});
- if(!selected){if(editorActive)stopInlineEditor();area.hidden=true;return;}
+ if(!selected){if(editorActive)stopInlineEditor();area.hidden=true;identityShowAdvisor=false;return;}
+ if(selected!=='identidad')identityShowAdvisor=false;
  area.hidden=false;
  const x=items.find(v=>v[0]===selected);
  if(editorActive)stopInlineEditor();
  const stash=$('cya-hybrid-client-legacy');
  if(stash){for(const old of [...area.querySelectorAll(':scope > .cya-hybrid-client-panel-content > .tab-panel')]){old.hidden=true;old.classList.remove('active');stash.appendChild(old);}}
- area.innerHTML='<div class="cya-hybrid-client-panel-head"><strong>'+esc(x[1])+'</strong><small>Panel interno</small></div><div class="cya-hybrid-client-panel-content" id="cya-hybrid-client-content"></div>';
+ area.innerHTML='<div class="cya-hybrid-client-panel-head"><strong>'+esc(x[1])+'</strong><small>Datos del cliente</small></div><div class="cya-hybrid-client-panel-content" id="cya-hybrid-client-content"></div>';
  const box=$('cya-hybrid-client-content'),source=$(x[3]);
  if(inlineCategories.has(selected)&&mountInlineEditor(c,selected)){
   // The native AFORE editor already renders its reference information.
@@ -330,7 +452,8 @@ function build(){
   const tabs=$('perfil-tabs');if(tabs)tabs.hidden=true;
   const summaryGrid=body.querySelector('.profile-summary-grid');if(summaryGrid)summaryGrid.hidden=true;
   const root=document.createElement('section');root.id='cya-hybrid-client-root';
-  root.innerHTML=summaryCards(c)+'<nav class="cya-hybrid-client-cards" aria-label="Tarjetas del expediente"></nav><div id="cya-hybrid-client-legacy" hidden></div><section class="cya-hybrid-client-panel" id="cya-hybrid-client-panel" hidden></section>';
+  const nativeAlerts=pendingProfileAlerts(body);
+  root.innerHTML=summaryCards(c,nativeAlerts)+'<nav class="cya-hybrid-client-cards" aria-label="Tarjetas del expediente"></nav><div id="cya-hybrid-client-legacy" hidden></div><section class="cya-hybrid-client-panel" id="cya-hybrid-client-panel" hidden></section>';
   const stages=body.querySelector('.profile-stage-wrap');if(stages)stages.insertAdjacentElement('afterend',root);else body.prepend(root);
   const stash=$('cya-hybrid-client-legacy');
   for(const panel of [...body.querySelectorAll(':scope>.tab-panel')]){panel.hidden=true;panel.classList.remove('active');stash.appendChild(panel);}
