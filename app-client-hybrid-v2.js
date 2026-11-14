@@ -187,8 +187,8 @@ function header(c){
 /* Reuse the native client-edit form IN PLACE. No parallel save code or data model. */
 const inlineCategories=new Set(['identidad','previsional','afore','banco','comisiones','notas']);
 const inlineFields={
- identidad:['fc-nombre','fc-telefono','fc-email','fc-ciudad','fc-curp','fc-domicilio','fc-asesor'],
- previsional:['fc-nss','fc-rfc','el-semanas','el-imss','el-retiro','el-fecha'],
+ identidad:['fc-nombre','fc-telefono','fc-email','fc-ciudad','fc-curp','fc-nss','fc-domicilio','fc-asesor'],
+ previsional:['fc-rfc','el-semanas','el-imss','el-retiro','el-fecha'],
  afore:['fc-afore','fc-fecha-biometrica','fc-hora-afore','fc-sucursal-afore','fc-fecha-solicitud-manual'],
  banco:['fc-banco','fc-nivel-bbva','fc-clabe'],
  comisiones:['fc-colaborador','fc-col-pct','fc-col-comision','fc-honorarios','fc-comision'],
@@ -199,7 +199,7 @@ let identityPlaces=[],identityCurpRow=null,identityCurpControl=null,identityCurp
 let previsionalNssPlace=null;
 let aforeFieldPlaces=[];
 let bankFieldPlaces=[];
-// Relocate the exact six NATIVE form controls: no duplicate inputs, no parallel
+// Relocate the seven NATIVE form controls: no duplicate inputs, no parallel
 // save model and no mutation of clients. Each original location is restored on
 // section change/close so the rest of the CRM still sees its original form.
 function restoreIdentityFields(){
@@ -239,7 +239,7 @@ function setupIdentityFields(section){
  const modal=$('modal-cliente'),body=modal?.querySelector('.modal-body');
  if(!body)return;
  const layouts=[
-  [{id:'fc-nombre'}, {id:'fc-curp',label:'CURP'}, {id:'fc-telefono'}],
+  [{id:'fc-nombre'}, {id:'fc-curp',label:'CURP'}, {id:'fc-nss',label:'NSS'}, {id:'fc-telefono'}],
   [{id:'fc-email'}, {id:'fc-domicilio'}, {id:'fc-ciudad',label:'Ciudad / municipio'}]
  ];
  // Isolated tests or older native forms may not have every input. In that case
@@ -303,15 +303,9 @@ function restorePrevisionalNss(){
  previsionalNssPlace=null;
 }
 function setupPrevisionalNss(section){
- if(section!=='previsional')return;
- const eligibility=$('tab-elegibilidad'),group=$('fc-nss')?.closest('.form-group');
- if(!eligibility||!group||!$('el-semanas')||!$('el-imss'))return;
- restorePrevisionalNss();
- const anchor=document.createComment('restore-previsional-nss');
- group.parentNode.insertBefore(anchor,group);
- eligibility.insertBefore(group,$('el-result')||null);
- group.classList.add('cya-previsional-nss');group.hidden=false;
- previsionalNssPlace={group,anchor};
+ // NSS remains solely in Identity/Contact, with the same native field,
+ // native validator, and persisted client value. No duplicate or relocation.
+ if(section==='previsional')restorePrevisionalNss();
 }
 // AFORE's five native controls share one compact grid. The original nodes,
 // not clones, retain Agenda hooks, input handlers and existing persistence.
@@ -373,7 +367,7 @@ function stopInlineEditor(){
  restoreBankFields();
  restoreAforeFields();
  restorePrevisionalNss();
- // Restore the original DOM placement of all six fields before opening any other form.
+ // Restore the original DOM placement of all seven fields before opening any other form.
  restoreIdentityFields();
  // Restore the native ISO date input before returning the original editor.
  const nativeDate=$('el-fecha');
