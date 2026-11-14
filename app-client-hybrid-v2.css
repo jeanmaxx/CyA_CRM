@@ -452,3 +452,120 @@
 [data-theme="light"] #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-copy-curp{
  background:#e2e8f0!important;color:#1e293b!important;border-color:#94a3b8!important;
 }
+
+
+/* Expediente compacto 14/11/2026 — ajustes por sección aprobados.
+   Conserva formularios originales, guardado, controles y valores. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] .tab-panel:not([hidden]){
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px 12px!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] .form-group,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .form-group,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .form-group{
+ width:100%!important;min-width:0!important;grid-column:auto!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad{
+ grid-column:1/-1!important;min-width:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-row:not([hidden]){
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px 12px!important;margin:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] .optional-data{
+ grid-column:1/-1!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .tab-panel:not([hidden]){
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px 10px!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .form-group:has(#fc-afore),
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .form-group:has(#fc-sucursal-afore){
+ grid-column:span 2!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .afore-info,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .afore-reference,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .afore-directorio{
+ grid-column:span 2!important;min-width:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="notas"] .tab-panel:not([hidden]){
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px 10px!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="notas"] .form-group:has(#fc-notas),
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="notas"] .form-group:has(#fc-prox-nota){
+ grid-column:1/-1!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="notas"] #fc-notas{
+ width:100%!important;min-height:88px!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="notas"] #fc-prox-nota{
+ width:100%!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .tab-panel:not([hidden]){
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px 10px!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .optional-data,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .document-checklist,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .documentos-checklist{
+ display:none!important;
+}
+#modal-perfil #cya-hybrid-client-panel:has(#pd-contratos) .cya-generate-contract-prominent{
+ display:inline-flex!important;width:auto!important;max-width:100%!important;min-height:32px!important;
+ padding:6px 13px!important;font-size:11px!important;flex:none!important;
+}
+#modal-perfil #cya-hybrid-client-panel:has(#pd-contratos) .cya-generate-contract-prominent:not(:disabled){align-items:center!important}
+#modal-perfil #cya-hybrid-client-panel:has(#pd-contratos) .cya-generate-contract-prominent:is(button){margin:0!important}
+#modal-perfil #cya-hybrid-client-panel:has(#pd-contratos) .cya-generate-contract-prominent:is(button):first-child{justify-content:center!important}
+#modal-perfil #cya-hybrid-client-panel:has(#pd-contratos) #pd-contratos .form-row{margin-top:0!important;margin-bottom:8px!important}
+#modal-perfil #cya-hybrid-client-panel:has(#pd-finanzas) #pd-finanzas .form-row{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin:8px 0!important;
+}
+#modal-perfil #cya-hybrid-client-panel:has(#pd-finanzas) #pd-finanzas input,
+#modal-perfil #cya-hybrid-client-panel:has(#pd-finanzas) #pd-finanzas select{
+ min-width:0!important;max-width:100%!important;height:34px!important;box-sizing:border-box!important;
+}
+@media(max-width:850px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] .tab-panel:not([hidden]),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .tab-panel:not([hidden]),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .tab-panel:not([hidden]),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="notas"] .tab-panel:not([hidden]),
+ #modal-perfil #cya-hybrid-client-panel:has(#pd-finanzas) #pd-finanzas .form-row{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:520px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] .tab-panel:not([hidden]),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .tab-panel:not([hidden]),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .tab-panel:not([hidden]),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="notas"] .tab-panel:not([hidden]),
+ #modal-perfil #cya-hybrid-client-panel:has(#pd-finanzas) #pd-finanzas .form-row,
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-row:not([hidden]){
+  grid-template-columns:1fr!important;
+ }
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .form-group:has(#fc-afore),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .form-group:has(#fc-sucursal-afore){grid-column:1/-1!important}
+}
+
+
+/* Five existing finance fields form exactly two lines at desktop (3 + 2). */
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:9px 12px!important;align-items:end!important;margin:8px 0 12px!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid>.form-row{
+ display:contents!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid .form-group{
+ min-width:0!important;width:100%!important;margin:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .docs-checklist,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .docs-extra,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .doc-item{
+ display:none!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-contratos .cya-generate-contract-prominent{
+ width:auto!important;max-width:100%!important;
+}
+@media(max-width:850px){
+ #modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:520px){
+ #modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{grid-template-columns:1fr!important}
+}

@@ -98,13 +98,15 @@
     if(!button)return;
     button.classList.add('btn-primary','cya-generate-contract-prominent');
     button.style.fontSize='12px';
-    button.style.width='100%';
+    button.style.width='auto';
+    button.style.maxWidth='100%';
+    button.style.padding='6px 13px';
     const wrapper=button.parentElement;
     if(wrapper){
-      wrapper.style.margin='0 0 16px';
+      wrapper.style.margin='0 0 6px';
       panel.insertBefore(wrapper,panel.firstElementChild);
     }else{
-      button.style.marginBottom='16px';
+      button.style.marginBottom='6px';
       panel.insertBefore(button,panel.firstElementChild);
     }
   }
