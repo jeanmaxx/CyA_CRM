@@ -13,7 +13,7 @@
   {id:'seguimiento',name:'Seguimiento',icon:'▤',description:'Etapa, acciones y observaciones'},
   {id:'historial',name:'Historial',icon:'◷',description:'Registro de actividad'}
  ];
- let current='identidad',dirty=false,lastLeadKey='';
+ let current='identidad',dirty=false,lastLeadKey='',initialFields=null,closeBusy=false;
  const $=id=>document.getElementById(id);
  const safe=x=>String(x??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[ch]));
  const modal=()=> $('modal-lead');
@@ -44,6 +44,95 @@
   });
   return root;
  }
+ // Real field-value snapshot: clicking around without editing never prompts.
+ // All edits (including eligibility fields) are compared with the original
+ // values; stage auto-saves refresh only the stage baseline.
+ function fieldSnapshot(){
+  const result={};
+  modal()?.querySelectorAll('.modal-body input[id],.modal-body select[id],.modal-body textarea[id]').forEach(el=>{
+   if(!el.id.startsWith('lead-'))return;
+   result[el.id]=el.type==='checkbox'||el.type==='radio'?el.checked:el.value;
+  });
+  return result;
+ }
+ function captureSnapshot(){initialFields=fieldSnapshot();dirty=false;}
+ function hasUnsavedChanges(){
+  if(!initialFields)return false;
+  const values=fieldSnapshot();
+  return Object.keys({...initialFields,...values}).some(k=>values[k]!==initialFields[k]);
+ }
+ function ensureClosePrompt(){
+  let popup=$('cya-prospect-unsaved-dialog');
+  if(popup)return popup;
+  popup=document.createElement('div');popup.id='cya-prospect-unsaved-dialog';
+  popup.className='cya-prospect-unsaved-dialog';
+  popup.hidden=true;
+  popup.innerHTML='<div class="cya-prospect-unsaved-box" role="alertdialog" aria-modal="true" aria-labelledby="cya-unsaved-title">'+
+    '<h3 id="cya-unsaved-title">Hay cambios sin guardar</h3><p>¿Deseas guardar los cambios antes de cerrar el expediente?</p>'+
+    '<div class="cya-prospect-unsaved-actions"><button type="button" class="btn" data-unsaved-stay>Seguir editando</button>'+
+    '<button type="button" class="btn" data-unsaved-discard>Descartar cambios</button>'+
+    '<button type="button" class="btn btn-primary" data-unsaved-save>Guardar</button></div></div>';
+  document.body.appendChild(popup);
+  popup.querySelector('[data-unsaved-stay]').addEventListener('click',()=>{popup.hidden=true;closeBusy=false;});
+  popup.querySelector('[data-unsaved-discard]').addEventListener('click',()=>{
+   popup.hidden=true;closeBusy=false;dirty=false;initialFields=null;
+   if(typeof window.closeModal==='function')window.closeModal('modal-lead');
+   else modal()?.classList.remove('open');
+  });
+  popup.querySelector('[data-unsaved-save]').addEventListener('click',async()=>{
+   if(closeBusy)return;
+   closeBusy=true;
+   const button=popup.querySelector('[data-unsaved-save]');
+   button.disabled=true;button.textContent='Guardando…';
+   try{
+    const ok=typeof window.guardarLead==='function'?await window.guardarLead():false;
+    if(ok===true){
+     popup.hidden=true;initialFields=null;dirty=false;
+     if(typeof window.closeModal==='function')window.closeModal('modal-lead');
+     else modal()?.classList.remove('open');
+    }else{
+     if(typeof window.showToast==='function')window.showToast('No se pudo guardar. El expediente continúa abierto.','warn');
+    }
+   }catch(error){
+    console.warn('No se pudo guardar al cerrar el prospecto',error);
+    if(typeof window.showToast==='function')window.showToast('No se pudo guardar. Revisa tu conexión.','warn');
+   }finally{
+    button.disabled=false;button.textContent='Guardar';closeBusy=false;
+   }
+  });
+  return popup;
+ }
+ function requestProspectClose(){
+  if(!modal()?.classList.contains('open')||closeBusy)return;
+  if(!hasUnsavedChanges()){
+   initialFields=null;dirty=false;
+   if(typeof window.closeModal==='function')window.closeModal('modal-lead');
+   else modal()?.classList.remove('open');
+   return;
+  }
+  const popup=ensureClosePrompt();popup.hidden=false;
+  popup.querySelector('[data-unsaved-save]')?.focus();
+ }
+ // Capture outside clicks and the existing header close action before any
+ // global legacy handler can dismiss the dossier and lose unsaved edits.
+ document.addEventListener('click',event=>{
+  const overlay=modal();
+  if(!overlay?.classList.contains('open')||!initialFields)return;
+  const outside=event.target===overlay;
+  const headerClose=Boolean(event.target?.closest?.('#modal-lead .modal-header button'));
+  if(!outside&&!headerClose)return;
+  event.preventDefault();event.stopImmediatePropagation();requestProspectClose();
+ },true);
+ document.addEventListener('keydown',event=>{
+  if(event.key!=='Escape'||!modal()?.classList.contains('open'))return;
+  if($('cya-prospect-unsaved-dialog')?.hidden===false){
+   event.preventDefault();event.stopImmediatePropagation();
+   $('cya-prospect-unsaved-dialog').hidden=true;return;
+  }
+  if(document.getElementById('cya-wa-message-center')?.classList.contains('open'))return;
+  event.preventDefault();event.stopImmediatePropagation();requestProspectClose();
+ },true);
+
  function appendTo(section,element){
   const target=$('cya-hybrid-fields-'+section);if(!target||!element)return;
   if(!target.contains(element))target.appendChild(element);
@@ -96,7 +185,10 @@
   const eleg=$('cya-hybrid-fields-elegibilidad');
   if(eleg)eleg.dataset.eligibilityService=$('lead-servicio')?.value||'retiro_desempleo';
   appendTo('origen',groupFor('lead-fuente'));
-  appendTo('seguimiento',$('cya-prospect-stage-stepper'));
+  // Keep the SINGLE original stage selector beside WhatsApp in the
+  // persistent dossier header (not duplicated under Seguimiento).
+  const stepper=$('cya-prospect-stage-stepper'),wa=$('cya-hybrid-lead-whatsapp');
+  if(stepper&&wa&&stepper.nextElementSibling!==wa)wa.before(stepper);
   appendTo('seguimiento',rowFor('lead-servicio'));
   appendTo('seguimiento',groupFor('lead-notas'));
   const questionnaire=$('cya-meta-questionnaire-panel');
@@ -223,6 +315,7 @@
   // The legacy modal is populated synchronously by openModalLead; rebuild its
   // presentation BEFORE the browser paints the next frame. No old-form flash.
   try{refresh();}catch(error){console.error('Prospecto híbrido: no se pudo preparar el expediente',error);}
+  captureSnapshot();
   if(modal()?.classList.contains('open')&&!$('cya-hybrid-lead-root')){
    document.documentElement.dataset.cyaProspectFallback='1';
   }
@@ -235,8 +328,14 @@
   if(!modal()?.classList.contains('open'))return;
   const savedId=event.detail?.id;
   if(savedId&&String(savedId)!==String(currentLead()?.id))return;
-  dirty=false;
+  captureSnapshot();
   lastLeadKey=savedId||lastLeadKey;
+  showSelected();
+ });
+ document.addEventListener('cya:prospect-stage-saved',event=>{
+  if(!modal()?.classList.contains('open'))return;
+  if(initialFields)initialFields['lead-estado']=$('lead-estado')?.value;
+  dirty=hasUnsavedChanges();
   showSelected();
  });
  // Do not wrap guardarLead just to close and reopen the same dossier.
