@@ -382,6 +382,7 @@
  height:38px!important;min-height:38px!important;
  padding:6px 8px!important;box-sizing:border-box!important;
  font-size:11px!important;line-height:1.25!important;text-overflow:clip!important;
+ background:#303743!important;border:1px solid #535e6f!important;color:#f7f9fb!important;
 }
 #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-curp-control{
  display:flex!important;align-items:center!important;gap:5px!important;
@@ -437,4 +438,17 @@
  #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-row>.form-group{
   grid-column:1/-1!important;
  }
+}
+
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-identity-caption{
+ margin:2px 0 0!important;padding:0!important;
+ font-size:10px!important;line-height:1.35!important;
+ color:var(--text-muted,#94a3b8)!important;
+}
+[data-theme="light"] #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .form-input,
+[data-theme="light"] #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .form-select{
+ background:#f1f5f9!important;border-color:#cbd5e1!important;color:#0f172a!important;
+}
+[data-theme="light"] #modal-perfil #modal-cliente.cya-hybrid-inline-editor.cya-client-identity-active .cya-client-copy-curp{
+ background:#e2e8f0!important;color:#1e293b!important;border-color:#94a3b8!important;
 }
