@@ -55,11 +55,11 @@ const tick=()=>new Promise(r=>setImmediate(r));
  assert.equal(root.querySelectorAll('.cya-client-pending-alert.is-medium').length,2);
  assert(!root.textContent.includes('✓ Contrato firmado el'),'Completed confirmation not repeated');
  assert.equal(d.querySelectorAll('.cya-client-identity-row').length,2,'Exactly two visible Identity field rows');
- const six=[
-  ['fc-nombre','fc-curp','fc-telefono'],
+ const seven=[
+  ['fc-nombre','fc-curp','fc-nss','fc-telefono'],
   ['fc-email','fc-domicilio','fc-ciudad']
  ];
- six.forEach((ids,row)=>assert.deepEqual([...d.querySelectorAll('.cya-client-identity-row')[row].querySelectorAll('.form-group input[id]')].map(n=>n.id),ids,'Approved field order '+row));
+ seven.forEach((ids,row)=>assert.deepEqual([...d.querySelectorAll('.cya-client-identity-row')[row].querySelectorAll('.form-group input[id]')].map(n=>n.id),ids,'Approved field order '+row));
  const native=d.getElementById('modal-cliente');
  assert.equal(native.classList.contains('cya-client-identity-active'),true);
  assert.equal(d.getElementById('fc-curp').value,curp,'Complete original 18-character CURP is not masked');
@@ -77,6 +77,8 @@ const tick=()=>new Promise(r=>setImmediate(r));
  assert.equal(d.getElementById('fc-nombre').closest('#tab-contacto'),null,'Native name field moved, never cloned');
  assert.equal(d.getElementById('fc-curp').closest('#tab-datos-extra'),null,'Native CURP moved, never cloned');
  assert.equal(d.querySelectorAll('#fc-curp').length,1,'Native CURP input must retain single identity');
+ assert.equal(d.querySelectorAll('.cya-client-identity-row.row-1 #fc-nss').length,1,'NSS positioned with CURP');
+ assert.equal(d.querySelectorAll('#fc-nss').length,1,'NSS input remains original, not duplicated');
  d.getElementById('fc-curp').value=curp;
  d.getElementById('fc-telefono').value='4465550011';
  await w.guardarCliente();await tick();
@@ -109,5 +111,5 @@ const tick=()=>new Promise(r=>setImmediate(r));
  assert.equal(d.getElementById('fc-curp').closest('#tab-datos-extra')!==null,true,'CURP restored on profile close');
  assert.deepEqual(toast.filter(x=>x.status==='success').map(x=>x.msg),['CURP copiada','CURP copiada']);
  dom.window.close();
- console.log('PASS Clientes approved: 6 native fields/2 rows, copy full 18 CURP, original save, all tabs, 4 KPI + only pending alerts and restore');
+ console.log('PASS Clientes approved: 7 native fields/2 rows, copy full 18 CURP, original save, all tabs, 4 KPI + only pending alerts and restore');
 })().catch(e=>{console.error(e);dom.window.close();process.exitCode=1});

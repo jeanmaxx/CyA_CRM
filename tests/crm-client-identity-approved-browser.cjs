@@ -64,10 +64,11 @@ const cases=[
    const rows=await page.locator('.cya-client-identity-row').count();
    assert.equal(rows,2,sc.name+' two rows of editable fields');
    assert.deepEqual(await page.locator('.cya-client-identity-row.row-1 .form-group input').evaluateAll(nodes=>nodes.map(n=>n.id)),
-    ['fc-nombre','fc-curp','fc-telefono'],sc.name+' exact first row');
+    ['fc-nombre','fc-curp','fc-nss','fc-telefono'],sc.name+' exact first row');
    assert.deepEqual(await page.locator('.cya-client-identity-row.row-2 .form-group input').evaluateAll(nodes=>nodes.map(n=>n.id)),
     ['fc-email','fc-domicilio','fc-ciudad'],sc.name+' exact second row');
    assert.equal(await page.locator('#fc-curp').inputValue(),'GOER700830HQTNVS02');
+   assert.equal(await page.locator('.cya-client-identity-row.row-1 #fc-nss').count(),1,sc.name+' NSS beside CURP in identity');
    assert.equal(await page.locator('#cya-client-copy-curp').count(),1);
    const cardRow=page.locator('.cya-client-summary-grid');
    assert.equal(await cardRow.locator(':scope > *').count(),6,sc.name+' 4 statuses and 2 warnings');
@@ -90,8 +91,8 @@ const cases=[
    });
    assert(Object.values(gold).every(v=>v>=3),sc.name+' COMPLETE gold panel outline '+JSON.stringify(gold));
    const inputMeasures=await page.locator('.cya-client-identity-grid input.form-input').evaluateAll(nodes=>nodes.map(el=>({id:el.id,visible:el.getBoundingClientRect().height,height:el.getBoundingClientRect().height,width:el.getBoundingClientRect().width})));
-   assert.equal(inputMeasures.length,6);
-   assert(inputMeasures.every(x=>Math.abs(x.height-38)<1),sc.name+' six original fields exactly 38px high '+JSON.stringify(inputMeasures));
+   assert.equal(inputMeasures.length,7);
+   assert(inputMeasures.every(x=>Math.abs(x.height-38)<1),sc.name+' seven original fields exactly 38px high '+JSON.stringify(inputMeasures));
    if(sc.width>800){
      const curpMeasure=await page.locator('#fc-curp').evaluate(el=>{
        const cs=getComputedStyle(el),ctx=document.createElement('canvas').getContext('2d');
@@ -100,7 +101,7 @@ const cases=[
      });
      assert(curpMeasure.room>=curpMeasure.text,sc.name+' all 18 CURP glyphs fit without clipping '+JSON.stringify(curpMeasure));
      const fieldRows=await page.locator('.cya-client-identity-row').evaluateAll(nodes=>nodes.map(el=>({cols:getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length})));
-     assert.deepEqual(fieldRows.map(x=>x.cols),[3,3],sc.name+' 3 fields in each row');
+     assert.deepEqual(fieldRows.map(x=>x.cols),[sc.width>900?4:2,3],sc.name+' approved identity columns');
    }
    const copy=page.locator('#cya-client-copy-curp');
    const hit=await copy.boundingBox();assert(hit&&hit.width>=37&&hit.height>=37,sc.name+' copy button 38px');
@@ -122,17 +123,15 @@ const cases=[
      const rfc=document.getElementById('fc-rfc');if(rfc)rfc.value='RFCGUARDADO123';
    });
    await page.locator('[data-hybrid-client="previsional"]').click();
-   assert.equal(await page.locator('#tab-elegibilidad .cya-previsional-nss #fc-nss').count(),1,sc.name+' NSS moved not copied');
+   assert.equal(await page.locator('#tab-elegibilidad #fc-nss').count(),0,sc.name+' NSS absent from previsional');
    assert.equal(await page.locator('#fc-nss').count(),1,sc.name+' exactly one NSS input');
    assert.equal(await page.locator('#docs-checklist-container').isVisible(),false,sc.name+' no duplicate documents');
-   const pieces=await page.locator('#tab-elegibilidad .cya-previsional-nss, #tab-elegibilidad .form-group:has(#el-semanas), #tab-elegibilidad .form-group:has(#el-imss), #tab-elegibilidad .form-group:has(#el-retiro), #tab-elegibilidad #el-fecha-wrap').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,right:r.right};}));
-   assert.equal(pieces.length,5,sc.name+' all five previsional controls');
+   const pieces=await page.locator('#tab-elegibilidad .form-group:has(#el-semanas), #tab-elegibilidad .form-group:has(#el-imss), #tab-elegibilidad .form-group:has(#el-retiro), #tab-elegibilidad #el-fecha-wrap').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,right:r.right};}));
+   assert.equal(pieces.length,4,sc.name+' all four previsional controls');
    if(sc.width>900){
-     // DOM order is weeks, IMSS, withdrawal, date, NSS; CSS grid places NSS first.
-     const [weeks,imss,withdrawal,date,nss]=pieces;
-     assert(Math.abs(nss.y-weeks.y)<3&&Math.abs(weeks.y-imss.y)<3,sc.name+' NSS weeks and IMSS in first row '+JSON.stringify(pieces));
-     assert(Math.abs(withdrawal.y-date.y)<3,sc.name+' withdrawal and date in second row '+JSON.stringify(pieces));
-     assert(nss.x<weeks.x&&weeks.x<imss.x,sc.name+' first row logical ordering');
+     const [weeks,imss,withdrawal,date]=pieces;
+     assert(pieces.every(x=>Math.abs(x.y-weeks.y)<3),sc.name+' four previsional fields aligned on one row '+JSON.stringify(pieces));
+     assert(weeks.x<imss.x&&imss.x<withdrawal.x&&withdrawal.x<date.x,sc.name+' previsional order');
    }
    const panelRight=await page.locator('#cya-hybrid-client-content').evaluate(el=>el.getBoundingClientRect().right);
    assert(pieces.every(p=>p.width>0&&p.right<=panelRight+2),sc.name+' controls inside panel');
@@ -141,14 +140,14 @@ const cases=[
    const layout=await page.evaluate(()=>{
      const bounds=id=>{const el=document.querySelector(id);if(!el)return null;const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,width:r.width,visible:getComputedStyle(el).display!=='none'};};
      return {qualification:bounds('#el-result'),basic:bounds('#eleg-container>.eleg-help'),
-       fields:['#fc-nss','#el-semanas','#el-imss','#el-retiro','#el-fecha-wrap'].map(id=>bounds(id)),
+       fields:['#el-semanas','#el-imss','#el-retiro','#el-fecha-wrap'].map(id=>bounds(id)),
        rfc:document.getElementById('fc-rfc')?.value||null,
        rfcGroup:bounds('.optional-data:has(#fc-rfc)')};
    });
    assert(layout.qualification?.visible&&layout.qualification.width>0,sc.name+' eligible banner visible');
    assert(layout.basic?.visible&&layout.basic.width>0,sc.name+' basic hint visible');
-   assert(layout.qualification.bottom<=Math.min(...layout.fields.map(f=>f.top))+2,sc.name+' qualification precedes all fields '+JSON.stringify(layout));
-   assert(layout.basic.top>=Math.max(...layout.fields.map(f=>f.bottom))-2,sc.name+' basic hint follows all fields '+JSON.stringify(layout));
+   assert(layout.qualification.top>=Math.max(...layout.fields.map(f=>f.bottom))-2,sc.name+' qualification below all fields '+JSON.stringify(layout));
+   assert(layout.basic.top>=layout.qualification.bottom-2,sc.name+' basic hint follows eligibility '+JSON.stringify(layout));
    assert.equal(layout.rfc,'RFCGUARDADO123',sc.name+' original RFC data kept in DOM');
    assert.equal(layout.rfcGroup?.visible,false,sc.name+' RFC disclosure not visible in previsional');
    await page.locator('[data-hybrid-client="banco"]').click();
