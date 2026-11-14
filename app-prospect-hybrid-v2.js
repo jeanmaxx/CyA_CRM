@@ -228,23 +228,19 @@
   }
   return result;
  };
- // Maintain the approved continuity rule: after a successful save, keep the
- // expediente open on the same section without creating a second data record.
- const originalSave=window.guardarLead;
- if(typeof originalSave==='function')window.guardarLead=async function(...args){
-  const openBefore=modal()?.classList.contains('open')===true,section=current;
-  const response=await originalSave.apply(this,args);
-  if(openBefore&&!modal()?.classList.contains('open')){
-   const id=typeof editingLeadId!=='undefined'?editingLeadId:null;
-   const persisted=id&&typeof store!=='undefined'&&store.leads?.some(l=>String(l.id)===String(id));
-   if(persisted&&typeof window.openModalLead==='function'){
-    window.openModalLead(id);
-    current=section;dirty=false;
-    refresh();current=section;showSelected();
-   }
-  }
-  return response;
- };
+ // Core save keeps an existing prospect's modal open. Refresh the card
+ // metadata in place, without calling openModalLead or moving form controls.
+ // The event is emitted only after cloudSyncNow succeeds.
+ document.addEventListener('cya:prospect-saved',event=>{
+  if(!modal()?.classList.contains('open'))return;
+  const savedId=event.detail?.id;
+  if(savedId&&String(savedId)!==String(currentLead()?.id))return;
+  dirty=false;
+  lastLeadKey=savedId||lastLeadKey;
+  showSelected();
+ });
+ // Do not wrap guardarLead just to close and reopen the same dossier.
+ // The native save plus the other Meta wrappers preserve their own behavior.
  // One first refresh handles a modal already open at module initialization.
  if(modal()?.classList.contains('open'))refresh();
 })();
