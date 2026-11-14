@@ -35,7 +35,6 @@
   container.insertBefore(root,container.firstChild);
   root.querySelectorAll('[data-hybrid-lead-section]').forEach(btn=>btn.addEventListener('click',()=>{
    if(btn.dataset.hybridLeadSection===current)return;
-   if(dirty&&!window.confirm('Hay cambios pendientes de guardar. ¿Deseas continuar a otra sección sin guardarlos todavía?'))return;
    current=btn.dataset.hybridLeadSection;showSelected();
   }));
   root.querySelector('#cya-hybrid-lead-whatsapp').addEventListener('click',()=>{
