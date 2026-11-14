@@ -155,7 +155,7 @@ const nativeMeta=extract(meta,'  function metaQualification(l){','  window.cyaMe
    for(const tab of ['identidad','elegibilidad','seguimiento','historial']){
     await page.locator('[data-hybrid-lead-section="'+tab+'"]').click();
     const color=await page.locator('#cya-hybrid-section-'+tab).evaluate(el=>getComputedStyle(el).borderLeftColor);
-    assert.equal(color,'rgb(202, 164, 94)',sc.name+' gold accent '+tab);
+    assert.equal(color,'rgb(205, 162, 83)',sc.name+' full gold border '+tab);
    }
    await page.locator('[data-hybrid-lead-section="elegibilidad"]').click();
    await page.locator('#lead-banco').fill('SANTANDER');
