@@ -51,6 +51,7 @@ const cases=[
        ['fc-email',c.email],['fc-domicilio',c.domicilio],['fc-ciudad',c.ciudad]])
        document.getElementById(id).value=v;
     };
+    window.validateCLABE=()=>{}; // native validator stub: this browser fixture loads only the hybrid module
     window.guardarCliente=async()=>{};
     window.openPerfil=()=>{};
     window.closeModal=id=>document.getElementById(id)?.classList.remove('open');
