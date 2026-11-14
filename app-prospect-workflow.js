@@ -294,7 +294,7 @@ async function guardarLead(){
   // Existing prospect: keep the SAME editor/modal DOM, selected section,
   // scroll position and focus. Closing and reopening it caused a visible jump.
   // New prospect: preserve the original close-on-create flow.
-  const keepOpen=Boolean(leadAnterior)&&document.getElementById('modal-lead')?.classList.contains('open')===true;
+  const keepOpen=Boolean(leadAnterior)&&typeof document!=='undefined'&&document.getElementById('modal-lead')?.classList.contains('open')===true;
   if(!keepOpen)closeModal('modal-lead');
   renderPage('leads');
   if(keepOpen)document.dispatchEvent(new CustomEvent('cya:prospect-saved',{
