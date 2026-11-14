@@ -79,8 +79,10 @@ w.eval(code);
  // The live original element, not a duplicate, remains editable and is seen by original save handler.
  const input=d.getElementById('lead-nombre');input.value='ANA MODIFICADA';input.dispatchEvent(new w.Event('input',{bubbles:true}));
  d.querySelector('[data-hybrid-lead-section="elegibilidad"]').click();
- assert.equal(d.querySelector('[data-hybrid-lead-section="identidad"]').getAttribute('aria-pressed'),'true','Unsaved edit blocks navigation without explicit confirmation');
- confirmNext=true;d.querySelector('[data-hybrid-lead-section="elegibilidad"]').click();
+ assert.equal(d.querySelector('[data-hybrid-lead-section="elegibilidad"]').getAttribute('aria-pressed'),'true','Unsaved edits do not block navigation');
+ assert.equal(d.getElementById('lead-nombre').value,'ANA MODIFICADA','Field value retained when changing sections');
+ d.querySelector('[data-hybrid-lead-section="identidad"]').click();
+ d.querySelector('[data-hybrid-lead-section="elegibilidad"]').click();
  assert.equal(d.querySelector('[data-hybrid-lead-section="elegibilidad"]').getAttribute('aria-pressed'),'true');
  assert.equal(d.getElementById('lead-nombre').value,'ANA MODIFICADA');
  const previousRoot=d.getElementById('cya-hybrid-lead-root');
