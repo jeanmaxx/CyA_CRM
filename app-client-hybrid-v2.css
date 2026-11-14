@@ -884,3 +884,15 @@
   grid-template-columns:minmax(0,1fr)!important;
  }
 }
+
+
+/* Higher specificity than legacy :has(#pd-finanzas) form-row grid rule.
+   Native row wrappers become transparent so the five form-group controls
+   participate directly in the same six-track CSS grid. */
+#modal-perfil #cya-hybrid-client-panel:has(#pd-finanzas) #pd-finanzas .cya-client-finance-edit-grid>.form-row{
+ display:contents!important;
+ grid-template-columns:none!important;
+ gap:0!important;
+ margin:0!important;
+ padding:0!important;
+}
