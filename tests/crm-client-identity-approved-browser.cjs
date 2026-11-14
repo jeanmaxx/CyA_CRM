@@ -186,6 +186,56 @@ const cases=[
    await page.locator('[data-hybrid-client="banco"]').click();
    assert.equal(await page.locator('#tab-datos-extra #fc-afore').count(),1,sc.name+' AFORE select restored');
    assert.equal(await page.locator('#cya-afore-inline-fields').count(),0,sc.name+' AFORE grid removed after switching');
+   // Banco: real bank fields, original CLABE input and BBVA level, no docs.
+   await page.evaluate(()=>{
+     const panel=document.getElementById('tab-datos-extra');
+     const row=document.createElement('div');row.className='form-row';
+     row.innerHTML='<div class="form-group"><label class="form-label">Nivel de cuenta BBVA</label><select class="form-select" id="fc-nivel-bbva"><option>Sin especificar</option><option>Nivel 4</option></select></div>';
+     panel.appendChild(row);
+   });
+   await page.locator('[data-hybrid-client="banco"]').click();
+   await page.locator('[data-hybrid-client="banco"]').click();
+   const bank=await page.locator('#cya-bank-inline-fields>.form-group').evaluateAll(nodes=>nodes.map(n=>{const el=n.querySelector('input,select'),r=n.getBoundingClientRect();return {id:el?.id,x:r.x,y:r.y,right:r.right,width:r.width};}));
+   assert.deepEqual(bank.map(x=>x.id),['fc-banco','fc-clabe','fc-nivel-bbva'],sc.name+' three original bank controls');
+   const bankRight=await page.locator('#cya-hybrid-client-content').evaluate(el=>el.getBoundingClientRect().right);
+   assert(bank.every(x=>x.width>0&&x.right<=bankRight+2),sc.name+' bank fields inside panel');
+   if(sc.width>740)assert(bank.every(x=>Math.abs(x.y-bank[0].y)<2),sc.name+' bank single desktop row');
+   assert.equal(await page.locator('#docs-checklist-container').isVisible(),false,sc.name+' no bank documents');
+   assert.equal(await page.locator('#extra-doc-new').isVisible(),false,sc.name+' no bank document entry');
+   await page.locator('#fc-clabe').fill('123456789012345678');
+   assert.equal(await page.locator('#fc-clabe').inputValue(),'123456789012345678',sc.name+' CLABE is editable');
+   await page.locator('[data-hybrid-client="finanzas"]').click();
+   assert.equal(await page.locator('#tab-datos-extra #fc-clabe').count(),1,sc.name+' bank form restored');
+
+   // Finance fixture reproduces native layout / DOM and keeps the native
+   // button with its handler, never a second mock payment button.
+   await page.evaluate(()=>{
+     const p=document.getElementById('pd-finanzas');
+     p.innerHTML='<div class="profile-finance-auto">Cálculo automático</div>'+
+       '<div class="info-rows"><div class="info-row">Resumen original</div></div>'+
+       '<hr class="divider"><div class="cya-fixture-fin-title">EDITAR / CONFIRMAR DATOS DE COBRO</div>'+
+       '<div class="form-row"><div class="form-group"><label class="form-label">Cantidad a retirar de AFORE</label><input id="fin-monto-c1" value="28000"></div>'+
+       '<div class="form-group"><label class="form-label">Honorarios</label><input id="fin-hon-c1" value="8400"></div></div>'+
+       '<div class="form-row"><div class="form-group"><label class="form-label">Comisión</label><input id="fin-com-c1" value="4200"></div>'+
+       '<div class="form-group"><label class="form-label">Fecha retiro estimada</label><input id="fin-fecha-c1" value="28/12/2026"></div></div>'+
+       '<div class="form-row"><div class="form-group"><label class="form-label">Estado de pago</label><select id="fin-estado-c1"><option>Pendiente</option></select></div></div>'+
+       '<button class="btn btn-primary profile-finance-save" onclick="window.__financeSaveClicked=true">Guardar datos de cobro</button>';
+   });
+   await page.locator('[data-hybrid-client="finanzas"]').click();
+   await page.locator('[data-hybrid-client="finanzas"]').click();
+   const finance=await page.locator('#pd-finanzas .cya-client-finance-edit-grid .form-group').evaluateAll(nodes=>nodes.map(n=>{const el=n.querySelector('input,select'),r=n.getBoundingClientRect();return {id:el?.id,x:r.x,y:r.y,right:r.right,width:r.width};}));
+   assert.deepEqual(finance.map(x=>x.id),['fin-monto-c1','fin-hon-c1','fin-com-c1','fin-fecha-c1','fin-estado-c1'],sc.name+' finance originals in approved order');
+   assert(finance.every(x=>x.width>0),sc.name+' nonzero finance widths');
+   if(sc.width>1080)assert(finance.every(x=>Math.abs(x.y-finance[0].y)<2),sc.name+' five finance inputs same row '+JSON.stringify(finance));
+   const finLayout=await page.locator('#pd-finanzas').evaluate(el=>{
+     const b=e=>e?.getBoundingClientRect();
+     return {title:b(el.querySelector('.cya-fixture-fin-title'))?.top,editor:b(el.querySelector('.cya-client-finance-edit-grid'))?.top,summary:b(el.querySelector('.profile-finance-auto'))?.top,button:b(el.querySelector('.profile-finance-save'))?.top,right:b(el)?.right};
+   });
+   assert(finLayout.title<finLayout.editor&&finLayout.editor<finLayout.summary,sc.name+' editor is above calculations '+JSON.stringify(finLayout));
+   assert(finance.every(x=>x.right<=finLayout.right+2),sc.name+' finance no horizontal overflow');
+   assert.equal(await page.locator('#pd-finanzas .profile-finance-save').count(),1,sc.name+' one native finance save');
+   await page.locator('#pd-finanzas .profile-finance-save').click();
+   assert.equal(await page.evaluate(()=>window.__financeSaveClicked),true,sc.name+' native finance save click retained');
    assert.deepEqual(errors,[],sc.name+' no uncaught JS errors');
    console.log('PASS approved client layout '+sc.name+': six compact top cards, nine navigation cards, gold panel, exact six editable fields and full CURP copy');
    await page.close();
