@@ -167,3 +167,82 @@
  #modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group:has(#fc-domicilio),
  #modal-perfil #modal-cliente.cya-hybrid-inline-editor .form-group:has(#fc-notas){grid-column:1/-1}
 }
+
+
+/* Clientes · maqueta aprobada 13/11/2026: resumen compacto sin barra
+ * operativa duplicada. Fechas y permisos permanecen en sus módulos originales. */
+#modal-perfil:has(#cya-hybrid-client-root) .profile-header{border-bottom:1px solid var(--border)!important;padding:13px 18px!important;align-items:center!important}
+#modal-perfil:has(#cya-hybrid-client-root) .profile-header-copy{display:flex!important;flex-direction:column!important;gap:5px!important;min-width:0!important}
+#modal-perfil:has(#cya-hybrid-client-root) #perfil-title{font-size:14px!important;font-weight:700!important;line-height:1.25!important;margin:0 0 4px!important}
+#modal-perfil .cya-hybrid-client-identity{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+#modal-perfil .cya-hybrid-client-identity #cya-hybrid-client-name{font-size:15px;font-weight:750;line-height:1.25;color:var(--text);overflow-wrap:anywhere}
+#modal-perfil .cya-hybrid-client-identity .cya-hybrid-client-meta{display:flex!important;flex-wrap:wrap;align-items:center;gap:4px;margin:0!important}
+#modal-perfil #perfil-sub{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:10px!important}
+#modal-perfil #perfil-sub strong{font-weight:700;color:var(--text)}
+#modal-perfil .cya-client-register-label{font-size:9px;letter-spacing:.055em;color:var(--text-muted);font-weight:700}
+#modal-perfil:has(#cya-hybrid-client-root) #perfil-body{padding:12px 15px 16px!important}
+#modal-perfil #cya-hybrid-client-root{gap:11px!important}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-grid{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:9px!important;align-items:stretch!important;width:100%!important;min-width:0!important;
+ padding:0 0 14px!important;border-bottom:1px solid var(--border)!important;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-card{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ min-width:0;min-height:80px;padding:11px 8px;gap:6px;
+ border:1px solid var(--border);border-radius:10px;
+ background:var(--bg-secondary);color:var(--text);text-align:center;
+ box-sizing:border-box;font:inherit;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-card small{
+ display:block;text-align:center;font-size:11px!important;line-height:1.3;
+ color:var(--text-muted);font-weight:750;letter-spacing:.05em;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-card strong{
+ display:block;text-align:center;font-size:17px!important;line-height:1.25!important;
+ font-weight:750!important;overflow-wrap:anywhere;
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-summary-card[data-cya-summary="stage"] strong{color:var(--primary,#57a6ff)}
+#modal-perfil #cya-hybrid-client-root .cya-client-next-priority{
+ display:block;font-size:10px;font-weight:750;line-height:1.3;letter-spacing:.045em;text-align:center;
+ color:var(--text-muted);
+}
+#modal-perfil #cya-hybrid-client-root .cya-client-next.is-high{background:rgba(207,65,75,.10);border-color:#c94e5c}
+#modal-perfil #cya-hybrid-client-root .cya-client-next.is-high strong,
+#modal-perfil #cya-hybrid-client-root .cya-client-next.is-high .cya-client-next-priority{color:#f47d84}
+#modal-perfil #cya-hybrid-client-root .cya-client-next.is-medium{background:rgba(205,150,36,.10);border-color:#c08b2d}
+#modal-perfil #cya-hybrid-client-root .cya-client-next.is-medium strong,
+#modal-perfil #cya-hybrid-client-root .cya-client-next.is-medium .cya-client-next-priority{color:#edb14a}
+#modal-perfil #cya-hybrid-client-root .cya-client-next.is-low{background:rgba(36,148,99,.10);border-color:#298b64}
+#modal-perfil #cya-hybrid-client-root .cya-client-next.is-low strong,
+#modal-perfil #cya-hybrid-client-root .cya-client-next.is-low .cya-client-next-priority{color:#56d09b}
+#modal-perfil #cya-hybrid-client-root button.cya-client-next{cursor:pointer}
+#modal-perfil #cya-hybrid-client-root button.cya-client-next:hover{filter:brightness(1.1)}
+#modal-perfil #cya-hybrid-client-root button.cya-client-next:focus-visible{outline:2px solid var(--warning);outline-offset:2px}
+#modal-perfil #cya-hybrid-client-root .cya-hybrid-client-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;padding:0 0 13px!important;border-bottom:1px solid var(--border)!important}
+#modal-perfil #cya-hybrid-client-root .cya-hybrid-client-card{
+ min-height:65px!important;align-items:center!important;justify-content:center!important;
+ text-align:center!important;padding:10px 8px!important;gap:6px!important;
+}
+#modal-perfil #cya-hybrid-client-root .cya-hybrid-client-card strong{font-size:11px!important;line-height:1.3;text-transform:uppercase;letter-spacing:.01em;text-align:center}
+#modal-perfil #cya-hybrid-client-root .cya-hybrid-client-card small{font-size:10px!important;text-align:center}
+#modal-perfil #cya-hybrid-client-root .cya-hybrid-client-card.active{background:rgba(205,163,85,.08)!important;border-color:#caa45e!important}
+#modal-perfil #cya-hybrid-client-panel{
+ border:1px solid var(--border)!important;border-left:4px solid #caa45e!important;
+ background:var(--bg-secondary)!important;border-radius:10px!important;
+ padding:12px!important;overflow:visible!important;
+}
+#modal-perfil #cya-hybrid-client-panel .cya-hybrid-client-panel-head strong{font-size:15px!important}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor input.form-input,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor select.form-select{height:38px!important;min-height:38px!important}
+@media(max-width:850px){
+ #modal-perfil #cya-hybrid-client-root .cya-client-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #modal-perfil #cya-hybrid-client-root .cya-hybrid-client-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:480px){
+ #modal-perfil:has(#cya-hybrid-client-root) .profile-header{padding:12px!important}
+ #modal-perfil #cya-hybrid-client-root .cya-client-summary-card{min-height:72px;padding:9px 6px}
+ #modal-perfil #cya-hybrid-client-root .cya-client-summary-card small{font-size:10px!important}
+ #modal-perfil #cya-hybrid-client-root .cya-client-summary-card strong{font-size:14px!important}
+ #modal-perfil #cya-hybrid-client-root .cya-hybrid-client-card{min-height:63px!important}
+}
