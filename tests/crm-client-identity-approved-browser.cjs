@@ -152,6 +152,40 @@ const cases=[
    assert.equal(layout.rfcGroup?.visible,false,sc.name+' RFC disclosure not visible in previsional');
    await page.locator('[data-hybrid-client="banco"]').click();
    assert.equal(await page.locator('#tab-datos-extra #fc-nss').count(),1,sc.name+' NSS restored after leaving');
+   // AFORE: five original controls, same desktop row, no horizontal scroll,
+   // institution reference below fields and original DOM restoration.
+   await page.evaluate(()=>{
+     const panel=document.getElementById('tab-datos-extra');
+     const row=document.createElement('div');row.className='form-row';
+     row.innerHTML='<div class="form-group"><label class="form-label">AFORE</label><select class="form-select" id="fc-afore"><option>SURA</option><option>Profuturo</option></select></div>'+
+      '<div class="form-group"><label class="form-label">Hora de la cita</label><input class="form-input" id="fc-hora-afore" type="time"></div>'+
+      '<div class="form-group"><label class="form-label">Sucursal o modalidad</label><input class="form-input" id="fc-sucursal-afore"></div>';
+     panel.appendChild(row);
+     const ref=document.createElement('div');ref.className='afore-reference';ref.id='afore-reference-fixture';ref.textContent='SURA: teléfono y documentos de referencia';
+     panel.appendChild(ref);
+     document.getElementById('fc-afore').addEventListener('change',e=>ref.textContent=e.target.value+': documentación');
+   });
+   await page.locator('[data-hybrid-client="afore"]').click();
+   const aforeInputs=await page.locator('#cya-afore-inline-fields>.form-group').evaluateAll(nodes=>nodes.map(n=>{
+     const r=n.getBoundingClientRect(),input=n.querySelector('input,select');
+     return {id:input?.id,top:r.top,left:r.left,right:r.right,width:r.width};
+   }));
+   assert.deepEqual(aforeInputs.map(x=>x.id),['fc-afore','fc-fecha-biometrica','fc-hora-afore','fc-sucursal-afore','fc-fecha-solicitud-manual'],sc.name+' native five AFORE fields');
+   assert(aforeInputs.every(x=>x.width>0),sc.name+' AFORE inputs visible');
+   const aBounds=await page.locator('#cya-hybrid-client-content').evaluate(el=>el.getBoundingClientRect());
+   assert(aforeInputs.every(x=>x.right<=aBounds.right+2),sc.name+' AFORE inputs stay inside panel');
+   if(sc.width>920){
+     assert(aforeInputs.every(x=>Math.abs(x.top-aforeInputs[0].top)<2),sc.name+' all AFORE fields on one desktop row '+JSON.stringify(aforeInputs));
+     assert(aforeInputs.every((x,i)=>i===0||x.left>aforeInputs[i-1].left),sc.name+' ordered left to right');
+   }
+   const refInfo=await page.locator('#afore-reference-fixture').evaluate(el=>({top:el.getBoundingClientRect().top,width:el.getBoundingClientRect().width}));
+   assert(refInfo.top>Math.max(...aforeInputs.map(x=>x.top)),sc.name+' reference appears below fields');
+   assert(refInfo.width>aBounds.width*.85,sc.name+' institution info uses available width '+JSON.stringify({refInfo,aBounds}));
+   await page.locator('#fc-afore').selectOption('Profuturo');
+   assert.match(await page.locator('#afore-reference-fixture').textContent(),/Profuturo/,sc.name+' original AFORE change listener retained');
+   await page.locator('[data-hybrid-client="banco"]').click();
+   assert.equal(await page.locator('#tab-datos-extra #fc-afore').count(),1,sc.name+' AFORE select restored');
+   assert.equal(await page.locator('#cya-afore-inline-fields').count(),0,sc.name+' AFORE grid removed after switching');
    assert.deepEqual(errors,[],sc.name+' no uncaught JS errors');
    console.log('PASS approved client layout '+sc.name+': six compact top cards, nine navigation cards, gold panel, exact six editable fields and full CURP copy');
    await page.close();
