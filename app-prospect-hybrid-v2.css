@@ -787,3 +787,78 @@ html:not([data-cya-prospect-fallback="1"]) #modal-lead.open:not(:has(#cya-hybrid
  #modal-lead #cya-hybrid-curp-line{flex-wrap:wrap!important}
  #modal-lead #cya-hybrid-curp-line #lead-curp-actions{flex-wrap:nowrap!important}
 }
+
+
+/* 14/11/2026 - always-visible compact prospect stage controls. */
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading{
+ display:flex!important;flex-wrap:nowrap!important;align-items:center!important;
+ gap:10px!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-person{
+ flex:1 1 37%!important;max-width:47%!important;min-width:0!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-wa{flex:0 0 auto!important;order:3!important}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading>#cya-prospect-stage-stepper{
+ flex:1 1 52%!important;min-width:0!important;order:2!important;
+ padding:0 0 0 11px!important;margin:0!important;
+ border:0!important;border-left:1px solid var(--border,#34465d)!important;
+ background:transparent!important;box-shadow:none!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading #cya-prospect-stage-stepper .cya-prospect-stage-caption,
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading #cya-prospect-stage-stepper .cya-prospect-stage-note{
+ display:none!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading .cya-prospect-stage-steps{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ align-items:stretch!important;gap:5px!important;margin:0!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading .cya-prospect-stage-step{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ gap:3px!important;min-width:0!important;min-height:36px!important;
+ padding:5px 3px!important;margin:0!important;border-radius:6px!important;
+ font-size:10px!important;line-height:1.2!important;font-weight:650!important;
+ background:var(--surface-2,#152033)!important;
+ border:1px solid var(--border,#374a62)!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading .cya-prospect-stage-step.active{
+ border-color:#18bb83!important;background:rgba(17,155,103,.17)!important;
+ color:#55dfac!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading .cya-prospect-stage-dot{
+ display:none!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading .cya-prospect-stage-step.active .cya-prospect-stage-dot{
+ display:inline!important;color:#29d399!important;flex:0 0 auto!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading .cya-prospect-stage-label{
+ font-size:10px!important;line-height:1.2!important;text-align:center!important;
+ overflow-wrap:normal!important;white-space:normal!important;
+}
+.cya-prospect-unsaved-dialog[hidden]{display:none!important}
+.cya-prospect-unsaved-dialog{
+ position:fixed;inset:0;z-index:12000;background:rgba(2,8,19,.7);
+ display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.cya-prospect-unsaved-box{
+ width:min(430px,100%);padding:20px 18px;border-radius:12px;
+ background:var(--surface,#1c2739);color:var(--text,#f1f5fb);
+ border:1px solid #d0a052;box-shadow:0 18px 50px rgba(0,0,0,.35);
+}
+.cya-prospect-unsaved-box h3{font-size:16px;margin:0 0 8px}
+.cya-prospect-unsaved-box p{font-size:12px;line-height:1.5;margin:0 0 17px}
+.cya-prospect-unsaved-actions{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:7px}
+.cya-prospect-unsaved-actions button{font-size:11px;min-height:35px}
+@media(max-width:780px){
+ #modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading{
+  flex-wrap:wrap!important;
+ }
+ #modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-person{flex:1 1 100%!important;max-width:100%!important}
+ #modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading>#cya-prospect-stage-stepper{
+  flex:1 1 auto!important;border-left:0!important;padding:0!important;
+ }
+}
+@media(max-width:430px){
+ #modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-heading .cya-prospect-stage-steps{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
