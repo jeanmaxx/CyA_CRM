@@ -800,3 +800,99 @@
 #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields>.form-group:has(#fc-sucursal-afore){
  grid-column:auto!important;grid-row:auto!important;
 }
+
+
+/* Banco 14/11/2026: native bank / CLABE / BBVA level in one compact row.
+   Document controls remain in the native form for other sections, but do not
+   appear or reserve space in this bank-only inline presentation. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] .cya-bank-inline-fields{
+ display:grid!important;
+ grid-template-columns:minmax(140px,1fr) minmax(245px,2fr) minmax(135px,1fr)!important;
+ align-items:start!important;gap:10px!important;width:100%!important;min-width:0!important;
+ margin:0!important;padding:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] .cya-bank-inline-fields>.form-group{
+ min-width:0!important;width:100%!important;max-width:100%!important;
+ margin:0!important;grid-column:auto!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] .cya-bank-inline-fields input,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] .cya-bank-inline-fields select{
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ height:36px!important;min-height:36px!important;box-sizing:border-box!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] #docs-checklist-container,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] #docs-checklist-container+div,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] .form-section,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] hr.divider,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] .tab-panel,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] .optional-data{
+ display:none!important;
+}
+/* Financial editor before the existing real calculation and payment summary. */
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{
+ display:grid!important;
+ grid-template-columns:minmax(112px,1.05fr) minmax(105px,1fr) minmax(105px,1fr) minmax(125px,1.05fr) minmax(122px,1.05fr) auto!important;
+ gap:10px!important;align-items:end!important;min-width:0!important;
+ margin:10px 0 16px!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid>.form-row{
+ display:contents!important;margin:0!important;padding:0!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid .form-group{
+ min-width:0!important;width:100%!important;max-width:100%!important;
+ grid-column:auto!important;grid-row:auto!important;margin:0!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid .form-label{
+ min-height:28px!important;display:flex!important;align-items:end!important;
+ line-height:1.25!important;font-size:10px!important;margin:0 0 5px!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid input,
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid select{
+ min-width:0!important;max-width:100%!important;width:100%!important;
+ height:36px!important;min-height:36px!important;box-sizing:border-box!important;
+ font-size:11px!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid .profile-finance-save{
+ grid-column:6!important;grid-row:1!important;
+ width:max-content!important;min-width:0!important;max-width:100%!important;
+ min-height:36px!important;height:36px!important;margin:0!important;
+ padding:7px 12px!important;white-space:nowrap!important;font-size:11px!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas:has(.cya-client-finance-edit-grid)>.divider{
+ display:none!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas:has(.cya-client-finance-edit-grid)>.profile-finance-auto{
+ margin-top:15px!important;
+}
+@media(max-width:1080px){
+ #modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ }
+ #modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid .profile-finance-save{
+  grid-column:auto!important;grid-row:auto!important;
+ }
+}
+@media(max-width:740px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] .cya-bank-inline-fields,
+ #modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:430px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="banco"] .cya-bank-inline-fields,
+ #modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+}
+
+
+/* Higher specificity than legacy :has(#pd-finanzas) form-row grid rule.
+   Native row wrappers become transparent so the five form-group controls
+   participate directly in the same six-track CSS grid. */
+#modal-perfil #cya-hybrid-client-panel:has(#pd-finanzas) #pd-finanzas .cya-client-finance-edit-grid>.form-row{
+ display:contents!important;
+ grid-template-columns:none!important;
+ gap:0!important;
+ margin:0!important;
+ padding:0!important;
+}
