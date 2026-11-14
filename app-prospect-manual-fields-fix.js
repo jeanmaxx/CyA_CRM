@@ -184,10 +184,17 @@
   window.__cyaHybridProspectLoaderStarted=true;
   if(window.__cyaHybridProspectInstalled)return;
   const script=document.createElement('script');
-  script.src='/app-prospect-hybrid-v2.js?v=20261113-elegibilidad-aprobada1';
+  script.src='/app-prospect-hybrid-v2.js?v=20261114-prospecto-compacto1';
   script.async=false;
+  // If the presentation bundle cannot load, show the original form rather
+  // than leave the user with a permanently concealed editor.
+  script.onerror=()=>{document.documentElement.dataset.cyaProspectFallback='1';};
   script.dataset.cyaHybridProspect='1';
   document.head.appendChild(script);
+  setTimeout(()=>{
+   if(!window.__cyaHybridProspectInstalled)
+    document.documentElement.dataset.cyaProspectFallback='1';
+  },3500);
 })();
 
 

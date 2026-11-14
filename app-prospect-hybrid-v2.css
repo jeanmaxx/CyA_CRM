@@ -663,3 +663,127 @@
     font-size:14px!important;
   }
 }
+
+
+/* 14/11/2026 — Prospectos con organización compacta de Clientes.
+   Pintar únicamente el expediente preparado evita el flash del formulario
+   original; si falla la carga, el loader restituye la presentación heredada. */
+html:not([data-cya-prospect-fallback="1"]) #modal-lead.open:not(:has(#cya-hybrid-lead-root)) .modal-body{
+ visibility:hidden!important;
+}
+html:not([data-cya-prospect-fallback="1"]) #modal-lead.open:not(:has(#cya-hybrid-lead-root)) .modal{
+ position:relative;
+}
+html:not([data-cya-prospect-fallback="1"]) #modal-lead.open:not(:has(#cya-hybrid-lead-root)) .modal:after{
+ content:"Preparando expediente…";
+ position:absolute;inset:40% 12px auto;z-index:2;text-align:center;
+ color:var(--text-secondary,var(--text));font-size:12px;
+ pointer-events:none;
+}
+#modal-lead:has(#cya-hybrid-lead-root) .modal.modal-lg{
+ width:min(1200px,calc(100vw - 24px))!important;max-width:1200px!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-card.active{
+ border:1.5px solid #cda253!important;
+ box-shadow:inset 0 0 0 1px rgba(205,162,83,.11)!important;
+ background:rgba(205,162,83,.075)!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-section:not([hidden]){
+ border:2px solid #cda253!important;
+ border-left:2px solid #cda253!important;
+ border-radius:12px!important;
+ padding:12px!important;
+ background:var(--bg-card,var(--surface-2))!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-lead-section:not([hidden])>.cya-hybrid-section-fields{
+ min-width:0!important;
+ padding:12px!important;
+ border:1px solid var(--border,#39465c)!important;
+ border-radius:9px!important;
+ background:var(--bg-secondary,var(--surface-2))!important;
+}
+#modal-lead #cya-hybrid-fields-identidad{
+ grid-template-columns:repeat(12,minmax(0,1fr))!important;
+ gap:9px!important;align-items:start!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-nombre){
+ grid-column:span 3!important;grid-row:1!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-curp){
+ grid-column:span 4!important;grid-row:1!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-nss){
+ grid-column:span 2!important;grid-row:1!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-tel){
+ grid-column:span 3!important;grid-row:1!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-colaborador){
+ grid-column:span 3!important;grid-row:2!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-email){
+ grid-column:span 3!important;grid-row:2!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-domicilio){
+ grid-column:span 4!important;grid-row:2!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-ciudad){
+ grid-column:span 2!important;grid-row:2!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-nss) input{
+ font-family:ui-monospace,SFMono-Regular,Consolas,monospace!important;
+ width:100%!important;min-width:0!important;
+}
+#modal-lead .cya-hybrid-section-fields .form-group{
+ min-width:0!important;
+}
+#modal-lead .cya-hybrid-section-fields input.form-input,
+#modal-lead .cya-hybrid-section-fields select.form-select{
+ max-width:100%!important;min-width:0!important;
+ height:36px!important;min-height:36px!important;
+ padding:6px 8px!important;font-size:11px!important;
+ box-sizing:border-box!important;
+}
+#modal-lead #cya-hybrid-curp-line #lead-curp-actions button{
+ min-height:36px!important;height:36px!important;
+}
+#modal-lead #cya-hybrid-fields-identidad #lead-curp{
+ font-size:10px!important;letter-spacing:0!important;
+ font-family:ui-monospace,SFMono-Regular,Consolas,monospace!important;
+}
+#modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-curp){
+ min-width:0!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-hybrid-section-fields:not(#cya-hybrid-fields-identidad):not(#cya-hybrid-fields-origen){
+ gap:9px!important;
+}
+@media(max-width:1050px){
+ #modal-lead #cya-hybrid-fields-identidad{
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+ }
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-nombre){grid-column:span 3!important;grid-row:1!important}
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-curp){grid-column:span 3!important;grid-row:1!important}
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-nss){grid-column:span 2!important;grid-row:2!important}
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-tel){grid-column:span 2!important;grid-row:2!important}
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-colaborador){grid-column:span 2!important;grid-row:2!important}
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-email){grid-column:span 3!important;grid-row:3!important}
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-domicilio){grid-column:span 3!important;grid-row:3!important}
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-ciudad){grid-column:span 3!important;grid-row:4!important}
+}
+@media(max-width:640px){
+ #modal-lead #cya-hybrid-fields-identidad{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-nombre),
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-curp),
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-domicilio){
+  grid-column:1/-1!important;grid-row:auto!important;
+ }
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-nss),
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-tel),
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-colaborador),
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-email),
+ #modal-lead #cya-hybrid-fields-identidad>.form-group:has(#lead-ciudad){
+  grid-column:span 1!important;grid-row:auto!important;
+ }
+ #modal-lead #cya-hybrid-curp-line{flex-wrap:wrap!important}
+ #modal-lead #cya-hybrid-curp-line #lead-curp-actions{flex-wrap:nowrap!important}
+}

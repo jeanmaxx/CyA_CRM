@@ -81,7 +81,7 @@
   const groupFor=id=>$(id)?.closest('.form-group');
   // Only the first category gets the approved compact, two-row layout.
   // Reuse live inputs/handlers; never mirror form state into a second form.
-  for(const id of ['lead-nombre','lead-curp','lead-colaborador','lead-tel','lead-email','lead-domicilio','lead-ciudad']){
+  for(const id of ['lead-nombre','lead-curp','lead-nss','lead-tel','lead-colaborador','lead-email','lead-domicilio','lead-ciudad']){
    appendTo('identidad',groupFor(id));
   }
   const registration=$('lead-registration-wrap'),registrationSlot=$('cya-hybrid-registration-slot');
@@ -91,7 +91,6 @@
   // Other categories retain their existing implementation until approved.
   appendTo('elegibilidad',container.querySelector('.form-section'));
   appendTo('elegibilidad',$('lead-elegibilidad-container'));
-  appendTo('elegibilidad',groupFor('lead-nss'));
   appendTo('elegibilidad',groupFor('lead-afore'));
   appendTo('elegibilidad',groupFor('lead-banco'));
   const eleg=$('cya-hybrid-fields-elegibilidad');
@@ -221,7 +220,12 @@
  if(typeof baseOpen==='function')window.openModalLead=function(...args){
   const result=baseOpen.apply(this,args);
   const key=args[0]||'new';lastLeadKey=key;current='identidad';dirty=false;
-  setTimeout(refresh,120);
+  // The legacy modal is populated synchronously by openModalLead; rebuild its
+  // presentation BEFORE the browser paints the next frame. No old-form flash.
+  try{refresh();}catch(error){console.error('Prospecto híbrido: no se pudo preparar el expediente',error);}
+  if(modal()?.classList.contains('open')&&!$('cya-hybrid-lead-root')){
+   document.documentElement.dataset.cyaProspectFallback='1';
+  }
   return result;
  };
  // Maintain the approved continuity rule: after a successful save, keep the
@@ -236,11 +240,11 @@
    if(persisted&&typeof window.openModalLead==='function'){
     window.openModalLead(id);
     current=section;dirty=false;
-    setTimeout(()=>{refresh();current=section;showSelected();},160);
+    refresh();current=section;showSelected();
    }
   }
   return response;
  };
  // One first refresh handles a modal already open at module initialization.
- if(modal()?.classList.contains('open'))setTimeout(refresh,120);
+ if(modal()?.classList.contains('open'))refresh();
 })();
