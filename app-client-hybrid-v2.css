@@ -569,3 +569,92 @@
 @media(max-width:520px){
  #modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{grid-template-columns:1fr!important}
 }
+
+
+/* 14/11: Información previsional — layout real sobre el DOM original.
+   Retiro por desempleo: 3 controles superiores y 2 inferiores. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro){
+ display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:10px 12px!important;
+ align-items:start!important;
+ width:100%!important;
+ min-width:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #eleg-container{
+ display:contents!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #eleg-container>.form-row{
+ display:contents!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #eleg-container>div:first-child{
+ grid-column:1 / 3!important;
+ grid-row:1!important;
+ margin:0!important;
+ padding:8px 10px!important;
+ font-size:11px!important;
+ line-height:1.4!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #el-result{
+ grid-column:3!important;grid-row:1!important;
+ margin:0!important;min-width:0!important;align-self:stretch!important;
+ padding:9px 11px!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .cya-previsional-nss{
+ grid-column:1!important;grid-row:2!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-semanas){
+ grid-column:2!important;grid-row:2!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-imss){
+ grid-column:3!important;grid-row:2!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-retiro){
+ grid-column:1!important;grid-row:3!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad #el-fecha-wrap{
+ grid-column:2!important;grid-row:3!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group{
+ min-width:0!important;width:100%!important;max-width:100%!important;
+ margin:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-helper{
+ margin:3px 0 0!important;font-size:9px!important;line-height:1.2!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-input,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-select{
+ height:36px!important;min-height:36px!important;width:100%!important;
+ font-size:12px!important;box-sizing:border-box!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-datos-extra #docs-checklist-container,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-datos-extra #docs-checklist-container+div{
+ display:none!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-datos-extra{
+ margin:6px 0 0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-datos-extra .optional-data{
+ grid-column:1/-1!important;
+}
+@media(max-width:900px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro){
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #eleg-container>div:first-child,
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #el-result{
+  grid-column:1/-1!important;grid-row:auto!important;
+ }
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .cya-previsional-nss,
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-semanas),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-imss),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-retiro),
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad #el-fecha-wrap{
+  grid-column:auto!important;grid-row:auto!important;
+ }
+}
+@media(max-width:520px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro){
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+}
