@@ -196,6 +196,7 @@ const inlineFields={
 };
 let editorHome=null,editorActive=false,editorSection='',identityShowAdvisor=false;
 let identityPlaces=[],identityCurpRow=null,identityCurpControl=null,identityCurpLabelHTML='';
+let previsionalNssPlace=null;
 // Relocate the exact six NATIVE form controls: no duplicate inputs, no parallel
 // save model and no mutation of clients. Each original location is restored on
 // section change/close so the rest of the CRM still sees its original form.
@@ -290,8 +291,29 @@ function setupIdentityFields(section){
  modal.classList.add('cya-client-identity-active');
 }
 
+/* One original NSS control is relocated next to eligibility fields only while
+   the previsional panel is open. Its DOM anchor restores the original form. */
+function restorePrevisionalNss(){
+ if(!previsionalNssPlace)return;
+ const {group,anchor}=previsionalNssPlace;
+ if(anchor.parentNode){anchor.parentNode.insertBefore(group,anchor);anchor.remove();}
+ group.classList.remove('cya-previsional-nss');
+ previsionalNssPlace=null;
+}
+function setupPrevisionalNss(section){
+ if(section!=='previsional')return;
+ const eligibility=$('tab-elegibilidad'),group=$('fc-nss')?.closest('.form-group');
+ if(!eligibility||!group||!$('el-semanas')||!$('el-imss'))return;
+ restorePrevisionalNss();
+ const anchor=document.createComment('restore-previsional-nss');
+ group.parentNode.insertBefore(anchor,group);
+ eligibility.insertBefore(group,$('el-result')||null);
+ group.classList.add('cya-previsional-nss');group.hidden=false;
+ previsionalNssPlace={group,anchor};
+}
 function stopInlineEditor(){
  const modal=$('modal-cliente');if(!modal||!editorActive)return;
+ restorePrevisionalNss();
  // Restore the original DOM placement of all six fields before opening any other form.
  restoreIdentityFields();
  // Restore the native ISO date input before returning the original editor.
@@ -388,6 +410,7 @@ function mountInlineEditor(c,section){
  editorActive=true;
  showEditorFields(section);
  setupMxLastWithdrawal(section);
+ setupPrevisionalNss(section);
  setupIdentityFields(section);
  const originalCancel=editor.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(originalCancel){originalCancel.dataset.cyaHybridCancel='1';originalCancel.onclick=()=>{
@@ -421,6 +444,15 @@ function selection(c){
  }
  if(source){
   source.classList.add('active');source.hidden=false;box.appendChild(source);
+  if(selected==='finanzas'){
+   // Group the five EXISTING payment controls in a 3+2 grid: preserve IDs,
+   // input values, input listeners and native guardarFinanzas handler.
+   const rows=[...source.querySelectorAll(':scope > .form-row')].filter(row=>row.querySelector('[id^="fin-"]'));
+   if(rows.length){
+    const grid=document.createElement('div');grid.className='cya-client-finance-edit-grid';
+    rows[0].before(grid);rows.forEach(row=>grid.appendChild(row));
+   }
+  }
   if(selected==='previsional'||selected==='banco'){
    source.querySelectorAll('.info-row').forEach(row=>{
     const label=String(row.querySelector('.ir-label')?.textContent||'').toLowerCase(),bank=/banco|nivel bbva|cuenta/.test(label);
