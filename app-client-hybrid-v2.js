@@ -199,6 +199,94 @@ let identityPlaces=[],identityCurpRow=null,identityCurpControl=null,identityCurp
 let previsionalNssPlace=null;
 let aforeFieldPlaces=[];
 let bankFieldPlaces=[];
+
+/* One in-memory edit session across all nine client cards. Never commit a
+   partial draft on navigation; the cloud-backed native save remains canonical. */
+let clientDraftId='',clientBaseline=null,clientDraft=null,clientClosePending=false;
+function readClientFields(){
+ const values={};
+ $('modal-cliente')?.querySelectorAll('input[id],select[id],textarea[id]').forEach(el=>{
+  if(el.id==='cya-last-withdrawal-mx')return; // native el-fecha is canonical
+  values[el.id]=el.type==='checkbox'||el.type==='radio'?el.checked:el.value;
+ });
+ $('modal-cliente')?.querySelectorAll('.doc-check[data-doc]').forEach(el=>{
+  values['doc:'+el.dataset.doc]=el.classList.contains('checked');
+ });
+ return values;
+}
+function stageClientDraft(){if(editorActive)clientDraft=readClientFields();}
+function restoreClientDraft(){
+ if(!clientDraft)return;
+ for(const [id,value] of Object.entries(clientDraft)){
+  if(id.startsWith('doc:')){
+   const el=[...$('modal-cliente').querySelectorAll('.doc-check[data-doc]')].find(x=>x.dataset.doc===id.slice(4));
+   if(el)el.classList.toggle('checked',!!value);
+   continue;
+  }
+  const el=$(id);
+  if(!el||!$('modal-cliente').contains(el))continue;
+  if(el.type==='checkbox'||el.type==='radio')el.checked=!!value;
+  else el.value=value;
+ }
+}
+function clientIsDirty(){
+ if(!clientBaseline)return false;
+ const current=editorActive?readClientFields():clientDraft||clientBaseline;
+ return Object.keys(clientBaseline).some(key=>current[key]!==clientBaseline[key]);
+}
+function clearClientDraft(){
+ clientBaseline=null;clientDraft=null;clientDraftId='';
+ if(typeof clienteFormDirty!=='undefined')clienteFormDirty=false;
+}
+function clientCloseDialog(){
+ let dlg=$('cya-client-unsaved-dialog');if(dlg)return dlg;
+ dlg=document.createElement('div');
+ dlg.id='cya-client-unsaved-dialog';
+ dlg.className='cya-prospect-unsaved-dialog';
+ dlg.hidden=true;
+ dlg.innerHTML='<div class="cya-prospect-unsaved-box" role="alertdialog" aria-modal="true" aria-labelledby="cya-client-unsaved-title">'+
+  '<h3 id="cya-client-unsaved-title">Hay cambios sin guardar</h3><p>¿Deseas guardar los cambios antes de cerrar el expediente?</p>'+
+  '<div class="cya-prospect-unsaved-actions"><button class="btn" type="button" data-client-stay>Seguir editando</button>'+
+  '<button class="btn" type="button" data-client-discard>Descartar cambios</button>'+
+  '<button class="btn btn-primary" type="button" data-client-save>Guardar</button></div></div>';
+ document.body.appendChild(dlg);
+ dlg.querySelector('[data-client-stay]').onclick=()=>{dlg.hidden=true;};
+ dlg.querySelector('[data-client-discard]').onclick=()=>{
+  dlg.hidden=true;clearClientDraft();stopInlineEditor();
+  window.closeModal?.('modal-perfil');
+ };
+ dlg.querySelector('[data-client-save]').onclick=async()=>{
+  if(clientClosePending)return;
+  clientClosePending=true;
+  const btn=dlg.querySelector('[data-client-save]');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+   if(!editorActive){
+    selected='identidad';selection(getClient());
+   }
+   const ok=await window.guardarCliente?.();
+   if(ok===true){
+    dlg.hidden=true;clearClientDraft();stopInlineEditor();
+    window.closeModal?.('modal-perfil');
+   }else if(typeof showToast==='function')
+    showToast('No se guardaron los cambios; el expediente sigue abierto.','warn');
+  }catch(err){
+   console.error('No se pudo guardar el expediente del cliente',err);
+   if(typeof showToast==='function')showToast('Error de guardado. El expediente permanece abierto.','warn');
+  }finally{clientClosePending=false;btn.disabled=false;btn.textContent='Guardar';}
+ };
+ return dlg;
+}
+function requestClientClose(){
+ if(clientClosePending||!$('modal-perfil')?.classList.contains('open'))return;
+ stageClientDraft();
+ if(!clientIsDirty()){
+  clearClientDraft();stopInlineEditor();window.closeModal?.('modal-perfil');return;
+ }
+ const dlg=clientCloseDialog();dlg.hidden=false;
+ dlg.querySelector('[data-client-save]').focus();
+}
+
 // Relocate the seven NATIVE form controls: no duplicate inputs, no parallel
 // save model and no mutation of clients. Each original location is restored on
 // section change/close so the rest of the CRM still sees its original form.
@@ -364,6 +452,7 @@ function setupBankFields(section){
 }
 function stopInlineEditor(){
  const modal=$('modal-cliente');if(!modal||!editorActive)return;
+ stageClientDraft();
  restoreBankFields();
  restoreAforeFields();
  restorePrevisionalNss();
@@ -381,12 +470,7 @@ function stopInlineEditor(){
  if(editorHome&&modal.parentElement!==editorHome)editorHome.appendChild(modal);
  editorActive=false;editorSection='';window.__cyaHybridClientEditSection='';
 }
-function confirmSwitch(){
- if(!editorActive)return true;
- if(typeof clienteFormDirty!=='undefined'&&clienteFormDirty&&
-    !window.confirm('Hay cambios sin guardar. ¿Deseas descartarlos y cambiar de sección?'))return false;
- return true;
-}
+function confirmSwitch(){return true; /* changes remain in the in-memory draft */}
 function showEditorFields(section){
  const modal=$('modal-cliente');if(!modal)return;
  const allow=new Set(inlineFields[section]||[]);
@@ -455,6 +539,8 @@ function mountInlineEditor(c,section){
  // editCliente populates native form fields and retains its current validation,
  // advisor permissions and cloudSyncNow guarded save.
  window.editCliente(c.id);
+ if(clientDraftId!==String(c.id)){clientDraftId=String(c.id);clientBaseline=readClientFields();clientDraft=null;}
+ else restoreClientDraft();
  area.appendChild(editor);
  editor.classList.add('cya-hybrid-inline-editor');
  editor.dataset.hybridSection=section;
@@ -469,7 +555,7 @@ function mountInlineEditor(c,section){
  setupIdentityFields(section);
  const originalCancel=editor.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(originalCancel){originalCancel.dataset.cyaHybridCancel='1';originalCancel.onclick=()=>{
-  stopInlineEditor();selected='';selection(c);
+  requestClientClose();
  };}
  if(typeof clienteFormDirty!=='undefined')clienteFormDirty=false;
  return true;
@@ -597,7 +683,8 @@ function build(){
  }
  building=true;
  try{
-  if(String(c.id)!==currentId||signed(c)!==previousSigned){currentId=String(c.id);previousSigned=signed(c);selected=signed(c)?'identidad':'contratos';}
+  if(String(c.id)!==currentId){clearClientDraft();currentId=String(c.id);selected=signed(c)?'identidad':'contratos';}
+  if(signed(c)!==previousSigned){previousSigned=signed(c);}
   header(c);
   const tabs=$('perfil-tabs');if(tabs)tabs.hidden=true;
   const summaryGrid=body.querySelector('.profile-summary-grid');if(summaryGrid)summaryGrid.hidden=true;
@@ -628,12 +715,18 @@ if(typeof nativeOpenProfile==='function')window.openPerfil=function(...args){
  if(editorActive)stopInlineEditor();
  return nativeOpenProfile.apply(this,args);
 };
+document.addEventListener('cya:client-saved',event=>{
+ if(clientDraftId!==String(event.detail?.id||''))return;
+ clientBaseline=readClientFields();clientDraft=readClientFields();
+ if(typeof clienteFormDirty!=='undefined')clienteFormDirty=false;
+ const c=getClient();if(c)header(c);
+});
 const nativeSave=window.guardarCliente;
 if(typeof nativeSave==='function')window.guardarCliente=async function(...args){
  const wasInline=editorActive,priorSection=selected,wasId=currentId;
  if(wasInline)window.__cyaHybridClientEditSection=editorSection;
  const result=await nativeSave.apply(this,args);
- if(wasInline&&!$('modal-cliente')?.classList.contains('open')){
+ if(wasInline&&result!==true&&!$('modal-cliente')?.classList.contains('open')){
   stopInlineEditor();
   if($('modal-perfil')?.classList.contains('open')&&typeof window.openPerfil==='function'){
    window.openPerfil(wasId);
@@ -655,10 +748,19 @@ for(const id of ['perfil-regresar-prospecto-btn','perfil-descartar-btn']){
   },true);
  }
 }
-// Always restore the native modal before closing the parent profile.
-$('modal-perfil')?.querySelector('.profile-close')?.addEventListener('click',event=>{
- if(editorActive&&!confirmSwitch()){event.preventDefault();event.stopImmediatePropagation();return;}
- stopInlineEditor();
+// Close only on actual exit, not on navigation within a dossier.
+document.addEventListener('click',event=>{
+ const parent=$('modal-perfil');
+ if(!parent?.classList.contains('open')||!$('cya-hybrid-client-root'))return;
+ const outside=event.target===parent;
+ const closeButton=Boolean(event.target?.closest?.('#modal-perfil .profile-close'));
+ if(!outside&&!closeButton)return;
+ event.preventDefault();event.stopImmediatePropagation();requestClientClose();
+},true);
+document.addEventListener('keydown',event=>{
+ if(event.key!=='Escape'||!$('modal-perfil')?.classList.contains('open')||!$('cya-hybrid-client-root'))return;
+ if($('cya-client-unsaved-dialog')?.hidden===false){event.preventDefault();event.stopImmediatePropagation();$('cya-client-unsaved-dialog').hidden=true;return;}
+ event.preventDefault();event.stopImmediatePropagation();requestClientClose();
 },true);
 // If the modal is closed by a different existing action, return editor to its
 // original DOM position before any new-client flow is attempted.
