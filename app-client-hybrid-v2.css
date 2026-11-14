@@ -542,3 +542,30 @@
  #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .form-group:has(#fc-afore),
  #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .form-group:has(#fc-sucursal-afore){grid-column:1/-1!important}
 }
+
+
+/* Five existing finance fields form exactly two lines at desktop (3 + 2). */
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:9px 12px!important;align-items:end!important;margin:8px 0 12px!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid>.form-row{
+ display:contents!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid .form-group{
+ min-width:0!important;width:100%!important;margin:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .docs-checklist,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .docs-extra,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="comisiones"] .doc-item{
+ display:none!important;
+}
+#modal-perfil #cya-hybrid-client-panel #pd-contratos .cya-generate-contract-prominent{
+ width:auto!important;max-width:100%!important;
+}
+@media(max-width:850px){
+ #modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:520px){
+ #modal-perfil #cya-hybrid-client-panel #pd-finanzas .cya-client-finance-edit-grid{grid-template-columns:1fr!important}
+}
