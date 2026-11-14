@@ -701,3 +701,23 @@
  #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #el-result{grid-row:1!important}
  #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #eleg-container>div:first-child{grid-row:7!important}
 }
+
+
+/* Explicit responsive placement: NSS is inserted after eligibility in DOM,
+   therefore auto placement would otherwise put it below the footer hint. */
+@media(max-width:900px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .cya-previsional-nss{grid-column:1!important;grid-row:2!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-semanas){grid-column:2!important;grid-row:2!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-imss){grid-column:1!important;grid-row:3!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-retiro){grid-column:2!important;grid-row:3!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad #el-fecha-wrap{grid-column:1!important;grid-row:4!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #eleg-container>div:first-child{grid-row:5!important}
+}
+@media(max-width:520px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .cya-previsional-nss{grid-column:1!important;grid-row:2!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-semanas){grid-column:1!important;grid-row:3!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-imss){grid-column:1!important;grid-row:4!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad .form-group:has(#el-retiro){grid-column:1!important;grid-row:5!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad #el-fecha-wrap{grid-column:1!important;grid-row:6!important}
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #eleg-container>div:first-child{grid-column:1!important;grid-row:7!important}
+}
