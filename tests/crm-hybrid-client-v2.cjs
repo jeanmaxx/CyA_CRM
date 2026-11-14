@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require('jsdom');
 const html=fs.readFileSync('app/index.html','utf8'),css=fs.readFileSync('app-client-hybrid-v2.css','utf8'),client=fs.readFileSync('app-client-hybrid-v2.js','utf8'),loader=fs.readFileSync('app-prospect-manual-fields-fix.js','utf8'),workflow=fs.readFileSync('app-workflow.js','utf8');
-assert.match(html,/app-client-hybrid-v2\.css\?v=20261113-clientes-resumen1/);
-assert.match(loader,/app-client-hybrid-v2\.js\?v=20261113-clientes-resumen1/);
+assert.match(html,/app-client-hybrid-v2\.css\?v=20261113-clientes-live2/);
+assert.match(loader,/app-client-hybrid-v2\.js\?v=20261113-clientes-live2/);
 assert.match(css,/cya-hybrid-client-cards/);
 assert.ok(!client.includes('fechaAltaAfore + 46'),'Client UI must not change existing date formula');
 assert.ok(workflow.includes('fechaRetiroEstimada'),'Core dates remain managed by existing workflow');
