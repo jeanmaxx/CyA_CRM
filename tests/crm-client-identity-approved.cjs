@@ -5,9 +5,12 @@ const nativeDoc=new JSDOM(app).window.document;
 const form=nativeDoc.getElementById('modal-cliente')?.outerHTML;
 assert(form&&form.includes('fc-curp')&&form.includes('fc-nombre'),'Using the real original client editor, not a mock copy');
 const panels=['pd-contacto','pd-datos','pd-docs','pd-cita-afore','pd-contratos','pd-finanzas','pd-historial'].map(id=>'<section class="tab-panel" id="'+id+'">Original '+id+'</section>').join('');
+let alertMode='pending';
 const main=()=>'<div class="alerta-firma alerta-verde">✓ Contrato firmado el 11/11/2026</div>'+
- '<div class="alerta-firma alerta-amarilla">⚠ Falta capturar banco</div>'+
- '<div class="alerta-firma alerta-amarilla">⚠ Falta cita de actualización de datos en AFORE</div>'+
+ (alertMode==='pending'?'<div class="alerta-firma alerta-amarilla">⚠ Falta capturar banco</div>'+
+ '<div class="alerta-firma alerta-amarilla">⚠ Falta cita de actualización de datos en AFORE</div>':'')+
+ (alertMode==='overflow'?'<div class="alerta-firma alerta-amarilla">⚠ Banco</div>'+
+ '<div class="alerta-firma alerta-amarilla">⚠ Cita AFORE</div><div class="alerta-firma alerta-roja">⚠ Vencimiento</div>':'')+
  '<div class="profile-stage-wrap"></div><div class="profile-summary-grid"></div><div id="perfil-tabs"></div>'+panels;
 const profile=()=>'<div class="modal-overlay open" id="modal-perfil"><div class="modal client-profile-modal"><div class="profile-header">'+
  '<div class="profile-header-copy"><div id="perfil-title"></div><div id="perfil-sub"></div></div>'+
@@ -93,17 +96,12 @@ const tick=()=>new Promise(r=>setImmediate(r));
  d.querySelector('[data-hybrid-client="identidad"]').click();
  assert.equal(d.querySelectorAll('#cya-client-copy-curp').length,1,'No duplicate copy control after category round trip');
  // Resolve pending warnings: profile rebuild should show four statuses only.
- d.getElementById('perfil-body').innerHTML='<div class="alerta-firma alerta-verde">✓ Contrato firmado el 11/11/2026</div>'+
- '<div class="profile-stage-wrap"></div><div class="profile-summary-grid"></div><div id="perfil-tabs"></div>'+panels;
- await tick();
+ alertMode='resolved';w.openPerfil('c1');await tick();
  assert.equal(d.querySelectorAll('.cya-client-pending-alert').length,0,'Resolved warnings disappear (not green)');
  assert.equal(d.querySelector('.cya-client-summary-grid.has-0-alerts')!==null,true,'KPI row automatically expands');
  assert.equal(d.querySelectorAll('.cya-client-summary-card').length,4);
  // More than two warnings must remain accessible in the second tooltip.
- d.getElementById('perfil-body').innerHTML='<div class="alerta-firma alerta-amarilla">⚠ Banco</div>'+
- '<div class="alerta-firma alerta-amarilla">⚠ Cita AFORE</div><div class="alerta-firma alerta-roja">⚠ Vencimiento</div>'+
- '<div class="profile-stage-wrap"></div><div class="profile-summary-grid"></div><div id="perfil-tabs"></div>'+panels;
- await tick();
+ alertMode='overflow';w.openPerfil('c1');await tick();
  assert.equal(d.querySelectorAll('.cya-client-pending-alert').length,2,'Additional alerts grouped without horizontal overflow');
  assert.match(d.querySelectorAll('.cya-client-pending-alert')[1].title,/Cita AFORE.+Vencimiento/);
  d.querySelector('.profile-close').click();
