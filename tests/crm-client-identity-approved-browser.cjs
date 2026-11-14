@@ -126,9 +126,11 @@ const cases=[
    const pieces=await page.locator('#tab-elegibilidad .cya-previsional-nss, #tab-elegibilidad .form-group:has(#el-semanas), #tab-elegibilidad .form-group:has(#el-imss), #tab-elegibilidad .form-group:has(#el-retiro), #tab-elegibilidad #el-fecha-wrap').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,right:r.right};}));
    assert.equal(pieces.length,5,sc.name+' all five previsional controls');
    if(sc.width>900){
-     assert(Math.abs(pieces[0].y-pieces[1].y)<3&&Math.abs(pieces[1].y-pieces[2].y)<3,sc.name+' NSS weeks and IMSS in first row '+JSON.stringify(pieces));
-     assert(Math.abs(pieces[3].y-pieces[4].y)<3,sc.name+' withdrawal and date in second row '+JSON.stringify(pieces));
-     assert(pieces[0].x<pieces[1].x&&pieces[1].x<pieces[2].x,sc.name+' first row logical ordering');
+     // DOM order is weeks, IMSS, withdrawal, date, NSS; CSS grid places NSS first.
+     const [weeks,imss,withdrawal,date,nss]=pieces;
+     assert(Math.abs(nss.y-weeks.y)<3&&Math.abs(weeks.y-imss.y)<3,sc.name+' NSS weeks and IMSS in first row '+JSON.stringify(pieces));
+     assert(Math.abs(withdrawal.y-date.y)<3,sc.name+' withdrawal and date in second row '+JSON.stringify(pieces));
+     assert(nss.x<weeks.x&&weeks.x<imss.x,sc.name+' first row logical ordering');
    }
    const panelRight=await page.locator('#cya-hybrid-client-content').evaluate(el=>el.getBoundingClientRect().right);
    assert(pieces.every(p=>p.width>0&&p.right<=panelRight+2),sc.name+' controls inside panel');
