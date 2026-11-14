@@ -661,8 +661,14 @@ async function guardarCliente(){
   try{await cloudSyncNow({throwOnError:true});}catch(e){if(cyaNewAgendaId)store.agenda=store.agenda.filter(ev=>ev.id!==cyaNewAgendaId);showToast('Los cambios están pendientes de guardar. Intenta nuevamente.','warn');return;}
   showToast(oldCliente?'Cliente actualizado':'Cliente agregado correctamente','success');
   clienteFormDirty=false;
-  closeModal('modal-cliente');
-  renderPage(currentPage);
+  const keepInline=Boolean(oldCliente&&window.__cyaHybridClientEditSection&&document.getElementById('modal-perfil')?.classList.contains('open'));
+  if(keepInline){
+    document.dispatchEvent(new CustomEvent('cya:client-saved',{detail:{id:cliente.id}}));
+  }else{
+    closeModal('modal-cliente');
+    renderPage(currentPage);
+  }
+  return true;
 }
 
 function eliminar(id){
