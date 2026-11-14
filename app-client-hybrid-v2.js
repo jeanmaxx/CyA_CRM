@@ -421,6 +421,15 @@ function selection(c){
  }
  if(source){
   source.classList.add('active');source.hidden=false;box.appendChild(source);
+  if(selected==='finanzas'){
+   // Group the five EXISTING payment controls in a 3+2 grid: preserve IDs,
+   // input values, input listeners and native guardarFinanzas handler.
+   const rows=[...source.querySelectorAll(':scope > .form-row')].filter(row=>row.querySelector('[id^="fin-"]'));
+   if(rows.length){
+    const grid=document.createElement('div');grid.className='cya-client-finance-edit-grid';
+    rows[0].before(grid);rows.forEach(row=>grid.appendChild(row));
+   }
+  }
   if(selected==='previsional'||selected==='banco'){
    source.querySelectorAll('.info-row').forEach(row=>{
     const label=String(row.querySelector('.ir-label')?.textContent||'').toLowerCase(),bank=/banco|nivel bbva|cuenta/.test(label);
