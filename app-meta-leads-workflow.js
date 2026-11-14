@@ -549,7 +549,8 @@
     const previousStage=existing?.estado;
     const info=requested==='reconsulta'&&existing?.estado!=='reconsulta'?await askReconsulta(existing):null;
     if(requested==='reconsulta'&&existing?.estado!=='reconsulta'&&!info)return;
-    await baseGuardarLead.apply(this,arguments);
+    const baseSaved=await baseGuardarLead.apply(this,arguments);
+    if(baseSaved!==true)return false;
     const lead=currentLead()||(existing?leadById(existing.id):null);
     if(!lead)return;
     Object.assign(lead,extras);
@@ -558,6 +559,7 @@
     let synced=false;
     try{await cloudSyncNow?.({throwOnError:true});synced=true;}catch(_){showToast?.('Los datos adicionales quedaron pendientes de sincronizar','warn');}
     if(synced&&requested==='sindos'&&previousStage!=='sindos'&&lead.estado==='sindos')window.cyaAbrirWhatsAppProspectoPorId?.(lead.id,'sindos');
+    return synced;
   };
 
   function isMetaNewLead(l){
