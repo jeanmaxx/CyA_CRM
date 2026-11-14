@@ -261,6 +261,9 @@ function setupIdentityFields(section){
   }
   layout.appendChild(row);
  }
+ const caption=document.createElement('p');caption.className='cya-client-identity-caption';
+ caption.textContent='Datos personales organizados en dos filas, sin repetir la información del encabezado.';
+ layout.appendChild(caption);
  if(identityShowAdvisor){
   const owner=$('fc-asesor'),group=owner?.closest('.form-group');
   if(group){
