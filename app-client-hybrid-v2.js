@@ -265,10 +265,25 @@ function clientCloseDialog(){
   const btn=dlg.querySelector('[data-client-save]');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
-   if(!editorActive){
-    selected='identidad';selection(getClient());
+   const snapshot=editorActive?readClientFields():clientDraft||clientBaseline||{};
+   const changed=Object.keys(clientBaseline||{}).filter(k=>snapshot[k]!==clientBaseline[k]);
+   const profileChanges=changed.filter(k=>k.startsWith('profile:'));
+   const nativeChanges=changed.filter(k=>!k.startsWith('profile:'));
+   let ok=false;
+   if(profileChanges.length){
+    const financeOnly=profileChanges.every(k=>k.startsWith('profile:fin-'));
+    if(financeOnly&&!nativeChanges.length&&typeof window.guardarFinanzas==='function'){
+     // Original finance persistence confirms cloud success before closing.
+     ok=await window.guardarFinanzas(getClient().id);
+    }else{
+     dlg.hidden=true;
+     if(typeof showToast==='function')showToast('Guarda primero Finanzas o las fechas de Contratos con su botón específico; el expediente permanece abierto.','warn');
+     return;
+    }
+   }else{
+    if(!editorActive){selected='identidad';selection(getClient());}
+    ok=await window.guardarCliente?.();
    }
-   const ok=await window.guardarCliente?.();
    if(ok===true){
     dlg.hidden=true;clearClientDraft();stopInlineEditor();
     window.closeModal?.('modal-perfil');
