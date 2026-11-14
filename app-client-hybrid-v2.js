@@ -197,6 +197,7 @@ const inlineFields={
 let editorHome=null,editorActive=false,editorSection='',identityShowAdvisor=false;
 let identityPlaces=[],identityCurpRow=null,identityCurpControl=null,identityCurpLabelHTML='';
 let previsionalNssPlace=null;
+let aforeFieldPlaces=[];
 // Relocate the exact six NATIVE form controls: no duplicate inputs, no parallel
 // save model and no mutation of clients. Each original location is restored on
 // section change/close so the rest of the CRM still sees its original form.
@@ -311,8 +312,40 @@ function setupPrevisionalNss(section){
  group.classList.add('cya-previsional-nss');group.hidden=false;
  previsionalNssPlace={group,anchor};
 }
+// AFORE's five native controls share one compact grid. The original nodes,
+// not clones, retain Agenda hooks, input handlers and existing persistence.
+function restoreAforeFields(){
+ for(const {group,anchor} of aforeFieldPlaces){
+  if(anchor.parentNode){anchor.parentNode.insertBefore(group,anchor);anchor.remove();}
+ }
+ aforeFieldPlaces=[];
+ $('cya-afore-inline-fields')?.remove();
+ $('modal-cliente')?.classList.remove('cya-afore-inline-active');
+}
+function setupAforeFields(section){
+ if(section!=='afore')return;
+ const modal=$('modal-cliente'),body=modal?.querySelector('.modal-body');
+ const ids=['fc-afore','fc-fecha-biometrica','fc-hora-afore','fc-sucursal-afore','fc-fecha-solicitud-manual'];
+ if(!body||!ids.every(id=>$(id)?.closest('.form-group')))return;
+ restoreAforeFields();
+ const grid=document.createElement('div');grid.id='cya-afore-inline-fields';
+ grid.className='cya-afore-inline-fields';
+ body.insertBefore(grid,body.firstChild);
+ for(const id of ids){
+  const group=$(id).closest('.form-group');
+  const anchor=document.createComment('restore-afore-'+id);
+  group.parentNode.insertBefore(anchor,group);
+  group.hidden=false;
+  grid.appendChild(group);
+  aforeFieldPlaces.push({group,anchor});
+ }
+ // The institution reference remains in its existing source panel and
+ // continues to refresh from the selected AFORE. Never re-create its links.
+ modal.classList.add('cya-afore-inline-active');
+}
 function stopInlineEditor(){
  const modal=$('modal-cliente');if(!modal||!editorActive)return;
+ restoreAforeFields();
  restorePrevisionalNss();
  // Restore the original DOM placement of all six fields before opening any other form.
  restoreIdentityFields();
@@ -411,6 +444,7 @@ function mountInlineEditor(c,section){
  showEditorFields(section);
  setupMxLastWithdrawal(section);
  setupPrevisionalNss(section);
+ setupAforeFields(section);
  setupIdentityFields(section);
  const originalCancel=editor.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(originalCancel){originalCancel.dataset.cyaHybridCancel='1';originalCancel.onclick=()=>{

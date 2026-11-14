@@ -721,3 +721,82 @@
  #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad #el-fecha-wrap{grid-column:1!important;grid-row:6!important}
  #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="previsional"] #tab-elegibilidad:has(#el-retiro) #eleg-container>div:first-child{grid-column:1!important;grid-row:7!important}
 }
+
+
+/* AFORE · maqueta aprobada 14/11/2026: cinco controles en una sola fila.
+   Referencia institucional original debajo, a todo lo ancho. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields{
+ display:grid!important;
+ grid-template-columns:minmax(115px,1.05fr) minmax(140px,1.2fr) minmax(96px,.8fr) minmax(130px,1.12fr) minmax(170px,1.38fr)!important;
+ align-items:start!important;
+ gap:10px!important;
+ width:100%!important;min-width:0!important;
+ margin:0 0 14px!important;padding:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields>.form-group{
+ display:flex!important;flex-direction:column!important;
+ min-width:0!important;max-width:100%!important;width:100%!important;
+ grid-column:auto!important;gap:3px!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields .form-label{
+ font-size:10px!important;line-height:1.25!important;min-height:14px!important;
+ margin:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields input.form-input,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields select.form-select{
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ height:36px!important;min-height:36px!important;
+ font-size:11px!important;padding:7px 8px!important;
+ box-sizing:border-box!important;text-overflow:clip!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields .form-helper{
+ font-size:9px!important;line-height:1.3!important;
+ margin:3px 0 0!important;
+}
+/* No stretched info card inside a narrow fifth column: institution reference
+   stays in the original native panel but uses the full available width. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .tab-panel:not([hidden]){
+ display:block!important;width:100%!important;min-width:0!important;
+ padding:0!important;margin:0!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .afore-info,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .afore-reference,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .afore-directorio{
+ display:block!important;width:100%!important;max-width:none!important;
+ min-width:0!important;box-sizing:border-box!important;
+ margin:0 0 12px!important;
+ padding:13px 15px!important;
+ border-radius:9px!important;
+}
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .afore-info *,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .afore-reference *,
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .afore-directorio *{
+ overflow-wrap:anywhere;
+}
+/* Do not let unrelated original form rows allocate empty vertical space. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .form-row:not(:has(.form-group:not([hidden]))):not(:has(.afore-info,.afore-reference,.afore-directorio)){
+ display:none!important;
+}
+@media(max-width:920px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:540px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:360px){
+ #modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields{
+  grid-template-columns:1fr!important;
+ }
+}
+
+
+/* Override older AFORE span-two rules explicitly; every item uses ONE grid
+   track in desktop view, including AFORE and sucursal fields. */
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields>.form-group:has(#fc-afore),
+#modal-perfil #modal-cliente.cya-hybrid-inline-editor[data-hybrid-section="afore"] .cya-afore-inline-fields>.form-group:has(#fc-sucursal-afore){
+ grid-column:auto!important;grid-row:auto!important;
+}
