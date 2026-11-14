@@ -197,7 +197,7 @@
  if(window.__cyaHybridClientLoaderStarted)return;
  window.__cyaHybridClientLoaderStarted=true;
  const script=document.createElement('script');
- script.src='/app-client-hybrid-v2.js?v=20261113-clientes-resumen1';
+ script.src='/app-client-hybrid-v2.js?v=20261113-clientes-live2';
  script.async=false;
  script.dataset.cyaHybridClient='1';
  document.head.appendChild(script);
