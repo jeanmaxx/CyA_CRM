@@ -264,7 +264,7 @@ const cases=[
        firma:rect('#perfil-firma'),alta:rect('#perfil-alta'),
        predicted:rect('.cya-contract-top-row>p'),save:rect('.cya-contract-top-row>button'),
        heading:rect('.cya-contract-history-heading'),
-       first:rect('.hist-contrato-item'),panel:(()=>{const box=el.getBoundingClientRect();return {top:box.top,bottom:box.bottom,left:box.left,right:box.right,width:box.width};})()};
+       first:rect('.hist-contrato-item'),panel:(()=>{const box=panel.getBoundingClientRect();return {top:box.top,bottom:box.bottom,left:box.left,right:box.right,width:box.width};})()};
    });
    assert(contractPositions.top&&contractPositions.generate&&contractPositions.firma&&contractPositions.alta&&contractPositions.predicted&&contractPositions.save,sc.name+' all native contract fields in top row '+JSON.stringify(contractPositions));
    assert(contractPositions.top.bottom<=contractPositions.heading.top+2,sc.name+' history below contract editor');
