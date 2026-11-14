@@ -862,3 +862,14 @@ html:not([data-cya-prospect-fallback="1"]) #modal-lead.open:not(:has(#cya-hybrid
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
  }
 }
+
+/* Etapa activa: únicamente borde/recuadro verde, sin círculo ni palomita. */
+#modal-lead #cya-hybrid-lead-root .cya-prospect-stage-step .cya-prospect-stage-dot,
+#modal-lead #cya-hybrid-lead-root .cya-prospect-stage-step.active .cya-prospect-stage-dot{
+ display:none!important;
+}
+#modal-lead #cya-hybrid-lead-root .cya-prospect-stage-step.active{
+ border:1.5px solid #18bb83!important;
+ background:rgba(17,155,103,.17)!important;
+ color:#55dfac!important;
+}

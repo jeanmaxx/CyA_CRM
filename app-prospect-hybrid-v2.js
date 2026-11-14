@@ -35,7 +35,6 @@
   container.insertBefore(root,container.firstChild);
   root.querySelectorAll('[data-hybrid-lead-section]').forEach(btn=>btn.addEventListener('click',()=>{
    if(btn.dataset.hybridLeadSection===current)return;
-   if(dirty&&!window.confirm('Hay cambios pendientes de guardar. ¿Deseas continuar a otra sección sin guardarlos todavía?'))return;
    current=btn.dataset.hybridLeadSection;showSelected();
   }));
   root.querySelector('#cya-hybrid-lead-whatsapp').addEventListener('click',()=>{
@@ -119,7 +118,7 @@
   const overlay=modal();
   if(!overlay?.classList.contains('open')||!initialFields)return;
   const outside=event.target===overlay;
-  const headerClose=Boolean(event.target?.closest?.('#modal-lead .modal-header button'));
+  const headerClose=Boolean(event.target?.closest?.('#modal-lead .modal-header button, #modal-lead .modal-footer button[onclick*="closeModal"]'));
   if(!outside&&!headerClose)return;
   event.preventDefault();event.stopImmediatePropagation();requestProspectClose();
  },true);

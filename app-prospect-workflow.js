@@ -291,14 +291,13 @@ async function guardarLead(){
   editingLeadId=lead.id;
   try{await cloudSyncNow({throwOnError:true});}catch(e){showToast('Prospecto pendiente de guardar. Conservamos la captura para reintentar.','warn');return;}
   showToast('Prospecto guardado en la nube','success');
-  // Existing prospect: keep the SAME editor/modal DOM, selected section,
-  // scroll position and focus. Closing and reopening it caused a visible jump.
-  // New prospect: preserve the original close-on-create flow.
-  const keepOpen=Boolean(leadAnterior)&&typeof document!=='undefined'&&document.getElementById('modal-lead')?.classList.contains('open')===true;
+  // Both newly created and existing prospects remain in the same dossier.
+  // editingLeadId was assigned above, so a subsequent save updates the record.
+  const keepOpen=typeof document!=='undefined'&&document.getElementById('modal-lead')?.classList.contains('open')===true;
   if(!keepOpen)closeModal('modal-lead');
   renderPage('leads');
   if(keepOpen)document.dispatchEvent(new CustomEvent('cya:prospect-saved',{
-    detail:{id:lead.id}
+    detail:{id:lead.id,created:!leadAnterior}
   }));
   // Una única invitación por transición confirmada a Aprobado. Abrir
   // la vista previa, nunca enviar el mensaje automáticamente.
