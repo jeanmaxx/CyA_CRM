@@ -46,8 +46,8 @@ const tick=()=>new Promise(r=>setImmediate(r));
 (async()=>{
  await tick();
  const click=id=>d.querySelector('[data-hybrid-client="'+id+'"]').click();
- assert.equal(d.getElementById('cya-hybrid-client-panel').hidden,true,'signed client opens with no panel');
- click('identidad');
+ assert.equal(d.getElementById('cya-hybrid-client-panel').hidden,false,'signed client starts on Identity');
+ assert.equal(d.getElementById('modal-cliente').dataset.hybridSection,'identidad');
  const editor=d.getElementById('modal-cliente');
  assert.equal(editor.parentElement.id,'cya-hybrid-client-content','native editor inserted inside card');
  assert.equal(editor.classList.contains('cya-hybrid-inline-editor'),true);

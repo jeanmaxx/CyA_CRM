@@ -44,6 +44,8 @@ jobs:
           node tests/collaborator-v2-final-ui.cjs
           node tests/collaborator-v2-cards-archive.cjs
           node tests/crm-hybrid-prospect-v2.cjs
+          node tests/crm-client-list-compact.cjs
+          node tests/crm-client-next-action.cjs
           node tests/crm-hybrid-client-v2.cjs
           node tests/crm-hybrid-client-inline.cjs
           node tests/crm-hybrid-client-save-isolation.cjs

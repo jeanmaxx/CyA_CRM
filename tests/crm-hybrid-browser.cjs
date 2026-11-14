@@ -59,19 +59,29 @@ const errors=[];
    assert.equal(await page.locator('#cya-hybrid-copy-curp').count(),0,scenario.name+' no obsolete floating CURP icon');
    assert.equal(await page.locator('#cya-hybrid-client-admin summary svg').count(),1,scenario.name+' SVG settings cog');
    assert.equal(await page.locator('.cya-hybrid-client-card').count(),9,scenario.name+' 9 cards');
-   assert.equal(await page.locator('#cya-operational-profile [data-cya-activity]').count(),12,scenario.name+' 12 steps');
+   assert.equal(await page.locator('#cya-operational-profile').count(),0,scenario.name+' internal 12-step bar removed');
+   assert.equal(await page.locator('.cya-client-summary-card').count(),4,scenario.name+' four executive cards');
+   assert.equal(await page.locator('#perfil-title').innerText(),'Expediente del cliente');
+   assert.equal(await page.locator('#cya-hybrid-client-name').innerText(),'CLIENTE DEMO');
    assert.equal(await page.locator('#cya-hybrid-client-meta.cya-hybrid-client-meta').count(),1);
-   assert.equal(await page.locator('#cya-hybrid-client-dates.cya-hybrid-client-dates').count(),1);
+   assert.equal(await page.locator('#cya-hybrid-client-dates').count(),0,scenario.name+' dates not duplicated in header');
+   assert.equal(await page.locator('#cya-client-summary-grid').count(),0);
+   for(const card of await page.locator('.cya-client-summary-card').all()){
+    const alignment=await card.evaluate(el=>({align:getComputedStyle(el).textAlign,items:getComputedStyle(el).alignItems,font:parseFloat(getComputedStyle(el.querySelector('strong')).fontSize)}));
+    assert.equal(alignment.align,'center',scenario.name+' centered summary');
+    assert.equal(alignment.items,'center',scenario.name+' centered flex');
+    assert(alignment.font>=14,scenario.name+' enlarged summary values');
+   }
    const columns=await page.locator('.cya-hybrid-client-cards').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length);
    assert.equal(columns,scenario.width<670?2:3,scenario.name+' responsive card columns');
-   assert.equal(await page.locator('#cya-operational-profile').isVisible(),true);
+   assert.equal(await page.locator('#cya-operational-profile').count(),0);
    await page.locator('[data-hybrid-client="finanzas"]').click();
    assert.equal(await page.locator('#cya-hybrid-client-panel').isVisible(),true);
-   await page.locator('[data-cya-activity="banco_n4"]').first().click();
+   await page.evaluate(()=>window.__cyaClientActivitiesV2.open('c1','banco_n4'));
    assert.equal(await page.locator('#cya-operational-modal').isVisible(),true);
    await page.locator('[data-op-close]').first().click();
    assert.equal(await page.locator('#cya-operational-modal').count(),0);
-   await page.locator('[data-cya-activity="documentos"]').first().click();
+   await page.evaluate(()=>window.__cyaClientActivitiesV2.open('c1','documentos'));
    assert.equal(await page.locator('#cya-operational-modal').isVisible(),true);
    const bg=await page.locator('.cya-operational-dialog').evaluate(el=>getComputedStyle(el).backgroundColor);
    const alpha=bg.startsWith('rgba(')?Number(bg.slice(bg.lastIndexOf(',')+1,-1)):1;
@@ -96,7 +106,7 @@ const errors=[];
    await page.evaluate(()=>window.cyaCerrarCentroMensajesWhatsApp());
    assert.equal(await page.locator('#cya-wa-message-center.open').count(),0);
    await page.close();
-   console.log('PASS browser '+scenario.name+': 9 cards, 12 milestones, WhatsApp and responsive CSS');
+   console.log('PASS browser '+scenario.name+': 9 cards, 4 centered KPIs, no internal step bar, native activity dialogs and WhatsApp');
   }
   assert.deepEqual(errors,[],'Browser must not emit uncaught script errors');
  }finally{await browser.close();}

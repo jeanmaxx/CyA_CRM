@@ -46,20 +46,84 @@ const summary=(c,id)=>{
  case 'historial':return (c.historial||[]).length+' movimientos';
  }return '';
 };
+// Read-only header for the next operational step. The milestone engine remains
+// canonical; Agenda and its existing SLA may add an urgency color and a link.
+// Never manufacture a priority or overwrite dates, stages or financial fields.
+const NEXT_LABELS={contrato:'Contrato',firmas:'Firmas',firmado:'Firmado',alta:'Alta',app:'AFORE móvil',banco_n4:'Banco N4',cita:'Cita AFORE',documentos:'Documentos',expediente:'Expediente actualizado',solicitud:'Solicitud',deposito:'Depósito',honorarios:'Honorarios'};
+const STEP_EVENT_RULES={contrato:['flujo_generar_contrato'],firmas:['flujo_enviar_firma'],firmado:['flujo_confirmar_firma'],alta:['flujo_confirmar_alta'],app:['flujo_afore_movil'],banco_n4:['flujo_banco_n4'],cita:['cita_afore'],documentos:['flujo_documentos'],expediente:['flujo_expediente'],solicitud:['flujo_solicitud'],deposito:['flujo_deposito'],honorarios:['flujo_honorarios']};
+const clientNextAction=c=>{
+ const stages=c.servicio==='retiro_desempleo'?window.__cyaClientActivitiesV2?.statuses?.(c)||[]:[];
+ const next=stages.find(st=>st.state==='future')||stages.find(st=>st.state==='skipped');
+ const pending=(typeof store!=='undefined'&&Array.isArray(store.agenda)?store.agenda:[])
+  .filter(ev=>String(ev.clienteId||'')===String(c.id)&&!ev.completado&&!ev.cancelarRecordatorio&&ev.fecha)
+  .sort((a,b)=>String(a.fecha||'')+' '+String(a.hora||'23:59')>String(b.fecha||'')+' '+String(b.hora||'23:59')?1:-1);
+ const matched=next?pending.find(ev=>(STEP_EVENT_RULES[next.id]||[]).includes(ev.regla)):null;
+ const event=matched||pending[0]||null;
+ const label=matched||!event?next?NEXT_LABELS[next.id]||next.short:'Sin acción pendiente'
+  :String(event.titulo||'Seguimiento').trim();
+ let tone='neutral',priorityText=event?'Pendiente en Agenda':'Sin prioridad registrada';
+ if(event){
+  let sla=null;
+  if(typeof agendaPrioritariaDashboard==='function'){
+   try{sla=agendaPrioritariaDashboard().find(ev=>String(ev.id)===String(event.id))?.seguimientoContrato||null;}catch(_){}
+  }
+  if(sla?.clave==='en_tiempo'){tone='low';priorityText='EN TIEMPO';}
+  else if(sla?.clave==='pendiente'){tone='medium';priorityText='PENDIENTE';}
+  else if(sla?.clave==='vencido'){tone='high';priorityText='VENCIDO';}
+  else if(['alta','media','baja'].includes(String(event.prioridad||'').toLowerCase())){
+   tone={alta:'high',media:'medium',baja:'low'}[String(event.prioridad).toLowerCase()];
+   priorityText='PRIORIDAD '+String(event.prioridad).toUpperCase();
+  }else{
+   // Generic Agenda events do not store a priority; reflect due-date urgency,
+   // never present it as a manually assigned priority.
+   const date=String(event.fecha||'').slice(0,10),now=new Date();
+   const local=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+   if(/^\d{4}-\d{2}-\d{2}$/.test(date)){
+    tone=date<local?'high':date===local?'medium':'low';
+    priorityText=date<local?'VENCIDO':date===local?'PARA HOY':'PROGRAMADO';
+   }
+  }
+ }
+ return {label,tone,priorityText,eventId:event?.id||'',event};
+};
+const stageTitle=c=>{
+ const labels={generando_contrato:'Generando contrato',contrato_firmas:'Contrato en firmas',contrato_firmado:'Contrato firmado',dado_alta:'Dado de alta',afore_actualizada:'AFORE actualizada',solicitud_realizada:'Solicitud realizada',deposito_recibido:'Depósito recibido',honorarios_recibidos:'Honorarios recibidos',concluido:'Concluido'};
+ return labels[c.etapa]||(typeof STAGES_RETIRO!=='undefined'?STAGES_RETIRO.find(x=>x.id===c.etapa)?.label:'')||field(c.etapa,'Por confirmar');
+};
+const summaryCards=c=>{
+ const next=clientNextAction(c);
+ const solicitud=c.fechaSolicitudManual||c.fechaRetiroEstimada||'';
+ const cobro=c.fechaCobroProbable||plusBusiness(c.fechaSolicitudRealizada||c.etapasOperativasV2?.solicitud?.fecha||solicitud);
+ const card=(id,title,value)=>'<div class="cya-client-summary-card" data-cya-summary="'+id+'"><small>'+title+'</small><strong>'+esc(value)+'</strong></div>';
+ return '<div class="cya-client-summary-grid" aria-label="Resumen del cliente">'+
+  card('stage','ETAPA ACTUAL',stageTitle(c))+
+  '<'+(next.eventId?'button':'div')+' class="cya-client-summary-card cya-client-next is-'+next.tone+'"'+(next.eventId?' type="button" data-cya-next-event="'+esc(next.eventId)+'" title="Abrir el evento pendiente en Agenda"':'')+'>'+
+  '<small>ACCIÓN SIGUIENTE</small><strong>'+esc(next.label)+'</strong><span class="cya-client-next-priority">'+esc(next.priorityText)+'</span></'+(next.eventId?'button':'div')+'>'+
+  card('request','SOLICITUD PROBABLE',format(solicitud))+
+  card('collection','COBRO PROBABLE',format(cobro))+
+  '</div>';
+};
+
 let currentId='',selected='',building=false,previousSigned=null;
 function header(c){
  const modal=$('modal-perfil'),copy=modal?.querySelector('.profile-header-copy');if(!copy)return;
- $('perfil-title').textContent=c.nombre||'Cliente';
- $('perfil-sub').textContent=[c.curp||'CURP pendiente',c.telefono||'',c.ciudad||''].filter(Boolean).join(' · ');
- // La CURP se muestra en la cabecera sin botón suelto de copia.
+ $('perfil-title').textContent='Expediente del cliente';
+ // Compact identity line: use the same existing client name and metadata, no
+ // independent edit form or duplicate CURP action.
  $('cya-hybrid-copy-curp')?.remove();
- let meta=$('cya-hybrid-client-meta');if(!meta){meta=document.createElement('div');meta.id='cya-hybrid-client-meta';meta.className='cya-hybrid-client-meta';copy.appendChild(meta);}
+ let identity=$('cya-hybrid-client-identity');
+ if(!identity){identity=document.createElement('div');identity.id='cya-hybrid-client-identity';identity.className='cya-hybrid-client-identity';copy.insertBefore(identity,$('perfil-sub'));}
+ let name=$('cya-hybrid-client-name');
+ if(!name){name=document.createElement('strong');name.id='cya-hybrid-client-name';identity.appendChild(name);}
+ name.textContent=c.nombre||'Cliente';
+ let meta=$('cya-hybrid-client-meta');
+ if(!meta){meta=document.createElement('div');meta.id='cya-hybrid-client-meta';meta.className='cya-hybrid-client-meta';}
+ if(meta.parentElement!==identity)identity.appendChild(meta);
  meta.innerHTML='<span>'+esc(getAdvisor(c)?.nombre||c.asesorNombre||'Asesor asignado')+'</span><span>'+esc(getCollaborator(c)?.nombre||'Cliente directo')+'</span><span>'+esc(c.fuenteContacto||(typeof FUENTES!=='undefined'?FUENTES[c.fuente]:c.fuente)||'Origen pendiente')+'</span>';
- let dates=$('cya-hybrid-client-dates');if(!dates){dates=document.createElement('div');dates.id='cya-hybrid-client-dates';dates.className='cya-hybrid-client-dates';copy.insertAdjacentElement('afterend',dates);}
- // Only display existing estimated request values; do not alter formula or stored dates.
- const solicitud=c.fechaSolicitudManual||c.fechaRetiroEstimada||'';
- const cobro=c.fechaCobroProbable||plusBusiness(c.fechaSolicitudRealizada||c.etapasOperativasV2?.solicitud?.fecha||solicitud);
- dates.innerHTML='<div><small>SOLICITUD PROBABLE</small><strong>'+esc(format(solicitud))+'</strong></div><div><small>COBRO PROBABLE</small><strong>'+esc(format(cobro))+'</strong></div>';
+ $('perfil-sub').innerHTML=esc([c.curp||'CURP pendiente',c.telefono||''].filter(Boolean).join(' · '))+
+   ' <span class="cya-client-register-label">REGISTRO</span> <strong>'+esc(format(c.fechaRegistro||c.fechaInicio||c.createdAt||''))+'</strong>';
+ // The two probable dates now live in the 4-card summary, not repeated beside the header.
+ $('cya-hybrid-client-dates')?.remove();
  let agenda=$('cya-hybrid-client-agenda');
  if(!agenda){
   agenda=document.createElement('button');agenda.id='cya-hybrid-client-agenda';agenda.type='button';agenda.className='btn';
@@ -261,17 +325,27 @@ function build(){
  }
  building=true;
  try{
-  if(String(c.id)!==currentId||signed(c)!==previousSigned){currentId=String(c.id);previousSigned=signed(c);selected=signed(c)?'':'contratos';}
+  if(String(c.id)!==currentId||signed(c)!==previousSigned){currentId=String(c.id);previousSigned=signed(c);selected=signed(c)?'identidad':'contratos';}
   header(c);
   const tabs=$('perfil-tabs');if(tabs)tabs.hidden=true;
   const summaryGrid=body.querySelector('.profile-summary-grid');if(summaryGrid)summaryGrid.hidden=true;
   const root=document.createElement('section');root.id='cya-hybrid-client-root';
-  root.innerHTML='<div class="cya-operational-profile" id="cya-operational-profile"><div class="cya-operational-profile-label">SEGUIMIENTO DEL TRÁMITE · 12 ACTIVIDADES</div>'+(typeof cyaRenderActivitiesFull==='function'?cyaRenderActivitiesFull(c):'')+'</div><div class="cya-hybrid-client-section-title">TARJETAS DEL EXPEDIENTE</div><nav class="cya-hybrid-client-cards" aria-label="Tarjetas del expediente"></nav><div id="cya-hybrid-client-legacy" hidden></div><section class="cya-hybrid-client-panel" id="cya-hybrid-client-panel" hidden></section>';
+  root.innerHTML=summaryCards(c)+'<nav class="cya-hybrid-client-cards" aria-label="Tarjetas del expediente"></nav><div id="cya-hybrid-client-legacy" hidden></div><section class="cya-hybrid-client-panel" id="cya-hybrid-client-panel" hidden></section>';
   const stages=body.querySelector('.profile-stage-wrap');if(stages)stages.insertAdjacentElement('afterend',root);else body.prepend(root);
   const stash=$('cya-hybrid-client-legacy');
   for(const panel of [...body.querySelectorAll(':scope>.tab-panel')]){panel.hidden=true;panel.classList.remove('active');stash.appendChild(panel);}
   root.querySelector('.cya-hybrid-client-cards').innerHTML=order(c).map(x=>'<button class="cya-hybrid-client-card" type="button" data-hybrid-client="'+x[0]+'" aria-pressed="false"><strong>'+esc(x[2])+' &nbsp; '+esc(x[1])+'</strong><small>'+esc(summary(c,x[0]))+'</small></button>').join('');
   root.querySelector('.cya-hybrid-client-cards').addEventListener('click',e=>{const b=e.target.closest('[data-hybrid-client]');if(!b||!confirmSwitch())return;selected=selected===b.dataset.hybridClient?'':b.dataset.hybridClient;selection(c);});
+  const nextButton=root.querySelector('[data-cya-next-event]');
+  if(nextButton)nextButton.addEventListener('click',()=>{
+   if(editorActive&&!confirmSwitch())return;
+   if(typeof window.openModalAgenda!=='function')return;
+   const eventId=nextButton.dataset.cyaNextEvent;
+   if(!(store.agenda||[]).some(ev=>String(ev.id)===eventId&&!ev.completado))return;
+   if(editorActive)stopInlineEditor();
+   if(typeof window.closeModal==='function')window.closeModal('modal-perfil');
+   window.openModalAgenda(eventId);
+  });
   selection(c);
  }finally{building=false;}
 }

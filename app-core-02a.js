@@ -465,27 +465,16 @@ function renderClientes(){
   <div class="filter-bar client-filter-bar">
     <div class="search-wrap">
       <span class="search-icon">⌕</span>
-      <input placeholder="Buscar por nombre, teléfono o NSS..." oninput="filtrarClientes()" id="search-cl">
+      <input placeholder="Buscar por nombre, teléfono, CURP o NSS..." oninput="filtrarClientes()" id="search-cl">
     </div>
-    <select id="fil-svc" onchange="filtrarClientes()">
-      <option value="">Todos los servicios</option>
-      ${(store.servicios||[]).filter(s=>s.activo!==false).map(s=>`<option value="${s.id}">${s.nombre}</option>`).join('')}
-    </select>
-    <select id="fil-etapa" onchange="filtrarClientes()">
-      <option value="">Todas las etapas</option>
-      ${STAGES_RETIRO.map(s=>`<option value="${s.id}">${s.label}</option>`).join('')}
-    </select>
-    <select id="fil-fuente" onchange="filtrarClientes()">
-      <option value="">Todas las fuentes</option>
-      ${Object.entries(FUENTES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
-    </select>
-    <button class="btn" onclick="exportarClientesExcel()" title="Exportar" style="flex-shrink:0;">⬇ Excel</button>
-    <button class="btn" onclick="exportarClientesPorEtapa()" title="Exportar por etapa" style="flex-shrink:0;">⬇ Por etapa</button>
     ${misColabs.length>0?`<select id="fil-colaborador" onchange="filtrarClientes()" style="font-size:12px;">
       <option value="">Todos los colaboradores</option>
       <option value="directo">Solo directos</option>
       ${misColabs.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('')}
     </select>`:''}
+    <button class="btn" onclick="exportarClientesExcel()" title="Exportar" style="flex-shrink:0;">⬇ Excel</button>
+    <button class="btn" onclick="exportarClientesPorEtapa()" title="Exportar por etapa" style="flex-shrink:0;">⬇ Por etapa</button>
+  </div>
   <div class="card clients-list-card">
     <div class="table-wrap clients-table-wrap">
       <table>
@@ -590,14 +579,10 @@ function toggleDescartadosView(){
 
 function filtrarClientes(){
   const q=(document.getElementById('search-cl')?.value||'').toLowerCase();
-  const svc=document.getElementById('fil-svc')?.value||'';
-  const etapa=document.getElementById('fil-etapa')?.value||'';
-  const fuente=document.getElementById('fil-fuente')?.value||'';
   const colab=document.getElementById('fil-colaborador')?.value||'';
   const filtered=clientesVisibles().filter(c=>{
     if(c.descartado||c.archivado) return false; // solo clientes activos en la lista principal
-    return (!q||c.nombre.toLowerCase().includes(q)||(c.telefono||'').includes(q)||(c.nss||'').includes(q))
-      &&(!svc||c.servicio===svc)&&(!etapa||c.etapa===etapa)&&(!fuente||c.fuente===fuente)
+    return (!q||c.nombre.toLowerCase().includes(q)||(c.telefono||'').includes(q)||(c.curp||'').toLowerCase().includes(q)||(c.nss||'').includes(q))
       &&(!colab||(colab==='directo'?!c.colaboradorId:c.colaboradorId===colab));
   });
   const tb=document.getElementById('tbody-cl');
