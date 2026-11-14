@@ -269,7 +269,7 @@
     const service=document.getElementById('lead-servicio')?.value||'retiro_desempleo';
     if(service==='asesoria_pension')return [['pensiones','Pensiones']];
     if(service==='correccion_imss')return [['correccion_imss','Corrección ante IMSS']];
-    return [['semanas','Semanas / NSS'],['reconsulta','Nueva consulta'],['sindos','SINDOs'],['aprobado','Aprobado']];
+    return [['reconsulta','Nueva consulta'],['semanas','Semanas / NSS'],['sindos','SINDOs'],['aprobado','Aprobado']];
   }
 
   const RECONSULTA_MOTIVOS={
@@ -363,7 +363,11 @@
       const ok=await persistReconsulta(lead,value,reconsultaInfo);
       if(!ok)throw new Error('No se pudo guardar la nueva etapa');
       showToast?.('Etapa guardada: '+(CYA_STAGES[value]||value),'success');
-      if(value==='sindos'&&oldStage!=='sindos')window.cyaAbrirWhatsAppProspectoPorId?.(lead.id,'sindos');
+      // Only after a confirmed stage change. Open an editable WhatsApp preview;
+      // never transmit the message automatically. Reconsultas use their own flow.
+      const group={semanas:'revision',sindos:'sindos',aprobado:'aprobado'}[value];
+      if(group&&oldStage!==value)window.cyaAbrirWhatsAppProspectoPorId?.(lead.id,group);
+      document.dispatchEvent(new CustomEvent('cya:prospect-stage-saved',{detail:{id:lead.id,stage:value}}));
     }catch(err){
       lead.estado=oldStage;
       select.value=oldValue;
@@ -414,11 +418,10 @@
     const active=select?.value||'semanas';
     const stages=prospectStages();
     const current=stages.findIndex(([key])=>key===active);
-    stepper.innerHTML='<div class="cya-prospect-stage-caption">ETAPAS DEL TRÁMITE</div><div class="cya-prospect-stage-steps">'+stages.map(([key,label],i)=>{
-      const done=current>=0&&i<current;
+    stepper.innerHTML='<div class="cya-prospect-stage-steps">'+stages.map(([key,label])=>{
       const selected=key===active;
-      return '<button type="button" class="cya-prospect-stage-step'+(selected?' active':'')+(done?' done':'')+'" data-cya-stage-select="'+key+'" aria-current="'+(selected?'step':'false')+'" title="Clic para cambiar de etapa; doble clic para confirmar regreso a la anterior"><span class="cya-prospect-stage-dot">'+(done?'✓':i+1)+'</span><span class="cya-prospect-stage-label">'+safe(label)+'</span></button>';
-    }).join('')+'</div><div class="cya-prospect-stage-note">Seleccionada: <strong>'+safe(Object.fromEntries(stages)[active]||CYA_STAGES[active]||'Sin definir')+'</strong> · Cambio guardado al seleccionar</div>';
+      return '<button type="button" class="cya-prospect-stage-step'+(selected?' active':'')+'" data-cya-stage-select="'+key+'" aria-pressed="'+selected+'" title="Cambiar etapa a '+safe(label)+'"><span class="cya-prospect-stage-dot" aria-hidden="true">'+(selected?'✓':'')+'</span><span class="cya-prospect-stage-label">'+safe(label)+'</span></button>';
+    }).join('')+'</div>';
   }
 
   function ensureQuestionnaireTab(){
@@ -546,7 +549,8 @@
     const previousStage=existing?.estado;
     const info=requested==='reconsulta'&&existing?.estado!=='reconsulta'?await askReconsulta(existing):null;
     if(requested==='reconsulta'&&existing?.estado!=='reconsulta'&&!info)return;
-    await baseGuardarLead.apply(this,arguments);
+    const baseSaved=await baseGuardarLead.apply(this,arguments);
+    if(baseSaved!==true)return false;
     const lead=currentLead()||(existing?leadById(existing.id):null);
     if(!lead)return;
     Object.assign(lead,extras);
@@ -555,6 +559,7 @@
     let synced=false;
     try{await cloudSyncNow?.({throwOnError:true});synced=true;}catch(_){showToast?.('Los datos adicionales quedaron pendientes de sincronizar','warn');}
     if(synced&&requested==='sindos'&&previousStage!=='sindos'&&lead.estado==='sindos')window.cyaAbrirWhatsAppProspectoPorId?.(lead.id,'sindos');
+    return synced;
   };
 
   function isMetaNewLead(l){

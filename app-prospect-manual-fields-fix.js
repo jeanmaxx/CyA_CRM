@@ -149,7 +149,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-whatsapp-message-center]'))return;
     const script=document.createElement('script');
-    script.src='/app-whatsapp-message-center.js?v=20261113-wa-close-fixed1';
+    script.src='/app-whatsapp-message-center.js?v=20261114-aprobado-corto1';
     script.async=false;
     script.dataset.cyaWhatsappMessageCenter='1';
     document.head.appendChild(script);
@@ -184,7 +184,7 @@
   window.__cyaHybridProspectLoaderStarted=true;
   if(window.__cyaHybridProspectInstalled)return;
   const script=document.createElement('script');
-  script.src='/app-prospect-hybrid-v2.js?v=20261114-save-in-place1';
+  script.src='/app-prospect-hybrid-v2.js?v=20261114-etapas-cierre1';
   script.async=false;
   // If the presentation bundle cannot load, show the original form rather
   // than leave the user with a permanently concealed editor.

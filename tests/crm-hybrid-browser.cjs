@@ -102,7 +102,7 @@ const errors=[];
    const layout=await page.locator('.cya-wa-center-modal .modal-body').evaluate(el=>getComputedStyle(el).display);
    assert.equal(layout,'flex',scenario.name+' WhatsApp wide category layout');
    const rowCols=await page.locator('#cya-wa-main-buttons').evaluate(el=>getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length);
-   assert.equal(rowCols,scenario.width>=1080?6:scenario.width>640?3:2,scenario.name+' WhatsApp categories responsive');
+   assert.equal(rowCols,scenario.width>=1080?7:scenario.width>640?3:2,scenario.name+' WhatsApp categories responsive');
    await page.evaluate(()=>window.cyaCerrarCentroMensajesWhatsApp());
    assert.equal(await page.locator('#cya-wa-message-center.open').count(),0);
    await page.close();

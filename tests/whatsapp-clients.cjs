@@ -58,7 +58,7 @@ assert.match(fields['cya-wa-reject-buttons'].innerHTML,/Seguimiento alta/);
 assert.match(fields['cya-wa-main-buttons'].innerHTML,/Finalización/);
 assert.match(fields['cya-wa-main-buttons'].innerHTML,/Bienvenida/);
 assert.match(fields['cya-wa-reject-buttons'].innerHTML,/IMSS activo/);
-assert.equal((fields['cya-wa-main-buttons'].innerHTML.match(/data-cya-wa-group=/g)||[]).length,6,'Six follow-up categories');
+assert.equal((fields['cya-wa-main-buttons'].innerHTML.match(/data-cya-wa-group=/g)||[]).length,7,'Seven follow-up categories including Aprobado Corto');
 assert.equal((fields['cya-wa-reject-buttons'].innerHTML.match(/data-cya-wa-group=/g)||[]).length,6,'Six future/nonviable categories');
 assert.match(fields['cya-wa-block-list'].innerHTML,/Han transcurrido 20 días/);
 assert.match(fields['cya-wa-block-list'].innerHTML,/¡Hola, Cliente!/);

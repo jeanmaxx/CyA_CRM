@@ -170,7 +170,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-meta-leads-workflow]'))return;
     const script=document.createElement('script');
-    script.src='/app-meta-leads-workflow.js?v=20261113-elegibilidad-aprobada1';
+    script.src='/app-meta-leads-workflow.js?v=20261114-etapas-cierre1';
     script.async=false;
     script.dataset.cyaMetaLeadsWorkflow='1';
     document.head.appendChild(script);

@@ -58,7 +58,7 @@ const css=fs.readFileSync('styles.css','utf8');
    assert.equal(await page.locator('#cya-wa-message-center.open').count(),1,sc.name+' reopens cleanly after close');
    if(sc.w===1440)assert(Math.abs(box.width-1280)<2,sc.name+' must render the approved 1280px modal width: '+box.width);
    else assert(box.width<=sc.w,sc.name+' modal fits viewport');
-   assert.equal(await page.locator('#cya-wa-main-buttons [data-cya-wa-group]').count(),6,sc.name+' six main groups');
+   assert.equal(await page.locator('#cya-wa-main-buttons [data-cya-wa-group]').count(),7,sc.name+' seven main groups including Aprobado Corto');
    assert.equal(await page.locator('#cya-wa-reject-buttons [data-cya-wa-group]').count(),6,sc.name+' six nonviable/future groups');
    assert.equal(await page.locator('#cya-wa-main-buttons [data-cya-wa-group="despedida"]').count(),1);
    assert.equal(await page.locator('#cya-wa-reject-buttons [data-cya-wa-group="alta_15"]').count(),1);
@@ -67,11 +67,11 @@ const css=fs.readFileSync('styles.css','utf8');
    assert.match(await page.locator('#cya-wa-selected-note').innerText(),/según etapa actual/i,sc.name+' automatic suggestion note');
    const selector='#cya-wa-main-buttons [data-cya-wa-group]';
    const cssColumns=await page.locator('#cya-wa-main-buttons').evaluate(el=>getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length);
-   assert.equal(cssColumns,sc.w>=1080?6:sc.w>640?3:2,sc.name+' responsive category columns');
+   assert.equal(cssColumns,sc.w>=1080?7:sc.w>640?3:2,sc.name+' responsive category columns');
    if(sc.w>=1080){
      const coords=await page.locator(selector).evaluateAll(nodes=>nodes.map(el=>({x:el.getBoundingClientRect().x,y:el.getBoundingClientRect().y})));
-     assert(coords.every(x=>Math.abs(x.y-coords[0].y)<2),sc.name+' all six follow-up categories share a row');
-     assert(coords.every((x,i)=>i===0||x.x>coords[i-1].x),sc.name+' six categories left to right');
+     assert(coords.every(x=>Math.abs(x.y-coords[0].y)<2),sc.name+' all seven follow-up categories share a row');
+     assert(coords.every((x,i)=>i===0||x.x>coords[i-1].x),sc.name+' seven categories left to right');
    }
    const bodyLayout=await page.locator('.cya-wa-center-modal .modal-body').evaluate(el=>getComputedStyle(el).display);
    assert.equal(bodyLayout,'flex',sc.name+' full-width top category groups and editor below');

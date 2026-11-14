@@ -36,6 +36,10 @@
       texto:'*3. Respaldo legal:* Para total seguridad y transparencia de ambas partes, nos reunimos de manera presencial para formalizar el trámite mediante la firma de un contrato de prestación de servicios y un pagaré como garantía.\n\n*4. Trámite y depósito:* Iniciamos el proceso operativo y en cuanto la AFORE libere tu dinero, quedas listo.\n\n*Siguiente paso:*\nPara arrancar con la gestión, compárteme una foto o PDF de tu INE para elaborar el contrato.\n\nPosterior a esto, debemos agendar una cita presencial para la firma de los documentos.\n\n¿Qué día prefieres que nos veamos? ¿Entre semana o en día sábado?\n\nComéntame para organizarnos.'
     },
     {
+      id:'pl_wa_aprobado_corto_1',nombre:'Mensaje Aprobado Corto',etapa:'aprobado',tipo:'whatsapp',icono:'',cyaGrupo:'aprobado_corto',cyaOrden:1,
+      texto:'¡Hola, {{NOMBRE}}, {{SALUDO}}!\n\n¡Te tengo muy buenas noticias! Terminamos de realizar la consulta en el sistema y cumples todos los requisitos básicos para comenzar a tramitar tu *Retiro por Desempleo*.\n\nAvísame cuando tengas oportunidad de recibirme una llamada para darte todos los detalles de qué sigue y cómo podemos comenzar.\n\nSaludos.'
+    },
+    {
       id:'pl_wa_despedida_1',nombre:'WhatsApp · Despedida / servicios',etapa:'',tipo:'whatsapp',icono:'',cyaGrupo:'despedida',cyaOrden:1,
       texto:'¡Muy bien!\n\nQuedo a tus enteras órdenes para cualquier duda que llegue a surgir en el futuro.\n\nAprovecho para recordarte los servicios en los que nos especializamos aquí en *Casillas & Asociados*:\n\n*Retiros por Desempleo de AFORE* (para quienes necesiten liquidez y tengan más de 45 días sin empleo).\n*Estrategias y Trámites de Pensiones.*\n*Corrección de Datos y Documentos ante el IMSS/AFORE.*\n\nTe dejo mi tarjeta digital por si algún amigo, conocido o familiar necesita de este o de otros servicios de consultoría; con gusto los podemos apoyar.\n\nhttps://ttd-alvasd.pages.dev/?asesor=emmanuel-alvarez\n\n¡Que tengas un excelente día!\n\n*{{ASESOR}}* | _Consultor Previsional_'
     },
@@ -88,6 +92,7 @@
     {key:'revision',label:'Revisión',kind:'main',ids:['pl_wa_revision_1']},
     {key:'sindos',label:'Revisión SINDOS',kind:'main',ids:['pl_wa_sindos_1']},
     {key:'aprobado',label:'Aprobado',kind:'main',ids:['pl_wa_aprobado_1','pl_wa_aprobado_2']},
+    {key:'aprobado_corto',label:'Mensaje Aprobado Corto',kind:'main',ids:['pl_wa_aprobado_corto_1']},
     {key:'finalizacion',label:'Finalización',kind:'main',ids:['pl_wa_finalizacion_1','pl_wa_finalizacion_2','pl_wa_finalizacion_3']},
     {key:'despedida',label:'Despedida',kind:'main',ids:['pl_wa_despedida_1']},
     {key:'curp_mal',label:'CURP mal',kind:'reject',ids:['pl_wa_curp_mal_1']},
@@ -317,6 +322,9 @@
       '#cya-wa-message-center .cya-wa-nav{display:flex!important;flex-direction:column!important;grid-column:auto!important;grid-row:auto!important;position:static!important;max-height:none!important;overflow:visible!important;padding:0!important;border:0!important;min-width:0!important;gap:6px!important}',
       '#cya-wa-message-center .cya-wa-section-label{font-size:11px!important;letter-spacing:.075em;text-transform:uppercase;color:var(--text-muted,#b7c3d5);font-weight:750;margin:0 0 4px!important}',
       '#cya-wa-message-center .cya-wa-template-row{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:8px!important;width:100%!important;min-width:0!important;margin:0 0 8px!important}',
+      '#cya-wa-message-center #cya-wa-main-buttons{grid-template-columns:repeat(7,minmax(0,1fr))!important}',
+      '@media(max-width:1079px){#cya-wa-message-center #cya-wa-main-buttons{grid-template-columns:repeat(3,minmax(0,1fr))!important}}',
+      '@media(max-width:640px){#cya-wa-message-center #cya-wa-main-buttons{grid-template-columns:repeat(2,minmax(0,1fr))!important}}',
       '#cya-wa-message-center .cya-wa-template-row .btn{display:flex!important;align-items:center!important;justify-content:center!important;min-width:0!important;min-height:50px!important;white-space:normal!important;text-align:center!important;overflow-wrap:anywhere;line-height:1.3!important;font-size:12px!important;padding:8px 7px!important;border-radius:10px!important;background:var(--bg-secondary,#202c3d);color:var(--text,#e7ecf4);font-weight:650}',
       '#cya-wa-message-center .cya-wa-template-row .btn.active{border-color:#25d366!important;background:rgba(37,211,102,.13)!important;color:#44de99!important}',
       '#cya-wa-message-center .cya-wa-template-row .btn:focus-visible,#cya-wa-message-center .cya-wa-part:focus-visible{outline:2px solid #d7ae57;outline-offset:2px}',
