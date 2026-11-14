@@ -66,8 +66,16 @@ const hybridJs=fs.readFileSync('app-prospect-hybrid-v2.js','utf8');
     window.mockRenapo=()=>{window.__renapo=true;};
    },scenario.theme);
    await page.addScriptTag({content:hybridJs});
+   // Without the hybrid module, the native form must not flash onscreen.
+   const prepaint=await page.evaluate(()=>{
+    document.getElementById('modal-lead').classList.add('open');
+    const hidden=getComputedStyle(document.querySelector('#modal-lead .modal-body')).visibility;
+    document.getElementById('modal-lead').classList.remove('open');
+    return hidden;
+   });
+   assert.equal(prepaint,'hidden',scenario.name+' no legacy flash before hybrid initialization');
    await page.evaluate(()=>window.openModalLead('demo'));
-   await page.waitForSelector('#cya-hybrid-fields-identidad:not([hidden])');
+   assert.equal(await page.locator('#cya-hybrid-fields-identidad:not([hidden])').count(),1,scenario.name+' synchronous hybrid initialization before next frame');
    await page.waitForTimeout(180);
    const id='#cya-hybrid-fields-identidad';
    assert.equal(await page.locator('#lead-fecha-registro').count(),1,'Native registration date is never duplicated');
@@ -81,7 +89,7 @@ const hybridJs=fs.readFileSync('app-prospect-hybrid-v2.js','utf8');
    const renapo=page.locator('#lead-curp-actions button').last();
    assert.equal((await renapo.innerText()).trim(),'RENAPO','Native RENAPO button shortened');
    // Coordinates, not just presence: identical control heights and common rows.
-   const controlIds=['lead-nombre','lead-curp','lead-colaborador','lead-tel','lead-email','lead-domicilio','lead-ciudad'];
+   const controlIds=['lead-nombre','lead-curp','lead-nss','lead-tel','lead-colaborador','lead-email','lead-domicilio','lead-ciudad'];
    const rects={};
    for(const id of controlIds)rects[id]=await page.locator('#'+id).boundingBox();
    for(const id of controlIds)assert(Math.abs(rects[id].height-38)<1,scenario.name+' '+id+' must be exactly 38px');
@@ -93,9 +101,12 @@ const hybridJs=fs.readFileSync('app-prospect-hybrid-v2.js','utf8');
    assert(copy.x>=rects['lead-curp'].x+rects['lead-curp'].width-2,
        scenario.name+' copy/RENAPO immediately follow CURP');
    if(scenario.w>1050){
-    for(const id of ['lead-nombre','lead-colaborador'])assert(Math.abs(rects[id].y-rects['lead-curp'].y)<2,scenario.name+' first row '+id);
-    for(const id of ['lead-tel','lead-email','lead-domicilio','lead-ciudad'])assert(Math.abs(rects[id].y-rects['lead-tel'].y)<2,scenario.name+' second row '+id);
-    assert(rects['lead-tel'].y>rects['lead-curp'].y+30,scenario.name+' distinct second row');
+    for(const id of ['lead-nombre','lead-nss','lead-tel'])assert(Math.abs(rects[id].y-rects['lead-curp'].y)<2,scenario.name+' first row '+id);
+    for(const id of ['lead-colaborador','lead-email','lead-domicilio','lead-ciudad'])assert(Math.abs(rects[id].y-rects['lead-colaborador'].y)<2,scenario.name+' second row '+id);
+    assert(rects['lead-colaborador'].y>rects['lead-curp'].y+30,scenario.name+' distinct second row');
+    assert(rects['lead-curp'].x<rects['lead-nss'].x&&rects['lead-nss'].x<rects['lead-tel'].x,scenario.name+' NSS alongside CURP');
+    const goldPanel=await page.locator('#cya-hybrid-section-identidad').evaluate(el=>{const cs=getComputedStyle(el);return [cs.borderTopWidth,cs.borderRightWidth,cs.borderBottomWidth,cs.borderLeftWidth].map(parseFloat);});
+    assert(goldPanel.every(v=>v>=2),scenario.name+' complete gold border');
     const heading=await page.locator('.cya-hybrid-lead-heading').boundingBox();
     const wa=await page.locator('.cya-hybrid-wa').boundingBox();
     const rightGap=heading.x+heading.width-(wa.x+wa.width);
