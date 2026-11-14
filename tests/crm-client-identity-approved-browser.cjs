@@ -117,7 +117,8 @@ const cases=[
       '<div class="form-row"><div class="form-group"><label class="form-label">¿Tiene alta activa en IMSS?</label><select class="form-select" id="el-imss"><option>No</option></select></div>'+
       '<div class="form-group"><label class="form-label">¿Retiró en últimos 5 años?</label><select class="form-select" id="el-retiro"><option>Sí</option></select></div></div>'+
       '<div class="form-group" id="el-fecha-wrap"><label>Fecha último retiro</label><input id="el-fecha" type="date"></div>';
-     document.getElementById('el-result').textContent='✓ Elegible';
+     const result=document.getElementById('el-result');result.textContent='✓ Elegible';result.className='eligibility-result show er-eligible';
+     const rfc=document.getElementById('fc-rfc');if(rfc)rfc.value='RFCGUARDADO123';
    });
    await page.locator('[data-hybrid-client="previsional"]').click();
    assert.equal(await page.locator('#tab-elegibilidad .cya-previsional-nss #fc-nss').count(),1,sc.name+' NSS moved not copied');
@@ -134,6 +135,21 @@ const cases=[
    }
    const panelRight=await page.locator('#cya-hybrid-client-content').evaluate(el=>el.getBoundingClientRect().right);
    assert(pieces.every(p=>p.width>0&&p.right<=panelRight+2),sc.name+' controls inside panel');
+   // Approved order: green evaluation ABOVE every input; basic requirement
+   // notice BELOW the last input, with RFC kept but hidden.
+   const layout=await page.evaluate(()=>{
+     const bounds=id=>{const el=document.querySelector(id);if(!el)return null;const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,width:r.width,visible:getComputedStyle(el).display!=='none'};};
+     return {qualification:bounds('#el-result'),basic:bounds('#eleg-container>.eleg-help'),
+       fields:['#fc-nss','#el-semanas','#el-imss','#el-retiro','#el-fecha-wrap'].map(id=>bounds(id)),
+       rfc:document.getElementById('fc-rfc')?.value||null,
+       rfcGroup:bounds('.optional-data:has(#fc-rfc)')};
+   });
+   assert(layout.qualification?.visible&&layout.qualification.width>0,sc.name+' eligible banner visible');
+   assert(layout.basic?.visible&&layout.basic.width>0,sc.name+' basic hint visible');
+   assert(layout.qualification.bottom<=Math.min(...layout.fields.map(f=>f.top))+2,sc.name+' qualification precedes all fields '+JSON.stringify(layout));
+   assert(layout.basic.top>=Math.max(...layout.fields.map(f=>f.bottom))-2,sc.name+' basic hint follows all fields '+JSON.stringify(layout));
+   assert.equal(layout.rfc,'RFCGUARDADO123',sc.name+' original RFC data kept in DOM');
+   assert.equal(layout.rfcGroup?.visible,false,sc.name+' RFC disclosure not visible in previsional');
    await page.locator('[data-hybrid-client="banco"]').click();
    assert.equal(await page.locator('#tab-datos-extra #fc-nss').count(),1,sc.name+' NSS restored after leaving');
    assert.deepEqual(errors,[],sc.name+' no uncaught JS errors');
