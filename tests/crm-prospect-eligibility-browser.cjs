@@ -72,7 +72,7 @@ const nativeMeta=extract(meta,'  function metaQualification(l){','  window.cyaMe
    await page.waitForSelector('#cya-hybrid-fields-elegibilidad[data-eligibility-service="retiro_desempleo"]');
    assert.equal(await page.locator('#lead-banco').count(),1,sc.name+' one bank field');
    assert.equal(await page.locator('#cya-hybrid-fields-elegibilidad #lead-banco').count(),1,sc.name+' bank in eligibility');
-   const ids=['lead-el-semanas','lead-el-cotiza','lead-el-retiro','lead-el-fecha-retiro','lead-nss','lead-afore','lead-banco'];
+   const ids=['lead-el-semanas','lead-el-cotiza','lead-el-retiro','lead-el-fecha-retiro','lead-afore','lead-banco'];
    const boxes={};
    for(const id of ids){
     boxes[id]=await page.locator('#'+id).boundingBox({timeout:3000});
@@ -94,10 +94,10 @@ const nativeMeta=extract(meta,'  function metaQualification(l){','  window.cyaMe
     const close=(a,b)=>Math.abs(boxes[a].y-boxes[b].y)<3;
     assert(close('lead-el-semanas','lead-el-cotiza')&&close('lead-el-semanas','lead-el-retiro')&&close('lead-el-semanas','lead-el-fecha-retiro'),
        sc.name+' all four primary criteria in one row');
-    assert(close('lead-nss','lead-afore')&&close('lead-nss','lead-banco'),sc.name+' three supplemental fields in second row');
-    assert(boxes['lead-nss'].y>boxes['lead-el-semanas'].y+30,sc.name+' second row below first');
+    assert(close('lead-afore','lead-banco'),sc.name+' supplemental fields aligned');
+    assert(boxes['lead-afore'].y>boxes['lead-el-semanas'].y+30,sc.name+' supplemental fields below criteria');
     const result=await page.locator('#lead-initial-criteria').boundingBox();
-    assert(result.y>boxes['lead-nss'].y,sc.name+' verdict below supplemental bank');
+    assert(result.y>boxes['lead-afore'].y,sc.name+' verdict below supplemental bank');
    }
    assert.equal(await page.locator('#lead-initial-criteria .criteria-alert').isVisible(),true,sc.name+' live eligibility result');
    // Match the approved Origen y captación mockup in the REAL production modal:
@@ -107,8 +107,8 @@ const nativeMeta=extract(meta,'  function metaQualification(l){','  window.cyaMe
    const originSection=page.locator('#cya-hybrid-section-origen');
    assert.equal(await originSection.isVisible(),true,sc.name+' origin visible');
    const gold=await originSection.evaluate(el=>({width:getComputedStyle(el).borderLeftWidth,color:getComputedStyle(el).borderLeftColor}));
-   assert.equal(gold.width,'4px',sc.name+' gold accent applied to active tab');
-   assert.equal(gold.color,'rgb(202, 164, 94)',sc.name+' accent uses approved C&A gold');
+   assert.equal(gold.width,'2px',sc.name+' full gold border applied to active tab');
+   assert.equal(gold.color,'rgb(205, 162, 83)',sc.name+' approved C&A gold outline');
    const qualification=page.locator('#cya-hybrid-qualification.is-green');
    assert.equal(await qualification.count(),1,sc.name+' native Meta qualification stays green');
    const qStyle=await qualification.locator('strong').evaluate(el=>({align:getComputedStyle(el).textAlign,transform:getComputedStyle(el).textTransform,size:parseFloat(getComputedStyle(el).fontSize)}));
