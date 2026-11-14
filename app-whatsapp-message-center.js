@@ -36,6 +36,10 @@
       texto:'*3. Respaldo legal:* Para total seguridad y transparencia de ambas partes, nos reunimos de manera presencial para formalizar el trámite mediante la firma de un contrato de prestación de servicios y un pagaré como garantía.\n\n*4. Trámite y depósito:* Iniciamos el proceso operativo y en cuanto la AFORE libere tu dinero, quedas listo.\n\n*Siguiente paso:*\nPara arrancar con la gestión, compárteme una foto o PDF de tu INE para elaborar el contrato.\n\nPosterior a esto, debemos agendar una cita presencial para la firma de los documentos.\n\n¿Qué día prefieres que nos veamos? ¿Entre semana o en día sábado?\n\nComéntame para organizarnos.'
     },
     {
+      id:'pl_wa_aprobado_corto_1',nombre:'Mensaje Aprobado Corto',etapa:'aprobado',tipo:'whatsapp',icono:'',cyaGrupo:'aprobado_corto',cyaOrden:1,
+      texto:'¡Hola, {{NOMBRE}}, {{SALUDO}}!\\n\\n¡Te tengo muy buenas noticias! Terminamos de realizar la consulta en el sistema y cumples todos los requisitos básicos para comenzar a tramitar tu *Retiro por Desempleo*.\\n\\nAvísame cuando tengas oportunidad de recibirme una llamada para darte todos los detalles de qué sigue y cómo podemos comenzar.\\n\\nSaludos.'
+    },
+    {
       id:'pl_wa_despedida_1',nombre:'WhatsApp · Despedida / servicios',etapa:'',tipo:'whatsapp',icono:'',cyaGrupo:'despedida',cyaOrden:1,
       texto:'¡Muy bien!\n\nQuedo a tus enteras órdenes para cualquier duda que llegue a surgir en el futuro.\n\nAprovecho para recordarte los servicios en los que nos especializamos aquí en *Casillas & Asociados*:\n\n*Retiros por Desempleo de AFORE* (para quienes necesiten liquidez y tengan más de 45 días sin empleo).\n*Estrategias y Trámites de Pensiones.*\n*Corrección de Datos y Documentos ante el IMSS/AFORE.*\n\nTe dejo mi tarjeta digital por si algún amigo, conocido o familiar necesita de este o de otros servicios de consultoría; con gusto los podemos apoyar.\n\nhttps://ttd-alvasd.pages.dev/?asesor=emmanuel-alvarez\n\n¡Que tengas un excelente día!\n\n*{{ASESOR}}* | _Consultor Previsional_'
     },
@@ -88,6 +92,7 @@
     {key:'revision',label:'Revisión',kind:'main',ids:['pl_wa_revision_1']},
     {key:'sindos',label:'Revisión SINDOS',kind:'main',ids:['pl_wa_sindos_1']},
     {key:'aprobado',label:'Aprobado',kind:'main',ids:['pl_wa_aprobado_1','pl_wa_aprobado_2']},
+    {key:'aprobado_corto',label:'Mensaje Aprobado Corto',kind:'main',ids:['pl_wa_aprobado_corto_1']},
     {key:'finalizacion',label:'Finalización',kind:'main',ids:['pl_wa_finalizacion_1','pl_wa_finalizacion_2','pl_wa_finalizacion_3']},
     {key:'despedida',label:'Despedida',kind:'main',ids:['pl_wa_despedida_1']},
     {key:'curp_mal',label:'CURP mal',kind:'reject',ids:['pl_wa_curp_mal_1']},
