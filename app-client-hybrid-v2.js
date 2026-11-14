@@ -202,7 +202,7 @@ let bankFieldPlaces=[];
 
 /* One in-memory edit session across all nine client cards. Never commit a
    partial draft on navigation; the cloud-backed native save remains canonical. */
-let clientDraftId='',clientBaseline=null,clientDraft=null,clientClosePending=false;
+let clientDraftId='',clientBaseline=null,clientDraft=null,clientProfileBaseline=null,clientClosePending=false;
 function readClientFields(){
  const values={};
  $('modal-cliente')?.querySelectorAll('input[id],select[id],textarea[id]').forEach(el=>{
@@ -217,6 +217,14 @@ function readClientFields(){
   values['doc:'+el.dataset.doc]=el.classList.contains('checked');
  });
  return values;
+}
+function readClientProfileValues(){
+ return Object.fromEntries(Object.entries(readClientFields()).filter(([id])=>id.startsWith('profile:')));
+}
+function profileHasPending(){
+ if(!clientProfileBaseline)return false;
+ const now=readClientProfileValues();
+ return Object.keys(clientProfileBaseline).some(key=>now[key]!==clientProfileBaseline[key]);
 }
 function stageClientDraft(){if(editorActive)clientDraft=readClientFields();}
 function restoreClientDraft(){
@@ -234,12 +242,13 @@ function restoreClientDraft(){
  }
 }
 function clientIsDirty(){
- if(!clientBaseline)return false;
- const current=editorActive?readClientFields():clientDraft||clientBaseline;
- return Object.keys(clientBaseline).some(key=>current[key]!==clientBaseline[key]);
+ const current=editorActive?readClientFields():clientDraft||clientBaseline||{};
+ const formDirty=Boolean(clientBaseline&&Object.keys(clientBaseline).some(key=>
+  !key.startsWith('profile:')&&current[key]!==clientBaseline[key]));
+ return formDirty||profileHasPending();
 }
 function clearClientDraft(){
- clientBaseline=null;clientDraft=null;clientDraftId='';
+ clientBaseline=null;clientDraft=null;clientDraftId='';clientProfileBaseline=null;
  if(typeof clienteFormDirty!=='undefined')clienteFormDirty=false;
 }
 function clientCloseDialog(){
@@ -266,9 +275,9 @@ function clientCloseDialog(){
   btn.disabled=true;btn.textContent='Guardando…';
   try{
    const snapshot=editorActive?readClientFields():clientDraft||clientBaseline||{};
-   const changed=Object.keys(clientBaseline||{}).filter(k=>snapshot[k]!==clientBaseline[k]);
-   const profileChanges=changed.filter(k=>k.startsWith('profile:'));
-   const nativeChanges=changed.filter(k=>!k.startsWith('profile:'));
+   const nativeChanges=Object.keys(clientBaseline||{}).filter(k=>!k.startsWith('profile:')&&snapshot[k]!==clientBaseline[k]);
+   const profileNow=readClientProfileValues();
+   const profileChanges=Object.keys(clientProfileBaseline||{}).filter(k=>profileNow[k]!==clientProfileBaseline[k]);
    let ok=false;
    if(profileChanges.length){
     const financeOnly=profileChanges.every(k=>k.startsWith('profile:fin-'));
@@ -726,6 +735,7 @@ function build(){
    window.openModalAgenda(eventId);
   });
   selection(c);
+  if(!clientProfileBaseline)clientProfileBaseline=readClientProfileValues();
  }finally{building=false;}
 }
 
