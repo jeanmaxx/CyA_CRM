@@ -118,7 +118,7 @@
   const overlay=modal();
   if(!overlay?.classList.contains('open')||!initialFields)return;
   const outside=event.target===overlay;
-  const headerClose=Boolean(event.target?.closest?.('#modal-lead .modal-header button'));
+  const headerClose=Boolean(event.target?.closest?.('#modal-lead .modal-header button, #modal-lead .modal-footer button[onclick*="closeModal"]'));
   if(!outside&&!headerClose)return;
   event.preventDefault();event.stopImmediatePropagation();requestProspectClose();
  },true);
