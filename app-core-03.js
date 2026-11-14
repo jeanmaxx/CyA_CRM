@@ -193,6 +193,7 @@ async function guardarFinanzas(id){
   catch(e){openPerfil(id);showToast('Los datos quedaron guardados localmente, pero falta confirmar la sincronización: '+e.message,'warn');return;}
   showToast('Datos financieros guardados','success');
   openPerfil(id);
+  return true;
 }
 
 // ==================== ELEGIBILIDAD ====================
