@@ -58,7 +58,7 @@ const css=fs.readFileSync('styles.css','utf8');
    assert.equal(await page.locator('#cya-wa-message-center.open').count(),1,sc.name+' reopens cleanly after close');
    if(sc.w===1440)assert(Math.abs(box.width-1280)<2,sc.name+' must render the approved 1280px modal width: '+box.width);
    else assert(box.width<=sc.w,sc.name+' modal fits viewport');
-   assert.equal(await page.locator('#cya-wa-main-buttons [data-cya-wa-group]').count(),6,sc.name+' six main groups');
+   assert.equal(await page.locator('#cya-wa-main-buttons [data-cya-wa-group]').count(),7,sc.name+' seven main groups including Aprobado Corto');
    assert.equal(await page.locator('#cya-wa-reject-buttons [data-cya-wa-group]').count(),6,sc.name+' six nonviable/future groups');
    assert.equal(await page.locator('#cya-wa-main-buttons [data-cya-wa-group="despedida"]').count(),1);
    assert.equal(await page.locator('#cya-wa-reject-buttons [data-cya-wa-group="alta_15"]').count(),1);
