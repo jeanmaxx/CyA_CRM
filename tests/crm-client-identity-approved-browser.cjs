@@ -108,6 +108,32 @@ const cases=[
    await page.locator('[data-hybrid-client="banco"]').click();
    assert.equal(await page.locator('#cya-client-copy-curp').count(),0,sc.name+' copy removed when leaving Identity');
    assert.equal(await page.locator('#fc-curp').evaluate(el=>!!el.closest('#tab-datos-extra')),true,sc.name+' original CURP restored');
+   // Previsional layout: generated eligibility controls coexist with the one
+   // native NSS group. Verify real Chromium grid geometry and restoration.
+   await page.evaluate(()=>{
+     document.getElementById('eleg-container').innerHTML=
+      '<div class="eleg-help">Retiro por desempleo — Mín. 105 semanas</div>'+
+      '<div class="form-group"><label class="form-label">Semanas cotizadas</label><input class="form-input" id="el-semanas" value="141"></div>'+
+      '<div class="form-row"><div class="form-group"><label class="form-label">¿Tiene alta activa en IMSS?</label><select class="form-select" id="el-imss"><option>No</option></select></div>'+
+      '<div class="form-group"><label class="form-label">¿Retiró en últimos 5 años?</label><select class="form-select" id="el-retiro"><option>Sí</option></select></div></div>'+
+      '<div class="form-group" id="el-fecha-wrap"><label>Fecha último retiro</label><input id="el-fecha" type="date"></div>';
+     document.getElementById('el-result').textContent='✓ Elegible';
+   });
+   await page.locator('[data-hybrid-client="previsional"]').click();
+   assert.equal(await page.locator('#tab-elegibilidad .cya-previsional-nss #fc-nss').count(),1,sc.name+' NSS moved not copied');
+   assert.equal(await page.locator('#fc-nss').count(),1,sc.name+' exactly one NSS input');
+   assert.equal(await page.locator('#docs-checklist-container').isVisible(),false,sc.name+' no duplicate documents');
+   const pieces=await page.locator('#tab-elegibilidad .cya-previsional-nss, #tab-elegibilidad .form-group:has(#el-semanas), #tab-elegibilidad .form-group:has(#el-imss), #tab-elegibilidad .form-group:has(#el-retiro), #tab-elegibilidad #el-fecha-wrap').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,right:r.right};}));
+   assert.equal(pieces.length,5,sc.name+' all five previsional controls');
+   if(sc.width>900){
+     assert(Math.abs(pieces[0].y-pieces[1].y)<3&&Math.abs(pieces[1].y-pieces[2].y)<3,sc.name+' NSS weeks and IMSS in first row '+JSON.stringify(pieces));
+     assert(Math.abs(pieces[3].y-pieces[4].y)<3,sc.name+' withdrawal and date in second row '+JSON.stringify(pieces));
+     assert(pieces[0].x<pieces[1].x&&pieces[1].x<pieces[2].x,sc.name+' first row logical ordering');
+   }
+   const panelRight=await page.locator('#cya-hybrid-client-content').evaluate(el=>el.getBoundingClientRect().right);
+   assert(pieces.every(p=>p.width>0&&p.right<=panelRight+2),sc.name+' controls inside panel');
+   await page.locator('[data-hybrid-client="banco"]').click();
+   assert.equal(await page.locator('#tab-datos-extra #fc-nss').count(),1,sc.name+' NSS restored after leaving');
    assert.deepEqual(errors,[],sc.name+' no uncaught JS errors');
    console.log('PASS approved client layout '+sc.name+': six compact top cards, nine navigation cards, gold panel, exact six editable fields and full CURP copy');
    await page.close();
