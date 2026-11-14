@@ -107,6 +107,8 @@ const tick=()=>new Promise(r=>setImmediate(r));
  assert.equal(d.querySelectorAll('.cya-client-pending-alert').length,2,'Additional alerts grouped without horizontal overflow');
  assert.match(d.querySelectorAll('.cya-client-pending-alert')[1].title,/Cita AFORE.+Vencimiento/);
  d.querySelector('.profile-close').click();
+ const dlg=d.getElementById('cya-client-unsaved-dialog');
+ if(dlg&&!dlg.hidden)d.querySelector('[data-client-discard]').click();
  assert.equal(d.getElementById('fc-nombre').closest('#tab-contacto')!==null,true,'Original form restored on profile close');
  assert.equal(d.getElementById('fc-curp').closest('#tab-datos-extra')!==null,true,'CURP restored on profile close');
  assert.deepEqual(toast.filter(x=>x.status==='success').map(x=>x.msg),['CURP copiada','CURP copiada']);
