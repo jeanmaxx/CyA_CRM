@@ -316,6 +316,14 @@
   // presentation BEFORE the browser paints the next frame. No old-form flash.
   try{refresh();}catch(error){console.error('Prospecto híbrido: no se pudo preparar el expediente',error);}
   captureSnapshot();
+  // Meta Ads fills its extra controls and builds the real stage buttons in a
+  // zero-delay callback. Reparent once that completes and use their final
+  // populated values as the clean baseline, not transient empty placeholders.
+  setTimeout(()=>{
+   if(!modal()?.classList.contains('open'))return;
+   routeFields();
+   captureSnapshot();
+  },30);
   if(modal()?.classList.contains('open')&&!$('cya-hybrid-lead-root')){
    document.documentElement.dataset.cyaProspectFallback='1';
   }
