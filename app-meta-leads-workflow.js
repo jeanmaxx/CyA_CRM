@@ -420,7 +420,7 @@
     const current=stages.findIndex(([key])=>key===active);
     stepper.innerHTML='<div class="cya-prospect-stage-steps">'+stages.map(([key,label])=>{
       const selected=key===active;
-      return '<button type="button" class="cya-prospect-stage-step'+(selected?' active':'')+'" data-cya-stage-select="'+key+'" aria-pressed="'+selected+'" title="Cambiar etapa a '+safe(label)+'"><span class="cya-prospect-stage-dot" aria-hidden="true">'+(selected?'✓':'')+'</span><span class="cya-prospect-stage-label">'+safe(label)+'</span></button>';
+      return '<button type="button" class="cya-prospect-stage-step'+(selected?' active':'')+'" data-cya-stage-select="'+key+'" aria-pressed="'+selected+'" title="Cambiar etapa a '+safe(label)+'"><span class="cya-prospect-stage-label">'+safe(label)+'</span></button>';
     }).join('')+'</div>';
   }
 
@@ -481,6 +481,38 @@
     setQuestionnaireTab('datos');
   }
 
+  // Prefer the verified Meta source. A collaborator selection assigns the
+  // collaborator source automatically, but never overrides an established
+  // independent source unless the user actually changes the collaborator.
+  function hasMetaOrigin(lead){
+    return Boolean(lead?.metaAds===true||lead?.metaLead||lead?.origenMeta||
+      String(lead?.fuenteContacto||lead?.origen?.fuente||'').trim().toLowerCase()==='meta ads');
+  }
+  function syncProspectSource(fromCollaboratorChange=false){
+    const source=document.getElementById('lead-fuente');
+    const col=document.getElementById('lead-colaborador');
+    if(!source||!col)return;
+    const lead=currentLead(),meta=hasMetaOrigin(lead);
+    if(meta){
+      if(source.value!=='Meta Ads'){source.value='Meta Ads';source.dispatchEvent(new Event('change',{bubbles:true}));}
+      return;
+    }
+    if(col.value){
+      const current=source.value;
+      if(fromCollaboratorChange||!current||current==='De colaborador'){
+        if(current!=='De colaborador'){source.value='De colaborador';source.dispatchEvent(new Event('change',{bubbles:true}));}
+      }
+    }else if(fromCollaboratorChange&&source.value==='De colaborador'){
+      source.value='';
+      source.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+  }
+  function installSourceAutomation(){
+    const col=document.getElementById('lead-colaborador');if(!col||col.dataset.cyaSourceListener)return;
+    col.dataset.cyaSourceListener='1';
+    col.addEventListener('change',()=>syncProspectSource(true));
+  }
+
   function fillExtraFields(){
     ensureExtraFields();ensureReviewButtons();ensureClientMessageButtons();ensureMetaNameHelper();
     const l=currentLead();
@@ -492,6 +524,7 @@
     set('lead-email',l?.email||l?.correo||'');
     set('lead-ciudad',l?.ciudad||l?.municipio||'');
     set('lead-fuente',l?.fuenteContacto||l?.origen?.fuente||'');
+    installSourceAutomation();syncProspectSource(false);
     set('lead-nss',l?.nss||'');
     set('lead-afore',l?.afore||'');
     set('lead-domicilio',l?.domicilio||'');
@@ -557,6 +590,7 @@
       showToast?.('No se encontró el expediente original. No se guardaron cambios para evitar crear un registro incompleto','warn');
       return;
     }
+    syncProspectSource(false);
     const extras=captureExtraFields();
     const existing=currentLead();
     const requested=document.getElementById('lead-estado')?.value;
