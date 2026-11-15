@@ -106,7 +106,7 @@
 (function loadCollaboratorProfileMetadata(){
   if(document.querySelector('script[data-cya-collaborator-profile]'))return;
   const script=document.createElement('script');
-  script.src='/app-collaborator-profile.js?v=20260919-routing1';
+  script.src='/app-collaborator-profile.js?v=20261115-collab-whatsapp-f2';
   script.async=false;
   script.dataset.cyaCollaboratorProfile='1';
   document.head.appendChild(script);
@@ -116,7 +116,7 @@
 (function loadCollaboratorProfileSafety(){
   if(document.querySelector('script[data-cya-collaborator-profile-safety]'))return;
   const script=document.createElement('script');
-  script.src='/app-collaborator-profile-safety.js?v=20260919-routing1';
+  script.src='/app-collaborator-profile-safety.js?v=20261115-collab-whatsapp-f2';
   script.async=false;
   script.dataset.cyaCollaboratorProfileSafety='1';
   document.head.appendChild(script);

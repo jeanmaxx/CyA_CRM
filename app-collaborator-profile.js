@@ -67,10 +67,10 @@
       for(const button of buttons){
         const tr=button.closest('tr');
         if(tr&&tr.cells?.[0]&&!tr.cells[0].querySelector('.cya-collab-profile-meta')){
-          const values=[email,birth?`Nacimiento ${birth}`:''].filter(Boolean);if(values.length)tr.cells[0].insertAdjacentHTML('beforeend',`<div class="cya-collab-profile-meta">${values.map(safe).join(' · ')}</div>`);
+          const values=[email,col.telefonoWhatsapp?'WhatsApp '+safe(col.telefonoWhatsapp):'',birth?`Nacimiento ${birth}`:''].filter(Boolean);if(values.length)tr.cells[0].insertAdjacentHTML('beforeend',`<div class="cya-collab-profile-meta">${values.map(safe).join(' · ')}</div>`);
         }
         const card=button.closest('.collaborator-mobile-card'),identity=card?.querySelector('.collaborator-mobile-identity');
-        if(identity&&!identity.querySelector('.cya-collab-profile-meta')){const values=[email,birth?`Nacimiento ${birth}`:''].filter(Boolean);if(values.length)identity.insertAdjacentHTML('beforeend',`<div class="cya-collab-profile-meta">${values.map(safe).join(' · ')}</div>`);}
+        if(identity&&!identity.querySelector('.cya-collab-profile-meta')){const values=[email,col.telefonoWhatsapp?'WhatsApp '+safe(col.telefonoWhatsapp):'',birth?`Nacimiento ${birth}`:''].filter(Boolean);if(values.length)identity.insertAdjacentHTML('beforeend',`<div class="cya-collab-profile-meta">${values.map(safe).join(' · ')}</div>`);}
       }
     }
   }
@@ -102,7 +102,9 @@
       const id=editingColaboradorId||'col_'+Date.now(),old=editingColaboradorId?(store.colaboradores||[]).find(c=>c.id===editingColaboradorId):null;
       if(old&&!isAdmin()&&old.asesorId!==sesionActiva?.id){showToast?.('No puedes modificar colaboradores de otro asesor','warn');return;}
       const advisorId=isAdmin()?(getVal('col-asesor')||sesionActiva?.id):sesionActiva?.id;
-      const record={...(old||{}),id,nombres,apellidos,nombre,ciudad:upper(getVal('col-ciudad')),email,fechaNacimiento:birth,asesorId,pctComision:Number(getVal('col-pct'))||50,activo:getVal('col-activo')!=='false',fechaAlta:old?.fechaAlta||new Date().toISOString().split('T')[0]};
+      const whatsapp=normalizarWhatsappColaborador(document.getElementById('col-whatsapp')?.value||'');
+      if(whatsapp===null){showToast?.('WhatsApp inválido. Usa 10 dígitos mexicanos o +52','warn');document.getElementById('col-whatsapp')?.focus();return;}
+      const record={...(old||{}),id,nombres,apellidos,nombre,ciudad:upper(getVal('col-ciudad')),telefonoWhatsapp:whatsapp,email,fechaNacimiento:birth,asesorId:advisorId,pctComision:Number(getVal('col-pct'))||50,activo:getVal('col-activo')!=='false',fechaAlta:old?.fechaAlta||new Date().toISOString().split('T')[0]};
       const portalState=document.getElementById('col-portal-estado')?.value||'no_crear',password=document.getElementById('col-portal-password')?.value||'',known=accountFor(id);
       if(portalState!=='no_crear'&&!email){showToast?.('Captura el correo para habilitar el portal','warn');return;}
       if(portalState==='activo'&&!known?.hasAccount&&!password){showToast?.('Captura una contraseña temporal para crear la cuenta','warn');document.getElementById('col-portal-password')?.focus();return;}

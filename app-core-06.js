@@ -325,6 +325,17 @@ function flechaOrden(campo){
 // ==================== COLABORADORES ====================
 let editingColaboradorId = null;
 
+// Un solo formato para WhatsApp: diez dígitos mexicanos, sin lada almacenada.
+// Acepta 10 dígitos, +52 y el prefijo legado 521. No altera otros campos.
+function normalizarWhatsappColaborador(raw){
+  const value=String(raw??'').trim(),digits=value.replace(/\D/g,'');
+  if(!value)return '';
+  if(/^\d{10}$/.test(digits))return digits;
+  if(/^52\d{10}$/.test(digits))return digits.slice(2);
+  if(/^521\d{10}$/.test(digits))return digits.slice(3);
+  return null;
+}
+
 function renderColaboradores(){
   const cols = isAdmin()?(store.colaboradores||[]):(store.colaboradores||[]).filter(c=>c.asesorId===sesionActiva?.id);
   const datos=cols.map(col=>{
@@ -401,6 +412,7 @@ function openModalColaborador(id){
   document.getElementById('col-btn-eliminar').style.display=id?'':'none';
   setVal('col-nombre',col?col.nombre:'');
   setVal('col-ciudad',col?col.ciudad:'');
+  setVal('col-whatsapp',col?col.telefonoWhatsapp||col.whatsapp||'':'');
   setVal('col-pct',col?col.pctComision:50);
   setVal('col-activo',col?(col.activo===false?'false':'true'):'true');
   // Poblar select de asesores
@@ -415,11 +427,13 @@ function openModalColaborador(id){
 function guardarColaborador(){
   const nombre=(getVal('col-nombre')||'').trim();
   if(!nombre){showToast('El nombre es obligatorio','warn');return;}
+  const whatsapp=normalizarWhatsappColaborador(getVal('col-whatsapp'));
+  if(whatsapp===null){showToast('WhatsApp inválido. Usa 10 dígitos mexicanos o +52','warn');return;}
   const anterior=editingColaboradorId?store.colaboradores.find(c=>c.id===editingColaboradorId):null;
   if(anterior&&!isAdmin()&&anterior.asesorId!==sesionActiva?.id){showToast('No puedes modificar colaboradores de otro asesor','warn');return;}
   const col={
     id:editingColaboradorId||'col_'+Date.now(),
-    nombre, ciudad:getVal('col-ciudad'),
+    nombre, ciudad:getVal('col-ciudad'),telefonoWhatsapp:whatsapp,
     asesorId:isAdmin()?(getVal('col-asesor')||sesionActiva?.id):sesionActiva?.id,
     pctComision:Number(getVal('col-pct'))||50,
     activo:getVal('col-activo')!=='false',

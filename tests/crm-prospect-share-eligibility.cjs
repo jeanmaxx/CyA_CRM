@@ -67,5 +67,13 @@ d.getElementById('lead-com-sbc').value='200';
 share.open();
 assert.equal(d.getElementById('cya-share-ratio').textContent,'4.20 veces','Popup reads current unsaved form, not stale storage');
 assert.equal(d.getElementById('lead-com-sbc').value,'200','Share does not mutate source form');
+share.close();
+w.store.colaboradores[0].telefonoWhatsapp='4427654321';
+share.open();
+select.value='colaborador';select.dispatchEvent(new w.Event('change',{bubbles:true}));
+assert.equal(d.getElementById('cya-share-phone').value,'524427654321','Canonical saved collaborator WhatsApp takes priority');
+d.getElementById('cya-share-whatsapp').click();
+assert(url.startsWith('https://wa.me/524427654321?text='),'Direct share uses collaborator WhatsApp stored in profile');
+
 dom.window.close();
 console.log('PASS sharing eligibility snapshot, 30% fee cap, net, editable message, collaborator WhatsApp and parent close isolation');

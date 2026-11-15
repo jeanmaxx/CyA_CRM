@@ -150,7 +150,7 @@
 (function loadCollaboratorViewScope(){
   if(document.querySelector('script[data-cya-collaborator-view]'))return;
   const script=document.createElement('script');
-  script.src='/app-collaborator-view.js?v=20260919-routing1';
+  script.src='/app-collaborator-view.js?v=20261115-collab-whatsapp-f2';
   script.async=false;
   script.dataset.cyaCollaboratorView='1';
   document.head.appendChild(script);
