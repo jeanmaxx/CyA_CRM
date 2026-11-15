@@ -431,6 +431,7 @@ function restoreAforeFields(){
  }
  aforeFieldPlaces=[];
  $('cya-afore-inline-fields')?.remove();
+ $('cya-afore-followup-strip')?.remove();
  $('modal-cliente')?.classList.remove('cya-afore-inline-active');
 }
 function setupAforeFields(section){
@@ -453,6 +454,7 @@ function setupAforeFields(section){
  // The institution reference remains in its existing source panel and
  // continues to refresh from the selected AFORE. Never re-create its links.
  modal.classList.add('cya-afore-inline-active');
+ window.__cyaAforeFollowup?.mount();
 }
 // Bank uses the same native inputs and validation; only move their form groups
 // into a compact row. Restore the original DOM when leaving the section.
