@@ -18,7 +18,7 @@ const normalizePhone=v=>{
  if(digits.length===13&&digits.startsWith('521'))return '52'+digits.slice(3);
  return digits.length>=10&&digits.length<=15?digits:'';
 };
-const state={data:null,openedFrom:null};
+const state={data:null,openedFrom:null,recipient:'cliente',drafts:{}};
 function snapshot(){
  const id=typeof editingLeadId!=='undefined'?editingLeadId:null;
  const l=typeof store!=='undefined'?(store.leads||[]).find(x=>String(x.id)===String(id)):null;
@@ -42,6 +42,8 @@ function snapshot(){
   maximum:periodMax(value('lead-com-periodo')||'2026'),
   eligibilityText,
   collaborator:col?.nombre||'Sin colaborador asignado',
+  clientPhone:normalizePhone(value('lead-tel')||l?.telefono||''),
+  collaboratorPhone:normalizePhone(col?.telefonoWhatsapp||col?.whatsapp||col?.telefono||col?.celular||col?.tel||col?.numero||''),
   phone:normalizePhone(col?.telefonoWhatsapp||col?.whatsapp||col?.telefono||col?.celular||col?.tel||col?.numero||'')
  };
 }
@@ -56,11 +58,37 @@ function message(d){
   '\n\nEl retiro estimado es de '+money(d.amount)+' y el neto estimado después de honorarios sería '+money(d.net)+
   '. Ambos son importes orientativos sujetos a revisión y autorización de la AFORE.\n\nTe comparto la ficha resumen como apoyo para tu seguimiento.\n\n¡Saludos!';
 }
+function clientMessage(d){
+ const first=String(d.name||'').trim().split(/\s+/)[0]||'';
+ const greeting=first?'¡Hola, '+first.charAt(0).toUpperCase()+first.slice(1).toLocaleLowerCase('es-MX')+'!':'¡Hola!';
+ const favorable=d.eligibilityText==='Criterios iniciales favorables';
+ const intro=favorable?'Ya terminamos la revisión inicial de tu caso y tengo buenas noticias: *cumples con los criterios iniciales* para continuar evaluando tu Retiro por Desempleo.':
+  'Ya terminamos una primera revisión de tu caso. Todavía necesitamos confirmar algunos requisitos antes de determinar si puedes iniciar tu Retiro por Desempleo.';
+ const comparison=d.ratio===null?'Aún debemos confirmar los importes a partir de tu información del IMSS.':
+  'La estimación que revisamos indica un *neto de '+money(d.net)+' después de honorarios*, equivalente a *'+d.ratio.toFixed(2)+' veces* la referencia de 30 días de tu salario registrado ante el IMSS.';
+ return greeting+' 👋\n\n'+intro+'\n\n'+comparison+
+  '\n\nLos montos son orientativos y están sujetos a la revisión y autorización de la AFORE; no representan una cantidad garantizada.\n\n'+
+  '¿A qué hora tendrías oportunidad de recibir una llamada? 📞 Con gusto te explico los detalles y los siguientes pasos si decides continuar con nosotros.\n\n¡Saludos!';
+}
+function switchRecipient(recipient,remember=true){
+ if(!state.data||!['cliente','colaborador'].includes(recipient))return;
+ if(remember&&$('cya-share-text'))state.drafts[state.recipient]=value('cya-share-text');
+ state.recipient=recipient;
+ const client=recipient==='cliente',d=state.data;
+ $('cya-share-recipient-kind').value=recipient;
+ $('cya-share-text').value=state.drafts[recipient]??(client?clientMessage(d):message(d));
+ $('cya-share-phone').value=client?d.clientPhone:d.collaboratorPhone;
+ $('cya-share-phone-label').textContent=client?'WhatsApp del cliente':'WhatsApp del colaborador';
+ $('cya-share-message-label').textContent=client?'Mensaje editable para el cliente':'Mensaje editable para el colaborador';
+ $('cya-share-recipient').textContent=client?(d.name+' · '+(d.clientPhone?'Número del expediente':'Captura su número')):
+  (d.collaborator+' · '+(d.collaboratorPhone?'Número disponible':'Captura su número'));
+ $('cya-share-feedback').textContent='';
+}
 function createDialog(){
  let root=$('cya-share-eligibility-dialog');if(root)return root;
  root=document.createElement('div');root.id='cya-share-eligibility-dialog';root.hidden=true;
  root.innerHTML='<div class="cya-share-window" role="dialog" aria-modal="true" aria-labelledby="cya-share-title">'+
-  '<div class="cya-share-bar"><div><strong id="cya-share-title">Compartir elegibilidad</strong><small>Ficha PNG y mensaje para colaborador</small></div>'+
+  '<div class="cya-share-bar"><div><strong id="cya-share-title">Compartir elegibilidad</strong><small>Ficha PNG y mensaje para cliente o colaborador</small></div>'+
   '<button type="button" class="cya-share-close" aria-label="Cerrar">×</button></div>'+
   '<div class="cya-share-content">'+
    '<div class="cya-share-pane"><div class="cya-share-pane-title">Vista previa de ficha (PNG)</div>'+
@@ -74,8 +102,9 @@ function createDialog(){
      '<p>Estimación interna, no monto autorizado por la AFORE. La modalidad y requisitos aplicables deben verificarse.</p>'+
      '</div></div></div>'+
    '<div class="cya-share-pane"><div class="cya-share-pane-title">Mensaje de WhatsApp</div>'+
-    '<div class="cya-share-chat"><label for="cya-share-text">Mensaje editable para el colaborador</label><textarea id="cya-share-text" rows="13"></textarea>'+
-    '<div class="cya-share-destination"><label for="cya-share-phone">WhatsApp del colaborador</label><input id="cya-share-phone" type="tel" inputmode="tel" placeholder="Número con lada"/>'+
+    '<div class="cya-share-recipient-selector"><label for="cya-share-recipient-kind">Destinatario</label><select id="cya-share-recipient-kind" aria-label="Destinatario de elegibilidad"><option value="cliente">Cliente</option><option value="colaborador">Colaborador</option></select></div>'+
+    '<div class="cya-share-chat"><label for="cya-share-text" id="cya-share-message-label">Mensaje editable</label><textarea id="cya-share-text" rows="13"></textarea>'+
+    '<div class="cya-share-destination"><label for="cya-share-phone" id="cya-share-phone-label">WhatsApp del destinatario</label><input id="cya-share-phone" type="tel" inputmode="tel" placeholder="Número con lada"/>'+
     '<small id="cya-share-recipient"></small></div></div>'+
     '<p class="cya-share-hint">WhatsApp abrirá la conversación con el texto precargado. El PNG se adjunta manualmente; nada se enviará automáticamente.</p></div>'+
    '</div>'+
@@ -86,6 +115,7 @@ function createDialog(){
  document.body.appendChild(root);
  root.querySelector('.cya-share-close').addEventListener('click',close);
  root.addEventListener('click',e=>{if(e.target===root)close();});
+ root.querySelector('#cya-share-recipient-kind').addEventListener('change',e=>switchRecipient(e.target.value));
  root.querySelector('#cya-share-png').addEventListener('click',downloadPNG);
  root.querySelector('#cya-share-copy').addEventListener('click',()=>void copyMessage());
  root.querySelector('#cya-share-whatsapp').addEventListener('click',openWhatsapp);
@@ -101,10 +131,8 @@ function render(d){
  $('cya-share-work-stats').innerHTML=stats([['Última empresa',d.company],['Salario diario (SBC)',d.sbc===null?'Por confirmar':money(d.sbc)],['Referencia de 30 días',d.sbc===null?'—':money(d.reference)]]);
  $('cya-share-finance-stats').innerHTML=stats([['Retiro estimado',money(d.amount)],['Honorarios',money(d.fee)],['Neto estimado',money(d.net)],['Máximo de referencia',money(d.maximum)]]);
  $('cya-share-ratio').textContent=d.ratio===null?'—':d.ratio.toFixed(2)+' veces';
- $('cya-share-text').value=message(d);
- $('cya-share-phone').value=d.phone;
- $('cya-share-recipient').textContent=d.collaborator+(d.phone?' · Número disponible':' · Puedes escribir su número');
- $('cya-share-feedback').textContent='';
+ state.drafts={};
+ switchRecipient('cliente',false);
 }
 function open(){
  if(!$('modal-lead')?.classList.contains('open'))return;
@@ -138,7 +166,7 @@ async function copyMessage(){
 function openWhatsapp(){
  const text=value('cya-share-text');if(!text){$('cya-share-feedback').textContent='Escribe un mensaje antes de continuar';return;}
  const raw=value('cya-share-phone'),phone=normalizePhone(raw);
- if(raw&&!phone){$('cya-share-feedback').textContent='Verifica el teléfono del colaborador (10 dígitos o lada internacional)';return;}
+ if(raw&&!phone){$('cya-share-feedback').textContent='Verifica el teléfono del destinatario (10 dígitos o lada internacional)';return;}
  const url='https://wa.me/'+(phone||'')+'?text='+encodeURIComponent(text);
  const opened=window.open(url,'_blank');
  if(opened)opened.opener=null;
@@ -203,5 +231,5 @@ function downloadPNG(){
  }catch(e){console.error('PNG de elegibilidad',e);$('cya-share-feedback').textContent='No se pudo crear la ficha PNG en este navegador';}
 }
 window.cyaAbrirCompartirElegibilidad=open;
-window.__cyaShareEligibility={snapshot,open,close,downloadPNG};
+window.__cyaShareEligibility={snapshot,open,close,downloadPNG,switchRecipient,clientMessage};
 })();

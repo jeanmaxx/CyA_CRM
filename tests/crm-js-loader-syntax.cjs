@@ -41,5 +41,5 @@ assert.match(loader,/app-afore-followup\.js\?v=20261115-afore-citas1/);
 assert.match(app,/app-afore-followup\.css\?v=20261115-afore-citas1/);
 console.log('PASS production loader graph and syntax');
 
-assert.match(loader,/app-prospect-share-eligibility\.js\?v=20261115-compartir-elegibilidad1/);
-assert.match(app,/app-prospect-share-eligibility\.css\?v=20261115-compartir-elegibilidad1/);
+assert.match(loader,/app-prospect-share-eligibility\.js\?v=20261115-destinatarios-f1/);
+assert.match(app,/app-prospect-share-eligibility\.css\?v=20261115-destinatarios-f1/);
