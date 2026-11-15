@@ -139,6 +139,7 @@
    $('cya-prospect-unsaved-dialog').hidden=true;return;
   }
   if(document.getElementById('cya-wa-message-center')?.classList.contains('open'))return;
+  if(document.getElementById('cya-share-eligibility-dialog')?.hidden===false)return;
   event.preventDefault();event.stopImmediatePropagation();requestProspectClose();
  },true);
 
