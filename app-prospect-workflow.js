@@ -275,8 +275,11 @@ async function guardarLead(){
         delete actualizado.fechaRecontacto;
         actualizado.recontactar=false;
         actualizado.recontactoVencido=false;
+        const fechaReactivacion=new Date().toISOString();
         const notaReactivado='REACTIVADO MANUALMENTE: '+fmtDateTime(new Date());
         actualizado.notas=((actualizado.notas||'')+'\n'+notaReactivado).trim();
+        actualizado.historial=Array.isArray(actualizado.historial)?actualizado.historial:[];
+        actualizado.historial.push({fecha:fechaReactivacion,tipo:'reactivacion',accion:'Prospecto reactivado',detalle:'Reactivado manualmente desde Archivados'});
         store.agenda=(store.agenda||[]).filter(e=>e.id!=='ev_recontacto_'+actualizado.id);
       }
       registrarCambioFecha(actualizado,'fechaRegistro',leadAnterior.fechaRegistro||leadAnterior.fechaInicio,fechaRegistroLead,'Registro');
