@@ -74,7 +74,7 @@ function openModal(kind){
  }else{
   markup='<p>¿El cliente asistió a su cita de actualización AFORE?</p>'+
    select('Asistencia','cya-afore-attendance',[['','— Seleccionar —'],['si','Sí asistió'],['no','No asistió']])+
-   '<div id="cya-afore-attended" hidden>'+select('¿Actualizó datos y biométricos?','cya-afore-completed',[['si','Sí, actualización completada'],['no','No, sigue pendiente']])+'</div>'+
+   '<div id="cya-afore-attended" hidden>'+select('¿Actualizó datos y biométricos?','cya-afore-completed',[['si','Sí, actualización completada'],['no','No, sigue pendiente']])+field('Fecha real de actualización','cya-afore-visit-date','date',c.fechaBiometrica||nowISO())+'</div>'+
    '<div id="cya-afore-absent" hidden>'+select('Motivo de inasistencia','cya-afore-reason',[['','— Seleccionar —'],['imprevisto','Imprevisto personal'],['documentos','Faltaron documentos'],['trabajo','No obtuvo permiso laboral'],['no_contesta','No contesta'],['otro','Otro motivo']])+
    select('¿Reprogramar cita?','cya-afore-reschedule',[['si','Sí'],['no','Más adelante']])+
    '<div class="cya-afore-dialog-grid" id="cya-afore-new-when">'+field('Nueva fecha','cya-afore-new-date','date','')+field('Nueva hora','cya-afore-new-time','time','10:00')+'</div></div>'+
@@ -101,8 +101,8 @@ async function confirm(kind){
  const newDate=input('cya-afore-new-date'),newTime=input('cya-afore-new-time');
  if(reschedule&&(!validISO(newDate)||!validTime(newTime)||new Date(newDate+'T'+newTime+':00')<=new Date())){showToast?.('Indica una nueva cita futura con fecha y hora válidas','warn');return;}
  const completed=attendance==='sin_cita'||(attendance==='si'&&input('cya-afore-completed')==='si');
- const actualDate=attendance==='sin_cita'?input('cya-afore-date'):nowISO();
- if(completed&&!validISO(actualDate)){showToast?.('La fecha de actualización es obligatoria','warn');return;}
+ const actualDate=attendance==='sin_cita'?input('cya-afore-date'):attendance==='si'?input('cya-afore-visit-date'):nowISO();
+ if(completed&&(!validISO(actualDate)||actualDate>nowISO())){showToast?.('Indica una fecha de actualización válida, no futura','warn');return;}
  const previous=JSON.parse(JSON.stringify(c)),agendaBefore=JSON.parse(JSON.stringify(store.agenda||[]));
  busy=true;const btn=$('cya-afore-confirm');btn.disabled=true;btn.textContent='Guardando…';
  try{
