@@ -22,7 +22,14 @@ const due=(c,ref=new Date())=>{
  const when=new Date(date+'T'+time+':00');
  return !Number.isNaN(when.getTime())&&ref>=when;
 };
-const eventFor=e=>Boolean(e?.regla==='cita_afore_actualizacion');
+const eventFor=e=>{
+ if(e?.regla==='cita_afore_actualizacion')return true;
+ // Older manually scheduled AFORE appointments keep working too: require
+ // both the AFORE title and the same calendar day as the client's actual
+ // appointment, so unrelated client appointments are never intercepted.
+ const c=e?.clienteId?find(e.clienteId):null;
+ return Boolean(c&&e?.tipo==='cita'&&e.fecha===c.fechaBiometrica&&/afore|biom[eé]tric|expediente/i.test(String(e.titulo||'')));
+};
 const eventDue=(e,ref=new Date())=>eventFor(e)&&!e.completado&&due(find(e.clienteId),ref);
 const eventId=c=>'ev_cita_afore_'+c.id+'_'+c.fechaBiometrica+'_'+(validTime(c.horaBiometrica)?c.horaBiometrica:'sin_hora').replace(':','');
 function schedule(c,old){
@@ -176,6 +183,28 @@ function open(id){
   else mount();
  },90);
 }
+// Rerender the opened scheduling surface at the precise minute a pending
+// appointment becomes due. Do not disturb an open modal or unsaved edits.
+const dueAtLoad=new Map();
+const dueFor=c=>Boolean(c?.fechaBiometrica&&!updated(c)&&due(c));
+function snapshotDue(){
+ if(typeof store==='undefined')return;
+ const relevant=(store.clientes||[]).filter(c=>c?.fechaBiometrica);
+ for(const c of relevant)dueAtLoad.set(String(c.id),dueFor(c));
+}
+snapshotDue();
+if(typeof window.setInterval==='function')window.setInterval(()=>{
+ if(typeof store==='undefined')return;
+ let changed=false;
+ for(const c of store.clientes||[]){
+  const key=String(c.id),value=dueFor(c),previous=dueAtLoad.get(key);
+  if(previous!==undefined&&previous!==value)changed=true;
+  dueAtLoad.set(key,value);
+ }
+ if(changed&&typeof currentPage!=='undefined'&&['dashboard','agenda','operativo'].includes(currentPage)&&
+  !document.querySelector('.modal-overlay.open, #modal-perfil.open, #modal-cliente.open')&&typeof renderPage==='function')
+  renderPage(currentPage);
+},60000);
 window.cyaAbrirSeguimientoAfore=open;
 window.__cyaAforeFollowup={mount,schedule,due,updated,eventDue,eventFor,open};
 })();
