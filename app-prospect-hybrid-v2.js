@@ -382,6 +382,9 @@
  },true);
  const baseOpen=window.openModalLead;
  if(typeof baseOpen==='function')window.openModalLead=function(...args){
+  // A new edit session rehydrates persisted values; discarding a draft must not
+  // bring back unsaved values when reopening the same prospect.
+  const commercial=$('cya-prospect-commercial');if(commercial)delete commercial.dataset.loadedLead;
   const result=baseOpen.apply(this,args);
   const key=args[0]||'new';lastLeadKey=key;current='identidad';dirty=false;
   // The legacy modal is populated synchronously by openModalLead; rebuild its
