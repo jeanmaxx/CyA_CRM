@@ -32,6 +32,16 @@
   root.innerHTML='<div class="cya-hybrid-lead-heading"><div class="cya-hybrid-lead-person"><div class="cya-hybrid-kicker">CASILLAS & ASOCIADOS · EXPEDIENTE DEL PROSPECTO</div><div class="cya-hybrid-name-line"><strong id="cya-hybrid-lead-name">Prospecto</strong><div class="cya-hybrid-lead-context" id="cya-hybrid-lead-context"></div></div><div class="cya-hybrid-header-meta"><span id="cya-hybrid-lead-contact" class="cya-hybrid-lead-contact"></span><span class="cya-hybrid-registration-label">REGISTRO</span><span id="cya-hybrid-registration-slot"></span></div></div><button class="btn cya-hybrid-wa" type="button" id="cya-hybrid-lead-whatsapp">WhatsApp</button></div>'+ 
    '<nav class="cya-hybrid-lead-cards" aria-label="Categorías del expediente">'+TABS.map(t=>'<button type="button" class="cya-hybrid-lead-card" data-hybrid-lead-section="'+t.id+'" aria-pressed="false"><span class="cya-hybrid-card-title">'+safe(t.icon)+' &nbsp; '+safe(t.name)+'</span><small data-hybrid-summary="'+t.id+'">'+safe(t.description)+'</small></button>').join('')+'</nav>'+
    '<div class="cya-hybrid-lead-panels">'+TABS.map(t=>'<section class="cya-hybrid-lead-section" data-section="'+t.id+'" id="cya-hybrid-section-'+t.id+'" hidden><h3>'+safe(t.name)+'</h3><div class="cya-hybrid-section-fields" id="cya-hybrid-fields-'+t.id+'"></div></section>').join('')+'</div>';
+  const eligibilityTitle=root.querySelector('#cya-hybrid-section-elegibilidad>h3');
+  if(eligibilityTitle&&!root.querySelector('#cya-prospect-share-eligibility')){
+   const share=document.createElement('button');
+   share.type='button';share.id='cya-prospect-share-eligibility';
+   share.className='btn cya-prospect-share-button';
+   share.textContent='↗ Compartir';
+   share.setAttribute('aria-label','Compartir elegibilidad por WhatsApp');
+   share.addEventListener('click',()=>window.cyaAbrirCompartirElegibilidad?.());
+   eligibilityTitle.appendChild(share);
+  }
   container.insertBefore(root,container.firstChild);
   root.querySelectorAll('[data-hybrid-lead-section]').forEach(btn=>btn.addEventListener('click',()=>{
    if(btn.dataset.hybridLeadSection===current)return;
