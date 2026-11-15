@@ -582,19 +582,20 @@ function renderAgendaLista(){
 
 function renderEventoItem(e, pasado){
   const cliente=e.clienteId?store.clientes.find(c=>c.id===e.clienteId):null;
+  const confirmarAfore=window.__cyaAforeFollowup?.eventDue(e)===true;
   return `<div class="agenda-event ${e.completado?'':''}${pasado&&!e.completado?'border-left-color:var(--danger);':''}"
-    onclick="openModalAgenda('${e.id}')"
+    onclick="${confirmarAfore?`cyaAbrirSeguimientoAfore('${e.clienteId}')`:`openModalAgenda('${e.id}')`}"
     style="${e.completado?'opacity:.55;':''}${pasado&&!e.completado?'border-color:rgba(239,68,68,.3);':''}">
     <div class="agenda-event-time">${e.hora||'—'}</div>
     <div class="agenda-event-bar" style="background:${TIPO_COLORS[e.tipo]||'#64748b'};"></div>
     <div class="agenda-event-body">
-      <div class="agenda-event-title" style="${e.completado?'text-decoration:line-through;':''}">${e.titulo}</div>
+      <div class="agenda-event-title" style="${e.completado?'text-decoration:line-through;':''}">${confirmarAfore?'¿El cliente asistió a su cita?':e.titulo}</div>
       <div class="agenda-event-sub">${TIPO_LABELS[e.tipo]||e.tipo}${cliente?' · '+cliente.nombre:''}${e.notas?' · '+e.notas.substring(0,50)+(e.notas.length>50?'...':''):''}</div>
     </div>
     <div class="agenda-event-badge">
       ${e.completado
         ?'<span class="chip chip-green" style="font-size:10px;">✓ Listo</span>'
-        :`<button class="btn" style="font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();completarEvento('${e.id}')">${escapeHTMLBasico(botonEventoAgenda(e))}</button>`}
+        :`<button class="btn" style="font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();${confirmarAfore?`cyaAbrirSeguimientoAfore('${e.clienteId}')`:`completarEvento('${e.id}')`}">${confirmarAfore?'Abrir expediente AFORE':escapeHTMLBasico(botonEventoAgenda(e))}</button>`}
     </div>
   </div>`;
 }

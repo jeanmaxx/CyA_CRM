@@ -204,7 +204,7 @@
  if(window.__cyaHybridClientLoaderStarted)return;
  window.__cyaHybridClientLoaderStarted=true;
  const script=document.createElement('script');
- script.src='/app-client-hybrid-v2.js?v=20261114-cierre-unificado1';
+ script.src='/app-client-hybrid-v2.js?v=20261115-afore-citas1';
  script.async=false;
  script.dataset.cyaHybridClient='1';
  document.head.appendChild(script);
@@ -219,5 +219,17 @@
  script.src='/app-client-activities-v2.js?v=20261113-polish2';
  script.async=false;
  script.dataset.cyaClientActivities='1';
+ document.head.appendChild(script);
+})();
+
+/* AFORE attendance, self-service update and appointment rebooking overlay.
+   It uses the existing hybrid client form and is entirely opt-in by action. */
+(function loadAforeFollowup(){
+ if(window.__cyaAforeFollowupLoaderStarted)return;
+ window.__cyaAforeFollowupLoaderStarted=true;
+ const script=document.createElement('script');
+ script.src='/app-afore-followup.js?v=20261115-afore-citas1';
+ script.async=false;script.dataset.cyaAforeFollowup='1';
+ script.onload=()=>window.__cyaAforeFollowup?.mount();
  document.head.appendChild(script);
 })();

@@ -140,7 +140,7 @@ function renderAlertasAFORE(c){
   if(!c.fechaBiometrica&&!c.fechaSolicitudManual) return '';
   const hoy=new Date(); hoy.setHours(0,0,0,0);
   let alertas='';
-  if(c.fechaBiometrica){
+  if(c.fechaBiometrica&&!window.__cyaAforeFollowup?.updated(c)){
     const fb=new Date(c.fechaBiometrica+'T12:00:00');
     const diff=Math.floor((fb-hoy)/(1000*60*60*24));
     if(diff===0) alertas+=`<div class="alerta-afore-urgente">🔴 Cita biométrica AFORE: HOY</div>`;
@@ -162,7 +162,7 @@ function verificarAlertasAFOREDiarias(){
   const hoy=new Date(); hoy.setHours(0,0,0,0);
   store.clientes.forEach(c=>{
     if(c.descartado||c.etapa==='concluido') return;
-    [c.fechaBiometrica,c.fechaSolicitudManual].forEach(fecha=>{
+    [window.__cyaAforeFollowup?.updated(c)?null:c.fechaBiometrica,c.fechaSolicitudManual].forEach(fecha=>{
       if(!fecha) return;
       const d=new Date(fecha+'T12:00:00');
       const diff=Math.floor((d-hoy)/(1000*60*60*24));
