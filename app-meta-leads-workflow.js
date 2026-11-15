@@ -521,7 +521,21 @@
 
   function captureExtraFields(){
     const get=id=>String(document.getElementById(id)?.value||'').trim();
-    return {email:get('lead-email'),ciudad:get('lead-ciudad'),fuenteContacto:get('lead-fuente'),nss:get('lead-nss').replace(/\D/g,'').slice(0,11),afore:get('lead-afore'),domicilio:get('lead-domicilio'),banco:get('lead-banco').toUpperCase()};
+    const extras={email:get('lead-email'),ciudad:get('lead-ciudad'),fuenteContacto:get('lead-fuente'),nss:get('lead-nss').replace(/\D/g,'').slice(0,11),afore:get('lead-afore'),domicilio:get('lead-domicilio'),banco:get('lead-banco').toUpperCase()};
+    // Prospect-only optional commercial draft; do not alter the eligibility
+    // decision, client finances or any manually defined client commissions.
+    const sbcField=document.getElementById('lead-com-sbc');
+    const amountField=document.getElementById('lead-com-retiro');
+    if(sbcField&&amountField&&get('lead-servicio')==='retiro_desempleo'){
+      const period=get('lead-com-periodo');
+      extras.simulacionComercial={
+        ultimaEmpresa:get('lead-com-empresa'),
+        salarioDiarioSbc:sbcField.value.trim()===''?null:Math.max(0,Number(sbcField.value)||0),
+        periodo:['2026','2027'].includes(period)?period:'2026',
+        retiroEstimado:Math.max(0,Number(amountField.value)||0)
+      };
+    }
+    return extras;
   }
 
   const baseOpenModalLead=window.openModalLead;
