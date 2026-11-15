@@ -492,7 +492,7 @@
     const source=document.getElementById('lead-fuente');
     const col=document.getElementById('lead-colaborador');
     if(!source||!col)return;
-    const lead=currentLead(),meta=hasMetaOrigin(lead);
+    const lead=currentLead(),meta=hasMetaOrigin(lead)||source.value==='Meta Ads';
     if(meta){
       if(source.value!=='Meta Ads'){source.value='Meta Ads';source.dispatchEvent(new Event('change',{bubbles:true}));}
       return;
