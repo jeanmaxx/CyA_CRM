@@ -18,7 +18,7 @@ assert.equal(w.normalizarWhatsappColaborador('+52 442 123 4567'),'4421234567');
 assert.equal(w.normalizarWhatsappColaborador('5214421234567'),'4421234567');
 assert.equal(w.normalizarWhatsappColaborador('44212'),null);
 assert.equal(w.normalizarWhatsappColaborador(''),'');
-w.eval('let editingColaboradorId="col1";let sesionActiva={id:"a1"};let store={colaboradores:[{id:"col1",asesorId:"a1",nombre:"ANA NIETO",comisionDefault:1000,metaAdicional:"conservar"}],asesores:[{id:"a1"}]};');
+w.eval('var editingColaboradorId="col1";var sesionActiva={id:"a1"};var store={colaboradores:[{id:"col1",asesorId:"a1",nombre:"ANA NIETO",comisionDefault:1000,metaAdicional:"conservar"}],asesores:[{id:"a1"}]};');
 w.eval('function guardarColaborador(){}');
 w.getVal=id=>d.getElementById(id)?.value||'';
 w.isAdmin=()=>false;
