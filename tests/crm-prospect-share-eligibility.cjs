@@ -5,7 +5,7 @@ assert(css.includes('grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)'),'C
 const mk=(id,value)=>'<input id="'+id+'" value="'+value+'">';
 const dom=new JSDOM('<div class="modal-overlay open" id="modal-lead">'+
  mk('lead-nombre','LEOBARDO NIETO CERVANTES')+mk('lead-servicio','retiro_desempleo')+
- mk('lead-colaborador','col1')+mk('lead-com-empresa','PARTENZA SA DE CV')+
+ mk('lead-colaborador','col1')+mk('lead-tel','4425550101')+mk('lead-com-empresa','PARTENZA SA DE CV')+
  mk('lead-com-sbc','160.98')+mk('lead-com-retiro','35193')+
  mk('lead-com-periodo','2026')+mk('lead-el-semanas','164')+
  mk('lead-el-cotiza','No')+mk('lead-el-retiro','No')+'</div>',{
@@ -27,11 +27,19 @@ assert.equal(info.fee,10000);
 assert.equal(info.net,25193);
 assert.equal(info.ratio.toFixed(2),'5.22');
 assert.equal(info.phone,'524421234567');
+assert.equal(info.clientPhone,'524425550101');
 share.open();
 assert.equal(d.getElementById('cya-share-eligibility-dialog').hidden,false);
 assert.equal(d.getElementById('cya-share-person').textContent,'LEOBARDO NIETO CERVANTES');
 assert.match(d.getElementById('cya-share-ratio').textContent,/5.22 veces/);
+assert.equal(d.getElementById('cya-share-recipient-kind').value,'cliente');
+assert.equal(d.getElementById('cya-share-phone').value,'524425550101');
+assert.match(d.getElementById('cya-share-text').value,/¡Hola, Leobardo!/);
 assert.match(d.getElementById('cya-share-text').value,/5.22 veces/);
+const select=d.getElementById('cya-share-recipient-kind');
+select.value='colaborador';select.dispatchEvent(new w.Event('change',{bubbles:true}));
+assert.equal(d.getElementById('cya-share-phone').value,'524421234567');
+assert.match(d.getElementById('cya-share-text').value,/tu cliente/);
 assert(!d.getElementById('cya-share-text').value.includes('5.22 veces más'),'Comparison must not overpromise');
 d.getElementById('cya-share-text').value='Texto personalizado';
 d.getElementById('cya-share-whatsapp').click();
@@ -44,6 +52,14 @@ assert.equal(opens,1,'Invalid recipient never opens WhatsApp');
 d.getElementById('cya-share-phone').value='';
 d.getElementById('cya-share-whatsapp').click();
 assert.equal(opens,2,'Without collaborator phone, allow WhatsApp recipient picker');
+select.value='cliente';select.dispatchEvent(new w.Event('change',{bubbles:true}));
+assert.equal(d.getElementById('cya-share-phone').value,'524425550101');
+assert.match(d.getElementById('cya-share-text').value,/¡Hola, Leobardo!/);
+d.getElementById('cya-share-whatsapp').click();
+assert.equal(opens,3,'Cliente directly opens its registered phone');
+assert(url.startsWith('https://wa.me/524425550101?text='));
+select.value='colaborador';select.dispatchEvent(new w.Event('change',{bubbles:true}));
+assert.equal(d.getElementById('cya-share-text').value,'Texto personalizado','Each recipient retains its edited message');
 d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
 assert.equal(d.getElementById('cya-share-eligibility-dialog').hidden,true);
 assert.equal(d.getElementById('modal-lead').classList.contains('open'),true,'Closing share popup never closes parent dossier');
