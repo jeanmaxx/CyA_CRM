@@ -75,7 +75,7 @@ function renderDashboardAgendaPrioritaria(){
             <div class="dashboard-event-title">${escapeHTMLBasico(e.titulo)}</div>
             <div class="dashboard-event-meta">${escapeHTMLBasico(TIPO_LABELS[e.tipo]||e.tipo||'Evento')}${e.hora?' · '+escapeHTMLBasico(e.hora):''}${cliente?.nombre?' · '+escapeHTMLBasico(cliente.nombre):''}</div>
           </div>
-          <button class="btn dashboard-agenda-action" onclick="event.stopPropagation();completarEvento('${e.id}')">${escapeHTMLBasico(botonEventoAgenda(e))}</button>
+          <button class="btn dashboard-agenda-action" onclick="event.stopPropagation();${window.__cyaAforeFollowup?.eventDue(e)?`cyaAbrirSeguimientoAfore('${e.clienteId}')`:`completarEvento('${e.id}')`}">${window.__cyaAforeFollowup?.eventDue(e)?'¿El cliente asistió a su cita?':escapeHTMLBasico(botonEventoAgenda(e))}</button>
         </div>`;
       }).join('')}</div>`:`<div class="dashboard-priority-empty">✓ No tienes actividades vencidas ni pendientes para el resto de esta semana.</div>`}
     </div>`:''}
@@ -100,10 +100,12 @@ function obtenerSiguienteAccion(cliente,referencia=new Date()){
       const tono=dias>=25?'rojo':dias>=15?'naranja':'normal';
       return {...base,clave:'solicitar_cita',grupo:'Solicitar cita en AFORE a',boton:'Registrar cita',tipo:'cita',tono,dias,detalle:`${dias} día${dias!==1?'s':''} desde el alta`};
     }
-    const hoyISO=fechaISOLocal(referencia);
-    if(cliente.fechaBiometrica>hoyISO) return {...base,clave:'cita_programada',grupo:'Dar seguimiento a cita AFORE de',boton:'Abrir cliente',tipo:'abrir',tono:'normal',detalle:`Cita: ${fmtDate(cliente.fechaBiometrica)}`};
+    const seguimiento=window.__cyaAforeFollowup;
+    if(seguimiento?.updated(cliente))return {...base,clave:'solicitar_retiro',grupo:'Solicitar retiro a',boton:'Abrir expediente',tipo:'abrir',tono:'normal',detalle:'Expediente AFORE actualizado'};
+    const confirmar=seguimiento?.due(cliente,referencia)??(cliente.fechaBiometrica<=fechaISOLocal(referencia));
+    if(!confirmar)return {...base,clave:'cita_programada',grupo:'Dar seguimiento a cita AFORE de',boton:'Abrir AFORE',tipo:'abrir_afore',tono:'normal',detalle:`Cita: ${fmtDate(cliente.fechaBiometrica)} · ${cliente.horaBiometrica||'Hora pendiente'}`};
     const retraso=diasTranscurridosDesde(cliente.fechaBiometrica,referencia);
-    return {...base,clave:'confirmar_afore',grupo:'Confirmar actualización AFORE de',boton:'Marcar AFORE actualizada',tipo:'avanzar',tono:retraso>0?'naranja':'normal',detalle:retraso?`Cita hace ${retraso} día${retraso!==1?'s':''}`:'Cita programada para hoy'};
+    return {...base,clave:'confirmar_afore',grupo:'¿El cliente asistió a su cita AFORE?',boton:'Confirmar asistencia',tipo:'abrir_afore',tono:retraso>0?'naranja':'normal',detalle:'¿El cliente asistió a su cita?'};
   }
   if(cliente.etapa==='afore_actualizada') return {...base,clave:'solicitar_retiro',grupo:'Solicitar retiro a',boton:'Marcar solicitud realizada',tipo:'avanzar',tono:'normal',detalle:'AFORE actualizada'};
   if(cliente.etapa==='solicitud_realizada') return {...base,clave:'revisar_deposito',grupo:'Revisar depósito de',boton:'Confirmar depósito',tipo:'avanzar',tono:'normal',detalle:'Solicitud realizada'};
@@ -184,6 +186,7 @@ async function realizarAccionDashboard(clienteId,clave,event){
     setTimeout(()=>{switchTab('tab-datos-extra',1);document.getElementById('fc-fecha-biometrica')?.focus();},30);
     return;
   }
+  if(accion.tipo==='abrir_afore'){window.cyaAbrirSeguimientoAfore?.(clienteId);return;}
   if(accion.tipo==='abrir'){ openPerfil(clienteId); return; }
   await avanzarEtapa(clienteId);
 }
