@@ -104,7 +104,7 @@
       const advisorId=isAdmin()?(getVal('col-asesor')||sesionActiva?.id):sesionActiva?.id;
       const whatsapp=normalizarWhatsappColaborador(document.getElementById('col-whatsapp')?.value||'');
       if(whatsapp===null){showToast?.('WhatsApp inválido. Usa 10 dígitos mexicanos o +52','warn');document.getElementById('col-whatsapp')?.focus();return;}
-      const record={...(old||{}),id,nombres,apellidos,nombre,ciudad:upper(getVal('col-ciudad')),telefonoWhatsapp:whatsapp,email,fechaNacimiento:birth,asesorId,pctComision:Number(getVal('col-pct'))||50,activo:getVal('col-activo')!=='false',fechaAlta:old?.fechaAlta||new Date().toISOString().split('T')[0]};
+      const record={...(old||{}),id,nombres,apellidos,nombre,ciudad:upper(getVal('col-ciudad')),telefonoWhatsapp:whatsapp,email,fechaNacimiento:birth,asesorId:advisorId,pctComision:Number(getVal('col-pct'))||50,activo:getVal('col-activo')!=='false',fechaAlta:old?.fechaAlta||new Date().toISOString().split('T')[0]};
       const portalState=document.getElementById('col-portal-estado')?.value||'no_crear',password=document.getElementById('col-portal-password')?.value||'',known=accountFor(id);
       if(portalState!=='no_crear'&&!email){showToast?.('Captura el correo para habilitar el portal','warn');return;}
       if(portalState==='activo'&&!known?.hasAccount&&!password){showToast?.('Captura una contraseña temporal para crear la cuenta','warn');document.getElementById('col-portal-password')?.focus();return;}
