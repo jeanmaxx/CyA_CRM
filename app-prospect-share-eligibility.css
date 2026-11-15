@@ -1,0 +1,146 @@
+/* C&A — Compartir elegibilidad, a compact popup outside the prospect tab. */
+#modal-lead #cya-hybrid-section-elegibilidad>h3{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+}
+#modal-lead #cya-prospect-share-eligibility{
+ margin:0!important;padding:7px 11px!important;min-height:31px!important;
+ background:rgba(207,162,78,.13)!important;border:1px solid #cba050!important;
+ color:var(--text,#e9effa)!important;border-radius:6px!important;
+ font-size:10px!important;font-weight:700!important;letter-spacing:0!important;
+}
+#modal-lead #cya-prospect-share-eligibility:hover{background:rgba(207,162,78,.23)!important}
+#cya-share-eligibility-dialog[hidden]{display:none!important}
+#cya-share-eligibility-dialog{
+ position:fixed;inset:0;z-index:14000;background:rgba(2,8,19,.75);
+ display:flex;justify-content:center;align-items:center;padding:14px;
+ color:#e9f0fb;font-family:Inter,Arial,sans-serif;font-size:11px;
+}
+#cya-share-eligibility-dialog *{box-sizing:border-box}
+#cya-share-eligibility-dialog .cya-share-window{
+ width:min(990px,100%);max-height:min(90vh,820px);display:flex;flex-direction:column;
+ overflow:hidden;border-radius:12px;border:1px solid #40516c;background:#192538;
+ box-shadow:0 24px 64px rgba(0,0,0,.42);
+}
+#cya-share-eligibility-dialog .cya-share-bar{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ padding:12px 15px;background:#1e2b40;border-bottom:1px solid #34455f;
+}
+#cya-share-eligibility-dialog .cya-share-bar strong{font-size:13px}
+#cya-share-eligibility-dialog .cya-share-bar small{display:block;font-size:10px;color:#a5b5cd;margin-top:3px}
+#cya-share-eligibility-dialog .cya-share-close{
+ border:0;background:transparent;color:#e5eefb;cursor:pointer;
+ font-size:22px;line-height:1;padding:2px 7px;
+}
+#cya-share-eligibility-dialog .cya-share-content{
+ display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:10px;
+ padding:11px;min-height:0;overflow:auto;
+}
+#cya-share-eligibility-dialog .cya-share-pane{
+ background:#142032;border:1px solid #31435d;border-radius:8px;overflow:hidden;min-width:0;
+}
+#cya-share-eligibility-dialog .cya-share-pane-title{
+ padding:10px 11px;font-size:11px;font-weight:750;border-bottom:1px solid #324359;
+}
+#cya-share-eligibility-dialog .cya-share-png{
+ margin:10px;background:#fff;color:#172b46;border-radius:7px;overflow:hidden;
+ border:1px solid #ced7e3;font-family:Arial,sans-serif;font-size:10px;
+}
+#cya-share-eligibility-dialog .cya-share-png-head{
+ display:flex;align-items:center;gap:12px;background:#142c50;color:#fff;
+ border-bottom:3px solid #cba150;padding:11px 13px;
+}
+#cya-share-eligibility-dialog .cya-share-png-head>b{
+ font-size:25px;font-family:Georgia,serif;color:#efc475;
+}
+#cya-share-eligibility-dialog .cya-share-png-head strong{display:block;font-size:12px}
+#cya-share-eligibility-dialog .cya-share-png-head small{display:block;font-size:9px;color:#e1e9f5;margin-top:3px}
+#cya-share-eligibility-dialog .cya-share-png-body{padding:11px}
+#cya-share-eligibility-dialog .cya-share-client{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ padding-bottom:10px;border-bottom:1px solid #dce3eb;
+}
+#cya-share-eligibility-dialog .cya-share-client>div{min-width:0}
+#cya-share-eligibility-dialog .cya-share-client small{display:block;font-size:9px;color:#62768b;margin-bottom:3px}
+#cya-share-eligibility-dialog .cya-share-client strong{font-size:12px;overflow-wrap:anywhere}
+#cya-share-eligibility-dialog #cya-share-status{
+ flex:0 1 auto;background:#e4f5e8;color:#167c43;font-weight:750;
+ border-radius:5px;padding:6px 8px;max-width:43%;font-size:9px;
+}
+#cya-share-eligibility-dialog .cya-share-stats{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;
+ padding:10px 0;border-bottom:1px solid #dce3eb;
+}
+#cya-share-eligibility-dialog .cya-share-stat{
+ min-width:0;padding:0 7px;border-right:1px solid #dbe3eb;
+}
+#cya-share-eligibility-dialog .cya-share-stat:first-child{padding-left:0}
+#cya-share-eligibility-dialog .cya-share-stat:last-child{border-right:0}
+#cya-share-eligibility-dialog .cya-share-stat small{
+ display:block;color:#6c7e93;font-size:9px;line-height:1.25;
+}
+#cya-share-eligibility-dialog .cya-share-stat strong{
+ display:block;overflow-wrap:anywhere;font-size:11px;margin-top:5px;
+}
+#cya-share-eligibility-dialog .cya-share-finances{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
+ background:#fbf7ec;border:1px solid #efdfc2;border-radius:5px;
+ padding:9px 5px;margin-top:9px;
+}
+#cya-share-eligibility-dialog .cya-share-finances .cya-share-stat strong{font-size:10px}
+#cya-share-eligibility-dialog .cya-share-compare{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ margin-top:8px;background:#e5f6e9;border:1px solid #ccebd3;border-radius:6px;
+ padding:9px;color:#186e41;
+}
+#cya-share-eligibility-dialog .cya-share-compare>span{font-size:10px;font-weight:750}
+#cya-share-eligibility-dialog .cya-share-compare small{display:block;margin-top:3px;font-size:8px;font-weight:400;color:#61766a}
+#cya-share-eligibility-dialog .cya-share-compare strong{font-size:19px;white-space:nowrap}
+#cya-share-eligibility-dialog .cya-share-png-body>p{
+ margin:9px 0 0;color:#6b7b91;font-size:9px;line-height:1.4;
+}
+#cya-share-eligibility-dialog .cya-share-chat{padding:11px}
+#cya-share-eligibility-dialog .cya-share-chat label{
+ display:block;color:#a8bad2;font-size:10px;margin-bottom:5px;
+}
+#cya-share-eligibility-dialog #cya-share-text{
+ width:100%;height:290px;max-height:40vh;min-height:170px;resize:vertical;
+ padding:10px;color:#17372b;background:#e0f2e3;border:1px solid #79aa8a;
+ border-radius:7px;font:11px/1.6 Inter,Arial,sans-serif;
+}
+#cya-share-eligibility-dialog .cya-share-destination{margin-top:10px}
+#cya-share-eligibility-dialog .cya-share-destination input{
+ width:100%;height:33px;border:1px solid #405671;background:#111d2f;
+ color:#e7f0fc;border-radius:5px;padding:7px;font-size:11px;
+}
+#cya-share-eligibility-dialog #cya-share-recipient{
+ display:block;margin-top:5px;color:#9fb5cf;font-size:9px;line-height:1.4;
+}
+#cya-share-eligibility-dialog .cya-share-hint{
+ margin:0 11px 12px;background:#192d44;border-left:3px solid #6798c9;
+ padding:8px 9px;border-radius:4px;color:#a9bfda;font-size:10px;line-height:1.5;
+}
+#cya-share-eligibility-dialog .cya-share-footer{
+ border-top:1px solid #34455e;padding:10px 12px;
+ display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap;
+}
+#cya-share-eligibility-dialog .cya-share-footer button{
+ border:1px solid #405572;background:#21314a;color:#eaf2fe;
+ font:700 10px Inter,Arial,sans-serif;padding:8px 11px;
+ border-radius:5px;cursor:pointer;min-height:33px;
+}
+#cya-share-eligibility-dialog .cya-share-footer .cya-share-whatsapp{
+ background:#128857;border-color:#128857;color:#fff;
+}
+#cya-share-eligibility-dialog #cya-share-feedback{
+ margin-right:auto;color:#a1bbd9;font-size:10px;
+}
+@media(max-width:730px){
+ #cya-share-eligibility-dialog .cya-share-content{grid-template-columns:1fr}
+ #cya-share-eligibility-dialog .cya-share-window{max-height:94vh}
+ #cya-share-eligibility-dialog #cya-share-text{height:180px}
+}
+@media(max-width:410px){
+ #cya-share-eligibility-dialog .cya-share-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #cya-share-eligibility-dialog .cya-share-finances{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ #cya-share-eligibility-dialog .cya-share-compare strong{font-size:15px}
+}

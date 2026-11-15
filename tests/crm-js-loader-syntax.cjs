@@ -12,6 +12,7 @@ const files=[
   'app-meta-leads-workflow.js',
   'app-prospect-manual-fields-fix.js',
   'app-prospect-hybrid-v2.js',
+  'app-prospect-share-eligibility.js',
   'app-whatsapp-message-center.js',
   'app-wa-sindos-template.js',
   'app-client-hybrid-v2.js',
@@ -31,11 +32,14 @@ const meta=fs.readFileSync('app-meta-leads-workflow.js','utf8');
 assert.match(meta,/function fillQuestionnaireTab\(l\)/);
 assert(!meta.includes('\\\\n  function fillQuestionnaireTab'),'Backslash n literals must never break Meta JS');
 assert.match(recovery,/app-meta-leads-workflow\.js\?v=20261114-fuentes-archivo1/);
-assert.match(loader,/app-prospect-hybrid-v2\.js\?v=20261114-fuentes-archivo1/);
+assert.match(loader,/app-prospect-hybrid-v2\.js\?v=20261115-compartir-elegibilidad1/);
 assert.match(loader,/app-whatsapp-message-center\.js\?v=20261114-aprobado-corto1/);
 const worker=fs.readFileSync('_worker.js','utf8');
 assert.match(worker,/app-wa-sindos-template\.js\?v=20261113-whatsapp-wide1/);
-assert.match(app,/app-prospect-hybrid-v2\.css\?v=20261114-fuentes-archivo1/);
+assert.match(app,/app-prospect-hybrid-v2\.css\?v=20261115-compartir-elegibilidad1/);
 assert.match(loader,/app-afore-followup\.js\?v=20261115-afore-citas1/);
 assert.match(app,/app-afore-followup\.css\?v=20261115-afore-citas1/);
 console.log('PASS production loader graph and syntax');
+
+assert.match(loader,/app-prospect-share-eligibility\.js\?v=20261115-compartir-elegibilidad1/);
+assert.match(app,/app-prospect-share-eligibility\.css\?v=20261115-compartir-elegibilidad1/);

@@ -184,7 +184,7 @@
   window.__cyaHybridProspectLoaderStarted=true;
   if(window.__cyaHybridProspectInstalled)return;
   const script=document.createElement('script');
-  script.src='/app-prospect-hybrid-v2.js?v=20261114-fuentes-archivo1';
+  script.src='/app-prospect-hybrid-v2.js?v=20261115-compartir-elegibilidad1';
   script.async=false;
   // If the presentation bundle cannot load, show the original form rather
   // than leave the user with a permanently concealed editor.
@@ -231,5 +231,15 @@
  script.src='/app-afore-followup.js?v=20261115-afore-citas1';
  script.async=false;script.dataset.cyaAforeFollowup='1';
  script.onload=()=>window.__cyaAforeFollowup?.mount();
+ document.head.appendChild(script);
+})();
+
+/* Ficha de elegibilidad compartible con colaboradores; no cambia datos del CRM. */
+(function loadShareEligibility(){
+ if(window.__cyaShareEligibilityLoaderStarted)return;
+ window.__cyaShareEligibilityLoaderStarted=true;
+ const script=document.createElement('script');
+ script.src='/app-prospect-share-eligibility.js?v=20261115-compartir-elegibilidad1';
+ script.async=false;script.dataset.cyaShareEligibility='1';
  document.head.appendChild(script);
 })();
