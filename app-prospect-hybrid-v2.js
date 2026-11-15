@@ -282,8 +282,9 @@
   const entries=all.slice(-30).reverse();
   target.innerHTML=entries.length?entries.map(v=>{
    const rawDate=String(v.fecha||v.createdAt||v.registradoEn||v.fechaISO||'');
-   const match=/^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})/.exec(rawDate);
-   const date=match?match[3]+'/'+match[2]+'/'+match[1]+' '+match[4]+':'+match[5]:txt(rawDate);
+   const archiveStamp=/^\d{4}-\d{2}-\d{2}T/.test(rawDate);
+   const date=archiveStamp&&!Number.isNaN(new Date(rawDate).getTime())?
+     new Date(rawDate).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}):txt(rawDate);
    const desc=txt(v.detalle||v.descripcion||v.accion||v.tipo||'Actividad');
    return '<div class="cya-hybrid-history-line"><small>'+safe(date)+'</small><span>'+safe(desc)+'</span></div>';
   }).join(''):'<div class="cya-hybrid-empty">Sin movimientos adicionales registrados.</div>';
