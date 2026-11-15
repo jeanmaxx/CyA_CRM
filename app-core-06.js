@@ -699,7 +699,7 @@ function renderArchivadosPorCausa(items){
 function renderTarjetaArchivado(l,temporal){
   const dias=Math.max(0,Math.floor((new Date()-new Date(l.fechaInicio||l.fechaArchivo||new Date()))/86400000));
   const nota=(l.notas||l.notasArchivo||'Sin notas').split(/\r?\n/)[0];
-  return `<div class="lead-card" data-lead-id="${escapeLeadText(l.id)}" role="button" tabindex="0" onclick="openModalLead('${l.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${l.id}');}"><div class="lead-card-nombre" style="opacity:.78;">${l.nombre}</div><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-size:10px;color:var(--text-secondary);">${l.curp||'CURP pendiente'}</span><span class="lead-card-dias lead-dias-normal" style="margin:0;">${dias}d</span></div><div class="lead-card-nota">${nota}</div><div style="font-size:10px;color:var(--text-muted);margin-top:5px;"><strong>Causa:</strong> ${l.causaArchivo||'Sin causa especificada'}</div>${temporal&&l.fechaRecontacto?`<div style="font-size:10px;color:var(--warning);margin-top:4px;">Recontacto: ${fmtDate(l.fechaRecontacto)}</div>`:''}</div>`;
+  return `<div class="lead-card" data-lead-id="${escapeLeadText(l.id)}" role="button" tabindex="0" onclick="openModalLead('${l.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModalLead('${l.id}');}"><div class="lead-card-nombre" style="opacity:.78;">${l.nombre}</div><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-size:10px;color:var(--text-secondary);">${l.curp||'CURP pendiente'}</span><span class="lead-card-dias lead-dias-normal" style="margin:0;">${dias}d</span></div><div class="lead-card-nota">${nota}</div><div style="font-size:10px;color:var(--text-muted);margin-top:5px;"><strong>Causa:</strong> ${l.causaArchivo||'Sin causa especificada'}</div>${l.fechaArchivo?`<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Archivado: ${fmtDate(l.fechaArchivo)}</div>`:''}${temporal&&l.fechaRecontacto?`<div style="font-size:10px;color:var(--warning);margin-top:4px;">Recontacto: ${fmtDate(l.fechaRecontacto)}</div>`:''}</div>`;
 }
 
 function toggleArchivadosLeads(){ archivadosLeadsAbiertos=!archivadosLeadsAbiertos; renderPage('leads'); }
@@ -864,12 +864,24 @@ function confirmarArchivarLead(){
   if(causa==='otros'&&!otros.trim()){ showToast('Especifica la causa de archivo','warn'); return; }
   const fechaUltimoRetiro=causa==='retiro_menos_5'?leerFechaMX('lead-fecha-ultimo-retiro',true):'';
   if(causa==='retiro_menos_5'&&fechaUltimoRetiro===null) return;
+  const alreadyArchived=lead.estado==='archivado';
+  const now=new Date().toISOString();
   lead.estado='archivado';
   lead.causaArchivoId=causa;
   lead.causaArchivo=causaLabel[causa]||causa;
   lead.notasArchivo=getVal('lead-archivo-notas');
-  lead.fechaArchivo=new Date().toISOString();
+  // Preserve the ORIGINAL archive timestamp when editing the cause.
+  lead.fechaArchivo=alreadyArchived&&lead.fechaArchivo?lead.fechaArchivo:now;
   lead.archivoTipo=causa==='retiro_menos_5'?'temporal':'definitivo';
+  // Append a dated, auditable event; do not overwrite past archive events.
+  lead.historial=Array.isArray(lead.historial)?lead.historial:[];
+  lead.historial.push({
+    fecha:now,
+    tipo:alreadyArchived?'actualizacion_archivo':'archivo',
+    accion:(alreadyArchived?'Causa de archivo actualizada':'Prospecto archivado')+': '+lead.causaArchivo,
+    detalle:(alreadyArchived?'Se actualizó el motivo':'Archivado')+': '+lead.causaArchivo+
+      (lead.notasArchivo?' · '+lead.notasArchivo:'')
+  });
   if(causa!=='retiro_menos_5'){
     delete lead.fechaUltimoRetiro;
     delete lead.fechaRecontacto;
