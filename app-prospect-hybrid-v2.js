@@ -274,9 +274,16 @@
  function makeHistory(lead){
   const target=$('cya-hybrid-fields-historial');if(!target)return;
   const arrays=[lead?.historial,lead?.historialRevision,lead?.historialReconsultas].filter(Array.isArray);
-  const entries=arrays.flat().filter(v=>v&&typeof v==='object').slice(-30).reverse();
+  const all=arrays.flat().filter(v=>v&&typeof v==='object');
+  // Historical archived leads predate the archive-history event. Surface
+  // their stored fechaArchivo without manufacturing a duplicate when present.
+  if(lead?.fechaArchivo&&!all.some(v=>v.tipo==='archivo'))
+   all.push({fecha:lead.fechaArchivo,tipo:'archivo',accion:'Prospecto archivado',detalle:'Archivado: '+(lead.causaArchivo||'Causa no especificada')});
+  const entries=all.slice(-30).reverse();
   target.innerHTML=entries.length?entries.map(v=>{
-   const date=txt(v.fecha||v.createdAt||v.registradoEn||v.fechaISO||'');
+   const rawDate=String(v.fecha||v.createdAt||v.registradoEn||v.fechaISO||'');
+   const match=/^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})/.exec(rawDate);
+   const date=match?match[3]+'/'+match[2]+'/'+match[1]+' '+match[4]+':'+match[5]:txt(rawDate);
    const desc=txt(v.detalle||v.descripcion||v.accion||v.tipo||'Actividad');
    return '<div class="cya-hybrid-history-line"><small>'+safe(date)+'</small><span>'+safe(desc)+'</span></div>';
   }).join(''):'<div class="cya-hybrid-empty">Sin movimientos adicionales registrados.</div>';
