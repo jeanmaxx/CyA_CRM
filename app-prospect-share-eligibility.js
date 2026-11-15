@@ -140,8 +140,9 @@ function openWhatsapp(){
  const raw=value('cya-share-phone'),phone=normalizePhone(raw);
  if(raw&&!phone){$('cya-share-feedback').textContent='Verifica el teléfono del colaborador (10 dígitos o lada internacional)';return;}
  const url='https://wa.me/'+(phone||'')+'?text='+encodeURIComponent(text);
- const opened=window.open(url,'_blank','noopener,noreferrer');
- if(!opened)$('cya-share-feedback').textContent='El navegador podría haber bloqueado WhatsApp. Permite ventanas emergentes.';
+ const opened=window.open(url,'_blank');
+ if(opened)opened.opener=null;
+ else $('cya-share-feedback').textContent='El navegador podría haber bloqueado WhatsApp. Permite ventanas emergentes.';
 }
 function drawCanvas(d){
  const c=document.createElement('canvas');c.width=1100;c.height=810;
