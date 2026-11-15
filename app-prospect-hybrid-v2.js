@@ -163,6 +163,77 @@
    if(status.parentElement!==identity)identity.appendChild(status);
   }
  }
+ // Internal commercial simulator. Uses the IMSS daily SBC as an optional
+ // informational input and never changes official eligibility or finances.
+ function commercialMax(period){return period==='2027'?37200:35193;}
+ function commercialMoney(amount){
+  return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2,maximumFractionDigits:2}).format(amount);
+ }
+ function defaultCommercialPeriod(){return new Date()>=new Date(2027,0,11)?'2027':'2026';}
+ function updateCommercial(){
+  const box=$('cya-prospect-commercial');if(!box)return;
+  const period=$('lead-com-periodo')?.value||defaultCommercialPeriod();
+  const sbc=Math.max(0,Number($('lead-com-sbc')?.value)||0);
+  const amount=Math.max(0,Number($('lead-com-retiro')?.value)||0);
+  const thirty=sbc*30,fee=Math.min(amount*0.30,10000),net=amount-fee;
+  for(const [id,value] of [
+   ['lead-com-max',commercialMoney(commercialMax(period))],
+   ['lead-com-referencia',sbc>0?commercialMoney(thirty):'—'],
+   ['lead-com-honorarios',commercialMoney(fee)],
+   ['lead-com-neto',commercialMoney(net)],
+   ['lead-com-comparacion',thirty>0?(net/thirty).toFixed(2)+' veces':'—']
+  ]){const input=$(id);if(input)input.value=value;}
+  const notice=$('cya-commercial-estimate-note');
+  if(notice)notice.textContent=period==='2027'?
+   'Proyección operativa de 2027: $37,200 a partir de la segunda semana de enero; no es un monto autorizado.':
+   'Referencia operativa de 2026: $35,193; no es un monto autorizado.';
+ }
+ function ensureCommercial(){
+  const container=$('cya-hybrid-fields-elegibilidad');if(!container)return;
+  let box=$('cya-prospect-commercial');
+  if(!box){
+   box=document.createElement('section');box.id='cya-prospect-commercial';
+   box.setAttribute('aria-label','Información laboral y comparación comercial');
+   box.innerHTML=
+    '<div class="cya-com-group"><div class="cya-com-heading">INFORMACIÓN LABORAL · ÚLTIMO EMPLEO</div>'+
+     '<div class="cya-com-work"><div class="cya-com-field"><label for="lead-com-empresa">Última empresa</label><input class="form-input" id="lead-com-empresa" maxlength="180" placeholder="Empresa del reporte IMSS"></div>'+
+      '<div class="cya-com-field"><label for="lead-com-sbc">Último salario diario (SBC)</label><input class="form-input" id="lead-com-sbc" inputmode="decimal" type="number" step="0.01" min="0" placeholder="0.00"></div>'+
+      '<div class="cya-com-field"><label for="lead-com-referencia">Referencia de 30 días</label><input class="form-input" id="lead-com-referencia" readonly tabindex="-1" value="—"></div></div></div>'+
+    '<div class="cya-com-group"><div class="cya-com-headrow"><span class="cya-com-heading">COMPARACIÓN COMERCIAL · RETIRO ESTIMADO</span>'+
+     '<label class="cya-com-period-label" for="lead-com-periodo">Periodo <select class="form-select" id="lead-com-periodo"><option value="2026">2026</option><option value="2027">2027</option></select></label></div>'+
+     '<div class="cya-com-values">'+
+      '<div class="cya-com-field"><label for="lead-com-max">Máximo de referencia</label><input class="form-input" id="lead-com-max" readonly tabindex="-1"></div>'+
+      '<div class="cya-com-field"><label for="lead-com-retiro">Retiro estimado</label><input class="form-input" id="lead-com-retiro" type="number" min="0" step="0.01" inputmode="decimal"></div>'+
+      '<div class="cya-com-field"><label for="lead-com-honorarios">Honorarios</label><input class="form-input" id="lead-com-honorarios" readonly tabindex="-1"></div>'+
+      '<div class="cya-com-field"><label for="lead-com-neto">Neto estimado</label><input class="form-input" id="lead-com-neto" readonly tabindex="-1"></div>'+
+      '<div class="cya-com-field"><label for="lead-com-comparacion">Comparación neta</label><input class="form-input cya-com-ratio" id="lead-com-comparacion" readonly tabindex="-1"></div></div>'+
+     '<p class="cya-com-note" id="cya-commercial-estimate-note"></p>'+
+     '<p class="cya-com-disclaimer">Referencia de 30 días del SBC y comparación interna después de honorarios. No es un retiro garantizado; la AFORE determina el monto según la modalidad aplicable.</p></div>';
+   box.addEventListener('input',event=>{
+    if(event.target?.id==='lead-com-sbc'||event.target?.id==='lead-com-retiro')updateCommercial();
+   });
+   box.addEventListener('change',event=>{
+    if(event.target?.id==='lead-com-periodo'){
+     // Changing the scenario year resets ONLY the commercial estimate.
+     const amount=$('lead-com-retiro');if(amount)amount.value=String(commercialMax(event.target.value));
+     updateCommercial();
+    }
+   });
+  }
+  if(box.parentElement!==container)container.appendChild(box);
+  const prospect=currentLead(),key=String(prospect?.id||'new');
+  if(box.dataset.loadedLead!==key){
+   const saved=prospect?.simulacionComercial||{};
+   const period=['2026','2027'].includes(String(saved.periodo||''))?String(saved.periodo):defaultCommercialPeriod();
+   $('lead-com-periodo').value=period;
+   $('lead-com-empresa').value=String(saved.ultimaEmpresa||'');
+   $('lead-com-sbc').value=saved.salarioDiarioSbc==null?'':String(saved.salarioDiarioSbc);
+   $('lead-com-retiro').value=String(saved.retiroEstimado??commercialMax(period));
+   box.dataset.loadedLead=key;
+  }
+  box.hidden=($('lead-servicio')?.value||'retiro_desempleo')!=='retiro_desempleo';
+  updateCommercial();
+ }
  function routeFields(){
   const container=body();if(!container)return;
   const rowFor=id=>$(id)?.closest('.form-row');
@@ -183,6 +254,7 @@
   appendTo('elegibilidad',groupFor('lead-banco'));
   const eleg=$('cya-hybrid-fields-elegibilidad');
   if(eleg)eleg.dataset.eligibilityService=$('lead-servicio')?.value||'retiro_desempleo';
+  ensureCommercial();
   appendTo('origen',groupFor('lead-fuente'));
   // Keep the SINGLE original stage selector beside WhatsApp in the
   // persistent dossier header (not duplicated under Seguimiento).
@@ -272,6 +344,7 @@
   const root=$('cya-hybrid-lead-root');if(!root)return;
   const eligibilityFields=$('cya-hybrid-fields-elegibilidad');
   if(eligibilityFields)eligibilityFields.dataset.eligibilityService=byId('lead-servicio')||'retiro_desempleo';
+  const commercial=$('cya-prospect-commercial');if(commercial)commercial.hidden=byId('lead-servicio')!=='retiro_desempleo';
   // Use the approved short labels only inside the hybrid unemployment panel;
   // the original eligibility engine, values and validators stay untouched.
   if(eligibilityFields?.dataset.eligibilityService==='retiro_desempleo'){
