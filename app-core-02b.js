@@ -143,7 +143,7 @@ function openPerfil(id){
           alertas+=`<div class="alerta-firma alerta-amarilla" style="align-items:flex-start;">⚠ <span><strong>Documentos pendientes:</strong> ${faltantes.join(', ')}</span></div>`;
         }
         if(!c.banco) alertas+=`<div class="alerta-firma alerta-amarilla">⚠ Falta cuenta bancaria completa</div>`;
-        if(!c.fechaBiometrica) alertas+=`<div class="alerta-firma alerta-amarilla">⚠ Falta cita de actualización de datos en AFORE</div>`;
+        if(!c.fechaBiometrica&&!window.__cyaAforeFollowup?.updated(c)) alertas+=`<div class="alerta-firma alerta-amarilla">⚠ Falta cita de actualización de datos en AFORE</div>`;
       }
       return alertas;
     })()}
@@ -654,6 +654,9 @@ async function guardarCliente(){
       addHist(cliente,'agenda','Próxima acción programada: '+cyaNextAction.fecha+' '+cyaNextAction.hora);
     }
   }
+  // Keep Agenda and appointment confirmation in sync with the native AFORE
+  // date/time only; changes in unrelated client sections do not add events.
+  window.__cyaAforeFollowup?.schedule(cliente,oldCliente);
   editingId=cliente.id; // A failed synchronization retries this same record.
   // No hidden-card edit is allowed to refresh estimated dates or agenda rules.
   // The dedicated contract/alta and full-editor flows keep the legacy behavior.
