@@ -111,7 +111,7 @@ async function confirm(kind){
   const confirmation=attendance==='sin_cita'?input('cya-afore-confirmation'):'cliente';
   let outcome=completed?'actualizado':attendance==='no'?'no_asistio':'asistio_pendiente';
   if(completed){
-   c.aforeSeguimiento={estado:'actualizado',modalidad:method,fechaActualizacion:actualDate,confirmacion,registro:stamp,citaFecha:c.fechaBiometrica||null,observaciones:note};
+   c.aforeSeguimiento={estado:'actualizado',modalidad:method,fechaActualizacion:actualDate,confirmacion:confirmation,registro:stamp,citaFecha:c.fechaBiometrica||null,observaciones:note};
    c.fechaActualizacionAfore=actualDate;
    c.etapasOperativasV2=c.etapasOperativasV2||{};
    c.etapasOperativasV2.expediente={done:true,fecha:actualDate,fuente:method,usuario:sesionActiva?.id||null};
