@@ -5,7 +5,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict'),{JSDOM}=require
 const app=fs.readFileSync('app/index.html','utf8');
 const form=new JSDOM(app).window.document.querySelector('#modal-cliente')?.outerHTML;
 assert(form&&form.includes('fc-curp'));
-const css=fs.readFileSync('styles.css','utf8')+'\n'+fs.readFileSync('app-client-hybrid-v2.css','utf8');
+const css=fs.readFileSync('styles.css','utf8')+'\n'+fs.readFileSync('app-client-hybrid-v2.css','utf8')+'\n'+fs.readFileSync('app-afore-followup.css','utf8');
 const script=fs.readFileSync('app-client-hybrid-v2.js','utf8');
 const stages=['contacto','datos','docs','cita-afore','contratos','finanzas','historial'].map(id=>'<section class="tab-panel" id="pd-'+id+'">Contenido original</section>').join('');
 const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>'+
@@ -175,8 +175,10 @@ const cases=[
    const aBounds=await page.locator('#cya-hybrid-client-content').evaluate(el=>el.getBoundingClientRect());
    assert(aforeInputs.every(x=>x.right<=aBounds.right+2),sc.name+' AFORE inputs stay inside panel');
    if(sc.width>920){
-     assert(aforeInputs.every(x=>Math.abs(x.top-aforeInputs[0].top)<2),sc.name+' all AFORE fields on one desktop row '+JSON.stringify(aforeInputs));
-     assert(aforeInputs.every((x,i)=>i===0||x.left>aforeInputs[i-1].left),sc.name+' ordered left to right');
+     assert(aforeInputs.slice(0,3).every(x=>Math.abs(x.top-aforeInputs[0].top)<2),sc.name+' AFORE/date/time share first row '+JSON.stringify(aforeInputs));
+     assert(aforeInputs.slice(3).every(x=>Math.abs(x.top-aforeInputs[3].top)<2),sc.name+' branch/request date share second row '+JSON.stringify(aforeInputs));
+     assert(aforeInputs[3].top>aforeInputs[0].top+15,sc.name+' compact approved 3+2 AFORE grid');
+     assert(aforeInputs[0].left<aforeInputs[1].left&&aforeInputs[1].left<aforeInputs[2].left&&aforeInputs[3].left<aforeInputs[4].left,sc.name+' approved field order');
    }
    const refInfo=await page.locator('#afore-reference-fixture').evaluate(el=>({top:el.getBoundingClientRect().top,width:el.getBoundingClientRect().width}));
    assert(refInfo.top>Math.max(...aforeInputs.map(x=>x.top)),sc.name+' reference appears below fields');
