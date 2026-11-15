@@ -107,6 +107,7 @@ async function confirm(kind){
  if(!attendance){showToast?.('Selecciona si el cliente asistió','warn');return;}
  const reason=input('cya-afore-reason'),note=input('cya-afore-note');
  if(attendance==='no'&&!reason){showToast?.('Selecciona el motivo de inasistencia','warn');return;}
+ if(attendance==='no'&&reason==='otro'&&!note){showToast?.('Describe el motivo en la nota','warn');return;}
  const reschedule=attendance==='no'&&input('cya-afore-reschedule')==='si';
  const newDate=input('cya-afore-new-date'),newTime=input('cya-afore-new-time');
  if(reschedule&&(!validISO(newDate)||!validTime(newTime)||new Date(newDate+'T'+newTime+':00')<=new Date())){showToast?.('Indica una nueva cita futura con fecha y hora válidas','warn');return;}
@@ -151,6 +152,9 @@ async function confirm(kind){
   showToast?.('Seguimiento AFORE guardado','success');
   mount();if(typeof renderPage==='function'&&typeof currentPage==='string'&&['dashboard','operativo','agenda'].includes(currentPage))renderPage(currentPage);
  }catch(error){
+  // Restore the exact previous object shape, including keys introduced by
+  // this update. A failed cloud write must never leave a fake completed state.
+  for(const key of Object.keys(c))if(!Object.prototype.hasOwnProperty.call(previous,key))delete c[key];
   Object.assign(c,previous);
   store.agenda=agendaBefore;
   console.error('No se pudo sincronizar resultado AFORE',error);
