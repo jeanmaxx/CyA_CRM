@@ -37,7 +37,10 @@ function schedule(c,old){
  if(old?.fechaBiometrica===c.fechaBiometrica&&String(old.horaBiometrica||'')===String(c.horaBiometrica||'')&&String(old.sucursalAfore||'')===String(c.sucursalAfore||''))return;
  const events=Array.isArray(store.agenda)?store.agenda:(store.agenda=[]);
  for(const e of events){
-  if(String(e.clienteId)===String(c.id)&&eventFor(e)&&!e.completado){
+  const legacyPrior=String(e.clienteId)===String(c.id)&&
+   String(e.fecha||'')===String(old?.fechaBiometrica||'')&&
+   e.tipo==='cita'&&/afore|biom[eé]tric|expediente/i.test(String(e.titulo||''));
+  if(String(e.clienteId)===String(c.id)&&(eventFor(e)||legacyPrior)&&!e.completado){
    e.completado=true;e.resultado='reprogramada';e.notas=(e.notas||'')+' · Sustituida por una nueva programación';
   }
  }
