@@ -128,7 +128,7 @@
   if(window.__cyaMetaLeadOutcomesLoaderStarted)return;
   window.__cyaMetaLeadOutcomesLoaderStarted=true;
   const script=document.createElement('script');
-  script.src='/app-meta-lead-outcomes.js?v=20261026-meta2';
+  script.src='/app-meta-lead-outcomes.js?v=20261116-cuestionario1';
   script.async=false;
   script.dataset.cyaMetaLeadOutcomes='1';
   document.head.appendChild(script);

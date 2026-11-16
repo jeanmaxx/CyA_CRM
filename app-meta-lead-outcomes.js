@@ -12,6 +12,7 @@
     imss_activo:'Tiene IMSS activo',
     inconsistencias_curp_nss:'Inconsistencias de CURP / NSS',
     retiro_menos_5:'Retiró hace menos de 5 años',
+    retiro_5_cuestionario:'Retiro menor a 5 años · Cuestionario',
     sin_semanas:'Sin semanas suficientes',
     otros:'Otros',
   });
@@ -19,6 +20,7 @@
   const TEMPLATE_BY_CAUSE=Object.freeze({
     imss_activo:'pl_no_elegible_imss_activo',
     retiro_menos_5:'pl_no_elegible_retiro_5',
+    retiro_5_cuestionario:'pl_wa_retiro_5_cuestionario',
     sin_semanas:'pl_wa_sin_semanas_1',
     inconsistencias_curp_nss:'pl_no_elegible_inconsistencia',
   });
@@ -96,6 +98,8 @@
     }
     return changed;
   }
+
+  function questionnaireTemplate(){return (store?.plantillas||[]).find(p=>p.id==='pl_wa_retiro_5_cuestionario')||null;}
 
   function templateForCause(cause){
     const id=TEMPLATE_BY_CAUSE[cause];
@@ -181,8 +185,9 @@
     const cause=String(document.getElementById('lead-causa-archivo')?.value||'');
     const lead=(store?.leads||[]).find(l=>String(l.id)===String(window.leadParaArchivar||leadParaArchivar||''));
     if(lead&&TEMPLATE_BY_CAUSE[cause]){
-      const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',inconsistencias_curp_nss:'inconsistencias',sin_semanas:'sin_semanas'}[cause];
+      const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',retiro_5_cuestionario:'retiro_5',inconsistencias_curp_nss:'inconsistencias',sin_semanas:'sin_semanas'}[cause];
       if(!group||!window.cyaAbrirWhatsAppArchivado?.(lead.id,group))openOutcomeModal(lead,cause);
+      else if(cause==='retiro_5_cuestionario')window.cyaSeleccionarMensajeWhatsApp?.(1);
     }
   };
 
@@ -197,7 +202,7 @@
     const leadBefore=(store?.leads||[]).find(l=>String(l.id)===String(leadId));
     const result=confirmArchiveBase.apply(this,arguments);
     if(leadBefore&&TEMPLATE_BY_CAUSE[cause])setTimeout(()=>{
-      const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',inconsistencias_curp_nss:'inconsistencias'}[cause];
+      const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',retiro_5_cuestionario:'retiro_5',inconsistencias_curp_nss:'inconsistencias'}[cause];
       if(!group||!window.cyaAbrirWhatsAppArchivado?.(leadBefore.id,group))openOutcomeModal(leadBefore,cause);
     },80);
     return result;

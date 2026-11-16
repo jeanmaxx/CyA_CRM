@@ -1,0 +1,17 @@
+'use strict';
+const fs=require('node:fs');
+const assert=require('node:assert/strict');
+const read=p=>fs.readFileSync(p,'utf8');
+const core=read('app-core-06.js'),html=read('app/index.html'),wa=read('app-whatsapp-message-center.js'),out=read('app-meta-lead-outcomes.js');
+assert(html.includes('value="retiro_5_cuestionario"'));
+assert(core.includes("retiro_5_cuestionario:'Retiro menor a 5 años · Cuestionario'"));
+assert(core.includes("causa==='retiro_menos_5'?leerFechaMX"),'Only verified withdrawal requires a date');
+assert(core.includes("if(causa!=='retiro_menos_5')"),'Questionnaire cause must not schedule recontact');
+assert(core.includes('origenMotivoArchivo'),'Archive origin should be traceable');
+assert(wa.includes("id:\"pl_wa_retiro_5_cuestionario\""));
+assert(wa.includes("id:\"pl_wa_imss_cuestionario\""));
+assert(wa.includes("index===0?'Mensaje actual':'De cuestionario'"));
+assert(wa.includes("contact.causaArchivoId==='retiro_5_cuestionario'"));
+assert(out.includes("retiro_5_cuestionario:'retiro_5'"));
+for(const [p,s] of [['app-core-06.js',core],['app-whatsapp-message-center.js',wa],['app-meta-lead-outcomes.js',out]])new Function(s);
+console.log('OK: questionnaire archive reason, no mandatory date, dual WhatsApp templates, archive origin and JS syntax');

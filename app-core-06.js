@@ -840,7 +840,7 @@ function causaArchivoCodigo(lead){
   const porTexto={
     'No envió toda la documentación':'docs_incompletos','No contesta':'no_contesta',
     'Aprobado y no contesta':'aprobado_no_contesta','No quiso continuar':'no_quiso',
-    'Tiene IMSS activo':'imss_activo','Inconsistencias de CURP / NSS':'inconsistencias_curp_nss','Retiró hace menos de 5 años':'retiro_menos_5','Sin semanas suficientes':'sin_semanas',
+    'Tiene IMSS activo':'imss_activo','Inconsistencias de CURP / NSS':'inconsistencias_curp_nss','Retiró hace menos de 5 años':'retiro_menos_5','Retiro menor a 5 años · Cuestionario':'retiro_5_cuestionario','Sin semanas suficientes':'sin_semanas',
   };
   return porTexto[lead.causaArchivo]||'otros';
 }
@@ -874,7 +874,7 @@ function confirmarArchivarLead(){
   if(!lead) return;
   const causa=getVal('lead-causa-archivo');
   const otros=getVal('lead-otros-texto');
-  const causaLabel={docs_incompletos:'No envió toda la documentación',no_contesta:'No contesta',aprobado_no_contesta:'Aprobado y no contesta',no_quiso:'No quiso continuar',imss_activo:'Tiene IMSS activo',inconsistencias_curp_nss:'Inconsistencias de CURP / NSS',retiro_menos_5:'Retiró hace menos de 5 años',sin_semanas:'Sin semanas suficientes',otros:otros||'Otros'};
+  const causaLabel={docs_incompletos:'No envió toda la documentación',no_contesta:'No contesta',aprobado_no_contesta:'Aprobado y no contesta',no_quiso:'No quiso continuar',imss_activo:'Tiene IMSS activo',inconsistencias_curp_nss:'Inconsistencias de CURP / NSS',retiro_menos_5:'Retiró hace menos de 5 años',retiro_5_cuestionario:'Retiro menor a 5 años · Cuestionario',sin_semanas:'Sin semanas suficientes',otros:otros||'Otros'};
   if(causa==='otros'&&!otros.trim()){ showToast('Especifica la causa de archivo','warn'); return; }
   const fechaUltimoRetiro=causa==='retiro_menos_5'?leerFechaMX('lead-fecha-ultimo-retiro',true):'';
   if(causa==='retiro_menos_5'&&fechaUltimoRetiro===null) return;
@@ -884,6 +884,7 @@ function confirmarArchivarLead(){
   lead.causaArchivoId=causa;
   lead.causaArchivo=causaLabel[causa]||causa;
   lead.notasArchivo=getVal('lead-archivo-notas');
+   lead.origenMotivoArchivo=(causa==='retiro_5_cuestionario'||(causa==='imss_activo'&&(lead.metaAds===true||!!lead.metaLead||String(lead.fuenteContacto||lead.fuente||'').toLowerCase()==='meta ads')))?'Declarado en cuestionario · Sin verificación externa':'Verificación / causa registrada por asesor';
   // Preserve the ORIGINAL archive timestamp when editing the cause.
   lead.fechaArchivo=alreadyArchived&&lead.fechaArchivo?lead.fechaArchivo:now;
   lead.archivoTipo=causa==='retiro_menos_5'?'temporal':'definitivo';
@@ -894,7 +895,7 @@ function confirmarArchivarLead(){
     tipo:alreadyArchived?'actualizacion_archivo':'archivo',
     accion:(alreadyArchived?'Causa de archivo actualizada':'Prospecto archivado')+': '+lead.causaArchivo,
     detalle:(alreadyArchived?'Se actualizó el motivo':'Archivado')+': '+lead.causaArchivo+
-      (lead.notasArchivo?' · '+lead.notasArchivo:'')
+      ' · '+lead.origenMotivoArchivo+(lead.notasArchivo?' · '+lead.notasArchivo:'')
   });
   if(causa!=='retiro_menos_5'){
     delete lead.fechaUltimoRetiro;
