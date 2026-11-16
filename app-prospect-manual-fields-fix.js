@@ -149,7 +149,7 @@
     clearInterval(timer);
     if(document.querySelector('script[data-cya-whatsapp-message-center]'))return;
     const script=document.createElement('script');
-    script.src='/app-whatsapp-message-center.js?v=20261114-aprobado-corto1';
+    script.src='/app-whatsapp-message-center.js?v=20261116-cuestionario1';
     script.async=false;
     script.dataset.cyaWhatsappMessageCenter='1';
     document.head.appendChild(script);
