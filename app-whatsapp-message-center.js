@@ -96,9 +96,9 @@
     {key:'finalizacion',label:'Finalización',kind:'main',ids:['pl_wa_finalizacion_1','pl_wa_finalizacion_2','pl_wa_finalizacion_3']},
     {key:'despedida',label:'Despedida',kind:'main',ids:['pl_wa_despedida_1']},
     {key:'curp_mal',label:'CURP mal',kind:'reject',ids:['pl_wa_curp_mal_1']},
-    {key:'imss_activo',label:'IMSS activo',kind:'reject',ids:['pl_wa_imss_activo_1']},
+    {key:'imss_activo',label:'IMSS activo',kind:'reject',ids:['pl_wa_imss_activo_1','pl_wa_imss_cuestionario']},
     {key:'inconsistencias',label:'Inconsistencias',kind:'reject',ids:['pl_wa_inconsistencias_1','pl_wa_inconsistencias_2']},
-    {key:'retiro_5',label:'Retiro -5 años',kind:'reject',ids:['pl_wa_retiro_5_1']},
+    {key:'retiro_5',label:'Retiro -5 años',kind:'reject',ids:['pl_wa_retiro_5_1','pl_wa_retiro_5_cuestionario']},
     {key:'sin_semanas',label:'Sin semanas suficientes',kind:'reject',ids:['pl_wa_sin_semanas_1']},
     {key:'alta_15',label:'Seguimiento alta',kind:'reject',ids:['pl_wa_alta_15_1']}
   ];
@@ -415,7 +415,7 @@
       :group.key==='alta_15'?'Esta plantilla es para seguimiento posterior al alta de clientes. Confirma la etapa antes de utilizarla.':'';
     const tabs=templates.map((item,index)=>
       '<button class="cya-wa-part'+(index===currentMessageIndex?' active':'')+'" type="button" data-cya-wa-part="'+index+'" aria-pressed="'+(index===currentMessageIndex?'true':'false')+'">'+
-      safe((index+1)+' / '+templates.length+' · '+item.nombre)+'</button>'
+      safe((group.key==='retiro_5'||group.key==='imss_activo')?(index===0?'Mensaje actual':'De cuestionario'):(index+1)+' / '+templates.length+' · '+item.nombre)+'</button>'
     ).join('');
     const text=tpl?(Object.prototype.hasOwnProperty.call(currentDrafts,tpl.id)?currentDrafts[tpl.id]:renderText(tpl,contact)):'';
     list.innerHTML=(altaNote?'<div class="cya-wa-alta-status" role="status">'+safe(altaNote)+'</div>':'')+
