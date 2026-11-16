@@ -187,6 +187,7 @@
     if(lead&&TEMPLATE_BY_CAUSE[cause]){
       const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',retiro_5_cuestionario:'retiro_5',inconsistencias_curp_nss:'inconsistencias',sin_semanas:'sin_semanas'}[cause];
       if(!group||!window.cyaAbrirWhatsAppArchivado?.(lead.id,group))openOutcomeModal(lead,cause);
+      else if(cause==='retiro_5_cuestionario')window.cyaSeleccionarMensajeWhatsApp?.(1);
     }
   };
 
@@ -201,7 +202,7 @@
     const leadBefore=(store?.leads||[]).find(l=>String(l.id)===String(leadId));
     const result=confirmArchiveBase.apply(this,arguments);
     if(leadBefore&&TEMPLATE_BY_CAUSE[cause])setTimeout(()=>{
-      const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',inconsistencias_curp_nss:'inconsistencias'}[cause];
+      const group={imss_activo:'imss_activo',retiro_menos_5:'retiro_5',retiro_5_cuestionario:'retiro_5',inconsistencias_curp_nss:'inconsistencias'}[cause];
       if(!group||!window.cyaAbrirWhatsAppArchivado?.(leadBefore.id,group))openOutcomeModal(leadBefore,cause);
     },80);
     return result;
