@@ -2,6 +2,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
 const code=fs.readFileSync('app-prospect-share-eligibility.js','utf8');
 const css=fs.readFileSync('app-prospect-share-eligibility.css','utf8');
 assert(css.includes('grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)'),'Compact desktop popup is two columns');
+assert(code.includes("BRAND_LOGO_URL='/assets/brand/cya-logo-dark.svg'"),'Use original C&A institutional logo asset');
+assert(code.includes('ctx.drawImage(logo'),'PNG must contain the actual C&A logo');
+assert(code.includes('CASILLAS & ASOCIADOS · CONSULTORÍA'),'Institutional title on exported PNG');
+assert(code.includes('NETO ESTIMADO A RECIBIR'),'Commercial headline exists');
+assert(!code.includes("['Máximo de referencia',money(d.maximum)]"),'Do not repeat maximum reference');
+assert(css.includes('.cya-share-featured'),'Preview has two featured financial metrics');
+
 const mk=(id,value)=>'<input id="'+id+'" value="'+value+'">';
 const dom=new JSDOM('<div class="modal-overlay open" id="modal-lead">'+
  mk('lead-nombre','LEOBARDO NIETO CERVANTES')+mk('lead-servicio','retiro_desempleo')+
@@ -32,6 +39,10 @@ share.open();
 assert.equal(d.getElementById('cya-share-eligibility-dialog').hidden,false);
 assert.equal(d.getElementById('cya-share-person').textContent,'LEOBARDO NIETO CERVANTES');
 assert.match(d.getElementById('cya-share-ratio').textContent,/5.22 veces/);
+assert.equal(d.getElementById('cya-share-net').textContent,'$25,193.00','Net estimated highlighted in share preview');
+assert.equal(d.getElementById('cya-share-finance-stats').children.length,2,'Only withdrawal and fees remain as secondary values');
+assert(d.querySelector('.cya-share-brand-logo').getAttribute('src').includes('cya-logo-dark.svg'));
+
 assert.equal(d.getElementById('cya-share-recipient-kind').value,'cliente');
 assert.equal(d.getElementById('cya-share-phone').value,'524425550101');
 assert.match(d.getElementById('cya-share-text').value,/¡Hola, Leobardo!/);
