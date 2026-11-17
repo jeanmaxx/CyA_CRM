@@ -239,7 +239,7 @@
  if(window.__cyaShareEligibilityLoaderStarted)return;
  window.__cyaShareEligibilityLoaderStarted=true;
  const script=document.createElement('script');
- script.src='/app-prospect-share-eligibility.js?v=20261116-ficha-premium1';
+ script.src='/app-prospect-share-eligibility.js?v=20261117-seguimiento-retiro5';
  script.async=false;script.dataset.cyaShareEligibility='1';
  document.head.appendChild(script);
 })();
