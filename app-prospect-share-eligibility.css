@@ -181,3 +181,25 @@
  #cya-share-eligibility-dialog .cya-share-featured .cya-share-compare strong{font-size:14px}
  #cya-share-eligibility-dialog .cya-share-finances{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 }
+
+
+/* Ficha de seguimiento: segunda variante sin cifras comerciales. */
+#cya-share-eligibility-dialog #cya-share-pending[hidden],
+#cya-share-eligibility-dialog #cya-share-eligible[hidden]{display:none!important}
+#cya-share-eligibility-dialog .cya-share-is-pending #cya-share-status{background:#fff2dc;color:#93631d}
+#cya-share-eligibility-dialog .cya-share-followup-title{color:#142d50;font-weight:800;font-size:10px;margin:12px 0 7px}
+#cya-share-eligibility-dialog .cya-share-followup-date{display:flex;align-items:center;flex-direction:column;gap:5px;background:#e9f0fa;border-radius:6px;padding:14px 8px;color:#142d50;text-align:center}
+#cya-share-eligibility-dialog .cya-share-followup-date strong{font-size:29px;letter-spacing:-.025em}
+#cya-share-eligibility-dialog .cya-share-followup-date span{font-size:11px;color:#51627d}
+#cya-share-eligibility-dialog .cya-share-followup-date small{font-size:10px;color:#142d50}
+#cya-share-eligibility-dialog .cya-share-followup-reason{margin-top:9px;background:#fff7e9;border-radius:6px;padding:12px;color:#665a4a;font-size:10px;line-height:1.5}
+#cya-share-eligibility-dialog .cya-share-followup-reason>b{color:#835a20;font-size:11px}
+#cya-share-eligibility-dialog .cya-share-followup-reason>div{display:flex;gap:5px;justify-content:space-between;margin:7px 0}
+#cya-share-eligibility-dialog .cya-share-followup-reason strong{color:#142d50}
+#cya-share-eligibility-dialog .cya-share-followup-reason p,#cya-share-eligibility-dialog .cya-share-followup-note p{margin:5px 0 0;line-height:1.5}
+#cya-share-eligibility-dialog .cya-share-followup-note{margin-top:10px;color:#51627d;font-size:10px;line-height:1.5}
+#cya-share-eligibility-dialog .cya-share-followup-note b{color:#142d50;font-size:11px}
+#cya-share-eligibility-dialog .cya-share-advisor{display:flex;flex-direction:column;gap:3px;border-top:1px solid #dce3eb;margin-top:12px;padding-top:11px;color:#142d50}
+#cya-share-eligibility-dialog .cya-share-advisor>b{font-size:13px}
+#cya-share-eligibility-dialog .cya-share-advisor small{color:#51627d;font-size:10px}
+#cya-share-eligibility-dialog .cya-share-advisor strong{color:#176b4a;font-size:13px}
