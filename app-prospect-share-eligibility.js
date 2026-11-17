@@ -10,7 +10,7 @@ const money=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',mi
 const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[ch]));
 const value=id=>$(id)?.value?.trim()||'';
 const positive=id=>{const raw=value(id);return raw===''?null:Math.max(0,Number(raw)||0);};
-const periodMax=y=>y==='2027'?37200:35193;
+const BRAND_LOGO_URL='/assets/brand/cya-logo-dark.svg';
 const normalizePhone=v=>{
  const digits=String(v||'').replace(/\D/g,'');
  if(digits.length===10)return '52'+digits;
@@ -39,7 +39,6 @@ function snapshot(){
   company:value('lead-com-empresa')||'No registrada',
   sbc,reference:ref,amount:withdrawal,fee,net,
   ratio:ref>0?net/ref:null,period:value('lead-com-periodo')||'2026',
-  maximum:periodMax(value('lead-com-periodo')||'2026'),
   eligibilityText,
   collaborator:col?.nombre||'Sin colaborador asignado',
   clientPhone:normalizePhone(value('lead-tel')||l?.telefono||''),
@@ -93,13 +92,13 @@ function createDialog(){
   '<div class="cya-share-content">'+
    '<div class="cya-share-pane"><div class="cya-share-pane-title">Vista previa de ficha (PNG)</div>'+
     '<div class="cya-share-png" id="cya-share-sheet">'+
-     '<div class="cya-share-png-head"><b>C&A</b><div><strong>RESULTADO DE ELEGIBILIDAD</strong><small>Retiro por desempleo</small></div></div>'+
+     '<div class="cya-share-png-head"><img class="cya-share-brand-logo" src="'+BRAND_LOGO_URL+'" alt="Casillas & Asociados Consultoría"><div><span class="cya-share-brand-name">CASILLAS & ASOCIADOS · CONSULTORÍA</span><strong>RESULTADO DE ELEGIBILIDAD</strong><small>Retiro por desempleo</small></div></div>'+
      '<div class="cya-share-png-body"><div class="cya-share-client"><div><small>CLIENTE</small><strong id="cya-share-person"></strong></div><span id="cya-share-status"></span></div>'+
      '<div class="cya-share-stats" id="cya-share-eligibility-stats"></div>'+
      '<div class="cya-share-stats" id="cya-share-work-stats"></div>'+
-     '<div class="cya-share-finances" id="cya-share-finance-stats"></div>'+
-     '<div class="cya-share-compare"><span>COMPARACIÓN NETA<small>Neto frente a referencia de 30 días</small></span><strong id="cya-share-ratio"></strong></div>'+
-     '<p>Estimación interna, no monto autorizado por la AFORE. La modalidad y requisitos aplicables deben verificarse.</p>'+
+     '<div class="cya-share-featured"><div class="cya-share-net"><small>NETO ESTIMADO A RECIBIR</small><strong id="cya-share-net"></strong><span>Importe estimado después de honorarios.</span></div>'+'<div class="cya-share-compare"><span>COMPARACIÓN NETA</span><strong id="cya-share-ratio"></strong><small>Frente a la referencia de 30 días del SBC.</small></div></div>'+'<div class="cya-share-finances" id="cya-share-finance-stats"></div>'+
+     
+     '<p>Estimación informativa, no monto garantizado. El importe definitivo depende de la modalidad aplicable y autorización de la AFORE.</p>'+
      '</div></div></div>'+
    '<div class="cya-share-pane"><div class="cya-share-pane-title">Mensaje de WhatsApp</div>'+
     '<div class="cya-share-recipient-selector"><label for="cya-share-recipient-kind">Destinatario</label><select id="cya-share-recipient-kind" aria-label="Destinatario de elegibilidad"><option value="cliente">Cliente</option><option value="colaborador">Colaborador</option></select></div>'+
@@ -129,7 +128,8 @@ function render(d){
  $('cya-share-status').textContent=d.eligibilityText;
  $('cya-share-eligibility-stats').innerHTML=stats([['Semanas cotizadas',d.weeks],['IMSS activo',d.imss],['Retiro últimos 5 años',d.past]]);
  $('cya-share-work-stats').innerHTML=stats([['Última empresa',d.company],['Salario diario (SBC)',d.sbc===null?'Por confirmar':money(d.sbc)],['Referencia de 30 días',d.sbc===null?'—':money(d.reference)]]);
- $('cya-share-finance-stats').innerHTML=stats([['Retiro estimado',money(d.amount)],['Honorarios',money(d.fee)],['Neto estimado',money(d.net)],['Máximo de referencia',money(d.maximum)]]);
+ $('cya-share-finance-stats').innerHTML=stats([['Retiro estimado',money(d.amount)],['Honorarios de asesoría',money(d.fee)]]);
+ $('cya-share-net').textContent=money(d.net);
  $('cya-share-ratio').textContent=d.ratio===null?'—':d.ratio.toFixed(2)+' veces';
  state.drafts={};
  switchRecipient('cliente',false);
@@ -172,8 +172,17 @@ function openWhatsapp(){
  if(opened)opened.opener=null;
  else $('cya-share-feedback').textContent='El navegador podría haber bloqueado WhatsApp. Permite ventanas emergentes.';
 }
-function drawCanvas(d){
- const c=document.createElement('canvas');c.width=1100;c.height=810;
+function loadBrandLogo(){
+ return new Promise((resolve,reject)=>{
+  const img=new Image();
+  img.onload=()=>resolve(img);
+  img.onerror=()=>reject(new Error('No se pudo cargar el logotipo institucional'));
+  img.src=BRAND_LOGO_URL;
+  if(img.complete&&img.naturalWidth>0)resolve(img);
+ });
+}
+function drawCanvas(d,logo){
+ const c=document.createElement('canvas');c.width=1100;c.height=895;
  const ctx=c.getContext('2d');if(!ctx)throw Error('No se pudo crear el PNG');
  const fill=(x,y,w,h,color)=>{ctx.fillStyle=color;ctx.fillRect(x,y,w,h)};
  const line=(x,y,w)=>fill(x,y,w,1,'#d9e2eb');
@@ -182,7 +191,7 @@ function drawCanvas(d){
   const str=String(t),words=str.split(/\s+/);ctx.font=(bold?'700 ':'400 ')+size+'px Arial';
   let current='',rows=[];
   for(const word of words){
-   let candidate=current?current+' '+word:word;
+   const candidate=current?current+' '+word:word;
    if(ctx.measureText(candidate).width>maxW&&current){rows.push(current);current=word;}else current=candidate;
   }
   if(current)rows.push(current);
@@ -192,43 +201,65 @@ function drawCanvas(d){
   wrap(label,x,y,w-14,17,'#64758d',false,21,2);
   wrap(val,x,y+51,w-14,22,'#192e4c',true,24,2);
  }
- fill(0,0,1100,810,'#fff');
- fill(0,0,1100,145,'#132d52');fill(0,141,1100,5,'#c9a050');
- text('C&A',37,85,59,'#f1c87c',true);
- text('RESULTADO DE ELEGIBILIDAD',205,78,34,'#fff',true);
- text('Retiro por desempleo',208,116,21,'#dce8f7');
- text('CLIENTE',35,194,18,'#63768d');
- wrap(d.name.toUpperCase(),35,238,780,31,'#142c4c',true,33,2);
- fill(820,181,245,59,d.eligibilityText.startsWith('Criterios')?'#e4f6e9':'#fff3de');
- wrap(d.eligibilityText,833,206,222,16,'#14643c',true,19,2);
- line(35,289,1030);
+ fill(0,0,1100,895,'#ffffff');
+ fill(0,0,1100,170,'#142d50');fill(0,166,1100,4,'#cba150');
+ if(!logo||!logo.naturalWidth)throw Error('Logotipo institucional no disponible');
+ // The original C&A monogram is white on transparent background, optimized for navy.
+ const maxW=170,maxH=126;
+ const scale=Math.min(maxW/logo.naturalWidth,maxH/logo.naturalHeight);
+ const iw=logo.naturalWidth*scale,ih=logo.naturalHeight*scale;
+ ctx.drawImage(logo,30+(maxW-iw)/2,19+(maxH-ih)/2,iw,ih);
+ fill(226,27,1,112,'#5b718e');
+ text('CASILLAS & ASOCIADOS · CONSULTORÍA',250,53,18,'#efc878',true);
+ text('RESULTADO DE ELEGIBILIDAD',250,100,34,'#ffffff',true);
+ text('Retiro por desempleo',251,139,21,'#dce8f7');
+ text('CLIENTE',35,220,17,'#63768d');
+ wrap(d.name.toUpperCase(),35,258,750,30,'#142c4c',true,34,2);
+ fill(814,196,251,75,d.eligibilityText.startsWith('Criterios')?'#e4f6e9':'#fff3de');
+ wrap(d.eligibilityText,829,226,220,17,'#14643c',true,22,2);
+ line(35,302,1030);
  const cols=[35,395,750];
- stat('Semanas cotizadas',d.weeks,cols[0],325,300);
- stat('IMSS activo',d.imss,cols[1],325,300);
- stat('Retiro últimos 5 años',d.past,cols[2],325,310);
- line(35,427,1030);
- stat('Última empresa',d.company,cols[0],469,300);
- stat('Salario diario (SBC)',d.sbc===null?'Por confirmar':money(d.sbc),cols[1],469,300);
- stat('Referencia de 30 días',d.sbc===null?'—':money(d.reference),cols[2],469,300);
- fill(30,572,1040,120,'#fcf8ee');
- const financial=[['Retiro estimado',money(d.amount)],['Honorarios',money(d.fee)],['Neto estimado',money(d.net)],['Máximo de referencia',money(d.maximum)]];
- financial.forEach((pair,i)=>stat(pair[0],pair[1],45+i*260,607,242));
- fill(30,703,1040,59,'#e4f6e9');
- text('COMPARACIÓN NETA',51,741,22,'#187344',true);
- text(d.ratio===null?'—':d.ratio.toFixed(2)+' veces',790,742,33,'#15733d',true);
- text('Estimación informativa, sujeta al cálculo y autorización de la AFORE.',35,787,16,'#63738b');
+ stat('Semanas cotizadas',d.weeks,cols[0],337,300);
+ stat('IMSS activo',d.imss,cols[1],337,300);
+ stat('Retiro últimos 5 años',d.past,cols[2],337,310);
+ line(35,442,1030);
+ stat('Última empresa',d.company,cols[0],478,300);
+ stat('Salario diario (SBC)',d.sbc===null?'Por confirmar':money(d.sbc),cols[1],478,300);
+ stat('Referencia de 30 días',d.sbc===null?'—':money(d.reference),cols[2],478,300);
+ // Two principal figures: net (navy) and comparison (green).
+ fill(30,587,569,166,'#142d50');
+ fill(30,749,569,4,'#cba150');
+ text('NETO ESTIMADO A RECIBIR',51,620,18,'#e9d0a0',true);
+ text(money(d.net),51,696,53,'#ffffff',true);
+ text('Importe estimado después de honorarios.',52,731,16,'#cfdaea');
+ fill(613,587,457,166,'#e4f5e9');
+ text('COMPARACIÓN NETA',638,620,18,'#187344',true);
+ text(d.ratio===null?'—':d.ratio.toFixed(2)+' veces',638,696,49,'#15733d',true);
+ text('Frente a la referencia de 30 días del SBC.',639,731,15,'#347750');
+ fill(30,769,510,70,'#f4f6f9');fill(550,769,520,70,'#f4f6f9');
+ text('Retiro estimado',48,792,16,'#64758d');
+ text(money(d.amount),48,825,26,'#192e4c',true);
+ text('Honorarios de asesoría',570,792,16,'#64758d');
+ text(money(d.fee),570,825,26,'#192e4c',true);
+ text('Estimación informativa, no monto garantizado. La AFORE determina el importe definitivo.',35,869,15,'#63738b');
  return c;
 }
-function downloadPNG(){
+async function downloadPNG(){
  const d=state.data;if(!d)return;
+ const button=$('cya-share-png');if(button)button.disabled=true;
  try{
-  const canvas=drawCanvas(d);
+  $('cya-share-feedback').textContent='Preparando ficha con logotipo institucional…';
+  const logo=await loadBrandLogo();
+  const canvas=drawCanvas(d,logo);
   const link=document.createElement('a');
   link.download='CYA_Elegibilidad_'+d.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/gi,'_')+'.png';
   link.href=canvas.toDataURL('image/png');
   document.body.appendChild(link);link.click();link.remove();
   $('cya-share-feedback').textContent='Ficha PNG generada. Adjunta el archivo en WhatsApp.';
- }catch(e){console.error('PNG de elegibilidad',e);$('cya-share-feedback').textContent='No se pudo crear la ficha PNG en este navegador';}
+ }catch(e){
+  console.error('PNG de elegibilidad',e);
+  $('cya-share-feedback').textContent='No se pudo generar el PNG con el logotipo. Verifica la conexión e inténtalo nuevamente.';
+ }finally{if(button)button.disabled=false;}
 }
 window.cyaAbrirCompartirElegibilidad=open;
 window.__cyaShareEligibility={snapshot,open,close,downloadPNG,switchRecipient,clientMessage};
