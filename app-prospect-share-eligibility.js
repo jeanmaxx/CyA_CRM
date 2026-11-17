@@ -132,12 +132,13 @@ function createDialog(){
     '<div class="cya-share-png" id="cya-share-sheet">'+
      '<div class="cya-share-png-head"><img class="cya-share-brand-logo" src="'+BRAND_LOGO_URL+'" alt="Casillas & Asociados Consultoría"><div><span class="cya-share-brand-name">CASILLAS & ASOCIADOS · CONSULTORÍA</span><strong>RESULTADO DE ELEGIBILIDAD</strong><small>Retiro por desempleo</small></div></div>'+
      '<div class="cya-share-png-body"><div class="cya-share-client"><div><small>CLIENTE</small><strong id="cya-share-person"></strong></div><span id="cya-share-status"></span></div>'+
+     '<div id="cya-share-pending" hidden><div class="cya-share-followup-title">PRÓXIMA FECHA DE REVISIÓN</div><div class="cya-share-followup-date"><strong id="cya-share-followup-date"></strong><span id="cya-share-followup-long"></span><small>Te contactaremos para revisar nuevamente tu caso.</small></div><div class="cya-share-followup-reason"><b>Retiro anterior registrado</b><div>Fecha del último retiro: <strong id="cya-share-last-date"></strong></div><p>Por el momento no es posible iniciar un nuevo trámite debido al tiempo transcurrido desde tu retiro anterior.</p></div><div class="cya-share-followup-note"><b>Tu expediente permanece en seguimiento</b><p>Conservaremos tu registro para realizar una nueva revisión en la fecha programada, considerando los requisitos vigentes.</p></div><div class="cya-share-advisor"><b id="cya-share-advisor"></b><small>Asesor · Casillas & Asociados</small><strong id="cya-share-advisor-phone"></strong></div></div><div id="cya-share-eligible">'+
      '<div class="cya-share-stats" id="cya-share-eligibility-stats"></div>'+
      '<div class="cya-share-stats" id="cya-share-work-stats"></div>'+
      '<div class="cya-share-featured"><div class="cya-share-net"><small>NETO ESTIMADO A RECIBIR</small><strong id="cya-share-net"></strong><span>Importe estimado después de honorarios.</span></div>'+'<div class="cya-share-compare"><span>COMPARACIÓN NETA</span><strong id="cya-share-ratio"></strong><small>Frente a la referencia de 30 días del SBC.</small></div></div>'+'<div class="cya-share-finances" id="cya-share-finance-stats"></div>'+
      
      '<p>Estimación informativa, no monto garantizado. El importe definitivo depende de la modalidad aplicable y autorización de la AFORE.</p>'+
-     '</div></div></div>'+
+     '</div></div></div></div>'+
    '<div class="cya-share-pane"><div class="cya-share-pane-title">Mensaje de WhatsApp</div>'+
     '<div class="cya-share-recipient-selector"><label for="cya-share-recipient-kind">Destinatario</label><select id="cya-share-recipient-kind" aria-label="Destinatario de elegibilidad"><option value="cliente">Cliente</option><option value="colaborador">Colaborador</option></select></div>'+
     '<div class="cya-share-chat"><label for="cya-share-text" id="cya-share-message-label">Mensaje editable</label><textarea id="cya-share-text" rows="13"></textarea>'+
@@ -162,8 +163,17 @@ function stats(items){
  return items.map(([label,v])=>'<div class="cya-share-stat"><small>'+escapeHTML(label)+'</small><strong>'+escapeHTML(v)+'</strong></div>').join('');
 }
 function render(d){
+ $('cya-share-sheet').classList.toggle('cya-share-is-pending',d.pendingRetiro5);
+ $('cya-share-pending').hidden=!d.pendingRetiro5;
+ $('cya-share-eligible').hidden=d.pendingRetiro5;
+ $('cya-share-sheet').querySelector('.cya-share-png-head strong').textContent=d.pendingRetiro5?'RESULTADO DE REVISIÓN':'RESULTADO DE ELEGIBILIDAD';
+ $('cya-share-followup-date').textContent=shortDate(d.recontactDate);
+ $('cya-share-followup-long').textContent=longDate(d.recontactDate);
+ $('cya-share-last-date').textContent=shortDate(d.lastWithdrawal);
+ $('cya-share-advisor').textContent=d.advisorName;
+ $('cya-share-advisor-phone').textContent=d.advisorPhone;
  $('cya-share-person').textContent=d.name.toUpperCase();
- $('cya-share-status').textContent=d.eligibilityText;
+ $('cya-share-status').textContent=d.pendingRetiro5?'Seguimiento programado':d.eligibilityText;
  $('cya-share-eligibility-stats').innerHTML=stats([['Semanas cotizadas',d.weeks],['IMSS activo',d.imss],['Retiro últimos 5 años',d.past]]);
  $('cya-share-work-stats').innerHTML=stats([['Última empresa',d.company],['Salario diario (SBC)',d.sbc===null?'Por confirmar':money(d.sbc)],['Referencia de 30 días',d.sbc===null?'—':money(d.reference)]]);
  $('cya-share-finance-stats').innerHTML=stats([['Retiro estimado',money(d.amount)],['Honorarios de asesoría',money(d.fee)]]);
@@ -219,7 +229,46 @@ function loadBrandLogo(){
   if(img.complete&&img.naturalWidth>0)resolve(img);
  });
 }
+function drawPendingCanvas(d,logo){
+ const c=document.createElement('canvas');c.width=1100;c.height=895;
+ const ctx=c.getContext('2d');if(!ctx)throw Error('No se pudo crear el PNG');
+ const fill=(x,y,w,h,color)=>{ctx.fillStyle=color;ctx.fillRect(x,y,w,h)};
+ const txt=(v,x,y,size=24,color='#142d50',bold=false)=>{ctx.fillStyle=color;ctx.font=(bold?'700 ':'400 ')+size+'px Arial';ctx.fillText(String(v),x,y)};
+ function lines(str,x,y,maxW,size=23,color='#52617a',height=33){
+  ctx.font=size+'px Arial';let row='',yy=y;
+  for(const word of String(str).split(/\s+/)){const t=row?row+' '+word:word;if(ctx.measureText(t).width>maxW&&row){txt(row,x,yy,size,color);yy+=height;row=word;}else row=t;}
+  if(row)txt(row,x,yy,size,color);return yy;
+ }
+ fill(0,0,1100,895,'#ffffff');fill(0,0,1100,170,'#142d50');fill(0,166,1100,4,'#cba150');
+ if(!logo||!logo.naturalWidth)throw Error('Logotipo institucional no disponible');
+ const scale=Math.min(170/logo.naturalWidth,126/logo.naturalHeight);
+ const w=logo.naturalWidth*scale,h=logo.naturalHeight*scale;
+ ctx.drawImage(logo,30+(170-w)/2,19+(126-h)/2,w,h);
+ fill(226,27,1,112,'#5b718e');
+ txt('CASILLAS & ASOCIADOS · CONSULTORÍA',250,53,18,'#efc878',true);
+ txt('RESULTADO DE REVISIÓN',250,100,34,'#ffffff',true);
+ txt('Retiro por desempleo',251,139,21,'#dce8f7');
+ txt('CLIENTE',35,216,17,'#63768d');lines(d.name.toUpperCase(),35,254,750,27,'#142c4c',31);
+ fill(805,198,255,61,'#fff2dc');txt('Seguimiento programado',818,235,18,'#93631d',true);
+ fill(35,296,1030,1,'#d9e2eb');
+ txt('PRÓXIMA FECHA DE REVISIÓN',40,339,22,'#142d50',true);
+ fill(35,357,1030,203,'#e9f0fa');txt(shortDate(d.recontactDate),290,441,67,'#142d50',true);
+ txt(longDate(d.recontactDate),342,486,25,'#51627d');
+ txt('Te contactaremos para revisar nuevamente tu caso.',217,531,24,'#142d50');
+ fill(35,580,1030,140,'#fff7e9');txt('Retiro anterior registrado',55,619,25,'#835a20',true);
+ txt('Fecha del último retiro',55,658,22,'#665a4a');
+ txt(shortDate(d.lastWithdrawal),815,658,26,'#142d50',true);
+ lines('Por el momento no es posible iniciar un nuevo trámite debido al tiempo transcurrido desde tu retiro anterior.',55,698,975,19,'#665a4a',25);
+ txt('Tu expediente permanece en seguimiento',40,764,24,'#142d50',true);
+ txt('Nueva revisión sujeta a requisitos vigentes y actualización de datos.',40,796,19,'#51627d');
+ fill(35,817,1030,1,'#d9e2eb');
+ txt(d.advisorName,40,854,24,'#142d50',true);
+ txt('Asesor · Casillas & Asociados',40,883,16,'#51627d');
+ txt(d.advisorPhone,805,861,23,'#176b4a',true);
+ return c;
+}
 function drawCanvas(d,logo){
+ if(d.pendingRetiro5)return drawPendingCanvas(d,logo);
  const c=document.createElement('canvas');c.width=1100;c.height=895;
  const ctx=c.getContext('2d');if(!ctx)throw Error('No se pudo crear el PNG');
  const fill=(x,y,w,h,color)=>{ctx.fillStyle=color;ctx.fillRect(x,y,w,h)};
