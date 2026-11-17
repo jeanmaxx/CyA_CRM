@@ -39,7 +39,7 @@ function addMonths(iso,months){
 const longDate=iso=>iso?Number(iso.slice(8,10))+' de '+MONTHS[Number(iso.slice(5,7))-1]+' de '+iso.slice(0,4):'pendiente de confirmar';
 const shortDate=iso=>iso?iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4):'Por confirmar';
 function retiro5Message(d){
- return RETIRO5_TEMPLATE.replace('{{NOMBRE}}',String(d.name||'').trim().split(/\s+/)[0]||'')
+ return RETIRO5_TEMPLATE.replace('{{NOMBRE}}',(String(d.name||'').trim().split(/\s+/)[0]||'').toLocaleLowerCase('es-MX').replace(/^./,c=>c.toLocaleUpperCase('es-MX')))
  .replace('{{FECHA_ULTIMO_RETIRO}}',longDate(d.lastWithdrawal))
  .replace('{{FECHA_RECONTACTO}}',longDate(d.recontactDate));
 }
