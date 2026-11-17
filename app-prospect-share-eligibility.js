@@ -19,6 +19,31 @@ const normalizePhone=v=>{
  return digits.length>=10&&digits.length<=15?digits:'';
 };
 const state={data:null,openedFrom:null,recipient:'cliente',drafts:{}};
+
+const RETIRO5_TEMPLATE='¡Hola, {{NOMBRE}}!\n\nAl revisar tu información encontramos que _ya realizaste anteriormente un retiro por desempleo_.\n\nDe acuerdo con tu expediente, la fecha de tu último retiro es *{{FECHA_ULTIMO_RETIRO}}*.\n\nPor ello, hemos programado una nueva revisión para el *{{FECHA_RECONTACTO}}*. En esa fecha te contactaremos para revisar nuevamente tu información y confirmar si ya cumples con los requisitos vigentes para iniciar un nuevo retiro por desempleo.\n\nPor el momento no es posible continuar con el trámite, pero con gusto dejaremos tu registro guardado para dar seguimiento en la fecha indicada.\n\nSi en ese momento continúas interesado y cumples con los requisitos vigentes, podremos comenzar nuevamente con tu trámite.\n\nAgradecemos tu confianza y quedamos a tus órdenes.';
+const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function isoDate(raw){
+ const str=String(raw||'').trim();
+ let m=str.match(/^(\d{4})-(\d\d)-(\d\d)/);
+ if(!m){const mx=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(mx)m=[null,mx[3],mx[2],mx[1]];}
+ if(!m)return '';
+ const d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));
+ return d.getUTCFullYear()===+m[1]&&d.getUTCMonth()===+m[2]-1&&d.getUTCDate()===+m[3]?d.toISOString().slice(0,10):'';
+}
+function addMonths(iso,months){
+ if(!iso)return '';
+ const [year,month,day]=iso.split('-').map(Number),d=new Date(Date.UTC(year,month-1+months,1));
+ const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();
+ d.setUTCDate(Math.min(day,last));return d.toISOString().slice(0,10);
+}
+const longDate=iso=>iso?Number(iso.slice(8,10))+' de '+MONTHS[Number(iso.slice(5,7))-1]+' de '+iso.slice(0,4):'pendiente de confirmar';
+const shortDate=iso=>iso?iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4):'Por confirmar';
+function retiro5Message(d){
+ return RETIRO5_TEMPLATE.replace('{{NOMBRE}}',String(d.name||'').trim().split(/\s+/)[0]||'')
+ .replace('{{FECHA_ULTIMO_RETIRO}}',longDate(d.lastWithdrawal))
+ .replace('{{FECHA_RECONTACTO}}',longDate(d.recontactDate));
+}
+
 function snapshot(){
  const id=typeof editingLeadId!=='undefined'?editingLeadId:null;
  const l=typeof store!=='undefined'?(store.leads||[]).find(x=>String(x.id)===String(id)):null;
@@ -31,11 +56,22 @@ function snapshot(){
  const label=id=>{const el=$(id);if(!el)return '';return el.selectedOptions?.[0]?.textContent?.trim()||el.value||''};
  const imss=label('lead-el-cotiza')||'Por confirmar';
  const past=label('lead-el-retiro')||'Por confirmar';
+ const pastRaw=value('lead-el-retiro')||l?.elegibilidad?.retiro5||'';
+ const lastWithdrawal=isoDate(value('lead-el-fecha-retiro'))||isoDate(l?.fechaUltimoRetiro)||isoDate(l?.elegibilidad?.fechaRetiro);
+ const savedLast=isoDate(l?.fechaUltimoRetiro)||isoDate(l?.elegibilidad?.fechaRetiro);
+ const scheduled=isoDate(l?.fechaRecontacto)||isoDate((typeof store!=='undefined'?(store.agenda||[]):[]).find(e=>String(e.leadId||'')===String(id)&&String(e.id||'')==='ev_recontacto_'+id)?.fecha);
+ const recontactDate=lastWithdrawal===savedLast&&scheduled?scheduled:addMonths(lastWithdrawal,59);
+ const today=new Date(),localToday=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
+ const pendingRetiro5=pastRaw==='si'&&!!lastWithdrawal&&!!recontactDate&&recontactDate>localToday;
+ const advisor=(typeof sesionActiva!=='undefined'&&sesionActiva)?sesionActiva:null;
+ const assignedAdvisor=(typeof store!=='undefined'?(store.asesores||[]):[]).find(a=>String(a.id)===String(l?.asesorId))||advisor;
+ const advisorName=assignedAdvisor?.nombre||'Emmanuel Álvarez';
+ const advisorPhone=assignedAdvisor?.telefonoWhatsapp||assignedAdvisor?.whatsapp||assignedAdvisor?.telefono||assignedAdvisor?.celular||'442 286 79 65';
  const qualified=(typeof window.cyaMetaQualification==='function'&&l)?window.cyaMetaQualification(l):null;
  const eligibilityText=qualified?.tone==='green'?'Criterios iniciales favorables':'Evaluación inicial · Por confirmar';
  return {
   name:value('lead-nombre')||l?.nombre||'Prospecto sin nombre',
-  weeks:String(weeks),imss,past,
+  weeks:String(weeks),imss,past,pendingRetiro5,lastWithdrawal,recontactDate,advisorName,advisorPhone,
   company:value('lead-com-empresa')||'No registrada',
   sbc,reference:ref,amount:withdrawal,fee,net,
   ratio:ref>0?net/ref:null,period:value('lead-com-periodo')||'2026',
@@ -47,6 +83,7 @@ function snapshot(){
  };
 }
 function message(d){
+ if(d.pendingRetiro5)return 'Seguimiento de '+d.name+'\n\n'+retiro5Message(d);
  const comparison=d.ratio!==null?
   'El neto estimado después de honorarios equivale a *'+d.ratio.toFixed(2)+' veces* la referencia de 30 días del salario registrado en el IMSS.':
   'Aún falta el salario diario registrado ante el IMSS para realizar la comparación de importes.';
@@ -58,6 +95,7 @@ function message(d){
   '. Ambos son importes orientativos sujetos a revisión y autorización de la AFORE.\n\nTe comparto la ficha resumen como apoyo para tu seguimiento.\n\n¡Saludos!';
 }
 function clientMessage(d){
+ if(d.pendingRetiro5)return retiro5Message(d);
  const first=String(d.name||'').trim().split(/\s+/)[0]||'';
  const greeting=first?'¡Hola, '+first.charAt(0).toUpperCase()+first.slice(1).toLocaleLowerCase('es-MX')+'!':'¡Hola!';
  const favorable=d.eligibilityText==='Criterios iniciales favorables';
