@@ -1,0 +1,31 @@
+name: Build CYA Android 5 Fase 3
+on:
+  push:
+    branches:
+      - diagnostico-android5-fase3
+    paths:
+      - 'android-fase3/**'
+      - '.github/workflows/build-cya-android5-fase3.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-fase3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build diagnostic APK
+        run: gradle :app:assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CyA-Fase3-Android5-APK
+          path: android-fase3/app/build/outputs/apk/debug/app-debug.apk
