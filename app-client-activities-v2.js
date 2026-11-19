@@ -118,7 +118,7 @@
    c.etapa='honorarios_recibidos';
    c.archivado=true;
    const date=c.etapasOperativasV2?.honorarios?.fecha;
-   c.fechaCierre=/^\\d{4}-\\d{2}-\\d{2}$/.test(String(date||''))&&date<=isoToday()?date:isoToday();
+   c.fechaCierre=/^\d{4}-\d{2}-\d{2}$/.test(String(date||''))&&date<=isoToday()?date:isoToday();
    if(typeof addHist==='function')addHist(c,'cierre','Cierre conciliado: 12 actividades confirmadas y honorarios previamente cobrados; sin nuevo movimiento financiero');
   }
   Promise.resolve().then(()=>cloudSyncNow({throwOnError:true})).then(()=>{
