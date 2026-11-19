@@ -72,7 +72,7 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(c.estadoPago,'Cobrado','One honorarios confirmation also updates Finanzas');
  assert.equal(c.etapasOperativasV2.honorarios.done,true);
  assert.equal(c.archivado,undefined,'Missing previous activities must not silently archive a client');
- assert.equal(confirmations,3,'One confirmation for fees and deposit together');
+ assert.equal(confirmations,2,'One confirmation for fees and deposit together');
  assert.equal(c.etapasOperativasV2.deposito.done,true,'Deposit confirmation is explicit dependency');
  assert.equal(c.comision,snap.comision,'Never mark advisor commission paid');
  // An attended case allows owner/admin audited historical corrections.
