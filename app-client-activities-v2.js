@@ -61,6 +61,7 @@
   // Do not guess optional milestones from later legacy stages. They remain yellow.
   return done;
  };
+ const fullyCompleted=c=>Boolean(c&&c.servicio==='retiro_desempleo'&&!c.descartado&&!c.devueltoAProspectos&&feeCollected(c)&&STEPS.every(step=>flags(c)[step.id]));
  const statuses=c=>{
   const f=flags(c);
   return STEPS.map((step,i)=>{
@@ -102,6 +103,34 @@
  };
  let active=null;
  let saving=false;
+ let reconciliationBusy=false;
+ const reconciliationAttempted=new Set();
+ // Conciliación de expedientes históricos que ya tenían las 12 marcas verdes
+ // antes de habilitar el cierre automático. Nunca crea cobros ni hitos.
+ function reconcileCompleted(clients){
+  if(reconciliationBusy||saving||typeof cloudReady==='undefined'||!cloudReady||typeof cloudSyncNow!=='function')return;
+  const eligible=(Array.isArray(clients)?clients:[]).filter(c=>!c.archivado&&authorized(c)&&fullyCompleted(c)&&!reconciliationAttempted.has(String(c.id)));
+  if(!eligible.length)return;
+  reconciliationBusy=true;
+  const snapshots=eligible.map(c=>({c,etapa:c.etapa,archivado:c.archivado,fechaCierre:c.fechaCierre,historial:JSON.parse(JSON.stringify(c.historial||[]))}));
+  for(const {c} of snapshots){
+   reconciliationAttempted.add(String(c.id));
+   c.etapa='honorarios_recibidos';
+   c.archivado=true;
+   const date=c.etapasOperativasV2?.honorarios?.fecha;
+   c.fechaCierre=/^\\d{4}-\\d{2}-\\d{2}$/.test(String(date||''))&&date<=isoToday()?date:isoToday();
+   if(typeof addHist==='function')addHist(c,'cierre','Cierre conciliado: 12 actividades confirmadas y honorarios previamente cobrados; sin nuevo movimiento financiero');
+  }
+  Promise.resolve().then(()=>cloudSyncNow({throwOnError:true})).then(()=>{
+   reconciliationBusy=false;
+   if(typeof renderPage==='function'&&typeof currentPage!=='undefined'&&currentPage==='clientes')renderPage('clientes');
+  }).catch(()=>{
+   for(const {c,etapa,archivado,fechaCierre,historial} of snapshots){c.etapa=etapa;c.archivado=archivado;c.fechaCierre=fechaCierre;c.historial=historial;}
+   reconciliationBusy=false;
+   if(typeof showToast==='function')showToast('No se pudo sincronizar el cierre de los expedientes completos. No se modificaron sus pagos; vuelve a intentar al recargar.','warn');
+  });
+ }
+
  const close=()=>{
   $('cya-operational-modal')?.remove();
   active=null;
@@ -211,7 +240,7 @@
    if(typeof addHist==='function')addHist(c,'finanzas','Cobro de honorarios confirmado desde seguimiento operativo · '+date+(note?' · '+note:''));
   }
   // Solo cerrar al existir cobro y las doce actividades verificadas.
-  if(!c.archivado&&feeCollected(c)&&STEPS.every(s=>flags(c)[s.id])){
+  if(!c.archivado&&fullyCompleted(c)){
    c.etapa='honorarios_recibidos';
    c.archivado=true;
    c.fechaCierre=date;
@@ -244,7 +273,7 @@
   e.stopPropagation();e.preventDefault();
   open(button.dataset.cyaClient,button.dataset.cyaActivity);
  },true);
- window.__cyaClientActivitiesV2={STEPS,statuses,flags,documents,renderMini,renderFull,open,close};
+ window.__cyaClientActivitiesV2={STEPS,statuses,flags,documents,fullyCompleted,reconcileCompleted,renderMini,renderFull,open,close};
  window.cyaRenderActivitiesMini=renderMini;
  window.cyaRenderActivitiesFull=renderFull;
 })();
