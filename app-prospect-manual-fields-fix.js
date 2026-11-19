@@ -216,7 +216,7 @@
  if(window.__cyaClientActivitiesV2LoaderStarted)return;
  window.__cyaClientActivitiesV2LoaderStarted=true;
  const script=document.createElement('script');
- script.src='/app-client-activities-v2.js?v=20261113-polish2';
+ script.src='/app-client-activities-v2.js?v=20261119-cierre-finanzas1';
  script.async=false;
  script.dataset.cyaClientActivities='1';
  document.head.appendChild(script);
