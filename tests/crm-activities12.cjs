@@ -75,7 +75,19 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(confirmations,2,'One confirmation for fees and deposit together');
  assert.equal(c.etapasOperativasV2.deposito.done,true,'Deposit confirmation is explicit dependency');
  assert.equal(c.comision,snap.comision,'Never mark advisor commission paid');
- // An attended case allows owner/admin audited historical corrections.
+ // Fully confirmed milestones must archive on the very same finance confirmation.
+ const complete={...c,id:'complete-1',etapa:'deposito_recibido',archivado:false,estadoPago:'Pendiente',fechaCierre:null,historial:[],docs:{curp:true,csf:true,acta:true},etapasOperativasV2:{}};
+ for(const item of model.STEPS.filter(x=>x.id!=='honorarios'))complete.etapasOperativasV2[item.id]={done:true,fecha:'2026-11-10'};
+ w.store.clientes.push(complete);
+ assert(model.open('complete-1','honorarios'));
+ d.getElementById('cya-op-date').value='11/11/2026';
+ d.querySelector('[data-op-save]').click();await tick();await tick();
+ assert.equal(complete.archivado,true,'Completed case automatically moves to Clientes atendidos');
+ assert.equal(complete.etapa,'honorarios_recibidos','Completion records canonical closed stage');
+ assert.equal(complete.estadoPago,'Cobrado','The finance ledger shares the one confirmation');
+ assert.equal(complete.fechaCierre,'2026-11-11','Historical date is preserved on closing');
+ assert.equal(complete.comision,snap.comision,'Completion does not mark commissions as paid');
+  // An attended case allows owner/admin audited historical corrections.
  const attended={...c,id:'arch-1',archivado:true,etapasOperativasV2:{},docs:{curp:true,csf:false,acta:false},historial:[]};
  w.store.clientes.push(attended);
  assert(model.open('arch-1','documentos'));
