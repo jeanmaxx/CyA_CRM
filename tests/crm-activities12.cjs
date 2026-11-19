@@ -109,7 +109,25 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(attended.etapasOperativasV2.alta.done,true,'Historical correction saved');
  assert.equal(attended.archivado,true,'Historical correction keeps archive state');
  assert.equal(attended.estadoPago,'Cobrado','Historical correction preserves paid finance');
- // No save for other advisor.
+ // A previously fully completed, paid case is closed without any new collection.
+ const retro={...complete,id:'retro-1',etapa:'deposito_recibido',archivado:false,fechaCierre:null,historial:[],estadoPago:'Cobrado',etapasOperativasV2:{...complete.etapasOperativasV2}};
+ w.store.clientes.push(retro);
+ w.cloudReady=true;
+ assert.equal(model.fullyCompleted(retro),true,'All twelve green and collected qualify for retroactive closure');
+ const priorSaves=saves;
+ model.reconcileCompleted([retro]);
+ await tick();await tick();
+ assert.equal(retro.archivado,true,'Existing completed case moves to attended');
+ assert.equal(retro.etapa,'honorarios_recibidos');
+ assert.equal(retro.estadoPago,'Cobrado','No second payment is registered');
+ assert.equal(retro.fechaCierre,'2026-11-11','Original fee confirmation date is retained');
+ assert.equal(saves,priorSaves+1,'Retroactive closure persists once');
+ assert(retro.historial.some(h=>h.tipo==='cierre'),'Retroactive closure is audited');
+ const notPaid={...retro,id:'unpaid-1',archivado:false,etapa:'deposito_recibido',estadoPago:'Pendiente',historial:[]};
+ model.reconcileCompleted([notPaid]);
+ await tick();
+ assert.equal(notPaid.archivado,false,'No client is archived without collected fees');
+  // No save for other advisor.
  w.sesionActiva={id:'other',rol:'asesor'};
  const before=saves;
  assert(model.open('c1','app'));
