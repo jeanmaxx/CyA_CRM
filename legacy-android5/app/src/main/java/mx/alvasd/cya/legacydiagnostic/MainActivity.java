@@ -23,7 +23,7 @@ public final class MainActivity extends Activity {
         heading.setTextSize(20);
         layout.addView(heading);
         TextView status = new TextView(this);
-        status.setText("Android API: " + Build.VERSION.SDK_INT + "\\nMotor WebView: comprobación local, sin conexión ni credenciales.");
+        status.setText("Android API: " + Build.VERSION.SDK_INT + "\nMotor WebView: comprobación local, sin conexión ni credenciales.");
         status.setTextColor(Color.WHITE);
         status.setPadding(0, 18, 0, 18);
         layout.addView(status);
