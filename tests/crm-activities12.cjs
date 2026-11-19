@@ -68,15 +68,14 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(model.statuses(c).find(x=>x.id==='documentos').state,'done');
  assert(model.open('c1','honorarios'));
  d.getElementById('cya-op-date').value='11/11/2026';
- d.querySelector('[data-op-save]').click();await tick();
- assert.equal(Boolean(c.etapasOperativasV2.honorarios),false,'Honorarios cannot be marked without finance confirmation');
- c.estadoPago='Cobrado';
  d.querySelector('[data-op-save]').click();await tick();await tick();
+ assert.equal(c.estadoPago,'Cobrado','One honorarios confirmation also updates Finanzas');
  assert.equal(c.etapasOperativasV2.honorarios.done,true);
+ assert.equal(c.archivado,undefined,'Missing previous activities must not silently archive a client');
+ assert.equal(confirmations,3,'One confirmation for fees and deposit together');
  assert.equal(c.etapasOperativasV2.deposito.done,true,'Deposit confirmation is explicit dependency');
  assert.equal(c.comision,snap.comision,'Never mark advisor commission paid');
- // A completed/attended case is read-only except for an owner/admin's
- // explicit and audited document correction.
+ // An attended case allows owner/admin audited historical corrections.
  const attended={...c,id:'arch-1',archivado:true,etapasOperativasV2:{},docs:{curp:true,csf:false,acta:false},historial:[]};
  w.store.clientes.push(attended);
  assert(model.open('arch-1','documentos'));
@@ -90,7 +89,13 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(attended.etapasOperativasV2.documentos.done,true,'Archived owner document correction persisted');
  assert(attended.historial.some(h=>h.tipo==='actividad'),'Correction has audit trail');
  assert(model.open('arch-1','alta'));
- assert(!d.querySelector('[data-op-save]'),'Unrelated archived milestones are read-only');
+ assert(d.querySelector('[data-op-save]'),'Owner can correct archived milestones');
+ d.getElementById('cya-op-note').value='Alta confirmada en expediente histórico';
+ d.getElementById('cya-op-date').value='11/11/2026';
+ d.querySelector('[data-op-save]').click();await tick();await tick();
+ assert.equal(attended.etapasOperativasV2.alta.done,true,'Historical correction saved');
+ assert.equal(attended.archivado,true,'Historical correction keeps archive state');
+ assert.equal(attended.estadoPago,'Cobrado','Historical correction preserves paid finance');
  // No save for other advisor.
  w.sesionActiva={id:'other',rol:'asesor'};
  const before=saves;
@@ -102,5 +107,5 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert(!d.querySelector('[data-op-save]'));
  assert.match(d.querySelector('.cya-operational-readonly')?.textContent||'',/Solo lectura/);
  model.close();w.close();
- console.log('PASS: 12 milestones, confirmed canonical request, forecast preservation, no fabricated prior dates, finance and role guards.');
+ console.log('PASS: 12 milestones, single-step fee posting, archived corrections, finance and role guards.');
 })().catch(e=>{console.error(e);w.close();process.exitCode=1});
