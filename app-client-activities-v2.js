@@ -155,14 +155,14 @@
   if(!step||!authorized(c,stepId))return msg('No tienes permiso para actualizar este seguimiento');
   const note=String($('cya-op-note')?.value||'').trim(),date=readDate('cya-op-date');
   if(!date||(stepId!=='cita'&&date>isoToday()))return msg('Registra una fecha válida en formato dd/mm/aaaa; las actividades realizadas no pueden tener fecha futura');
-  if(step.done&&note.length<3)return msg('Escribe un motivo de corrección de al menos tres caracteres');
+  if((step.done||c.archivado)&&note.length<3)return msg('Escribe un motivo o evidencia de la corrección de al menos tres caracteres');
   const docChecks={curp:Boolean($('cya-op-doc-curp')?.checked),csf:Boolean($('cya-op-doc-csf')?.checked),acta:Boolean($('cya-op-doc-acta')?.checked)};
   // Individual checks are saved, even when the checklist is incomplete.
-  if((stepId==='firmado'||stepId==='firmas')&&!flags(c).contrato)return msg('Primero genera el contrato desde el expediente');
-  if(stepId==='contrato'&&!(c.historialContratos||[]).length)return msg('Primero genera el contrato desde Contratos');
-  if(stepId==='banco_n4'&&!String(c.banco||'').trim())return msg('Primero registra el banco en su tarjeta');
+  if((stepId==='firmado'||stepId==='firmas')&&!c.archivado&&!flags(c).contrato)return msg('Primero genera el contrato desde el expediente');
+  if(stepId==='contrato'&&!c.archivado&&!(c.historialContratos||[]).length)return msg('Primero genera el contrato desde Contratos');
+  if(stepId==='banco_n4'&&!c.archivado&&!String(c.banco||'').trim())return msg('Primero registra el banco en su tarjeta');
   const citaTime=String($('cya-op-time')?.value||''),citaBranch=String($('cya-op-branch')?.value||'').trim();
-  if(stepId==='cita'&&(!/^([01]\d|2[0-3]):[0-5]\d$/.test(citaTime)||!citaBranch))return msg('Registra hora y sucursal de la cita AFORE');
+  if(stepId==='cita'&&!c.archivado&&(!/^([01]\d|2[0-3]):[0-5]\d$/.test(citaTime)||!citaBranch))return msg('Registra hora y sucursal de la cita AFORE');
   if(stepId==='firmado'&&typeof window.confirm==='function'&&!window.confirm('¿Confirmas que el contrato está firmado en la fecha registrada?'))return;
   if(stepId==='deposito'&&typeof window.confirm==='function'&&!window.confirm('¿Confirmas que el depósito fue recibido realmente por el cliente?'))return;
   if(stepId==='honorarios'){
@@ -194,7 +194,7 @@
   }
   if(stepId==='app')c.aforeMovil='si';
   if(stepId==='banco_n4')c.cuentaNivel4='si';
-  if(stepId==='cita'){c.fechaBiometrica=date;c.horaBiometrica=citaTime;c.sucursalAfore=citaBranch;}
+  if(stepId==='cita'){c.fechaBiometrica=date;if(citaTime)c.horaBiometrica=citaTime;if(citaBranch)c.sucursalAfore=citaBranch;}
   if(stepId==='documentos')c.docs={...(c.docs||{}),...docChecks};
   if(stepId==='expediente'&&['contrato_firmado','dado_alta'].includes(c.etapa))advance('afore_actualizada');
   if(stepId==='solicitud'){
