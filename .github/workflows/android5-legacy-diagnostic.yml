@@ -55,14 +55,14 @@ jobs:
       - name: Publish APK to isolated branch
         run: |
           mkdir -p legacy-android5/dist
-          cp legacy-android5/app/build/outputs/apk/debug/app-debug.apk legacy-android5/dist/CyA_CRM_Legacy_Android5_Diagnostico.apk
+          cp legacy-android5/app/build/outputs/apk/debug/app-debug.apk legacy-android5/dist/CyA_CRM_Legacy_Android5_Fase2.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f legacy-android5/dist/CyA_CRM_Legacy_Android5_Diagnostico.apk
+          git add -f legacy-android5/dist/CyA_CRM_Legacy_Android5_Fase2.apk
           git diff --cached --quiet || (git commit -m "Build isolated Android 5 diagnostic APK [skip ci]" && git push)
       - name: Upload diagnostic APK
         uses: actions/upload-artifact@v4
         with:
-          name: cya-legacy-android5-diagnostic-apk
+          name: cya-legacy-android5-phase2-apk
           path: legacy-android5/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
