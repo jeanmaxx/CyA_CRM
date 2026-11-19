@@ -53,6 +53,7 @@ jobs:
       - name: Check APK exists
         run: test -s legacy-android5/app/build/outputs/apk/debug/app-debug.apk
       - name: Publish APK to isolated branch
+        continue-on-error: true
         run: |
           mkdir -p legacy-android5/dist
           cp legacy-android5/app/build/outputs/apk/debug/app-debug.apk legacy-android5/dist/CyA_CRM_Legacy_Android5_Fase2.apk
