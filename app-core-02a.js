@@ -454,6 +454,11 @@ function initCharts(){
 // ---- CLIENTES ----
 function renderClientes(){
   const base=clientesVisibles();  // clientes del asesor o vista seleccionada
+  // El módulo de actividades concilia expedientes previamente completados.
+  // Se difiere fuera del render para no modificar el arreglo al construir la tabla.
+  if(typeof window!=='undefined'&&window.__cyaClientActivitiesV2?.reconcileCompleted){
+    Promise.resolve().then(()=>window.__cyaClientActivitiesV2?.reconcileCompleted(base));
+  }
   const descartados=base.filter(c=>c.descartado);
   const activos=base.filter(c=>!c.descartado&&!c.archivado);
   const atendidos=base.filter(c=>!c.descartado&&c.archivado);
