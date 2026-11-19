@@ -1,0 +1,2 @@
+plugins { id 'com.android.application' }
+android { namespace 'mx.alvasd.cyafase3'; compileSdk 35; defaultConfig { applicationId 'mx.alvasd.cyafase3'; minSdk 21; targetSdk 28; versionCode 3; versionName '3.0' } }
