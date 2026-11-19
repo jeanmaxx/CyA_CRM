@@ -96,6 +96,7 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  d.getElementById('cya-op-date').value='11/11/2026';
  d.getElementById('cya-op-doc-csf').click();
  d.getElementById('cya-op-doc-acta').click();
+ d.getElementById('cya-op-note').value='Documentos verificados en el expediente histórico';
  assert.equal(d.getElementById('cya-op-doc-csf').checked,true,'Checkbox responds to real click');
  d.querySelector('[data-op-save]').click();await tick();await tick();
  assert.equal(attended.etapasOperativasV2.documentos.done,true,'Archived owner document correction persisted');
