@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=2">
+<title>C&A Legacy | Pruebas locales</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:15px Arial,sans-serif;background:#eef1f5;color:#162a43}
+header{background:#102540;color:#fff;padding:20px 18px;border-bottom:4px solid #bd9a58}
+.brand{font-weight:bold;letter-spacing:.3px;font-size:21px}.sub{color:#d5b675;font-size:12px;margin-top:4px}
+nav{display:flex;background:#fff;border-bottom:1px solid #d6dce3}
+nav button{flex:1;border:0;background:#fff;color:#273b54;padding:14px 4px;font-size:13px}
+nav button.active{color:#102540;border-bottom:3px solid #b99857;font-weight:bold}
+main{padding:16px;max-width:850px;margin:auto}.panel{background:white;border:1px solid #dce1e8;border-radius:10px;padding:18px;margin-bottom:14px}
+h2{font-size:19px;margin:0 0 10px}p{line-height:1.5}.muted{color:#627187;font-size:13px}
+label{display:block;font-weight:bold;margin:15px 0 6px}
+input{display:block;width:100%;padding:12px;border:1px solid #b9c4d2;border-radius:5px;font-size:16px}
+.action{background:#102540;color:#fff;border:0;border-radius:6px;padding:12px 16px;margin-top:14px;min-height:44px}
+.secondary{background:#b99857;color:#152840}.row{padding:8px 0;border-bottom:1px solid #e8edf2;word-break:break-word}
+.ok{color:#167647;font-weight:bold}.bad{color:#aa3131;font-weight:bold}
+section{display:none}section.current{display:block}.notice{border-left:4px solid #b99857;padding:10px;background:#faf6ed}
+</style>
+</head>
+<body>
+<header><div class="brand">Casillas &amp; Asociados</div><div class="sub">CONSULTORÍA · C&A CRM LEGACY · FASE 2</div></header>
+<nav><button type="button" class="active" data-tab="acceso">Acceso demo</button><button type="button" data-tab="pruebas">Compatibilidad</button><button type="button" data-tab="info">Información</button></nav>
+<main>
+<section id="acceso" class="current"><div class="panel">
+<h2>Acceso de demostración</h2><p class="notice">Esta pantalla es una simulación local. No ingreses contraseñas ni datos reales.</p>
+<label for="alias">Nombre de prueba</label><input id="alias" autocomplete="off" placeholder="Ejemplo: Asesor de prueba" maxlength="40">
+<button class="action" type="button" id="demo">Probar acceso local</button>
+<p id="resultado" aria-live="polite" class="muted">Sin conexión a servidores. Ninguna sesión real será iniciada.</p>
+</div></section>
+<section id="pruebas"><div class="panel"><h2>Pruebas del motor web</h2><p class="muted">Estas pruebas se ejecutan solamente dentro de la tablet.</p><div id="checks">Presiona «Ejecutar pruebas».</div><button type="button" class="action secondary" id="run">Ejecutar pruebas</button></div></section>
+<section id="info"><div class="panel"><h2>Información del dispositivo</h2><div class="row" id="agent">Motor: por detectar</div><div class="row" id="screen">Pantalla: por detectar</div><p class="notice">Aplicación independiente sin permiso de Internet. No utiliza Supabase ni contiene expedientes.</p></div></section>
+</main>
+<script>
+(function(){
+function el(id){return document.getElementById(id);}
+var buttons=document.querySelectorAll('nav button');
+for(var i=0;i<buttons.length;i++){buttons[i].onclick=function(){var tab=this.getAttribute('data-tab');for(var j=0;j<buttons.length;j++){buttons[j].className=buttons[j]===this?'active':'';}var sections=document.querySelectorAll('main section');for(var k=0;k<sections.length;k++){sections[k].className=sections[k].id===tab?'current':'';}};}
+el('demo').onclick=function(){var alias=el('alias').value.replace(/^\s+|\s+$/g,'');el('resultado').textContent=alias?'Bienvenido, '+alias+'. La navegación y el botón funcionan. Acceso REAL deshabilitado.':'Escribe un nombre de prueba para comprobar el formulario.';};
+el('agent').textContent='Motor: '+navigator.userAgent;
+el('screen').textContent='Pantalla CSS: '+window.innerWidth+' × '+window.innerHeight;
+function test(name,fn){var good=false;try{good=!!fn();}catch(e){}return '<div class="row">'+(good?'<span class="ok">OK</span>':'<span class="bad">NO</span>')+' — '+name+'</div>';}
+el('run').onclick=function(){var output='';
+output+=test('JavaScript básico',function(){return 2+2===4;});
+output+=test('localStorage disponible',function(){var key='cya_legacy_test';localStorage.setItem(key,'ok');var ok=localStorage.getItem(key)==='ok';localStorage.removeItem(key);return ok;});
+output+=test('Promise',function(){return typeof Promise==='function';});
+output+=test('fetch',function(){return typeof fetch==='function';});
+output+=test('ES6 let',function(){return new Function('let x=3;return x===3;')();});
+output+=test('Funciones flecha',function(){return new Function('return (()=>4)()===4;')();});
+output+=test('Optional chaining',function(){return new Function('var a={b:1};return a?.b===1;')();});
+output+=test('CSS Grid',function(){return !!(window.CSS&&CSS.supports&&CSS.supports('display','grid'));});
+el('checks').innerHTML=output;};
+})();
+</script>
+</body></html>
