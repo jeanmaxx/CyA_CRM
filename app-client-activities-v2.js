@@ -66,7 +66,8 @@
   const f=flags(c);
   return STEPS.map((step,i)=>{
    const later=STEPS.slice(i+1).some(s=>f[s.id]);
-   return {...step,index:i+1,done:f[step.id],state:f[step.id]?'done':later?'skipped':'future'};
+   const independent=step.id==='cita'&&(c?.etapasOperativasV2?.cita?.modalidad==='sin_cita'||(c?.aforeSeguimiento?.estado==='actualizado'&&c?.aforeSeguimiento?.modalidad==='sin_cita'));
+   return {...step,label:independent?'Expediente AFORE actualizado por cuenta propia':step.label,index:i+1,done:f[step.id],state:f[step.id]?'done':later?'skipped':'future'};
   });
  };
  const getClient=id=>typeof store==='undefined'?null:(store.clientes||[]).find(c=>String(c.id)===String(id));
