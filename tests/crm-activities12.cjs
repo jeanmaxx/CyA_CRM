@@ -152,6 +152,20 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(own.etapa,'afore_actualizada');
  assert(model.open('self-1','cita'));
  assert.equal(d.getElementById('cya-op-cita-mode').value,'sin_cita','Se conserva modalidad al reabrir');
+  // Banco N4 uses same bank suggestions and persists the canonical bank.
+ const bankClient={...c,id:'bank-1',etapa:'dado_alta',archivado:false,banco:'',cuentaNivel4:'',etapasOperativasV2:{},historial:[]};
+ w.store.clientes.push(bankClient);
+ assert(model.open('bank-1','banco_n4'));
+ const bankInput=d.getElementById('cya-op-bank');
+ assert(bankInput,'Bank dropdown must be available');
+ assert.equal(d.querySelectorAll('#cya-op-bank-options option').length,10);
+ d.querySelector('[data-op-save]').click();await tick();
+ assert.equal(bankClient.cuentaNivel4,'','Bank required to verify N4');
+ bankInput.value='BBVA';
+ d.querySelector('[data-op-save]').click();await tick();await tick();
+ assert.equal(bankClient.banco,'BBVA','Bank saved in original field');
+ assert.equal(bankClient.cuentaNivel4,'si','N4 confirmation saved');
+ assert(bankClient.historial.some(x=>x.tipo==='banco'),'Bank confirmation audited');
   // No save for other advisor.
  w.sesionActiva={id:'other',rol:'asesor'};
  const before=saves;
