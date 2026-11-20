@@ -145,18 +145,22 @@
    [['curp','CURP'],['csf','Constancia de Situación Fiscal'],['acta','Acta de Nacimiento']].map(([key,label])=>'<label><input type="checkbox" id="cya-op-doc-'+key+'" '+(check[key]?'checked':'')+' '+(!canEdit?'disabled':'')+'> '+label+'</label>').join('')+
    '<small>Recordar INE vigente y comprobante de domicilio de máximo tres meses.</small></fieldset>':'';
   const independent=record.modalidad==='sin_cita'||(c.aforeSeguimiento?.modalidad==='sin_cita'&&c.aforeSeguimiento?.estado==='actualizado');
+  // Sugerencias compartidas con el formulario de prospectos; se conserva la
+  // posibilidad de capturar bancos adicionales sin perder valores existentes.
+  const bankChoices=['BBVA','BANAMEX','SANTANDER','BANORTE','HSBC','SCOTIABANK','AZTECA','BAJÍO','INBURSA','OTRO'];
+  const bankFields=step.id==='banco_n4'?'<label class="cya-operational-field">Banco del cliente<input class="form-input" id="cya-op-bank" list="cya-op-bank-options" autocomplete="off" maxlength="100" placeholder="Selecciona o escribe el banco" value="'+esc(c.banco||'')+'" '+(!canEdit?'disabled':'')+'></label><datalist id="cya-op-bank-options">'+bankChoices.map(bank=>'<option value="'+esc(bank)+'"></option>').join('')+'</datalist><p class="cya-operational-tip">Seleccionar el banco no verifica por sí solo el nivel 4. Al confirmar este paso declaras que el nivel 4 fue comprobado.</p>':'';
   const citaFields=step.id==='cita'?'<label class="cya-operational-field">Modalidad de actualización AFORE<select class="form-input" id="cya-op-cita-mode" '+(!canEdit?'disabled':'')+'><option value="programada" '+(!independent?'selected':'')+'>Cita programada por el asesor</option><option value="sin_cita" '+(independent?'selected':'')+'>El cliente actualizó por su cuenta (sin cita)</option></select></label>'+
    '<div id="cya-op-cita-scheduled" '+(independent?'hidden':'')+'><label class="cya-operational-field">Hora programada (HH:MM)<input class="form-input" id="cya-op-time" type="time" value="'+esc(c.horaBiometrica||'')+'" '+(!canEdit?'disabled':'')+'></label><label class="cya-operational-field">Sucursal o ubicación<input class="form-input" id="cya-op-branch" maxlength="180" value="'+esc(c.sucursalAfore||'')+'" '+(!canEdit?'disabled':'')+'></label></div>'+
    '<div id="cya-op-cita-independent" '+(!independent?'hidden':'')+'><p class="cya-operational-tip">Registra la fecha real de actualización. No se creará una cita en Agenda.</p><label class="cya-operational-field">Origen de la confirmación<select class="form-input" id="cya-op-cita-confirmation" '+(!canEdit?'disabled':'')+'><option value="cliente" '+((c.aforeSeguimiento?.confirmacion||'cliente')==='cliente'?'selected':'')+'>Confirmado por el cliente</option><option value="cya" '+(c.aforeSeguimiento?.confirmacion==='cya'?'selected':'')+'>Verificado por C&amp;A</option></select></label></div>':'';
   const detail=step.id==='cita'?'<p class="cya-operational-tip">Selecciona cita programada o actualización realizada por el cliente. Una cita programada no confirma asistencia.</p>':
-   step.id==='banco_n4'?'<p class="cya-operational-tip">Seleccionar un banco no confirma que su cuenta sea nivel 4.</p>':
+   step.id==='banco_n4'?'':
    step.id==='honorarios'?'<p class="cya-operational-tip">Al confirmar el cobro se registrará en Finanzas con este mismo guardado. No significa que las comisiones a colaboradores se hayan pagado.</p>':
    step.id==='alta'?'<p class="cya-operational-tip">Registra el alta solo si fue confirmada. No se calcula automáticamente por hora de firma.</p>':'';
   return '<div class="cya-operational-overlay" id="cya-operational-modal"><div class="cya-operational-dialog" role="dialog" aria-modal="true" aria-labelledby="cya-operational-title">'+
    '<div class="cya-operational-header"><div><small>ACTIVIDAD '+step.index+' DE 12</small><h3 id="cya-operational-title">'+esc(step.label)+'</h3></div><button type="button" class="btn" data-op-close aria-label="Cerrar">✕</button></div>'+
    '<div class="cya-operational-body"><p>Estado: <strong>'+({done:'Confirmado',skipped:'Pendiente anterior',future:'Sin confirmar'}[step.state])+'</strong></p>'+(canEdit?(c.archivado?'<p class="cya-operational-tip">Corrección auditada de cliente atendido. Los cobros existentes se conservarán.</p>':''):'<p class="cya-operational-readonly" role="status">Solo lectura: expediente cerrado o sin permisos de edición.</p>')+detail+docs+
    '<label class="cya-operational-field">Fecha real o de confirmación (dd/mm/aaaa)<input class="form-input" id="cya-op-date" value="'+esc(local)+'" inputmode="numeric" placeholder="dd/mm/aaaa" '+(!canEdit?'disabled':'')+'></label>'+
-   citaFields+
+   citaFields+bankFields+
    '<label class="cya-operational-field">Observaciones<textarea class="form-textarea" id="cya-op-note" rows="3" '+(!canEdit?'disabled':'')+'>'+esc(record.nota||'')+'</textarea></label>'+
    (done?'<p class="cya-operational-tip">Para corregir un paso confirmado debes indicar el motivo. La corrección quedará en el historial.</p>':'')+
    '</div><div class="cya-operational-actions">'+(canEdit?'<button type="button" class="btn btn-primary" data-op-save>'+(step.id==='documentos'?(done?'Corregir documentos':'Guardar documentos'):(done?'Corregir registro':'Confirmar actividad'))+'</button>':'')+'<button type="button" class="btn" data-op-close>Cancelar</button></div></div></div>';
@@ -197,7 +201,8 @@
   // Individual checks are saved, even when the checklist is incomplete.
   if((stepId==='firmado'||stepId==='firmas')&&!c.archivado&&!flags(c).contrato)return msg('Primero genera el contrato desde el expediente');
   if(stepId==='contrato'&&!c.archivado&&!(c.historialContratos||[]).length)return msg('Primero genera el contrato desde Contratos');
-  if(stepId==='banco_n4'&&!c.archivado&&!String(c.banco||'').trim())return msg('Primero registra el banco en su tarjeta');
+  const selectedBank=String($('cya-op-bank')?.value||'').trim().toUpperCase();
+  if(stepId==='banco_n4'&&!selectedBank)return msg('Selecciona o captura el banco del cliente para confirmar nivel 4');
   const citaMode=String($('cya-op-cita-mode')?.value||'programada');
   const citaTime=String($('cya-op-time')?.value||''),citaBranch=String($('cya-op-branch')?.value||'').trim();
   if(stepId==='cita'&&citaMode!=='programada'&&citaMode!=='sin_cita')return msg('Selecciona una modalidad de actualización válida');
@@ -213,7 +218,7 @@
    if(!confirmed(message+(depositMissing?'\nTambién confirmas que el cliente recibió el depósito.':'')+'\nNo registra comisiones de colaboradores como pagadas.'))return;
   }
   if(!requiredDependencies(c,stepId))return;
-  const fieldsBefore={etapa:c.etapa,contratoFirmado:c.contratoFirmado,fechaFirmaContrato:c.fechaFirmaContrato,fechaAltaAfore:c.fechaAltaAfore,fechaSolicitudRealizada:c.fechaSolicitudRealizada,aforeMovil:c.aforeMovil,cuentaNivel4:c.cuentaNivel4,docs:JSON.parse(JSON.stringify(c.docs||{})),fechaBiometrica:c.fechaBiometrica,horaBiometrica:c.horaBiometrica,sucursalAfore:c.sucursalAfore,estadoPago:c.estadoPago,archivado:c.archivado,fechaCierre:c.fechaCierre};
+  const fieldsBefore={etapa:c.etapa,contratoFirmado:c.contratoFirmado,fechaFirmaContrato:c.fechaFirmaContrato,fechaAltaAfore:c.fechaAltaAfore,fechaSolicitudRealizada:c.fechaSolicitudRealizada,aforeMovil:c.aforeMovil,cuentaNivel4:c.cuentaNivel4,docs:JSON.parse(JSON.stringify(c.docs||{})),fechaBiometrica:c.fechaBiometrica,horaBiometrica:c.horaBiometrica,sucursalAfore:c.sucursalAfore,banco:c.banco,estadoPago:c.estadoPago,archivado:c.archivado,fechaCierre:c.fechaCierre};
   const previous=JSON.parse(JSON.stringify(c.etapasOperativasV2||{}));
   const history=JSON.parse(JSON.stringify(c.historial||[]));
   const aforeBefore={aforeSeguimiento:JSON.parse(JSON.stringify(c.aforeSeguimiento||null)),fechaActualizacionAfore:c.fechaActualizacionAfore};
@@ -239,7 +244,11 @@
     if(c.etapa==='contrato_firmado')advance('dado_alta');
   }
   if(stepId==='app')c.aforeMovil='si';
-  if(stepId==='banco_n4')c.cuentaNivel4='si';
+  if(stepId==='banco_n4'){
+   c.banco=selectedBank;
+   c.cuentaNivel4='si';
+   if(typeof addHist==='function')addHist(c,'banco','Banco '+selectedBank+' · Cuenta nivel 4 verificada · '+date);
+  }
   if(stepId==='cita'){
    if(citaMode==='programada'){
     c.fechaBiometrica=date;
