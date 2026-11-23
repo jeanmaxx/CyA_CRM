@@ -36,7 +36,8 @@
 
   function isMetaLead(l){
     const source=String(l?.fuenteContacto||l?.origen?.fuente||'').trim().toLowerCase();
-    return l?.metaAds===true||source==='meta ads'||Boolean(l?.metaLead)||Boolean(l?.origenMeta);
+    // A manually captured Facebook/Meta contact is not necessarily an imported form.
+    return Boolean(l?.metaLead)||Boolean(l?.origenMeta)||Boolean(l?.metaLeadId)||Boolean(l?.meta_lead_id);
   }
 
   function rawMetaName(l){
@@ -188,6 +189,7 @@
     if(!lead){showToast?.('Primero guarda el prospecto antes de marcar la revisión','warn');return;}
     const payload=reviewMessage();
     if(!payload.ok){showToast?.('La CURP debe tener 18 caracteres antes de marcar la revisión','warn');return;}
+    const previous={curp:lead.curp,revisionSolicitada:lead.revisionSolicitada,fechaRevisionSolicitada:lead.fechaRevisionSolicitada,estado:lead.estado,historialRevision:lead.historialRevision};
     const now=new Date().toISOString();
     lead.curp=payload.curp;
     lead.revisionSolicitada=true;
@@ -201,9 +203,9 @@
       if(typeof window.cyaAbrirCentroMensajesWhatsApp==='function')window.cyaAbrirCentroMensajesWhatsApp('revision');
       else openClientReviewModal(lead);
     }catch(error){
-      lead.revisionSolicitada=false;
-      lead.fechaRevisionSolicitada=null;
-      showToast?.('No se pudo guardar el cambio. El prospecto permanece como pendiente de revisión.','warn');
+      Object.assign(lead,previous);
+      try{if(typeof saveStore==='function')saveStore();}catch(_){}
+      showToast?.('No se pudo guardar la revisión. Se restauró la etapa anterior; conserva los pendientes y recarga la versión guardada si persiste el conflicto.','warn');
     }
   };
 
@@ -485,14 +487,14 @@
   // collaborator source automatically, but never overrides an established
   // independent source unless the user actually changes the collaborator.
   function hasMetaOrigin(lead){
-    return Boolean(lead?.metaAds===true||lead?.metaLead||lead?.origenMeta||
-      String(lead?.fuenteContacto||lead?.origen?.fuente||'').trim().toLowerCase()==='meta ads');
+    // Only imported questionnaire metadata is authoritative for locking Meta origin.
+    return Boolean(lead?.metaLead||lead?.origenMeta||lead?.metaLeadId||lead?.meta_lead_id);
   }
   function syncProspectSource(fromCollaboratorChange=false){
     const source=document.getElementById('lead-fuente');
     const col=document.getElementById('lead-colaborador');
     if(!source||!col)return;
-    const lead=currentLead(),meta=hasMetaOrigin(lead)||source.value==='Meta Ads';
+    const lead=currentLead(),meta=hasMetaOrigin(lead);
     if(meta){
       if(source.value!=='Meta Ads'){source.value='Meta Ads';source.dispatchEvent(new Event('change',{bubbles:true}));}
       return;
@@ -603,7 +605,9 @@
     if(!lead)return;
     Object.assign(lead,extras);
     if(info){lead.reconsulta=info;lead.historialReconsultas=[...(lead.historialReconsultas||[]),info];}
-    if(extras.fuenteContacto===META_SOURCE){lead.metaAds=true;lead.nombreVerificado=lead.nombreVerificado===true;lead.nombrePendienteValidacion=lead.nombreVerificado!==true;}
+    // Preserve the commercial source without fabricating a Meta form submission.
+    // Form-derived metadata (metaLead/origenMeta) is set by the importer only.
+    if(hasMetaOrigin(lead)){lead.metaAds=true;lead.nombreVerificado=lead.nombreVerificado===true;lead.nombrePendienteValidacion=lead.nombreVerificado!==true;}
     let synced=false;
     try{await cloudSyncNow?.({throwOnError:true});synced=true;}catch(_){showToast?.('Los datos adicionales quedaron pendientes de sincronizar','warn');}
     if(synced&&requested==='sindos'&&previousStage!=='sindos'&&lead.estado==='sindos')window.cyaAbrirWhatsAppProspectoPorId?.(lead.id,'sindos');
@@ -612,7 +616,7 @@
 
   function isMetaNewLead(l){
     const source=String(l?.fuenteContacto||l?.origen?.fuente||'').toLowerCase();
-    return l?.estado!=='archivado'&&l?.estado!=='aprobado'&&l?.estado!=='reconsulta'&&!l?.revisionSolicitada&&(l?.metaAds===true||source==='meta ads'||Boolean(l?.metaLead)||Boolean(l?.origenMeta));
+    return l?.estado!=='archivado'&&l?.estado!=='aprobado'&&l?.estado!=='reconsulta'&&!l?.revisionSolicitada&&isMetaLead(l);
   }
 
 
