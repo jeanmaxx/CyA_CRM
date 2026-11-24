@@ -105,6 +105,9 @@ const tick=()=>new Promise(r=>setImmediate(r));
  assert.equal(d.getElementById('modal-perfil').classList.contains('open'),false,'Discard closes profile');
  assert.equal(editor.parentElement,d.body,'profile close never strands editor inside a hidden profile');
  w.openPerfil('c1');await tick();
+ // Simulate background normalization without a user input/change event.
+ d.getElementById('fc-banco').value='NORMALIZADO';
+ click('banco');click('identidad');
  const plain=d.getElementById('modal-perfil');
  plain.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
  assert.equal(plain.classList.contains('open'),false,'Consulting only: outside click closes immediately');
