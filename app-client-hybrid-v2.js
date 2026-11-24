@@ -203,6 +203,24 @@ let bankFieldPlaces=[];
 /* One in-memory edit session across all nine client cards. Never commit a
    partial draft on navigation; the cloud-backed native save remains canonical. */
 let clientDraftId='',clientBaseline=null,clientDraft=null,clientProfileBaseline=null,clientClosePending=false;
+const clientTouched=new Set();
+const clientEditableIds=new Set(Object.values(inlineFields).flat());
+// Only actual editable controls count. Native initialization and asynchronous UI
+// normalization (e.g. bank selects) must not masquerade as user edits.
+function trackClientEdit(event){
+ const el=event.target;
+ if(!el?.closest||!$('modal-perfil')?.classList.contains('open')||!$('cya-hybrid-client-root'))return;
+ if(editorActive&&el.closest('#modal-cliente')){
+  const doc=el.closest('.doc-check[data-doc]');
+  if(event.type==='click'){if(doc)clientTouched.add('doc:'+doc.dataset.doc);return;}
+  const id=el.id==='cya-last-withdrawal-mx'?'el-fecha':el.id;
+  if(clientEditableIds.has(id))clientTouched.add(id);
+ }else if(event.type!=='click'&&el.id&&el.closest('#pd-finanzas,#pd-contratos'))clientTouched.add('profile:'+el.id);
+}
+for(const type of ['input','change','click'])document.addEventListener(type,trackClientEdit,true);
+function clientChangedKeys(baseline,current,profile=false){
+ return Object.keys(baseline||{}).filter(key=>key.startsWith('profile:')===profile&&clientTouched.has(key)&&Object.prototype.hasOwnProperty.call(current,key)&&current[key]!==baseline[key]);
+}
 function readClientFields(){
  const values={};
  $('modal-cliente')?.querySelectorAll('input[id],select[id],textarea[id]').forEach(el=>{
@@ -224,7 +242,7 @@ function readClientProfileValues(){
 function profileHasPending(){
  if(!clientProfileBaseline)return false;
  const now=readClientProfileValues();
- return Object.keys(clientProfileBaseline).some(key=>now[key]!==clientProfileBaseline[key]);
+ return clientChangedKeys(clientProfileBaseline,now,true).length>0;
 }
 function stageClientDraft(){if(editorActive)clientDraft=readClientFields();}
 function restoreClientDraft(){
@@ -243,12 +261,11 @@ function restoreClientDraft(){
 }
 function clientIsDirty(){
  const current=editorActive?readClientFields():clientDraft||clientBaseline||{};
- const formDirty=Boolean(clientBaseline&&Object.keys(clientBaseline).some(key=>
-  !key.startsWith('profile:')&&current[key]!==clientBaseline[key]));
+ const formDirty=clientChangedKeys(clientBaseline,current).length>0;
  return formDirty||profileHasPending();
 }
 function clearClientDraft(){
- clientBaseline=null;clientDraft=null;clientDraftId='';clientProfileBaseline=null;
+ clientBaseline=null;clientDraft=null;clientDraftId='';clientProfileBaseline=null;clientTouched.clear();
  if(typeof clienteFormDirty!=='undefined')clienteFormDirty=false;
 }
 function clientCloseDialog(){
@@ -275,9 +292,9 @@ function clientCloseDialog(){
   btn.disabled=true;btn.textContent='Guardando…';
   try{
    const snapshot=editorActive?readClientFields():clientDraft||clientBaseline||{};
-   const nativeChanges=Object.keys(clientBaseline||{}).filter(k=>!k.startsWith('profile:')&&snapshot[k]!==clientBaseline[k]);
+   const nativeChanges=clientChangedKeys(clientBaseline,snapshot);
    const profileNow=readClientProfileValues();
-   const profileChanges=Object.keys(clientProfileBaseline||{}).filter(k=>profileNow[k]!==clientProfileBaseline[k]);
+   const profileChanges=clientChangedKeys(clientProfileBaseline,profileNow,true);
    let ok=false;
    if(profileChanges.length){
     const financeOnly=profileChanges.every(k=>k.startsWith('profile:fin-'));
@@ -569,7 +586,8 @@ function mountInlineEditor(c,section){
  // editCliente populates native form fields and retains its current validation,
  // advisor permissions and cloudSyncNow guarded save.
  window.editCliente(c.id);
- if(clientDraftId!==String(c.id)){clientDraftId=String(c.id);clientBaseline=readClientFields();clientDraft=null;}
+ const fresh=clientDraftId!==String(c.id);
+ if(fresh){clientDraftId=String(c.id);clientDraft=null;}
  else restoreClientDraft();
  area.appendChild(editor);
  editor.classList.add('cya-hybrid-inline-editor');
@@ -583,6 +601,7 @@ function mountInlineEditor(c,section){
  setupAforeFields(section);
  setupBankFields(section);
  setupIdentityFields(section);
+ if(fresh)clientBaseline=readClientFields();
  const originalCancel=editor.querySelector('.modal-footer .btn:not(.btn-primary)');
  if(originalCancel){originalCancel.dataset.cyaHybridCancel='1';originalCancel.onclick=()=>{
   requestClientClose();
@@ -749,6 +768,7 @@ if(typeof nativeOpenProfile==='function')window.openPerfil=function(...args){
 document.addEventListener('cya:client-saved',event=>{
  if(clientDraftId!==String(event.detail?.id||''))return;
  clientBaseline=readClientFields();clientDraft=readClientFields();
+ for(const key of [...clientTouched])if(!key.startsWith('profile:'))clientTouched.delete(key);
  if(typeof clienteFormDirty!=='undefined')clienteFormDirty=false;
  const c=getClient();if(c)header(c);
 });
@@ -797,7 +817,7 @@ document.addEventListener('keydown',event=>{
 // If the modal is closed by a different existing action, return editor to its
 // original DOM position before any new-client flow is attempted.
 const parentProfile=$('modal-perfil');
-if(parentProfile)new MutationObserver(()=>{if(!parentProfile.classList.contains('open')&&editorActive)stopInlineEditor();}).observe(parentProfile,{attributes:true,attributeFilter:['class']});
+if(parentProfile)new MutationObserver(()=>{if(!parentProfile.classList.contains('open')){if(editorActive)stopInlineEditor();clearClientDraft();}}).observe(parentProfile,{attributes:true,attributeFilter:['class']});
 
 const target=$('perfil-body');
 if(target)new MutationObserver(()=>{if(!$('cya-hybrid-client-root')&&$('pd-contacto'))build();}).observe(target,{childList:true,subtree:false});
