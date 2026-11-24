@@ -86,3 +86,13 @@
 .clients-table-wrap th.cya-client-milestone-head{font-size:9px!important;line-height:1.25!important;white-space:normal!important;
  overflow-wrap:normal!important;hyphens:auto!important;vertical-align:middle}
 .clients-table-wrap th.cya-client-milestone-head:nth-child(11){font-size:8px!important;line-height:1.12!important}
+
+
+/* Separadores ópticos de etapas: después de Alta y antes de Solicitud.
+   Sombra interna de 1px: no añade ancho ni altera la cuadrícula móvil. */
+.clients-table-wrap th.cya-client-milestone-head:nth-child(7),
+.clients-table-wrap th.cya-client-milestone-head:nth-child(12),
+.clients-table-wrap td.cya-client-milestone-cell:nth-child(7),
+.clients-table-wrap td.cya-client-milestone-cell:nth-child(12){
+  box-shadow:inset 1px 0 0 rgba(128,145,168,.19);
+}
