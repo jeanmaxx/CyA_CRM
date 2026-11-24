@@ -47,7 +47,7 @@ sincronizarFechasCliente=function(c,anterior){syncDatesPrevious(c,anterior);sinc
 verificarAlertasAFOREDiarias=function(){for(const c of store.clientes||[])sincronizarCitaAfore(c);saveStore();};
 fechaSolicitudCliente=function(c){
   if(c?.servicio!=='retiro_desempleo')return '';
-  return c.fechaRetiroEstimada||c.fechaSolicitudRealizada||c.fechaSolicitudManual||(c.fechaAltaAfore?sumarDiasISO(c.fechaAltaAfore,45):'');
+  return c.fechaSolicitudManual||c.fechaSolicitudRealizada||c.fechaRetiroEstimada||(c.fechaAltaAfore?sumarDiasISO(c.fechaAltaAfore,45):'');
 };
 function etiquetaSolicitudCliente(c){
   if(c?.servicio!=='retiro_desempleo')return '—';
