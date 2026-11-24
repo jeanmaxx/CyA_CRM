@@ -666,6 +666,18 @@ async function guardarCliente(){
   clienteFormDirty=false;
   const keepInline=Boolean(oldCliente&&window.__cyaHybridClientEditSection&&document.getElementById('modal-perfil')?.classList.contains('open'));
   if(keepInline){
+    // Refresh the background list after confirmed persistence without closing the dossier.
+    if(currentPage==='clientes'){
+      const search=document.getElementById('search-cl')?.value||'';
+      const collaborator=document.getElementById('fil-colaborador')?.value||'';
+      const attendedOpen=document.querySelector('.clients-attended-section')?.open||false;
+      renderPage('clientes');
+      const searchField=document.getElementById('search-cl'),collaboratorField=document.getElementById('fil-colaborador');
+      if(searchField)searchField.value=search;
+      if(collaboratorField)collaboratorField.value=collaborator;
+      if(search||collaborator)filtrarClientes();
+      const attended=document.querySelector('.clients-attended-section');if(attended)attended.open=attendedOpen;
+    }
     document.dispatchEvent(new CustomEvent('cya:client-saved',{detail:{id:cliente.id}}));
   }else{
     closeModal('modal-cliente');
