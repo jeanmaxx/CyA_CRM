@@ -492,7 +492,7 @@ function renderClientes(){
           ${cyaClientesEtapasEncabezados()}
           <th class="cya-client-request-col" onclick="ordenarClientes('fechaSolicitud')" style="cursor:pointer">Solicitud${flechaOrden('fechaSolicitud')}</th>
         </tr></thead>
-        <tbody id="tbody-cl">${renderClientesRows(aplicarOrden(cl))}</tbody>
+        <tbody id="tbody-cl">${cyaRenderClientMonths(aplicarOrden(cl))}</tbody>
       </table>
       ${cl.length===0?`
         <div class="empty-state">
@@ -502,7 +502,7 @@ function renderClientes(){
           <button class="btn btn-primary" onclick="openModalCliente()">+ Nuevo cliente</button>
         </div>`:''}
     </div>
-    <div class="clients-mobile-list" id="clientes-mobile-list">${renderClientesCards(aplicarOrden(cl))}</div>
+    <div class="clients-mobile-list" id="clientes-mobile-list">${cyaRenderClientMonths(aplicarOrden(cl),false,true)}</div>
   </div>
   ${atendidos.length?`<details class="archivados-section clients-attended-section" style="margin-top:16px;width:100%;">
     <summary class="archivados-header cya-clients-attended-bar" style="cursor:pointer;">▸ CLIENTES ATENDIDOS (${atendidos.length})</summary>
@@ -510,9 +510,9 @@ function renderClientes(){
       <div class="card clients-list-card" style="overflow:hidden;">
         <div class="table-wrap clients-table-wrap"><table>
           <thead><tr><th>Registro</th><th>Nombre</th>${cyaClientesEtapasEncabezados()}<th>Solicitud</th></tr></thead>
-          <tbody>${renderClientesRows(aplicarOrden(atendidos))}</tbody>
+          <tbody>${cyaRenderClientMonths(aplicarOrden(atendidos),true)}</tbody>
         </table></div>
-        <div class="clients-mobile-list">${renderClientesCards(aplicarOrden(atendidos))}</div>
+        <div class="clients-mobile-list">${cyaRenderClientMonths(aplicarOrden(atendidos),true,true)}</div>
       </div>
     </div>
   </details>`:''}
@@ -555,6 +555,48 @@ function cyaClientesEtapasCelda(c,step){
  const text=label+' · '+(state==='done'?'Confirmado':state==='skipped'?'Pendiente anterior':'Sin confirmar');
  return '<td class="cya-client-milestone-cell"><button type="button" class="cya-stage-cell is-'+state+'" data-cya-activity="'+id+'" data-cya-client="'+escapeHTMLBasico(String(c.id))+'" aria-label="'+text+'" title="'+text+'">'+icon+'</button></td>';
 }
+
+/* Agrupación visual; no modifica expedientes ni fechas. */
+const cyaClientMonthState = {};
+function cyaMonthGroups(cl, attended=false){
+ const groups=new Map();
+ for(const c of cl){
+  const raw=String((attended?c.fechaCierre:fechaSolicitudCliente(c))||'');
+  const key=/^\d{4}-(0[1-9]|1[0-2])-\d{2}(?:$|T)/.test(raw)?raw.slice(0,7):'unknown';
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(c);
+ }
+ return [...groups].sort(([a],[b])=>a==='unknown'?1:b==='unknown'?-1:b.localeCompare(a));
+}
+function cyaMonthClosed(key, attended){
+ const id=(attended?'done-':'active-')+key;
+ if(Object.prototype.hasOwnProperty.call(cyaClientMonthState,id))return cyaClientMonthState[id];
+ try{const v=localStorage.getItem('cya-client-month-'+id);if(v!==null)return v==='1';}catch(e){}
+ return attended;
+}
+function cyaToggleClientMonth(btn){
+ const id=btn.dataset.clientMonth;
+ const closed=btn.getAttribute('aria-expanded')==='true';
+ cyaClientMonthState[id]=closed;
+ try{localStorage.setItem('cya-client-month-'+id,closed?'1':'0');}catch(e){}
+ document.querySelectorAll('[data-client-month="'+id+'"]').forEach(b=>{
+  b.setAttribute('aria-expanded',String(!closed));
+  b.querySelector('.cya-month-arrow').textContent=closed?'▸':'▾';
+ });
+ document.querySelectorAll('[data-client-month-body="'+id+'"]').forEach(el=>{el.hidden=closed;el.style.display=closed?'none':'';});
+}
+function cyaRenderClientMonths(cl, attended=false, mobile=false){
+ const names=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+ return cyaMonthGroups(cl,attended).map(([key,items])=>{
+  const id=(attended?'done-':'active-')+key,closed=cyaMonthClosed(key,attended);
+  const label=key==='unknown'?(attended?'Sin fecha de cierre':'Sin fecha de solicitud'):names[Number(key.slice(5))-1]+' '+key.slice(0,4);
+  const button='<button type="button" data-client-month="'+id+'" aria-expanded="'+!closed+'" onclick="cyaToggleClientMonth(this)" style="display:flex;align-items:center;gap:8px;width:100%;padding:6px 10px;background:transparent;border:0;color:inherit;font:inherit;font-size:11px;cursor:pointer;text-align:left;"><span class="cya-month-arrow" aria-hidden="true">'+(closed?'▸':'▾')+'</span><span style="text-transform:uppercase;font-weight:600;">'+label+'</span><span style="flex:1;border-top:1px solid currentColor;opacity:.15;"></span><span>'+items.length+(items.length===1?' cliente':' clientes')+'</span></button>';
+  const attr=' data-client-month-body="'+id+'"'+(closed?' hidden style="display:none"':'');
+  if(mobile)return '<div class="td-muted">'+button+'</div><div'+attr+'>'+renderClientesCards(items)+'</div>';
+  return '<tr class="td-muted"><td colspan="'+(CYA_CLIENT_STAGE_LABELS.length+3)+'" style="padding:0;border-bottom:1px solid rgba(128,128,128,.15);">'+button+'</td></tr>'+renderClientesRows(items).replace(/<tr class="cya-client-row">/g,'<tr class="cya-client-row"'+attr+'>');
+ }).join('');
+}
+
 function renderClientesRows(cl){
  if(!cl.length)return '';
  return cl.map(c=>'<tr class="cya-client-row">'+
@@ -594,9 +636,9 @@ function filtrarClientes(){
       &&(!colab||(colab==='directo'?!c.colaboradorId:c.colaboradorId===colab));
   });
   const tb=document.getElementById('tbody-cl');
-  if(tb) tb.innerHTML=renderClientesRows(aplicarOrden(filtered));
+  if(tb) tb.innerHTML=cyaRenderClientMonths(aplicarOrden(filtered));
   const cards=document.getElementById('clientes-mobile-list');
-  if(cards) cards.innerHTML=renderClientesCards(aplicarOrden(filtered));
+  if(cards) cards.innerHTML=cyaRenderClientMonths(aplicarOrden(filtered),false,true);
 }
 
 function elegibleChip(e){
